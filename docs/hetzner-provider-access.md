@@ -95,10 +95,17 @@ The selected application targets are:
 | Production  | `starter.vireocode.com`         | `starter`            | `46.224.72.162` |
 | Staging     | `starter-staging.vireocode.com` | `starter-staging`    | `46.224.72.162` |
 
-Authoritative inspection found both names absent, with no AAAA/CNAME conflicts.
-The current server-project API credential sees no DNS zones and receives `404`
-for this zone. That is an access boundary, not a reason to create another zone
-or change nameservers.
+Initial authoritative inspection found both names absent, with no AAAA/CNAME
+conflicts. The separate DNS-project credential was then verified and both A
+record sets were created at TTL `300`. All three authoritative nameservers and
+public resolvers `1.1.1.1`/`8.8.8.8` returned the exact IPv4; see
+[DNS acceptance](dns-acceptance.json) for operation IDs and scope. The local
+recursive resolver still returned `NXDOMAIN` at inspection time despite those
+positive answers; do not add duplicate records to work around resolver/cache lag.
+
+The server-project API credential sees no DNS zones and receives `404` for this
+zone. That access boundary required a separate credential, not a duplicate zone
+or nameserver changes. Public application/TLS verification is still pending.
 
 Obtain a **Read & Write** API token from the exact DNS project `15086223` using
 its **Security -> API tokens** settings. Store it through the hidden terminal

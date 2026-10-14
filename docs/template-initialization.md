@@ -309,10 +309,12 @@ and authoritative/recursive checks. A Cloud server token is not automatically
 authorized for a zone in another project. Obtain the correct protected
 credential rather than creating a duplicate zone or changing delegation.
 
-**Current gate:** both template names are absent at the authoritative provider.
-Zone `1423739` in project `15086223` requires the correct project API credential;
-no DNS record has been changed yet. Container publishing, deployment routing,
-public TLS, and backups remain separate pending steps.
+**Current gate:** both template A records were created and verified against all
+authoritative nameservers and two public recursive resolvers using the correct
+DNS-project credential. [DNS acceptance](dns-acceptance.json) records the exact
+changes. Local recursive `NXDOMAIN` was still observed at inspection time;
+resolver/cache readiness is separate from successful authoritative writes.
+Container publishing, deployment routing, public TLS, and backups remain pending.
 
 **Done when:** the intended records are verified at the selected existing
 authoritative zone, with conflicts resolved and access/negative-cache blockers
