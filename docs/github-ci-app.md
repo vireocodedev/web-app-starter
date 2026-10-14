@@ -1,5 +1,10 @@
 # GitHub App for the shared CI controller
 
+The template's current App is `5319558`, installation `171464279`, owned by
+`vireocodedev` and selected for `web-app-starter`. Actual repository JIT
+permission proof and subsequent isolated CI passed. These public IDs describe
+the operator's installation, not values to reuse for a different organization.
+
 The permanent controller uses an organization-owned GitHub App. Its root-only
 RSA key signs a short-lived JWT; the controller exchanges that JWT for a
 repository-scoped installation token and renews it before expiry. Tokens stay

@@ -262,8 +262,9 @@ examples do not establish active CI.
 [273 current-source foundation probes](../infrastructure/ci/verification/host-acceptance.json).
 Its organization-owned App is installed for `web-app-starter`, the repository is
 registered, and the controller is active for controlled job acceptance.
-Genuine cross-repository GitHub jobs and the root PR workflow/main-protection
-rollout still require acceptance. A consumer does not
+Genuine template PR/main GitHub jobs and enforced main protection are recorded
+in [CI acceptance](ci-acceptance.json); cross-repository shared-pool acceptance
+remains pending. A consumer does not
 inherit that host receipt: the operator checks its current boot/source/config,
 registers the consumer, and repeats validation. When the remaining steps are
 implemented, record their actual workflow/check names, run URLs, and GitHub

@@ -148,8 +148,8 @@ covers the required inputs and operator handoff.
 The selected template host has been rebuilt, installed, and passed
 [273 current-source isolation probes](infrastructure/ci/verification/host-acceptance.json).
 The organization-owned App is authorized and the registered controller is active
-for real-job acceptance. PR workflow rollout and branch protection are pending
-verified runs. Consumers register
+for real-job acceptance. PR/main verification has passed and main protection is
+enforced. Cross-repository shared-pool acceptance remains pending. Consumers register
 for the verified shared pool rather than rebuilding the operator's host.
 
 ## PR CI and branch protection
@@ -158,8 +158,8 @@ The [root CI workflow](.github/workflows/ci.yml) selects backend/frontend checks
 by changed folder, plus foundation checks for infrastructure changes. Every job
 uses the shared Hetzner pool, and the aggregate `CI gate` always reports.
 See [consumer CI/protection setup](docs/github-ci.md) for required repository
-access, exact check names, and the main-branch policy. Live rollout is pending
-the first verified workflow runs; no GitHub settings are inherited automatically
+access, exact check names, and the main-branch policy. See
+[live acceptance evidence](docs/ci-acceptance.json); no GitHub settings are inherited automatically
 when creating a repository from this template.
 
 ## Future staging and production
