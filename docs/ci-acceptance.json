@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "repository": "vireocodedev/web-app-starter",
+  "scope": "single-repository-ci-and-main-protection",
+  "runner": {
+    "labels": ["self-hosted", "Linux", "X64", "web-app-ci"],
+    "github_app_id": 5319558,
+    "installation_id": 171464279,
+    "job_isolation": "serial, repository-scoped, disposable",
+    "post_run_cleanup": "zero task-owned processes; no job disk/network namespace; empty recovery state"
+  },
+  "runs": {
+    "all_owners_pr": {
+      "run_id": 38619707582,
+      "source_commit": "7d5d9c2f1432db0ec1d88f558818ed3e078cc61c",
+      "url": "https://github.com/vireocodedev/web-app-starter/actions/runs/38619707582",
+      "result": "success",
+      "jobs": {
+        "Detect changes": "success",
+        "Backend verification": "success",
+        "Frontend verification": "success",
+        "Foundation verification": "success",
+        "CI gate": "success"
+      }
+    },
+    "main": {
+      "run_id": 38621722963,
+      "source_commit": "8317652f48e0f2f21876eaa15dd8e98958108b2c",
+      "url": "https://github.com/vireocodedev/web-app-starter/actions/runs/38621722963",
+      "result": "success"
+    },
+    "backend_only_controlled_failure": {
+      "run_id": 38622091362,
+      "url": "https://github.com/vireocodedev/web-app-starter/actions/runs/38622091362",
+      "result": "failure",
+      "backend": "failure",
+      "frontend": "skipped",
+      "foundation": "skipped",
+      "gate": "failure",
+      "merge_state": "BLOCKED",
+      "fixture_removed_before_merge": true
+    },
+    "frontend_only_corrected": {
+      "run_id": 38623725972,
+      "url": "https://github.com/vireocodedev/web-app-starter/actions/runs/38623725972",
+      "result": "success",
+      "backend": "skipped",
+      "frontend": "success",
+      "foundation": "skipped",
+      "gate": "success",
+      "merge_state": "CLEAN",
+      "merged_pr": 4,
+      "final_diff": ["frontend/README.md"]
+    }
+  },
+  "main_protection": {
+    "required_pull_request": true,
+    "required_approving_reviews": 0,
+    "required_check": "CI gate",
+    "check_source_app_id": 15368,
+    "check_source_slug": "github-actions",
+    "up_to_date_required": true,
+    "administrator_enforcement": true,
+    "code_owner_review_required": false,
+    "last_push_approval_required": false,
+    "force_push_allowed": false,
+    "deletion_allowed": false,
+    "linear_history_required": true,
+    "conversation_resolution_required": true,
+    "failing_gate_observed_blocked": true,
+    "corrected_gate_observed_mergeable_without_reviews": true
+  },
+  "remaining": [
+    "documentation-only real-run evidence",
+    "cross-repository shared-pool acceptance",
+    "staging-production publishing/deployment and backup acceptance"
+  ]
+}

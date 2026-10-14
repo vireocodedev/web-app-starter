@@ -80,7 +80,13 @@ a failing/missing required check blocks merging, then show that corrected green
 checks permit merging with zero approvals. Do not merge a failing fixture or
 weaken protection to demonstrate it.
 
-**Current rollout:** this workflow is being introduced and real self-hosted
-acceptance is pending. Main protection must be enabled only after observing the
-exact successful check names. Live run/protection evidence will replace this
-rollout note after activation.
+**Current activation:** the template's PR and main CI passed on genuine
+disposable Hetzner runners. Effective main protection requires the observed
+`CI gate` from GitHub Actions (App ID `15368`) with strict up-to-date checks,
+administrator enforcement, zero reviews, and blocked force pushes/deletion.
+A controlled backend-only failure selected no frontend/foundation work and
+blocked merging; the fixture was removed, a frontend-only green result skipped
+backend/foundation and became mergeable with no approving review. See
+[source-bound acceptance](ci-acceptance.json) for runs and policy observations.
+This documents the template repository, not inherited settings for a consumer.
+Documentation-only and cross-repository acceptance remain separate gates.
