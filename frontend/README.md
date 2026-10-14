@@ -9,6 +9,10 @@ PostgreSQL and the backend and obtain the initial login credentials. Do not
 commit `.env.local`, tokens, or an `.npmrc` containing credentials. The public
 `@rgo-web/frontend` package installs from npm without authentication. GitHub
 Actions runs `npm ci` and `npm run verify` for pull requests and pushes to `main`.
+The workflow belongs to the workspace root and runs on the shared isolated
+Hetzner pool. Frontend-only changes select frontend verification; unrelated
+backend checks are skipped. See [CI and branch protection](../docs/github-ci.md)
+for the consumer's required runner access and GitHub settings.
 
 ## Start locally
 
