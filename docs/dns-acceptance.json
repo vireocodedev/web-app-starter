@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-14T20:55:02Z",
+  "scope": "template-environment-dns-only",
+  "project_id": 15086223,
+  "zone_id": 1423739,
+  "zone_name": "vireocode.com",
+  "records": [
+    {
+      "hostname": "starter.vireocode.com",
+      "name": "starter",
+      "type": "A",
+      "value": "46.224.72.162",
+      "ttl": 300,
+      "action_id": 661528051477268,
+      "provider_status": "success"
+    },
+    {
+      "hostname": "starter-staging.vireocode.com",
+      "name": "starter-staging",
+      "type": "A",
+      "value": "46.224.72.162",
+      "ttl": 300,
+      "action_id": 661528051477384,
+      "provider_status": "success"
+    }
+  ],
+  "authoritative_verification": {
+    "ns1.your-server.de": "both names NOERROR with the exact IPv4 and TTL300",
+    "ns.second-ns.com": "both names NOERROR with the exact IPv4 and TTL300",
+    "ns3.second-ns.de": "both names NOERROR with the exact IPv4 and TTL300"
+  },
+  "public_recursive_verification": {
+    "1.1.1.1": "both names resolve to 46.224.72.162",
+    "8.8.8.8": "both names resolve to 46.224.72.162"
+  },
+  "local_recursive_observation": "NXDOMAIN still observed after authoritative/public success; local resolver/cache readiness is separate",
+  "conflicting_aaaa_or_cname": false,
+  "unrelated_records_modified": false,
+  "new_zone_created": false,
+  "delegation_changed": false,
+  "application_or_public_tls_verified": false
+}
