@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: prepare local credentials",
+      "type": "process",
+      "command": "node",
+      "args": ["${workspaceFolder}/backend/scripts/setup-local.mjs"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: start local PostgreSQL",
+      "type": "process",
+      "command": "docker",
+      "args": [
+        "compose",
+        "--env-file",
+        ".env",
+        "up",
+        "--detach",
+        "--wait",
+        "postgres"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "dependsOn": "Backend: prepare local credentials",
+      "problemMatcher": []
+    }
+  ]
+}

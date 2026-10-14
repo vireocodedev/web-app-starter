@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="426" height="100" viewBox="0 0 426 100" role="img" aria-labelledby="rgo-title rgo-description">
+  <title id="rgo-title">RGO</title>
+  <desc id="rgo-description">RGO identity. Two opposing routed channels form an exchange symbol, beside a custom geometric RGO wordmark. Original vector artwork; transparent background.</desc>
+  <g id="rgo-symbol" fill="#C93632" transform="translate(0 2)">
+    <path d="M0 0h60c19.882 0 36 16.118 36 36v20H72V36c0-6.627-5.373-12-12-12H0Z"/>
+    <path d="M96 96H36C16.118 96 0 79.882 0 60V40h24v20c0 6.627 5.373 12 12 12h60Z"/>
+  </g>
+  <g id="rgo-wordmark" fill="#142D3B" transform="translate(128 2)">
+    <path fill-rule="evenodd" d="M0 96V0h43c24 0 37 12 37 32 0 15-8 25-21 29l25 35H63L39 63H18v33Zm18-80v31h24c13 0 20-5 20-15S55 16 42 16Z"/>
+    <path d="m186 17-13 12c-5-9-13-14-25-14-19 0-32 13-32 33 0 21 13 33 32 33 9 0 16-3 21-6V60h-24V44h42v40c-11 9-23 14-39 14-31 0-50-20-50-50S119-2 148-2c17 0 31 7 38 19Z"/>
+    <path fill-rule="evenodd" d="M250-2c29 0 48 20 48 50s-19 50-48 50-48-20-48-50S221-2 250-2Zm0 18c-19 0-30 12-30 32s11 32 30 32 30-12 30-32-11-32-30-32Z"/>
+  </g>
+</svg>

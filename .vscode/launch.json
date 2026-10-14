@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Frontend: local dev",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort",
+      "cwd": "${workspaceFolder}/frontend",
+      "env": {
+        "VITE_API_BASE_URL": "/api",
+        "VITE_API_MODE": "http",
+        "VITE_API_WITH_CREDENTIALS": "true",
+        "VITE_APP_ENV": "development"
+      }
+    },
+    {
+      "name": "Backend: local dev",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "com.vireocode.backend.BackendApplication",
+      "projectName": "backend",
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/backend/.env",
+      "args": "--spring.profiles.active=local",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Backend: start local PostgreSQL"
+    }
+  ]
+}
