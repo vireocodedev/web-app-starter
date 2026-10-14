@@ -136,6 +136,19 @@ npm run verify
 See the [frontend guide](frontend/README.md) for architecture and mock-mode
 development. Mock `demo` credentials are fixtures, not real backend credentials.
 
+## Shared Hetzner CI foundation
+
+This repository owns the [shared CI foundation](infrastructure/ci/README.md):
+one isolated, disposable worker pool for explicitly registered private monorepos.
+Template consumers register their repository for that pool rather than install
+another permanent runner. The
+[initialization runbook](docs/template-initialization.md#5-configure-shared-ci-access)
+covers the required inputs and operator handoff.
+
+The source is prepared locally; clean-host installation, live runner acceptance,
+root PR workflows, and branch protection are not active yet. Server rebuild,
+installation, and activation require separate approval.
+
 ## Future staging and production
 
 Do not enable the `local` profile outside local development. Without it, startup
