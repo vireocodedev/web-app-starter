@@ -5,8 +5,8 @@ template consumer. Make scoped edits directly; this workflow needs no renaming
 script, generator, new dependencies, or runtime identity configuration.
 
 Initialization covers project naming, local development, and the shared CI
-access handoff below. Server rebuild/installation/activation are separately
-approved operator actions. Container publishing, branch protection,
+access and main-protection setup below. Server rebuild/installation/activation
+are separately approved operator actions. Container publishing,
 staging/production configuration, and deployment will gain their exact setup
 steps here as they are implemented; their absence is pending work, not permission
 to improvise a deployment.
@@ -259,10 +259,11 @@ from `backend/`, frontend commands from `frontend/`. Only root
 examples do not establish active CI.
 
 **Current gate:** the template's selected clean host passed
-[272 credential-free foundation probes](../infrastructure/ci/verification/host-acceptance.json).
-The controller remains disabled without a credential or registrations.
-Genuine cross-repository GitHub jobs, the root path-aware PR workflow, and
-branch protection still require implementation/acceptance. A consumer does not
+[273 current-source foundation probes](../infrastructure/ci/verification/host-acceptance.json).
+Its organization-owned App is installed for `web-app-starter`, the repository is
+registered, and the controller is active for controlled job acceptance.
+Genuine cross-repository GitHub jobs and the root PR workflow/main-protection
+rollout still require acceptance. A consumer does not
 inherit that host receipt: the operator checks its current boot/source/config,
 registers the consumer, and repeats validation. When the remaining steps are
 implemented, record their actual workflow/check names, run URLs, and GitHub
@@ -273,7 +274,27 @@ acceptance plus genuine repository CI are verified, or the precise pending
 operator/workflow prerequisites are reported. Do not rebuild a host, enable
 services, publish, or deploy as a side effect of identity personalization.
 
-## 6. Report the result
+## 6. Configure GitHub CI and main protection
+
+Follow [Monorepo CI and main protection](github-ci.md) for root workflow paths,
+change-selection rules, exact required-check naming, and the settings that
+GitHub does not copy from a template. Keep the shared Hetzner runner selection;
+changing a custom label also requires its operator registration and the
+[actionlint label configuration](../.github/actionlint.yaml).
+
+Verify actual consumer backend-only, frontend-only, both-owner, and unrelated
+PR results before claiming CI is working. Protect the selected integration
+branch after the real `CI gate` check succeeds: require PRs with zero approving
+reviews, bind the required check to GitHub Actions, require up-to-date branches,
+enforce for administrators, and block force pushes/deletion. Record observed
+run URLs, runner identity, effective policy, and a blocked/green mergeability
+test. Keep publication/deployment credentials separate from PR jobs.
+
+**Done when:** the correct checks run on the consumer's authorized Hetzner pool
+and the effective main policy is verified, or a concrete access/plan/run blocker
+is reported. Copied workflow files alone are not activation evidence.
+
+## 7. Report the result
 
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without

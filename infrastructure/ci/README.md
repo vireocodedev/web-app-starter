@@ -8,11 +8,11 @@ Registration and installation are operator tasks, not steps to repeat from
 every consumer's copy of this directory.
 
 **Status:** the selected template host was rebuilt and this source passed
-272 actual credential-free isolation probes, including a second fresh job and
+273 actual current-source isolation probes, including a second fresh job and
 complete cleanup. See [host acceptance](verification/host-acceptance.json) for
-source/configuration/boot-bound evidence. The controller remains disabled,
-without a GitHub credential or registered projects. Genuine GitHub jobs and
-cross-repository acceptance are still pending. This evidence describes the
+source/configuration/boot-bound evidence. The App and private template repository are registered, and the controller is
+active for controlled acceptance. Genuine GitHub jobs and cross-repository
+acceptance are still pending. This evidence describes the
 template host, not automatic readiness for a consumer or a different boot.
 
 The isolation machinery was extracted from the experimental
@@ -249,10 +249,11 @@ or registry-write credentials. Use ordinary `pull_request`, not privileged
 push and later manual deployment verification may use this CI pool, but any
 privileged deployment execution must use a separate, approved mechanism.
 
-The upcoming root workflow must run the backend from `backend/` and frontend
-from `frontend/`, detect affected paths, and always report one aggregate gate.
-GitHub ignores workflows nested inside `frontend/.github/workflows/`; those are
-not an active monorepo CI configuration.
+The [root CI workflow](../../.github/workflows/ci.yml) runs the backend from
+`backend/` and frontend from `frontend/`, selects affected paths, and always
+reports `CI gate`. See [CI/protection setup](../../docs/github-ci.md) for
+consumer activation and branch policy. The inactive nested frontend workflow
+was removed to keep one authoritative monorepo configuration.
 
 ## Host acceptance still required
 

@@ -48,6 +48,16 @@ the real IDs/key automatically through a loopback-only, one-use authorization
 flow. Validate the returned organization, permissions, selected-repository
 policy, and installation using the App's authenticated API before accepting it.
 
+The manifest conversion response does not include the App's `public` visibility
+field; private visibility comes from the submitted manifest. Validate fields
+the API actually returns rather than rejecting a successful conversion for an
+absent visibility property. Persist the protected key/identity before progressing.
+If a callback fails after GitHub creation, reconcile the existing App instead
+of repeating creation. Conversion codes are one-use and issued private keys
+cannot be retrieved again: if the response was lost, generate a replacement
+key in that existing App's settings, verify it using App authentication, and
+continue installation. Keep all keys out of chat and logs.
+
 ## Prepare the host's App adapter
 
 Fresh installations contain the App adapter and dormant settings. An already
