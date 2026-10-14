@@ -11,8 +11,9 @@ every consumer's copy of this directory.
 273 actual current-source isolation probes, including a second fresh job and
 complete cleanup. See [host acceptance](verification/host-acceptance.json) for
 source/configuration/boot-bound evidence. The App and private template repository are registered, and the controller is
-active for controlled acceptance. Genuine GitHub jobs and cross-repository
-acceptance are still pending. This evidence describes the
+active for controlled acceptance. Genuine template PR/main jobs and path-aware
+gate/protection acceptance passed; see [CI acceptance](../../docs/ci-acceptance.json).
+Cross-repository shared-pool acceptance is still pending. This evidence describes the
 template host, not automatic readiness for a consumer or a different boot.
 
 The isolation machinery was extracted from the experimental

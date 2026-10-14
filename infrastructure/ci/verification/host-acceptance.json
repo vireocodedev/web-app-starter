@@ -68,7 +68,6 @@
   },
   "remaining_gates": [
     "genuine-github-jobs-and-cross-repository-cleanup",
-    "root-path-aware-pr-workflow-and-main-protection",
     "staging-production-deployments-and-application-backups"
   ]
 }

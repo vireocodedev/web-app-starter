@@ -89,4 +89,6 @@ blocked merging; the fixture was removed, a frontend-only green result skipped
 backend/foundation and became mergeable with no approving review. See
 [source-bound acceptance](ci-acceptance.json) for runs and policy observations.
 This documents the template repository, not inherited settings for a consumer.
-Documentation-only and cross-repository acceptance remain separate gates.
+The documentation-only run also passed with all app/foundation jobs skipped and
+`CI gate` reported successfully. Cross-repository shared-pool acceptance remains
+a separate pending gate.

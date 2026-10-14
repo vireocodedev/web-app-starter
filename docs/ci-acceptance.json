@@ -51,6 +51,16 @@
       "merge_state": "CLEAN",
       "merged_pr": 4,
       "final_diff": ["frontend/README.md"]
+    },
+    "documentation_only": {
+      "run_id": 38625130916,
+      "url": "https://github.com/vireocodedev/web-app-starter/actions/runs/38625130916",
+      "result": "success",
+      "backend": "skipped",
+      "frontend": "skipped",
+      "foundation": "skipped",
+      "gate": "success",
+      "changed_paths": ["README.md", "docs/"]
     }
   },
   "main_protection": {
@@ -71,7 +81,6 @@
     "corrected_gate_observed_mergeable_without_reviews": true
   },
   "remaining": [
-    "documentation-only real-run evidence",
     "cross-repository shared-pool acceptance",
     "staging-production publishing/deployment and backup acceptance"
   ]
