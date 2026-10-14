@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-14T16:32:47Z",
+  "recorded_at": "2026-10-14T18:56:37Z",
   "scope": "credential-free-foundation-boundary",
   "status": "passed",
-  "source_commit": "edc5a2d533a42bf0eab117d963a9d7bdc2936942",
-  "source_archive_sha256": "2be31cdf65274b822d6c2c09e3676d829ab461b690cff882a667599e7a9ace2f",
+  "source_commit": "9c64b45d949d343497837e049812f919987520fd",
+  "source_archive_sha256": "3e9529336c30a61fc2fa9b6495d36d4e08a93f346bf4fe7826f58e2b60f96287",
   "host": {
     "server_id": 144310066,
     "name": "vps-main-01",
@@ -28,10 +28,18 @@
     "compose": "5.6.0",
     "caddy": "2.6.2"
   },
-  "configuration_sha256": "265afb10037528219a6826dfd830c021d3aef4a15c743408f4820dc606ad7e81",
-  "boundary_sha256": "a849bd3014af348c0cdddbb77e8cd95a48f6974aee85f0bb17979cff51a8f228",
-  "receipt_sha256": "be3d29fd3ee14d390781fd21b10d6a58868015a269df8f17cfc55d336522e636",
-  "probe_count": 272,
+  "configuration_sha256": "c696a337fc7523a232b8b94aa1b72edfa8b923c3dbca9616ba5bd8b3b64d3502",
+  "boundary_sha256": "582b210654e90b9f0a545e9701c2508987b268439c3a20df02d5b729ba13b5e1",
+  "receipt_sha256": "7cf1624d65b53e3b42ce8d9fbda70db4e3578242483853a99b79dc60b9eb1491",
+  "probe_count": 273,
+  "validation_note": "One initial App-adapter validation stopped at the private-bus probe. Narrow exact-context diagnostics and subsequent unchanged full and post-registration validations passed; no check was removed or weakened.",
+  "github_app": {
+    "app_id": 5319558,
+    "installation_id": 171464279,
+    "owner": "vireocodedev",
+    "repository": "vireocodedev/web-app-starter",
+    "jit_permission_proof": "passed"
+  },
   "acceptance_flags": {
     "notify_access_main": true,
     "child_notification_rejected": true,
@@ -54,13 +62,11 @@
     "job_image_absent": true,
     "job_namespace_absent": true,
     "job_state_empty": true,
-    "controller_active_state": "inactive",
-    "controller_unit_file_state": "disabled",
-    "controller_credential_introduced": false
+    "controller_active_state": "active",
+    "controller_unit_file_state": "enabled",
+    "controller_credential_introduced": true
   },
   "remaining_gates": [
-    "github-controller-credential-and-private-repository-registration",
-    "current-configuration-revalidation-after-registration",
     "genuine-github-jobs-and-cross-repository-cleanup",
     "root-path-aware-pr-workflow-and-main-protection",
     "staging-production-deployments-and-application-backups"
