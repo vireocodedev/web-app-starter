@@ -1,0 +1,26 @@
+[Unit]
+Description=Web app isolated ephemeral CI controller
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/web-app-ci/github-token
+ConditionPathExists=/var/lib/web-app-ci/validation.json
+
+[Service]
+Type=simple
+User=root
+UMask=0077
+LoadCredential=github-token:/etc/web-app-ci/github-token
+ExecStart=/usr/bin/python3 /usr/local/lib/web-app-ci/controller.py serve
+Restart=on-failure
+RestartSec=30
+TimeoutStopSec=120
+# The controller owns mounts, namespaces and stopping the entire CI UID.
+# It never invokes repository scripts as root; all child commands are fixed.
+KillMode=control-group
+LimitCORE=0
+MemoryMax=512M
+TasksMax=64
+CPUQuota=25%
+
+[Install]
+WantedBy=multi-user.target

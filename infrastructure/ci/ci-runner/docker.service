@@ -1,0 +1,22 @@
+[Unit]
+Description=Disposable Docker daemon inside Web app CI boundary
+After=dbus.service
+Requires=dbus.service
+
+[Service]
+Type=notify
+NotifyAccess=all
+Slice=user-@UID@.slice
+Environment=PATH=/usr/local/lib/web-app-ci/runtime-bin:/opt/node/bin:/opt/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=DOCKERD_ROOTLESS_ROOTLESSKIT_NET=slirp4netns
+Environment=DOCKERD_ROOTLESS_ROOTLESSKIT_PORT_DRIVER=builtin
+Environment=DOCKERD_ROOTLESS_ROOTLESSKIT_FLAGS=--disable-host-loopback
+ExecStart=/usr/bin/dockerd-rootless.sh --host=unix:///run/user/@UID@/docker.sock --storage-driver=overlay2 --exec-opt=native.cgroupdriver=systemd --cgroup-parent=user-@UID@.slice
+Restart=no
+TimeoutStartSec=90
+TimeoutStopSec=20
+KillMode=mixed
+Delegate=yes
+StandardOutput=file:/home/web-app-ci/docker.log
+StandardError=inherit
+LimitCORE=0

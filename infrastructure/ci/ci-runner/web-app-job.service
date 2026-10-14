@@ -1,0 +1,21 @@
+[Unit]
+Description=One ephemeral Web app GitHub Actions job
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=exec
+WorkingDirectory=/home/web-app-ci/runner
+Environment=DOCKER_HOST=unix:///run/user/@UID@/docker.sock
+Environment=JAVA_HOME=/opt/jdk
+Environment=PATH=/opt/node/bin:/opt/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=CI=true
+Environment=TESTCONTAINERS_HOST_OVERRIDE=127.0.0.1
+Environment=TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/@UID@/docker.sock
+Environment=TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED=false
+ExecStart=/usr/local/lib/web-app-ci/start-job.sh
+StandardOutput=null
+StandardError=null
+KillMode=control-group
+TimeoutStopSec=30
+LimitCORE=0

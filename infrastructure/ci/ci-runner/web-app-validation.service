@@ -1,0 +1,17 @@
+[Unit]
+Description=Credential-free Web app CI boundary probes
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+Environment=DOCKER_HOST=unix:///run/user/@UID@/docker.sock
+Environment=TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED=false
+Environment=PATH=/opt/node/bin:/opt/jdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/python3 /usr/local/lib/web-app-ci/validate-job.py
+TimeoutStartSec=600
+RemainAfterExit=yes
+StandardOutput=null
+StandardError=null
+KillMode=control-group
+LimitCORE=0

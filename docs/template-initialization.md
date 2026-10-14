@@ -4,9 +4,12 @@ Follow this runbook when a user asks to personalize a freshly cloned GitHub
 template consumer. Make scoped edits directly; this workflow needs no renaming
 script, generator, new dependencies, or runtime identity configuration.
 
-Initialization covers project naming and local development. Container publishing,
-GitHub settings, staging/production configuration, and deployment are separate
-tasks requiring their own instructions and authorization.
+Initialization covers project naming, local development, and the shared CI
+access handoff below. Server rebuild/installation/activation are separately
+approved operator actions. Container publishing, branch protection,
+staging/production configuration, and deployment will gain their exact setup
+steps here as they are implemented; their absence is pending work, not permission
+to improvise a deployment.
 
 ## 1. Confirm the target and identity
 
@@ -195,12 +198,82 @@ retain the local database volume.
 leftovers, and local runtime/IDE results are recorded. Missing prerequisites or
 failed checks are explicit blockers, not successful verification.
 
-## 5. Report the result
+## 5. Configure shared CI access
+
+GitHub's template creation copies repository files, not runner access, variables,
+secrets, branch protections, or environment settings. Obtain the consumer's exact
+GitHub `owner/repository`, approved project slug, and selected shared CI operator.
+For the organization maintained here, the permanent foundation source belongs to
+`vireocodedev/web-app-starter`; experimental repositories are not dependencies.
+
+The detailed install-once and registration procedures live in the
+[shared CI operator guide](../infrastructure/ci/README.md). Read it before any
+runner operation. Consumers inherit its source files but **register for the
+existing pool**, rather than reinstall it or create an app-specific permanent
+runner.
+
+Give the operator this nonsecret registration input, substituting the consumer's
+values:
+
+```json
+{
+  "slug": "inventory-portal",
+  "repository": "your-org/inventory-portal"
+}
+```
+
+If the shared host does not yet exist, the operator follows
+[Hetzner provider access](hetzner-provider-access.md) to establish a protected
+project API credential, verified server/image/SSH identity, and exact rebuild
+scope. This is an install-once bootstrap prerequisite, not a cloud credential
+requirement for every consumer. Apply those instructions to the selected host;
+the current template host identifiers in that guide must not be reused blindly.
+
+The operator must verify private repository identity, extend the protected
+controller credential's selected-repository permissions, register while the
+controller is stopped/disabled/idle, and establish a fresh current-boot isolation
+receipt before an approved activation. The single-repository format is
+intentional: separate `frontend`/`backend` repository fields are not supported.
+Keep the credential on the controller host, never in the consumer checkout or
+workflow secrets. Do not request its value in chat.
+If credential rotation removes repository access, preserve any registration/job
+recovery evidence; an authorization-related `404` does not prove a runner was
+removed. Follow the operator guide's interrupted-job recovery procedure.
+
+Workflows route to `[self-hosted, Linux, X64, web-app-ci]`, with read-only PR token
+permissions and no production/registry-write credentials. Labels select jobs;
+the protected allowlist and repository-scoped JIT runners authorize repository
+access. An empty GitHub runner inventory while idle is expected for this
+disposable pool; verify a genuine job instead of installing a permanent runner
+just to make that page nonempty.
+
+Keep this app's Java 21 toolchain. The immutable worker baseline also contains
+Node/npm and a validation JDK; select Java 21 inside the backend job using the
+job-local tool cache described in the operator guide. Backend commands must run
+from `backend/`, frontend commands from `frontend/`. Only root
+`.github/workflows/` files execute in this monorepo; nested frontend workflow
+examples do not establish active CI.
+
+**Current gate:** the shared foundation is source-prepared only. Clean-host
+installation, genuine cross-repository jobs, the root path-aware PR workflow,
+and branch protection still require implementation/acceptance. Report them as
+pending rather than claiming a configured label is working. When those steps
+are implemented, update this section with the actual workflow/check names and
+GitHub settings, then record real run URLs and protection evidence.
+
+**Done when:** the consumer's runner access is registered and current host
+acceptance plus genuine repository CI are verified, or the precise pending
+operator/workflow prerequisites are reported. Do not rebuild a host, enable
+services, publish, or deploy as a side effect of identity personalization.
+
+## 6. Report the result
 
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without
 revealing credentials. Leave changes uncommitted unless a commit is requested;
 remote publication and deployment are separate work.
+Include the shared CI registration/verification state without treating a
+template copy as inherited GitHub access.
 
 **Done when:** the consumer can distinguish completed personalization, verified
 behavior, and remaining work without relying on a generic "setup complete" claim.
