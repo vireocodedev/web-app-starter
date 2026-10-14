@@ -84,6 +84,39 @@ one-use proof from the host after attestation. Protected provider payloads and
 credentials stay outside source control; only sanitized operation IDs, hashes,
 and outcomes belong in the acceptance record.
 
+## DNS project access for staging and production
+
+The selected zone is `vireocode.com`, zone ID `1423739` in Cloud project
+`15086223`: [existing records](https://console.hetzner.com/projects/15086223/dns/1423739/records).
+The selected application targets are:
+
+| Environment | Hostname                        | Zone-relative A name | IPv4            |
+| ----------- | ------------------------------- | -------------------- | --------------- |
+| Production  | `starter.vireocode.com`         | `starter`            | `46.224.72.162` |
+| Staging     | `starter-staging.vireocode.com` | `starter-staging`    | `46.224.72.162` |
+
+Authoritative inspection found both names absent, with no AAAA/CNAME conflicts.
+The current server-project API credential sees no DNS zones and receives `404`
+for this zone. That is an access boundary, not a reason to create another zone
+or change nameservers.
+
+Obtain a **Read & Write** API token from the exact DNS project `15086223` using
+its **Security -> API tokens** settings. Store it through the hidden terminal
+handoff at `~/.config/vireocode/web-app-starter/hetzner-dns.env`, mode `0600`,
+under key `HCLOUD_TOKEN`. Keep it separate from the server-project credential;
+never overwrite that credential or paste either token into chat.
+
+Before writing, the agent must verify the token can read zone `1423739` and that
+its name/nameservers match the authoritative `vireocode.com` zone. Add only the
+two intended A record sets, preserving all other DNS and existing matching
+records. Use TTL `300` during bootstrap where supported. A newly discovered
+conflicting A/AAAA/CNAME requires reconciliation before replacement.
+
+Verify both authoritative answers and recursive resolution afterward. Negative
+caches can outlive a successful authoritative update; report that distinction
+instead of adding duplicate records. These current template hostnames are
+inputs to replace for a consumer, not automatically inherited deployment names.
+
 After provider work is finished, revoke the bootstrap token if it is no longer
 needed and remove its local file deliberately. Keep any longer-lived provider
 credential under separately agreed operator ownership and record only its

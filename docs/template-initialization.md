@@ -295,7 +295,30 @@ test. Keep publication/deployment credentials separate from PR jobs.
 and the effective main policy is verified, or a concrete access/plan/run blocker
 is reported. Copied workflow files alone are not activation evidence.
 
-## 7. Report the result
+## 7. Establish environment DNS access
+
+Obtain the consumer's exact production and staging hostnames and inspect their
+authoritative nameservers and existing A/AAAA/CNAME records. Keep one HTTPS
+origin per environment and the backend at `/api`. The current template selected
+`starter.vireocode.com` and `starter-staging.vireocode.com`; consumers supply
+their own names and selected host addresses.
+
+Follow [DNS project access](hetzner-provider-access.md#dns-project-access-for-staging-and-production)
+for the exact existing zone, provider credential boundary, guarded record writes,
+and authoritative/recursive checks. A Cloud server token is not automatically
+authorized for a zone in another project. Obtain the correct protected
+credential rather than creating a duplicate zone or changing delegation.
+
+**Current gate:** both template names are absent at the authoritative provider.
+Zone `1423739` in project `15086223` requires the correct project API credential;
+no DNS record has been changed yet. Container publishing, deployment routing,
+public TLS, and backups remain separate pending steps.
+
+**Done when:** the intended records are verified at the selected existing
+authoritative zone, with conflicts resolved and access/negative-cache blockers
+reported. DNS success alone does not certify HTTPS or a deployed application.
+
+## 8. Report the result
 
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without
