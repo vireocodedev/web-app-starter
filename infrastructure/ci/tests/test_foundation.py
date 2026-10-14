@@ -214,6 +214,7 @@ class RegistrationTests(unittest.TestCase):
                       mock.patch.object(manage, 'lifecycle_lock', side_effect=lambda: contextlib.nullcontext()),
                       mock.patch.object(manage, 'require_idle'),
                       mock.patch.object(manage, 'project_input', return_value=self.project),
+                      mock.patch.object(manage, 'registration_token', return_value='protected-token'),
                       mock.patch.object(ctl, 'protected_path', side_effect=lambda path, **_kw: Path(path)),
                       mock.patch.object(ctl, 'protected_file', side_effect=lambda path: 'protected-token' if Path(path) == manage.TOKEN else Path(path).read_text())):
             self.patches.enter_context(patch)
@@ -530,8 +531,9 @@ class ControllerRecoveryTests(unittest.TestCase):
 
                 with mock.patch.dict(os.environ, {'CREDENTIALS_DIRECTORY': '/root/fixture-credentials'}), \
                         mock.patch.object(ctl, 'protected_file', side_effect=lambda path: (
-                            'hidden' if Path(path).name == 'github-token' else json.dumps(receipt))), \
+                            'hidden' if Path(path).name == 'github-app-key' else json.dumps(receipt))), \
                         mock.patch.object(ctl, 'cleanup', side_effect=lambda *_: events.append('cleanup')), \
+                        mock.patch.object(ctl, 'app_credentials', return_value='hidden'), \
                         mock.patch.object(ctl, 'config_digest', return_value='config'), \
                         mock.patch.object(ctl, 'boundary_digest', side_effect=digest), \
                         mock.patch.object(Path, 'read_text', return_value='boot'), \

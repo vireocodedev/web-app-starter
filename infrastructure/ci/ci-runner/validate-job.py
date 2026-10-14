@@ -708,7 +708,8 @@ def main():
     require(Path('/etc/web-app-ci-boundary').read_text().strip() == 'web-app-ci-minimal-rootfs', 'minimal-root-positive')
     filesystem_policy()
     for path in ('/srv/web-app', '/srv/applications', '/etc/caddy', '/root/.ssh',
-                 '/etc/web-app-ci/github-token', '/var/run/docker.sock', '/run/docker.sock',
+                 '/etc/web-app-ci/github-app.pem', '/etc/web-app-ci/github-app.json',
+                 '/var/run/docker.sock', '/run/docker.sock',
                  '/var/lib/web-app-ci-host-canary'):
         require(not Path(path).exists(), 'host-path-hidden:' + path)
     require(not os.access('/proc/1/root', os.R_OK), 'host-pid-one-root-hidden')
@@ -749,7 +750,8 @@ def main():
     stage = 'privileged-container'
     require(run('docker', 'run', '--rm', '--privileged', '--network', 'host', '-v', '/:/outer:ro', PG,
                 'bash', '-ceu', 'test -f /outer/etc/web-app-ci-boundary; test ! -e /outer/var/lib/web-app-ci-host-canary; '
-                'test ! -e /outer/srv/web-app; test ! -e /outer/etc/web-app-ci/github-token; '
+                'test ! -e /outer/srv/web-app; test ! -e /outer/etc/web-app-ci/github-app.pem; '
+                'test ! -e /outer/etc/web-app-ci/github-app.json; '
                 'test ! -S /outer/run/docker.sock; test ! -S /outer/var/run/docker.sock', timeout=240).returncode == 0,
             'docker-bind-and-privileged-container-contained')
     host_pid = run('docker', 'run', '--rm', '--privileged', '--pid=host', '--network', 'host', PG,

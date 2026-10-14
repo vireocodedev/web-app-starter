@@ -5,6 +5,7 @@ import errno
 import fcntl
 import hashlib
 import ipaddress
+import importlib.util
 import json
 import os
 import re
@@ -20,6 +21,7 @@ import urllib.request
 
 BASE = Path('/var/lib/web-app-ci')
 CONFIG = Path('/etc/web-app-ci/config.json')
+APP_SETTINGS = Path('/etc/web-app-ci/github-app.json')
 STATE = BASE / 'controller.json'
 WITNESS_STATE = BASE / 'witness-mounts.json'
 HOME = BASE / 'job/home'
@@ -153,6 +155,22 @@ def config_digest():
     return hashlib.sha256(CONFIG.read_bytes()).hexdigest()
 
 
+def app_module():
+    spec = importlib.util.spec_from_file_location('web_app_github_credentials', Path(__file__).with_name('github_app.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def app_credentials(key_path):
+    settings = json.loads(protected_file(APP_SETTINGS), object_pairs_hook=unique_object)
+    return app_module().GitHubAppCredentials(settings, key_path, protected_file, validate_repository, BoundaryError)
+
+
+def credential_token(credentials, repository):
+    return credentials if type(credentials) is str else credentials.token_for(repository)
+
+
 def mapping_helpers():
     metadata = []
     for name, capability in (('newuidmap', 'cap_setuid=ep'), ('newgidmap', 'cap_setgid=ep')):
@@ -210,7 +228,8 @@ def minimal_devices():
 
 
 def boundary_digest(config):
-    paths = [CONFIG, Path(__file__), Path(__file__).with_name('validation.py'),
+    paths = [CONFIG, APP_SETTINGS, Path(__file__), Path(__file__).with_name('validation.py'),
+             Path(__file__).with_name('github_app.py'),
              ROOTFS / 'usr/local/lib/web-app-ci/start-job.sh',
              ROOTFS / 'usr/local/lib/web-app-ci/validate-job.py',
              ROOTFS / 'etc/systemd/user/docker.service',
@@ -415,7 +434,7 @@ def api(token, repo, suffix, method='GET', payload=None, missing_ok=False):
         raise BoundaryError('repository-or-api-path-rejected')
     req = urllib.request.Request(f'https://api.github.com/repos/{repo}/{suffix}',
         data=json.dumps(payload).encode() if payload is not None else None, method=method,
-        headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json',
+        headers={'Authorization': 'Bearer ' + credential_token(token, repo), 'Accept': 'application/vnd.github+json',
                  'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'web-app-ci-controller',
                  'Content-Type': 'application/json'})
     try:
@@ -770,9 +789,7 @@ def serve(config):
     credentials_dir = os.environ.get('CREDENTIALS_DIRECTORY')
     if not credentials_dir:
         raise BoundaryError('systemd-controller-credential-required')
-    token = protected_file(Path(credentials_dir) / 'github-token').strip()
-    if not token or '\n' in token:
-        raise BoundaryError('invalid-controller-credential')
+    token = app_credentials(Path(credentials_dir) / 'github-app-key')
     cleanup(config, token)
     receipt = json.loads(protected_file(BASE / 'validation.json'))
     if (receipt.get('configuration_sha256') != config_digest() or receipt.get('passed') is not True

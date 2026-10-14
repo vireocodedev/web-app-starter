@@ -12,6 +12,12 @@ The read-only inspection of the selected host established:
 - Current OS: Ubuntu 26.04 amd64.
 - The loaded local RSA identity matches a root-authorized key on that host.
 
+The approved rebuild completed using Ubuntu 26.04 image `387894169` and action
+`661493689671202`. All seven existing provider backups and the plan/IP were
+retained; no additional snapshot or other resource deletion was performed.
+[Credential-free foundation acceptance](../infrastructure/ci/verification/host-acceptance.json)
+records the resulting host/source evidence.
+
 These are this template's current bootstrap values, not defaults for a consumer.
 For a different host, obtain its exact Cloud server ID, address, desired image,
 and SSH recovery method and verify that they agree before any write operation.
@@ -56,6 +62,27 @@ Only after those checks and the required action authorization does the agent
 execute the rebuild. A credential being present is not proof of sufficient scope
 or approval to affect another resource. No other server, DNS zone, volume, or
 GitHub repository is removed as a side effect.
+
+## Rebuild and SSH recovery safeguards
+
+Rebuild through the exact server's `POST /servers/{id}/actions/rebuild` operation,
+with an available image of the matching architecture. Record the intent before
+submission and the returned action ID. Inspect that same action until it
+completes; a timeout or lost response is not permission to submit another rebuild.
+
+Supply explicit, schema-validated cloud-init `user_data` rather than inheriting
+experimental startup instructions. Configure the verified operator public key,
+disable SSH password authentication, and establish a secure way to attest the
+new SSH host identity. The current bootstrap used a private, one-use proof file
+installed through the provider; the agent compared it without logging its value
+before transferring source or credentials. Only then was the exact server's
+known-host record rotated, preserving unrelated host entries.
+
+Verify cloud-init completion, OS/architecture, memory/disk capacity, provider
+server identity, retained plan/IP, and all pre-existing backup IDs. Remove the
+one-use proof from the host after attestation. Protected provider payloads and
+credentials stay outside source control; only sanitized operation IDs, hashes,
+and outcomes belong in the acceptance record.
 
 After provider work is finished, revoke the bootstrap token if it is no longer
 needed and remove its local file deliberately. Keep any longer-lived provider
