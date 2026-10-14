@@ -19,6 +19,7 @@ class CIScopeTests(unittest.TestCase):
                 (['infrastructure/ci/manage.py'], (False, False, True)),
                 (['.github/workflows/ci.yml'], (True, True, True)),
                 (['.vscode/launch.json'], (True, True, True)),
+                (['infrastructure/release/smoke_images.py'], (True, True, True)),
                 (['infrastructure/ci/ci_scope.py'], (True, True, True))):
             with self.subTest(paths=paths):
                 self.assertEqual(tuple(ci.scope(paths).values()), expected)

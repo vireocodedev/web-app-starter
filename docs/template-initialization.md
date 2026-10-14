@@ -320,7 +320,34 @@ Container publishing, deployment routing, public TLS, and backups remain pending
 authoritative zone, with conflicts resolved and access/negative-cache blockers
 reported. DNS success alone does not certify HTTPS or a deployed application.
 
-## 8. Report the result
+## 8. Prepare whole-app release images
+
+Follow [paired release setup](../infrastructure/release/README.md). Keep separate
+frontend/backend image boundaries but one matched release from the selected
+tested commit. Supply the actual repository URL/source SHA, build both pinned
+Dockerfiles, and run the restricted image smoke tests before publication.
+Preserve the frontend's same-origin `/api` build configuration so staging and
+production can use the same immutable image pair. Environment hostnames, DB
+credentials, and production users belong in protected deployment provisioning,
+not Docker contexts/images.
+
+The current CI builds/smoke-tests each selected owner image independently; whole
+app deployment will verify/build/publish the pair. Two manual workflows remain
+the target: **Deploy staging** and **Deploy production**, without a component
+dropdown. They are not yet implemented; copy neither imaginary secret names nor
+an unverified publish/deploy command into a consumer.
+
+Production backup storage was explicitly selected as same-server, retention
+30 days, with server-loss limitation. Obtain the consumer's backup destination
+decision instead of inheriting that exception silently. No staging schedule.
+Deployment, public TLS, account provisioning, and initialized backup restoration
+still require their own setup steps and actual acceptance.
+
+**Done when:** the exact committed image pair passes real restricted runtime
+checks and its immutable provenance is known, or the precise build/platform
+blocker is reported. Working containers alone are not GHCR/deployment evidence.
+
+## 9. Report the result
 
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without

@@ -1,0 +1,8 @@
+.env
+.env.*
+.git
+.gradle
+build
+scripts
+compose.yaml
+Dockerfile

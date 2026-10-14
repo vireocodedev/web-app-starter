@@ -56,6 +56,16 @@ jobs:
           java-version: "21"
       - name: Verify backend and fresh PostgreSQL authentication
         run: ./gradlew --no-daemon --console=plain clean test bootJar
+      - name: Build and smoke-test backend image
+        working-directory: .
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          docker build --platform linux/amd64 --build-arg SOURCE_SHA="$SOURCE_SHA" \
+            --build-arg SOURCE_URL="$SOURCE_URL" --tag vireo-backend-ci:verified backend
+          python3 -B infrastructure/release/smoke_images.py \
+            --backend vireo-backend-ci:verified --source-sha "$SOURCE_SHA"
 
   frontend:
     name: Frontend verification
@@ -86,6 +96,16 @@ jobs:
         run: npm ci
       - name: Verify frontend
         run: npm run verify
+      - name: Build and smoke-test frontend image
+        working-directory: .
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          docker build --platform linux/amd64 --build-arg SOURCE_SHA="$SOURCE_SHA" \
+            --build-arg SOURCE_URL="$SOURCE_URL" --tag vireo-frontend-ci:verified frontend
+          python3 -B infrastructure/release/smoke_images.py \
+            --frontend vireo-frontend-ci:verified --source-sha "$SOURCE_SHA"
 
   foundation:
     name: Foundation verification
@@ -100,6 +120,7 @@ jobs:
       - name: Verify source-local lifecycle, authentication, and CI policy
         run: |
           python3 -B -m unittest discover -s infrastructure/ci/tests -p 'test_*.py' -v
+          python3 -B -m unittest discover -s infrastructure/release/tests -p 'test_*.py' -v
           bash -n infrastructure/ci/ci-runner/install.sh infrastructure/ci/ci-runner/start-job.sh
 
   gate:
