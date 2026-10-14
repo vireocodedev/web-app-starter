@@ -25,7 +25,10 @@ ctl = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ctl)
 SERVICE = 'web-app-ci-controller.service'
 LOCK_DIR = Path('/run/web-app-ci')
-TOKEN = Path('/etc/web-app-ci/github-token')
+TOKEN = Path('/etc/web-app-ci/github-app.pem')
+LEGACY_TOKEN = Path('/etc/web-app-ci/github-token')
+INSTALLED = Path('/usr/local/lib/web-app-ci')
+SYSTEMD = Path('/etc/systemd/system')
 
 
 def root_required():
@@ -108,7 +111,7 @@ def permission_request(token, repo, suffix='', method='GET', payload=None, missi
         raise ctl.BoundaryError('permission-probe-path-or-method-rejected')
     request = urllib.request.Request('https://api.github.com/repos/' + repo + suffix,
         data=json.dumps(payload).encode() if payload is not None else None, method=method,
-        headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json',
+        headers={'Authorization': 'Bearer ' + ctl.credential_token(token, repo), 'Accept': 'application/vnd.github+json',
                  'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'web-app-ci-registration',
                  'Content-Type': 'application/json'})
     try:
@@ -240,10 +243,74 @@ def verify_permissions(token, repositories):
 
 
 def registration_token():
-    token = ctl.protected_file(TOKEN).strip()
-    if not token or '\n' in token or '\r' in token:
-        raise ctl.BoundaryError('invalid-registration-credential')
-    return token
+    return ctl.app_credentials(TOKEN)
+
+
+def prepare_app_auth(settings_path, expected_sha, expected_controller_sha):
+    root_required()
+    source_protected()
+    with lifecycle_lock():
+        expected_digest(expected_sha)
+        config = ctl.load_config()
+        require_idle(config)
+        require_no_ledger()
+        if config['projects'] or TOKEN.exists() or TOKEN.is_symlink() or LEGACY_TOKEN.exists() or LEGACY_TOKEN.is_symlink():
+            raise ctl.BoundaryError('app-auth-preparation-requires-unregistered-credential-free-foundation')
+        installed = INSTALLED
+        metadata = installed.lstat()
+        if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != 0 or metadata.st_mode & 0o022:
+            raise ctl.BoundaryError('untrusted-installed-controller-directory')
+        controller = installed / 'controller.py'
+        metadata = controller.lstat()
+        if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != 0 or metadata.st_mode & 0o022
+                or not re.fullmatch('[0-9a-f]{64}', expected_controller_sha)
+                or hashlib.sha256(controller.read_bytes()).hexdigest() != expected_controller_sha):
+            raise ctl.BoundaryError('installed-controller-changed')
+        settings = json.loads(ctl.protected_file(Path(settings_path)), object_pairs_hook=ctl.unique_object)
+        ctl.app_module().validate_settings(settings, ctl.BoundaryError)
+        ctl.validate_repository(settings['owner'] + '/settings-check')
+        if settings['app_id'] is None:
+            raise ctl.BoundaryError('github-app-identifiers-required')
+        destinations = (
+            (installed / 'github_app.py', (SOURCE / 'github_app.py').read_bytes(), 0o755),
+            (ctl.APP_SETTINGS, (json.dumps(settings, sort_keys=True, indent=2) + '\n').encode(), 0o600),
+            (SYSTEMD / SERVICE, (SOURCE / SERVICE).read_bytes(), 0o644),
+            (ctl.ROOTFS / 'usr/local/lib/web-app-ci/validate-job.py',
+             (SOURCE / 'validate-job.py').read_bytes(), 0o755),
+            (ctl.ROOTFS / 'usr/local/lib/web-app-ci/start-job.sh',
+             (SOURCE / 'start-job.sh').read_bytes(), 0o755),
+            (controller, (SOURCE / 'controller.py').read_bytes(), 0o755),
+        )
+        for destination, _, _ in destinations:
+            for parent in (destination.parent, *destination.parent.parents):
+                metadata = parent.lstat()
+                if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != 0 or metadata.st_mode & 0o022:
+                    raise ctl.BoundaryError('untrusted-auth-adapter-parent')
+        for destination, _, _ in destinations:
+            if destination.exists() or destination.is_symlink():
+                metadata = destination.lstat()
+                if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != 0 or metadata.st_mode & 0o022:
+                    raise ctl.BoundaryError('untrusted-auth-adapter-destination')
+        receipt = ctl.BASE / 'validation.json'
+        if receipt.exists():
+            ctl.protected_path(receipt)
+            receipt.unlink()
+        for destination, content, mode in destinations:
+            descriptor, name = tempfile.mkstemp(prefix='.app-auth-', dir=destination.parent)
+            temporary = Path(name)
+            try:
+                with os.fdopen(descriptor, 'wb') as stream:
+                    os.fchmod(stream.fileno(), mode)
+                    stream.write(content)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.replace(temporary, destination)
+                sync_directory(destination.parent)
+            finally:
+                temporary.unlink(missing_ok=True)
+        ctl.command('systemctl', 'daemon-reload')
+        return {'operation': 'prepare-app-auth', 'controller_enabled': False,
+                'credential_introduced': False, 'full_validation_required': True}
 
 
 def recover_registration(expected_sha):
@@ -332,6 +399,10 @@ def main(argv=None):
     registration = operations.add_parser('register')
     registration.add_argument('--project', required=True)
     registration.add_argument('--expected-config-sha256', required=True)
+    auth = operations.add_parser('prepare-app-auth')
+    auth.add_argument('--settings', required=True)
+    auth.add_argument('--expected-config-sha256', required=True)
+    auth.add_argument('--expected-controller-sha256', required=True)
     recovery = operations.add_parser('recover-registration')
     recovery.add_argument('--expected-config-sha256', required=True)
     upgrade = operations.add_parser('upgrade')
@@ -342,6 +413,8 @@ def main(argv=None):
         result = inspect()
     elif args.operation == 'register':
         result = register(args.project, args.expected_config_sha256)
+    elif args.operation == 'prepare-app-auth':
+        result = prepare_app_auth(args.settings, args.expected_config_sha256, args.expected_controller_sha256)
     elif args.operation == 'recover-registration':
         result = recover_registration(args.expected_config_sha256)
     elif args.operation == 'install':

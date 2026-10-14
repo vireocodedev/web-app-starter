@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-14T16:32:47Z",
+  "scope": "credential-free-foundation-boundary",
+  "status": "passed",
+  "source_commit": "edc5a2d533a42bf0eab117d963a9d7bdc2936942",
+  "source_archive_sha256": "2be31cdf65274b822d6c2c09e3676d829ab461b690cff882a667599e7a9ace2f",
+  "host": {
+    "server_id": 144310066,
+    "name": "vps-main-01",
+    "public_ipv4": "46.224.72.162",
+    "os": "Ubuntu 26.04.1 LTS",
+    "architecture": "amd64",
+    "systemd": "259.5-0ubuntu3.4",
+    "memory_mib": 15603,
+    "boot_id": "025865ef-1ec9-41c7-a08d-21d75e4becd9"
+  },
+  "rebuild": {
+    "action_id": 661493689671202,
+    "image_id": 387894169,
+    "provider_backups_retained": 7,
+    "additional_snapshot_created": false,
+    "plan_and_ipv4_retained": true,
+    "ssh_identity_attested": true
+  },
+  "host_tools": {
+    "docker": "29.8.0",
+    "compose": "5.6.0",
+    "caddy": "2.6.2"
+  },
+  "configuration_sha256": "265afb10037528219a6826dfd830c021d3aef4a15c743408f4820dc606ad7e81",
+  "boundary_sha256": "a849bd3014af348c0cdddbb77e8cd95a48f6974aee85f0bb17979cff51a8f228",
+  "receipt_sha256": "be3d29fd3ee14d390781fd21b10d6a58868015a269df8f17cfc55d336522e636",
+  "probe_count": 272,
+  "acceptance_flags": {
+    "notify_access_main": true,
+    "child_notification_rejected": true,
+    "mapping_helper_metadata_verified": true,
+    "baseline_privilege_allowlist_verified": true,
+    "closed_device_policy_verified": true,
+    "inside_helper_cgroup_and_descriptors_verified": true,
+    "private_temporary_filesystems_verified": true,
+    "private_bus_runtime_adapter_verified": true,
+    "private_api_witnesses_verified": true,
+    "actual_ci_toolchain_verified": true,
+    "ryuk_reaper_verified": true,
+    "private_docker_controller_hierarchy_verified": true,
+    "host_parent_limits": true,
+    "abandoned_children_cleanup": true,
+    "fresh_second_job": true
+  },
+  "cleanup": {
+    "remaining_job_processes": 0,
+    "job_image_absent": true,
+    "job_namespace_absent": true,
+    "job_state_empty": true,
+    "controller_active_state": "inactive",
+    "controller_unit_file_state": "disabled",
+    "controller_credential_introduced": false
+  },
+  "remaining_gates": [
+    "github-controller-credential-and-private-repository-registration",
+    "current-configuration-revalidation-after-registration",
+    "genuine-github-jobs-and-cross-repository-cleanup",
+    "root-path-aware-pr-workflow-and-main-protection",
+    "staging-production-deployments-and-application-backups"
+  ]
+}

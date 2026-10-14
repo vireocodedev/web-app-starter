@@ -145,9 +145,11 @@ another permanent runner. The
 [initialization runbook](docs/template-initialization.md#5-configure-shared-ci-access)
 covers the required inputs and operator handoff.
 
-The source is prepared locally; clean-host installation, live runner acceptance,
-root PR workflows, and branch protection are not active yet. Server rebuild,
-installation, and activation require separate approval.
+The selected template host has been rebuilt, installed, and passed
+[272 credential-free isolation probes](infrastructure/ci/verification/host-acceptance.json).
+The controller is disabled pending GitHub authorization and real-job acceptance.
+Root PR workflows and branch protection are not active yet. Consumers register
+for the verified shared pool rather than rebuilding the operator's host.
 
 ## Future staging and production
 

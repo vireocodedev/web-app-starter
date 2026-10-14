@@ -34,7 +34,7 @@ test ! -e /usr/local/lib/web-app-ci && test ! -L /usr/local/lib/web-app-ci
 test ! -e /etc/systemd/system/web-app-ci-controller.service && test ! -L /etc/systemd/system/web-app-ci-controller.service
 test ! -e /etc/apparmor.d/web-app-ci && test ! -L /etc/apparmor.d/web-app-ci
 # Validate exact keys/bounded integers before interpolating configuration in units.
-WEB_APP_SETTINGS=$(python3 - "$WEB_APP_SOURCE" "$WEB_APP_CONFIG" "$WEB_APP_RAM_MIB" <<'PY'
+WEB_APP_SETTINGS=$(python3 -B - "$WEB_APP_SOURCE" "$WEB_APP_CONFIG" "$WEB_APP_RAM_MIB" <<'PY'
 import importlib.util,json,pathlib,pwd,grp,sys
 source, config_path, ram = sys.argv[1:]
 spec=importlib.util.spec_from_file_location('controller', pathlib.Path(source)/'controller.py')
@@ -63,7 +63,8 @@ test "$(df --output=avail -B1 /var/lib | tail -n 1)" -ge 26843545600 || { echo '
 install -d -m 0700 /etc/web-app-ci "$WEB_APP_BASE"
 install -m 0600 "$WEB_APP_CONFIG" /etc/web-app-ci/config.json
 install -d -m 0755 /usr/local/lib/web-app-ci
-install -m 0755 "$WEB_APP_SOURCE/controller.py" "$WEB_APP_SOURCE/validation.py" /usr/local/lib/web-app-ci/
+install -m 0755 "$WEB_APP_SOURCE/controller.py" "$WEB_APP_SOURCE/validation.py" "$WEB_APP_SOURCE/github_app.py" /usr/local/lib/web-app-ci/
+printf '%s\n' '{"app_id":null,"installation_id":null,"owner":"vireocodedev"}' > /etc/web-app-ci/github-app.json
 WEB_APP_PROC_MOUNTED=0
 trap 'if test "$WEB_APP_PROC_MOUNTED" = 1; then umount "$WEB_APP_ROOTFS/proc"; fi' EXIT
 # Ubuntu archive signatures authenticate all base packages and their hashes.
@@ -279,4 +280,4 @@ apparmor_parser --replace /etc/apparmor.d/web-app-ci
 install -m 0644 "$WEB_APP_SOURCE/web-app-ci-controller.service" /etc/systemd/system/
 systemctl daemon-reload
 python3 /usr/local/lib/web-app-ci/controller.py check-config
-echo 'Installation prepared. Controller remains disabled. Run credential-free validation before adding the GitHub PAT or enabling CI.'
+echo 'Installation prepared. Controller remains disabled. Run credential-free validation before adding the GitHub App key or enabling CI.'

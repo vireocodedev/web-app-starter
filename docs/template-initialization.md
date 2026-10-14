@@ -230,12 +230,16 @@ requirement for every consumer. Apply those instructions to the selected host;
 the current template host identifiers in that guide must not be reused blindly.
 
 The operator must verify private repository identity, extend the protected
-controller credential's selected-repository permissions, register while the
+GitHub App installation's selected-repository access, register while the
 controller is stopped/disabled/idle, and establish a fresh current-boot isolation
 receipt before an approved activation. The single-repository format is
 intentional: separate `frontend`/`backend` repository fields are not supported.
 Keep the credential on the controller host, never in the consumer checkout or
 workflow secrets. Do not request its value in chat.
+Follow [GitHub CI App setup](github-ci-app.md) for the organization-owned App,
+minimal permissions, protected PEM/metadata, automatic token renewal, and guarded
+credential-free adapter preparation. Do not substitute a personal token into
+the permanent controller interface.
 If credential rotation removes repository access, preserve any registration/job
 recovery evidence; an authorization-related `404` does not prove a runner was
 removed. Follow the operator guide's interrupted-job recovery procedure.
@@ -254,12 +258,15 @@ from `backend/`, frontend commands from `frontend/`. Only root
 `.github/workflows/` files execute in this monorepo; nested frontend workflow
 examples do not establish active CI.
 
-**Current gate:** the shared foundation is source-prepared only. Clean-host
-installation, genuine cross-repository jobs, the root path-aware PR workflow,
-and branch protection still require implementation/acceptance. Report them as
-pending rather than claiming a configured label is working. When those steps
-are implemented, update this section with the actual workflow/check names and
-GitHub settings, then record real run URLs and protection evidence.
+**Current gate:** the template's selected clean host passed
+[272 credential-free foundation probes](../infrastructure/ci/verification/host-acceptance.json).
+The controller remains disabled without a credential or registrations.
+Genuine cross-repository GitHub jobs, the root path-aware PR workflow, and
+branch protection still require implementation/acceptance. A consumer does not
+inherit that host receipt: the operator checks its current boot/source/config,
+registers the consumer, and repeats validation. When the remaining steps are
+implemented, record their actual workflow/check names, run URLs, and GitHub
+settings here rather than treating configured labels as working CI.
 
 **Done when:** the consumer's runner access is registered and current host
 acceptance plus genuine repository CI are verified, or the precise pending

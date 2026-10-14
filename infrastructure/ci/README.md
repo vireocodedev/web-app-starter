@@ -7,10 +7,13 @@ GitHub runner, filesystem, network namespace, and rootless Docker daemon.
 Registration and installation are operator tasks, not steps to repeat from
 every consumer's copy of this directory.
 
-**Status:** source preparation only. Installation, current-boot isolation
-validation, genuine multi-repository jobs, and cleanup acceptance for this
-source are not yet verified. No existing experimental server installation is
-adopted or upgraded by these files.
+**Status:** the selected template host was rebuilt and this source passed
+272 actual credential-free isolation probes, including a second fresh job and
+complete cleanup. See [host acceptance](verification/host-acceptance.json) for
+source/configuration/boot-bound evidence. The controller remains disabled,
+without a GitHub credential or registered projects. Genuine GitHub jobs and
+cross-repository acceptance are still pending. This evidence describes the
+template host, not automatic readiness for a consumer or a different boot.
 
 The isolation machinery was extracted from the experimental
 `vireocodedev/web-app-infrastructure` source at commit
@@ -22,7 +25,8 @@ Historical acceptance does not certify this modified source.
 ## Interface and ownership
 
 The public lifecycle interface is [manage.py](manage.py): `inspect`, `install`,
-`register`, `recover-registration`, and an explicitly unsupported `upgrade`.
+`prepare-app-auth`, `register`, `recover-registration`, and an explicitly
+unsupported general `upgrade`.
 The [ci-runner/](ci-runner/) implementation stays behind that interface. Jobs
 cannot supply root commands, source paths, or repository allowlists to it.
 
@@ -76,6 +80,12 @@ e2fsprogs, and capability tools. The full boundary validation needs a positive
 host HTTPS listener as well as internet access for toolchain/image probes.
 Plan that listener before installation; do not disable network-denial tests to
 work around its absence.
+The current bootstrap uses Caddy's internal TLS for `ci-bootstrap.internal`,
+with the real HTTPS listener bound on port `443`. Verify it locally using its
+generated CA and `--resolve`; no public DNS record is needed for this temporary
+validation endpoint. This does not establish public HTTPS for staging or
+production. Keep application sites in `/etc/caddy/sites/` and import them from
+the root Caddy configuration when deployment routing is implemented.
 
 The installer creates its own private Docker installation. It does not prepare
 the host Docker/Caddy deployment stack. PR jobs must not receive the host Docker
@@ -116,17 +126,16 @@ the current configuration, installed isolation sources, and current boot.
 
 ## Register a private monorepo
 
-Only after credential-free isolation validation passes, create a fine-grained
-GitHub PAT with the organization as resource owner and only the intended
-private repositories selected. It needs repository **Actions: read** and
-**Administration: read and write** for workflow discovery and repository JIT
-runner creation/deletion. Verify any organization approval requirement.
-
-Store it directly at `/etc/web-app-ci/github-token`, root-owned mode `0600`,
-through a hidden terminal/secret interface. Record its expiry and storage
-reference, not its value. Keep it out of workflow secrets, command arguments,
-chat, logs, and job environments. Extend its selected-repository access when
-adding a consumer; it does not need package publishing or deployment permissions.
+Use the organization-owned App described in
+[GitHub CI App setup](../../docs/github-ci-app.md). It needs only repository
+**Actions: read**, **Administration: write**, and automatic Metadata read,
+installed for selected private repositories. Its RSA key is stored at
+`/etc/web-app-ci/github-app.pem`, root-owned mode `0600`, and public IDs/owner
+at `/etc/web-app-ci/github-app.json`. The controller mints per-repository tokens
+with automatic renewal; it verifies installation ownership/permissions/selection.
+Neither the key nor its tokens are supplied to jobs. Extend installation access
+before registering a consumer; registry publishing/deployment permissions stay
+separate. Introduce the key only after current-source credential-free validation.
 
 Prepare a root-owned mode `0600` `/root/project-registration.json`:
 

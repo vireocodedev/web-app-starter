@@ -3,7 +3,7 @@ set -euo pipefail
 umask 077
 cd /home/web-app-ci/runner
 test -S /run/user/"$(id -u)"/docker.sock
-# This is the one-job GitHub configuration, never the controller's PAT.
+# This is the one-job GitHub configuration, never the App key or controller token.
 WEB_APP_JIT_CONFIG=$(cat /home/web-app-ci/jit-config)
 rm /home/web-app-ci/jit-config
 # Runner 2.338.0 masks this secret input and clears it before spawning job code.
