@@ -5,3 +5,4 @@
 .env.*
 !.env.example
 .npmrc
+/.template-initialization/
