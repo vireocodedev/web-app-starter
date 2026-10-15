@@ -377,6 +377,8 @@ compatibility from the existence of an old digest.
 **Current operational limits:** both manual releases and real browser flows
 passed, and the production timer is enabled only after the initialized restore
 passed. Its first scheduled firing is still future evidence. Shared CI
-cross-repository acceptance and a separate observed controller-memory OOM remain
-follow-ups. Ubuntu unattended security updates were identified as the cause of
+cross-repository acceptance remains a follow-up. The controller-memory OOM was
+resolved by the [reviewed and validated transport repair](../../docs/controller-memory-acceptance.json),
+including this deployment controller, without redeploying apps or changing limits.
+Ubuntu unattended security updates were identified as the cause of
 the interrupted initial CI run; updates were not disabled or protections relaxed.

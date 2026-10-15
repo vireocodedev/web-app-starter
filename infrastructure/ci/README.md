@@ -13,6 +13,10 @@ complete cleanup. See [host acceptance](verification/host-acceptance.json) for
 source/configuration/boot-bound evidence. The App and private template repository are registered, and the controller is
 active for controlled acceptance. Genuine template PR/main jobs and path-aware
 gate/protection acceptance passed; see [CI acceptance](../../docs/ci-acceptance.json).
+The reviewed HTTPS memory repair subsequently passed fresh installation and
+actual predecessor-to-repair validation on a disposable host, full current live
+validation, the original polling replay and genuine post-repair jobs. See
+[current controller acceptance](../../docs/controller-memory-acceptance.json).
 Cross-repository shared-pool acceptance is still pending. This evidence describes the
 template host, not automatic readiness for a consumer or a different boot.
 
@@ -68,6 +72,11 @@ retain those allocations until garbage collection, even when Python's live heap
 is small. The isolated real polling reproduction exceeded 64 MiB RSS growth
 after 52 polls; shared verified context reuse held 80 polls near 34 MiB RSS.
 Forced garbage collection was diagnostic only, not the production fix.
+The actual installed fix passed 80 polls at 33 MiB peak with 2.6 MiB RSS growth.
+After genuine backend/frontend/foundation jobs, controller RSS remained about
+37 MiB with zero OOM events or restarts and the same 512 MiB service limit.
+Worker preparation can charge reclaimable filesystem cache up to that cgroup
+limit; distinguish `memory.stat`/OOM counters from process RSS when monitoring.
 
 The shared App module owns a lazily cached default TLS context, with certificate
 and hostname verification and HTTP/1.1 ALPN preserved. Each request still gets a

@@ -245,6 +245,10 @@ operator must also refresh its installed source and pins for the canonical
 shared `infrastructure/ci/ci-runner/github_app.py` dependency before dispatching
 workflows that use the updated transport. Preserve certificate verification,
 existing memory limits, isolated Python imports and the worker trust boundary.
+The template's repaired controllers and unchanged running apps are backed by
+[current memory-repair acceptance](controller-memory-acceptance.json), including
+disposable-host migration proof and real post-repair jobs; consumers do not
+inherit that source/configuration/boot-bound receipt.
 Follow [GitHub CI App setup](github-ci-app.md) for the organization-owned App,
 minimal permissions, protected PEM/metadata, automatic token renewal, and guarded
 credential-free adapter preparation. Do not substitute a personal token into
