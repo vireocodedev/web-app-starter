@@ -7,12 +7,12 @@ import subprocess
 
 
 def scope(paths, force=False):
-    shared = force or any(path.startswith(('.github/', '.vscode/'))
+    shared = force or any(path.startswith(('.github/', '.vscode/', 'infrastructure/release/'))
                           or path == 'infrastructure/ci/ci_scope.py' for path in paths)
     return {
         'backend': shared or any(path.startswith('backend/') for path in paths),
         'frontend': shared or any(path.startswith('frontend/') for path in paths),
-        'foundation': shared or any(path.startswith('infrastructure/ci/') for path in paths),
+        'foundation': shared or any(path.startswith('infrastructure/') for path in paths),
     }
 
 

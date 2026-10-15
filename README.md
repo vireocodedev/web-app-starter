@@ -164,6 +164,11 @@ when creating a repository from this template.
 
 ## Future staging and production
 
+Production frontend/backend images and their restricted runtime smoke tests
+are defined in [paired releases](infrastructure/release/README.md). CI verifies
+each selected image; GHCR publication and the two manual whole-app deployments
+remain a separate step.
+
 Do not enable the `local` profile outside local development. Without it, startup
 requires `DATABASE_URL` (a JDBC PostgreSQL URL), `DATABASE_USERNAME`, and
 `DATABASE_PASSWORD`, uses Secure cookies, and never creates an initial user.

@@ -14,6 +14,7 @@ not settings inherited by **Use this template**.
 | `frontend/**`                                          | Frontend verification             |
 | Both app folders                                       | Both app verifications            |
 | `infrastructure/ci/**`                                 | Foundation verification           |
+| `infrastructure/release/**`                            | All verifications                 |
 | `.github/**`, `.vscode/**`, or the CI selection helper | All verifications                 |
 | Documentation outside the app folders                  | Detection and aggregate gate only |
 | Manual dispatch or the first branch push               | All verifications                 |
@@ -27,9 +28,13 @@ Backend verification selects Java 21 in the disposable job tool cache and runs
 the Gradle wrapper's tests/boot JAR build, including isolated PostgreSQL and auth
 integration tests. Frontend verification selects the repo's Node version and
 installs its declared npm version into a disposable prefix before `npm ci`
-and `npm run verify`. Neither job changes the host baseline or uses application
+and `npm run verify`. Each selected app then builds its pinned Dockerfile and
+smoke-tests its non-root read-only image; backend uses fresh disposable
+PostgreSQL, never the application database. See the
+[image contract](../infrastructure/release/README.md).
+Neither job changes the host baseline or uses application
 databases/credentials. Foundation verification runs the source-local lifecycle,
-App, recovery, and routing/gate tests.
+App, recovery, routing/gate, and image-smoke helper tests.
 
 `CI gate` always reports, even for documentation-only PRs. It succeeds only when
 change detection succeeded, every selected job succeeded, and unselected jobs
