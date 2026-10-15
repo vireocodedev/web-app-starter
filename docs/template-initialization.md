@@ -337,6 +337,16 @@ the target: **Deploy staging** and **Deploy production**, without a component
 dropdown. They are not yet implemented; copy neither imaginary secret names nor
 an unverified publish/deploy command into a consumer.
 
+For initial deployed accounts, follow
+[one-time operator provisioning](../infrastructure/release/README.md#one-time-deployed-user-provisioning).
+The current template user approved separately generated credentials on protected
+server files for each environment. Obtain a deliberate consumer decision rather
+than automatically seeding deployed users. Use the current backend digest,
+existing DB network, separate `PROVISION_USER_*` settings and explicit
+`--provision-user` command under the environment lock; verify termination,
+repeat safety and real HTTPS login. Keep provisioning credentials out of normal
+app containers and preserve conflicts rather than resetting users.
+
 Production backup storage was explicitly selected as same-server, retention
 30 days, with server-loss limitation. Obtain the consumer's backup destination
 decision instead of inheriting that exception silently. No staging schedule.

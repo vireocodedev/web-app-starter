@@ -169,6 +169,10 @@ are defined in [paired releases](infrastructure/release/README.md). CI verifies
 each selected image; GHCR publication and the two manual whole-app deployments
 remain a separate step.
 
+Deployed accounts require
+[explicit one-time operator provisioning](infrastructure/release/README.md#one-time-deployed-user-provisioning).
+Normal startup never seeds them or resets existing credentials.
+
 Do not enable the `local` profile outside local development. Without it, startup
 requires `DATABASE_URL` (a JDBC PostgreSQL URL), `DATABASE_USERNAME`, and
 `DATABASE_PASSWORD`, uses Secure cookies, and never creates an initial user.

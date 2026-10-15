@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-@Profile("local")
+@Profile("local & !provision-user")
 @EnableConfigurationProperties(LocalUserProperties.class)
 public class LocalUserInitializer implements ApplicationRunner {
 

@@ -50,7 +50,10 @@ Testcontainers inside BuildKit.
 [smoke_images.py](smoke_images.py) checks only allowlisted image metadata, starts
 temporary restricted containers, validates frontend HTML/SPA/API-error handling,
 and starts the backend against fresh disposable PostgreSQL to exercise
-Flyway/Hibernate, health, anonymous session and CSRF responses. It uses generated
+Flyway/Hibernate, health, anonymous session and CSRF responses. It also checks
+normal startup ignores provisioning settings, the explicit one-time command
+terminates, matching repeats preserve the user, and mismatched credentials fail
+without altering the row. It uses generated
 temporary DB credentials outside source control, bounded probes, no redirects,
 and task-unique resource names. Cleanup reconciles uncertain creation by exact
 names and removes only its containers/network.
@@ -61,6 +64,53 @@ Ubuntu 26.04 host. Local Docker rejected every executable with
 That platform limitation is distinct from application image behavior. Committed
 source/image provenance and actual CI acceptance remain the authoritative
 publication gate.
+
+## One-time deployed user provisioning
+
+Normal backend startup creates no users, even if provisioning settings are
+present. The operator-only `--provision-user` command activates a separate
+profile, connects to PostgreSQL, runs Flyway migrations and Hibernate validation,
+creates one BCrypt-hashed enabled user, and closes the application context.
+It binds a temporary server only on loopback with an ephemeral port and must
+not publish a container port. It refuses the `local` profile.
+
+Supply these values through a separate protected mode `0600` environment file,
+under a root-only directory on the host, never command arguments or Actions
+variables:
+
+- `PROVISION_USER_USERNAME`
+- `PROVISION_USER_PASSWORD` (12 or more characters, at most 72 UTF-8 bytes)
+- `PROVISION_USER_DISPLAY_NAME`
+- `PROVISION_USER_EMAIL`
+
+Generate different credentials for staging and production and store the files
+separately. Repeated provisioning succeeds only when the existing enabled user,
+display name, email and password match. It never resets credentials, enables a
+disabled account, or updates an existing identity; conflicts fail explicitly.
+Validation errors report field names, not input values. This starter currently
+has only the `USER` authority; an initial account named `admin` does not add an
+unimplemented administrator authorization model.
+
+After environment provisioning, under its operator lock, use the **currently
+deployed backend digest**, existing database network and protected database env
+file. Obtain a fresh verified production backup first, especially if using an
+image that could contain new migrations. For example (substitute the actual
+installed paths/network/digest, which are not provisioned yet):
+
+```sh
+docker run --rm --network PROJECT-production-db --read-only --cap-drop ALL \
+  --security-opt no-new-privileges --memory 512m --pids-limit 256 \
+  --tmpfs /tmp:rw,size=64m,mode=1777 \
+  --env-file /etc/PROJECT/production/database.env \
+  --env-file /etc/PROJECT/production/provision-user.env \
+  ghcr.io/OWNER/PROJECT-backend@sha256:ACTUAL_DIGEST --provision-user
+```
+
+Do not enable `provision-user` on the long-running service or mount these
+credentials into normal app containers. Do not use this command as a password
+recovery shortcut. Verify real HTTPS login/session/logout separately after
+provisioning. The operator command is implemented; no real deployed account
+has been created by the template yet.
 
 ## Deployment and recovery inputs
 
@@ -74,7 +124,7 @@ when provisioning.
 
 Two manual whole-app workflow entrypoints, private GHCR publication, trusted
 server execution, isolated environment Compose state, TLS, initial-account
-provisioning, backup scheduling and restore acceptance are still pending.
+installation, backup scheduling and restore acceptance are still pending.
 PR workers must retain their existing production-access denial; deployment
 credentials/execution need a distinct reviewed trust path before those
 workflows can become operational.
