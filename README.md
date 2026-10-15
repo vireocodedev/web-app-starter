@@ -180,6 +180,12 @@ Do not enable the `local` profile outside local development. Without it, startup
 requires `DATABASE_URL` (a JDBC PostgreSQL URL), `DATABASE_USERNAME`, and
 `DATABASE_PASSWORD`, uses Secure cookies, and never creates an initial user.
 Deploy frontend and `/api` under one HTTPS origin using a reverse proxy; the
-Vite development proxy is not part of a production build. User provisioning,
-container builds, exact GHCR image versions, CI, server configuration, and manual
-staging/production deployment are intentionally not implemented yet.
+Vite development proxy is not part of a production build.
+
+**Verified template activation:** [staging](https://starter-staging.vireocode.com)
+and [production](https://starter.vireocode.com) run the same private immutable
+frontend/backend pair. Both manual workflows, actual browser authentication,
+production pre-migration backups, initialized backup retrieval/isolated restore,
+and the enabled daily 03:00 Europe/Zagreb production timer are recorded in
+[release acceptance](docs/release-acceptance.json). These are the template's
+instances, not settings or credentials inherited by a new consumer.

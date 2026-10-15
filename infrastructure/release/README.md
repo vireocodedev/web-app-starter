@@ -101,16 +101,16 @@ installed paths/network/digest, which are not provisioned yet):
 docker run --rm --network PROJECT-production-db --read-only --cap-drop ALL \
   --security-opt no-new-privileges --memory 512m --pids-limit 256 \
   --tmpfs /tmp:rw,size=64m,mode=1777 \
-  --env-file /etc/PROJECT/production/database.env \
-  --env-file /etc/PROJECT/production/provision-user.env \
+  --env-file /etc/web-app-deploy/PROJECT/production/database.env \
+  --env-file /etc/web-app-deploy/PROJECT/production/provision-user.env \
   ghcr.io/OWNER/PROJECT-backend@sha256:ACTUAL_DIGEST --provision-user
 ```
 
 Do not enable `provision-user` on the long-running service or mount these
 credentials into normal app containers. Do not use this command as a password
 recovery shortcut. Verify real HTTPS login/session/logout separately after
-provisioning. The operator command is implemented; no real deployed account
-has been created by the template yet.
+provisioning. The template's real accounts were installed as explicit one-time
+operator actions; template copies receive no accounts or credentials.
 
 ## Deployment and recovery inputs
 
@@ -125,6 +125,35 @@ when provisioning.
 The two manual workflows and host controller are implemented below. Their live
 activation, first GHCR publication, real deployments/TLS/accounts and initialized
 restore acceptance require the operator gates below; source alone is not evidence.
+The template's completed activation and exact digests/run IDs are recorded in
+[release acceptance](../../docs/release-acceptance.json).
+
+## Deploy an initialized project
+
+From GitHub Actions choose **Deploy staging**, select the desired source branch,
+and dispatch. Wait for the complete workflow, not just image publication.
+Then choose **Deploy production**, select a branch still pointing to that exact
+tested source SHA, and enter the successful staging run ID.
+
+```sh
+gh workflow run deploy-staging.yaml --repo OWNER/REPOSITORY --ref SOURCE_BRANCH
+gh workflow run deploy-production.yaml --repo OWNER/REPOSITORY \
+  --ref SAME_SOURCE_BRANCH -f staging_run_id=SUCCESSFUL_STAGING_RUN_ID
+```
+
+If the original branch moved, preserve/use a release branch at the verified
+commit; do not change a pair's source SHA to match a newer branch tip.
+The first real promotion used `release/initial-starter-966e551` to demonstrate
+non-main branch selection and avoid rebuilding the already verified images.
+The app source and installed host-executor source can differ: an explicitly
+reviewed operator fix to backup durability does not rebuild application images
+or silently alter their source identity.
+
+Initial username is `admin` for the template only. Passwords are distinct and
+remain in `/etc/web-app-deploy/web-app-starter/<environment>/provision-user.env`
+on the host, root-owned `0600` beneath root-only directories. Read the selected
+file through authorized SSH, not through chat, logs, screenshots or GitHub.
+Consumers choose their own identity and receive new generated credentials.
 
 ## Manual workflow contract
 
@@ -297,3 +326,54 @@ categories. Never dump container environments, resolved secret-bearing Compose,
 CMS plaintext, Docker login files, database contents, or raw application logs.
 Scheduled/manual backups use the same environment lock; the backup CLI is
 `runtime.py backup --config <protected-runtime.json>`.
+
+## Rehearse recovery without touching a live database
+
+1. Run the installed backup CLI as root (or start the project's backup service).
+   Those entrypoints enforce `umask 0077`; do not bypass their credential/file
+   safeguards with an ad-hoc imported helper. Record the exact completed dump
+   and its `.dump.json`, not a `.partial` or a pre-initialization empty archive.
+2. Retrieve both files over verified SSH into an operator-owned `0700` directory
+   **outside Git**, preserving file mode `0600`. Check bytes and SHA-256 against
+   metadata, and require `initialized: true` plus the expected user/data counts.
+   Never put dumps, credentials or restored application data in workflow artifacts.
+3. Restore the **retrieved copy**, not merely the original server file, on a
+   supported recovery host. The first rehearsal downloaded to protected local
+   storage, verified it, then uploaded that same checksum-matched copy to a
+   root-only temporary directory on the supported host.
+4. Create a task-unique PostgreSQL container from the pinned image above with
+   `--network none`, no published ports, no bind mounts/persistent volumes,
+   UID/GID `999:999`, read-only root, dropped capabilities, `no-new-privileges`,
+   memory/PID limits, and bounded tmpfs at `/var/lib/postgresql`,
+   `/var/run/postgresql` and `/tmp`. Generate unrelated scratch DB credentials
+   in a temporary protected env file; never reuse production credentials.
+   PostgreSQL 18 uses the parent `/var/lib/postgresql` volume boundary.
+5. After bounded `pg_isready`, stream the archive into the exact scratch name:
+
+   ```sh
+   docker exec -i EXACT_SCRATCH_NAME pg_restore -U restore -d restore \
+     --exit-on-error --no-owner --no-privileges < PROTECTED_RETRIEVED_DUMP
+   ```
+
+   Capture errors privately; do not print restored data or credential-bearing
+   diagnostics. Verify expected initialized user rows/enabled BCrypt hashes,
+   successful Flyway versions and the session tables. The initial rehearsal
+   restored one enabled user, two migrations and queryable session data.
+6. Verify the scratch container's task-specific ownership label before removing
+   only that exact container and temporary credential/copy files. Preserve the
+   original backups and protected retrieved operator copy. If local Docker
+   rejects restricted runtimes, use a supported host; do not drop restrictions
+   or weaken global Docker/AppArmor policy to obtain a passing test.
+
+This is a recovery rehearsal, not authorization to restore production. A real
+data-loss recovery needs a separate explicit decision naming the backup,
+environment, exact destination volume and data-loss/retention consequences.
+Never automatically restore over the live database or infer image rollback
+compatibility from the existence of an old digest.
+
+**Current operational limits:** both manual releases and real browser flows
+passed, and the production timer is enabled only after the initialized restore
+passed. Its first scheduled firing is still future evidence. Shared CI
+cross-repository acceptance and a separate observed controller-memory OOM remain
+follow-ups. Ubuntu unattended security updates were identified as the cause of
+the interrupted initial CI run; updates were not disabled or protections relaxed.

@@ -1,0 +1,113 @@
+{
+  "observed_at": "2026-10-15T07:37:58Z",
+  "repository": "vireocodedev/web-app-starter",
+  "repository_id": 1419174972,
+  "server": "46.224.72.162",
+  "application_source_sha": "966e5513d5b83e4605919b5c88f868c1e214aaca",
+  "installed_controller_source_sha": "6f89f14868a719d6eb01743567f6ed0b1dc82687",
+  "images": {
+    "visibility": "private",
+    "frontend": "ghcr.io/vireocodedev/web-app-starter-frontend@sha256:717c4e7d72a88ceeca09e28962387e87d5bdf5b5c72dd1d1293f172d7377b895",
+    "backend": "ghcr.io/vireocodedev/web-app-starter-backend@sha256:600bed2949afb09df9d292335ea7776559a931c4cf271210ed424ec8c52f07c2",
+    "same_pair_promoted_without_rebuild": true,
+    "actual_workflow_token_metadata_and_server_pull_checks": true
+  },
+  "workflows": {
+    "staging": {
+      "workflow_id": 385198154,
+      "run_id": 38694455058,
+      "url": "https://github.com/vireocodedev/web-app-starter/actions/runs/38694455058",
+      "source_branch": "main",
+      "conclusion": "success",
+      "fresh_workers": ["Build staging candidates", "Verify and publish staging pair", "Request staging deployment"],
+      "isolated_python_imports": true
+    },
+    "production": {
+      "workflow_id": 385198153,
+      "run_id": 38698301631,
+      "url": "https://github.com/vireocodedev/web-app-starter/actions/runs/38698301631",
+      "source_branch": "release/initial-starter-966e551",
+      "staging_run_id": 38694455058,
+      "conclusion": "success",
+      "pre_migration_backup": "/var/lib/web-app-deploy/web-app-starter/production/backups/20261015T072331Z-e2c6fba6.dump"
+    },
+    "main_ci": [
+      {"run_id": 38693297058, "source_sha": "966e5513d5b83e4605919b5c88f868c1e214aaca", "conclusion": "success"},
+      {"run_id": 38696977394, "source_sha": "6f89f14868a719d6eb01743567f6ed0b1dc82687", "conclusion": "success"}
+    ],
+    "runner_policy": "self-hosted Linux X64 web-app-ci; no GitHub-hosted runners"
+  },
+  "environments": {
+    "staging": {
+      "url": "https://starter-staging.vireocode.com",
+      "frontend_loopback_port": 18080,
+      "backend_loopback_port": 18081,
+      "initial_user_count": 1,
+      "browser_login_refresh_logout": "passed",
+      "https_csrf_secure_cookie_rotation_session_logout": "passed"
+    },
+    "production": {
+      "url": "https://starter.vireocode.com",
+      "frontend_loopback_port": 18180,
+      "backend_loopback_port": 18181,
+      "initial_user_count": 1,
+      "browser_login_refresh_logout": "passed",
+      "https_csrf_secure_cookie_rotation_session_logout": "passed"
+    },
+    "public_tls_verified": true,
+    "dedicated_databases_credentials_volumes_and_networks": true,
+    "database_host_ports_published": false,
+    "distinct_initial_passwords": true,
+    "provisioning_credentials_in_normal_app_containers": false,
+    "temporary_registry_login_directories_removed": true,
+    "github_required_reviewers": 0,
+    "github_source_branch_restrictions": null
+  },
+  "backup_and_recovery": {
+    "destination": "protected same-server storage; server-loss limitation explicitly accepted",
+    "retention_days": 30,
+    "schedule": "*-*-* 03:00:00 Europe/Zagreb",
+    "timer": "web-app-backup-web-app-starter.timer",
+    "timer_enabled_and_active": true,
+    "next_trigger_observed_utc": "2026-10-16T01:00:00Z",
+    "staging_scheduled_backups": false,
+    "initialized_archive": "20261015T072957Z-d332a8c8.dump",
+    "archive_sha256": "b02d42d8db1cbfb9587b0285d18be415a846bceceb8a2253a76af7237fdde5a5",
+    "retrieved_copy_verified": true,
+    "protected_local_rehearsal_destination": "/home/bruno/.local/share/vireocode/web-app-starter/backups/production",
+    "retrieved_copy_reuploaded_and_restored": true,
+    "restore_network": "none",
+    "restore_persistent_volumes": false,
+    "restore_nonroot_readonly_cap_drop_no_new_privileges": true,
+    "restored_users": 1,
+    "restored_successful_flyway_migrations": 2,
+    "restored_session_table_queryable": true,
+    "scratch_container_removed": true,
+    "backup_final_filename_directory_fsynced": true,
+    "automatic_application_rollback_or_database_restore": false
+  },
+  "review_and_validation": {
+    "independent_review_findings_addressed": [
+      "mutable helper execution and sibling-module shadowing",
+      "unauthorized staging run starving production polling",
+      "partial dump and orphan retention poisoning future backups"
+    ],
+    "supported_host_release_regressions_passed": 27,
+    "real_openssl_cms_and_tamper_tests": true,
+    "real_malicious_sibling_import_regression": true,
+    "app_permission_expansion": false,
+    "actual_reader_token_permissions": ["actions:read", "metadata:read"],
+    "ci_worker_isolation_changed": false
+  },
+  "operational_observations": [
+    "Ubuntu unattended-upgrades/needrestart caused CI controller stop/start operations during 2026-10-15 06:18-06:22 UTC; corrected CI subsequently passed. Security updates were not disabled.",
+    "A separate earlier controller cgroup OOM remains a scoped follow-up; no limits or isolation were loosened.",
+    "One ad-hoc operator backup invocation omitted the normal service/CLI umask; protected-path checks rejected its mode. Only that root-owned file beneath the root-only backup directory was corrected, and provisioning resumed behind a new verified dump.",
+    "Initial account creation was an explicit one-time operator action; normal startup remains unseeded and existing credentials are never reset."
+  ],
+  "remaining_separate_acceptance": [
+    "genuine second-private-repository shared CI pool proof",
+    "investigate controller memory pressure through a reviewed controlled CI foundation change",
+    "a scheduled daily timer firing has not yet occurred; manual executions and real restore passed"
+  ]
+}
