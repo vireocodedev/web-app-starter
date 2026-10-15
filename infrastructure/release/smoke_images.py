@@ -67,6 +67,19 @@ def healthy(container, timeout=90):
     raise RuntimeError('Container healthcheck timed out.')
 
 
+def completed(container, expected=0, timeout=90):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        state = json.loads(docker('inspect', '--format',
+                                 '{"running":{{json .State.Running}},"exitCode":{{json .State.ExitCode}}}', container))
+        if not state['running']:
+            if state['exitCode'] != expected:
+                raise RuntimeError('Provisioning command exited with unexpected status: ' + str(state['exitCode']))
+            return
+        time.sleep(1)
+    raise RuntimeError('Provisioning command did not terminate.')
+
+
 def smoke(frontend, backend, source):
     prefix = 'vireo-smoke-' + secrets.token_hex(8)
     containers = []
@@ -105,8 +118,13 @@ def smoke(frontend, backend, source):
                 else:
                     raise RuntimeError('Disposable database did not become ready.')
                 backend_env = root / 'backend.env'
+                user_password = secrets.token_hex(24)
                 backend_env.write_text('DATABASE_URL=jdbc:postgresql://postgres:5432/smoke\n'
-                                       'DATABASE_USERNAME=smoke\nDATABASE_PASSWORD=' + password + '\n')
+                                       'DATABASE_USERNAME=smoke\nDATABASE_PASSWORD=' + password + '\n'
+                                       'PROVISION_USER_USERNAME=smoke-operator\n'
+                                       'PROVISION_USER_EMAIL=smoke@example.com\n'
+                                       'PROVISION_USER_DISPLAY_NAME=Smoke Operator\n'
+                                       'PROVISION_USER_PASSWORD=' + user_password + '\n')
                 backend_env.chmod(0o600)
                 app = prefix + '-backend'
                 containers.append(app)
@@ -123,7 +141,38 @@ def smoke(frontend, backend, source):
                 if csrf.get('headerName') != 'X-CSRF-TOKEN' or not csrf.get('token'):
                     raise RuntimeError('Backend CSRF contract mismatch.')
                 healthy(app)
+                query = ('exec', database, 'psql', '-U', 'smoke', '-d', 'smoke', '-tA', '-c')
+                if docker(*query, 'SELECT count(*) FROM app_user') != '0':
+                    raise RuntimeError('Normal backend startup unexpectedly provisioned a user.')
+                stamp_query = ("SELECT md5(row_to_json(app_user)::text) FROM app_user "
+                               "WHERE username='smoke-operator'")
+                stamp = None
+                conflict_password = secrets.token_hex(24)
+                for attempt, expected_exit in ((1, 0), (2, 0), (3, 1)):
+                    if attempt == 3:
+                        backend_env.write_text(backend_env.read_text().replace(user_password, conflict_password))
+                    provisioner = prefix + '-provision-' + str(attempt)
+                    containers.append(provisioner)
+                    docker('run', '--detach', '--name', provisioner, '--network', prefix, '--read-only',
+                           '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--memory', '512m',
+                           '--pids-limit', '256', '--tmpfs', '/tmp:rw,size=64m,mode=1777',
+                           '--env-file', str(backend_env), backend, '--provision-user')
+                    completed(provisioner, expected=expected_exit)
+                    diagnostics = subprocess.run(['docker', 'logs', provisioner], capture_output=True,
+                                                 text=True, timeout=10)
+                    if diagnostics.returncode:
+                        raise RuntimeError('Could not check provisioning diagnostics.')
+                    logs = diagnostics.stdout + diagnostics.stderr
+                    if any(secret in logs for secret in (password, user_password, conflict_password)):
+                        raise RuntimeError('Provisioning diagnostics exposed a credential.')
+                    if docker(*query, 'SELECT count(*) FROM app_user') != '1':
+                        raise RuntimeError('One-time provisioning did not preserve exactly one user.')
+                    current_stamp = docker(*query, stamp_query)
+                    if not current_stamp or (stamp is not None and current_stamp != stamp):
+                        raise RuntimeError('Provisioning changed an existing user.')
+                    stamp = current_stamp
                 print('Backend image: non-root restricted startup, fresh PostgreSQL/Flyway, health, session and CSRF passed.')
+                print('Operator provisioning: explicit command terminates, matching repeats preserve the user, mismatches fail.')
             if frontend:
                 image_identity(frontend, source)
                 app = prefix + '-frontend'

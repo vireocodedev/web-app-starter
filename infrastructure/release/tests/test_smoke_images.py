@@ -63,6 +63,20 @@ class SmokeContractTests(unittest.TestCase):
                 self.assertRaisesRegex(RuntimeError, 'healthcheck timed out'):
             smoke.healthy('fixture', timeout=1)
 
+    def test_provisioner_must_exit_with_the_expected_status(self):
+        with mock.patch.object(smoke, 'docker', side_effect=[
+                '{"running":true,"exitCode":0}', '{"running":false,"exitCode":0}']), \
+                mock.patch.object(smoke.time, 'sleep'):
+            smoke.completed('fixture')
+        with mock.patch.object(smoke, 'docker', return_value='{"running":false,"exitCode":1}'), \
+                self.assertRaisesRegex(RuntimeError, 'unexpected status'):
+            smoke.completed('fixture')
+        with mock.patch.object(smoke, 'docker', return_value='{"running":false,"exitCode":1}'):
+            smoke.completed('fixture', expected=1)
+        with mock.patch.object(smoke.time, 'monotonic', side_effect=[0, 1]), \
+                self.assertRaisesRegex(RuntimeError, 'did not terminate'):
+            smoke.completed('fixture', timeout=1)
+
 
 if __name__ == '__main__':
     unittest.main()
