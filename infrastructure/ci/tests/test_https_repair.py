@@ -57,11 +57,15 @@ class HTTPSRepairTests(unittest.TestCase):
             destination.write_bytes(source.read_bytes())
             destination.chmod(0o644 if destination.suffix == '.service' else 0o755)
         self.active = 'inactive'
+        self.netns_present = False
         original_lstat = Path.lstat
+        original_exists = Path.exists
         def metadata(path):
             info = original_lstat(path)
             mode = info.st_mode & ~0o022 if stat.S_ISDIR(info.st_mode) else info.st_mode
             return SimpleNamespace(st_mode=mode, st_uid=0, st_size=info.st_size)
+        def exists(path):
+            return self.netns_present if str(path) == '/run/netns/web-app-ci' else original_exists(path)
         patches = contextlib.ExitStack()
         self.addCleanup(patches.close)
         for patch in (
@@ -82,6 +86,7 @@ class HTTPSRepairTests(unittest.TestCase):
                 mock.patch.object(ctl, 'remaining_processes', return_value=[]),
                 mock.patch.object(ctl, 'mount_entries', return_value=[]),
                 mock.patch.object(ctl, 'command'),
+                mock.patch.object(Path, 'exists', exists),
                 mock.patch.object(Path, 'lstat', metadata)):
             patches.enter_context(patch)
 
@@ -121,6 +126,12 @@ class HTTPSRepairTests(unittest.TestCase):
         self.active = 'inactive'
         (ctl.STATE).write_text('{"repo":"Acme/app"}')
         with self.assertRaisesRegex(ctl.BoundaryError, 'job-state-not-empty'):
+            self.repair()
+        self.assertTrue(self.receipt.exists())
+
+    def test_surviving_namespace_blocks_repair_without_reading_the_host_namespace(self):
+        self.netns_present = True
+        with self.assertRaisesRegex(ctl.BoundaryError, 'job-boundary-still-present'):
             self.repair()
         self.assertTrue(self.receipt.exists())
 
