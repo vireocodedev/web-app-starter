@@ -1,14 +1,28 @@
 """Bounded GitHub transport and the immutable paired-release contract."""
 import base64
 import hashlib
+import importlib.util
 import io
 import json
+from pathlib import Path
 import re
 import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+
+_directory = Path(__file__).parent
+_transport_path = (_directory.parent / 'ci/ci-runner/github_app.py'
+                   if _directory.name == 'release' and _directory.parent.name == 'infrastructure'
+                   else _directory / 'github_app.py')
+_transport_spec = importlib.util.spec_from_file_location('vireo_https_transport', _transport_path)
+_transport = importlib.util.module_from_spec(_transport_spec)
+_transport_spec.loader.exec_module(_transport)
+
+
+def https_opener(*handlers):
+    return _transport.https_opener(*handlers)
 
 
 class ReleaseError(Exception):
@@ -95,7 +109,7 @@ class GitHub:
                      'X-GitHub-Api-Version': '2026-03-10', 'Content-Type': 'application/json',
                      'User-Agent': 'vireo-paired-release'})
         try:
-            with urllib.request.build_opener(NoRedirect()).open(request, timeout=30) as response:
+            with https_opener(NoRedirect()).open(request, timeout=30) as response:
                 raw = response.read(2 * 1024 * 1024 + 1)
         except urllib.error.HTTPError as error:
             if redirect and error.code == 302:
@@ -122,7 +136,7 @@ class GitHub:
                 or not parsed.hostname or not parsed.hostname.endswith('.blob.core.windows.net')):
             raise ReleaseError('artifact-download-host-rejected')
         try:
-            with urllib.request.build_opener(NoRedirect()).open(location, timeout=30) as response:
+            with https_opener(NoRedirect()).open(location, timeout=30) as response:
                 data = response.read(maximum + 1)
         except (urllib.error.URLError, TimeoutError):
             raise ReleaseError('artifact-download-failed') from None

@@ -3,6 +3,7 @@
 import argparse
 import errno
 import fcntl
+from functools import lru_cache
 import hashlib
 import ipaddress
 import importlib.util
@@ -155,6 +156,7 @@ def config_digest():
     return hashlib.sha256(CONFIG.read_bytes()).hexdigest()
 
 
+@lru_cache(maxsize=1)
 def app_module():
     spec = importlib.util.spec_from_file_location('web_app_github_credentials', Path(__file__).with_name('github_app.py'))
     module = importlib.util.module_from_spec(spec)
@@ -438,7 +440,7 @@ def api(token, repo, suffix, method='GET', payload=None, missing_ok=False):
                  'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'web-app-ci-controller',
                  'Content-Type': 'application/json'})
     try:
-        with urllib.request.build_opener(RejectRedirect()).open(req, timeout=30) as response:
+        with app_module().https_opener(RejectRedirect()).open(req, timeout=30) as response:
             data = response.read(8 * 1024 * 1024)
             return json.loads(data) if data else None
     except urllib.error.HTTPError as error:

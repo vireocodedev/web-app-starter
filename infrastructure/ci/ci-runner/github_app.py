@@ -1,12 +1,26 @@
 """Root-only GitHub App credentials; installation tokens never enter job inputs."""
 import base64
 from datetime import datetime
+from functools import lru_cache
 import json
 from pathlib import Path
 import subprocess
+import ssl
 import time
 import urllib.error
 import urllib.request
+
+
+@lru_cache(maxsize=1)
+def https_context():
+    context = ssl.create_default_context()
+    context.set_alpn_protocols(['http/1.1'])
+    return context
+
+
+def https_opener(*handlers):
+    # Reuse the native trust store, not mutable request/handler state or credentials.
+    return urllib.request.build_opener(*handlers, urllib.request.HTTPSHandler(context=https_context()))
 
 
 def validate_settings(value, error):
@@ -65,7 +79,7 @@ class GitHubAppCredentials:
                      'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'web-app-ci-controller',
                      'Content-Type': 'application/json'})
         try:
-            with urllib.request.build_opener(RejectRedirect()).open(request, timeout=30) as response:
+            with https_opener(RejectRedirect()).open(request, timeout=30) as response:
                 result = json.loads(response.read(1024 * 1024))
         except (urllib.error.URLError, ValueError, TimeoutError):
             raise self.error('github-app-api-request-failed') from None

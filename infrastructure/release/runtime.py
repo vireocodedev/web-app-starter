@@ -196,11 +196,11 @@ def inspect_image(image, release, component):
 
 
 def public_probe(url, expected, environment):
-    from protocol import NoRedirect
+    from protocol import NoRedirect, https_opener
     deadline = time.monotonic() + 45
     while time.monotonic() < deadline:
         try:
-            with urllib.request.build_opener(NoRedirect()).open(url, timeout=5) as response:
+            with https_opener(NoRedirect()).open(url, timeout=5) as response:
                 code, headers, body = response.status, response.headers, response.read(1024 * 1024)
         except urllib.error.HTTPError as error:
             code, headers, body = error.code, error.headers, error.read(1024 * 1024)

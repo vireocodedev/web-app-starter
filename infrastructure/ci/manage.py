@@ -115,7 +115,7 @@ def permission_request(token, repo, suffix='', method='GET', payload=None, missi
                  'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'web-app-ci-registration',
                  'Content-Type': 'application/json'})
     try:
-        with urllib.request.build_opener(ctl.RejectRedirect()).open(request, timeout=30) as response:
+        with ctl.app_module().https_opener(ctl.RejectRedirect()).open(request, timeout=30) as response:
             data = response.read(8 * 1024 * 1024)
             result = json.loads(data) if data else None
             if method == 'GET' and type(result) is not dict:
@@ -313,6 +313,65 @@ def prepare_app_auth(settings_path, expected_sha, expected_controller_sha):
                 'credential_introduced': False, 'full_validation_required': True}
 
 
+def repair_https_memory(expected_sha, expected_controller_sha, expected_app_sha):
+    root_required()
+    source_protected()
+    with lifecycle_lock():
+        expected_digest(expected_sha)
+        config = ctl.load_config()
+        require_idle(config)
+        require_no_ledger()
+        destinations = (
+            (INSTALLED / 'github_app.py', SOURCE / 'github_app.py', expected_app_sha),
+            (INSTALLED / 'controller.py', SOURCE / 'controller.py', expected_controller_sha),
+        )
+        unchanged = (
+            (INSTALLED / 'validation.py', SOURCE / 'validation.py'),
+            (ctl.ROOTFS / 'usr/local/lib/web-app-ci/start-job.sh', SOURCE / 'start-job.sh'),
+            (ctl.ROOTFS / 'usr/local/lib/web-app-ci/validate-job.py', SOURCE / 'validate-job.py'),
+            (SYSTEMD / SERVICE, SOURCE / SERVICE),
+        )
+        for destination, *_ in (*destinations, *unchanged):
+            for parent in (destination.parent, *destination.parent.parents):
+                info = parent.lstat()
+                if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+                    raise ctl.BoundaryError('untrusted-https-repair-parent')
+            info = destination.lstat()
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0
+                    or info.st_mode & 0o022 or info.st_size > 1024 * 1024):
+                raise ctl.BoundaryError('untrusted-https-repair-destination')
+        for destination, _, expected in destinations:
+            if (not re.fullmatch('[0-9a-f]{64}', expected)
+                    or hashlib.sha256(destination.read_bytes()).hexdigest() != expected):
+                raise ctl.BoundaryError('installed-https-client-changed')
+        for destination, source in unchanged:
+            if destination.read_bytes() != source.read_bytes():
+                raise ctl.BoundaryError('https-repair-source-incompatible')
+        expected_digest(expected_sha)
+        require_idle(config)
+        receipt = ctl.BASE / 'validation.json'
+        if receipt.exists():
+            ctl.protected_path(receipt)
+            receipt.unlink()
+            sync_directory(ctl.BASE)
+        for destination, source, _ in destinations:
+            descriptor, name = tempfile.mkstemp(prefix='.https-repair-', dir=destination.parent)
+            temporary = Path(name)
+            try:
+                with os.fdopen(descriptor, 'wb') as stream:
+                    os.fchmod(stream.fileno(), 0o755)
+                    stream.write(source.read_bytes())
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.replace(temporary, destination)
+                sync_directory(destination.parent)
+            finally:
+                temporary.unlink(missing_ok=True)
+        return {'operation': 'repair-https-memory', 'controller_enabled': False,
+                'credential_introduced': False, 'configuration_changed': False,
+                'full_validation_required': True}
+
+
 def recover_registration(expected_sha):
     root_required()
     with lifecycle_lock():
@@ -403,6 +462,10 @@ def main(argv=None):
     auth.add_argument('--settings', required=True)
     auth.add_argument('--expected-config-sha256', required=True)
     auth.add_argument('--expected-controller-sha256', required=True)
+    https = operations.add_parser('repair-https-memory')
+    https.add_argument('--expected-config-sha256', required=True)
+    https.add_argument('--expected-controller-sha256', required=True)
+    https.add_argument('--expected-github-app-sha256', required=True)
     recovery = operations.add_parser('recover-registration')
     recovery.add_argument('--expected-config-sha256', required=True)
     upgrade = operations.add_parser('upgrade')
@@ -415,6 +478,9 @@ def main(argv=None):
         result = register(args.project, args.expected_config_sha256)
     elif args.operation == 'prepare-app-auth':
         result = prepare_app_auth(args.settings, args.expected_config_sha256, args.expected_controller_sha256)
+    elif args.operation == 'repair-https-memory':
+        result = repair_https_memory(args.expected_config_sha256, args.expected_controller_sha256,
+                                     args.expected_github_app_sha256)
     elif args.operation == 'recover-registration':
         result = recover_registration(args.expected_config_sha256)
     elif args.operation == 'install':

@@ -27,6 +27,7 @@ class ProtocolTests(unittest.TestCase):
             root = Path(directory)
             for helper in ('client.py', 'protocol.py', 'smoke_images.py'):
                 shutil.copyfile(source / helper, root / helper)
+            shutil.copyfile(source.parent / 'ci/ci-runner/github_app.py', root / 'github_app.py')
             marker = root / 'shadow-executed'
             shadow = "from pathlib import Path\nPath(" + repr(str(marker)) + ").write_text('executed')\n"
             for module in ('subprocess', 'json', 'argparse', 'tempfile', 'http', 'urllib'):
@@ -36,6 +37,25 @@ class ProtocolTests(unittest.TestCase):
                                         cwd=root, capture_output=True, timeout=15)
                 self.assertEqual(result.returncode, 0, result.stderr.decode())
                 self.assertFalse(marker.exists())
+
+    def test_source_transport_cannot_be_replaced_by_an_unpinned_sibling(self):
+        source = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'infrastructure'
+            release = root / 'release'
+            release.mkdir(parents=True)
+            ci = root / 'ci/ci-runner'
+            ci.mkdir(parents=True)
+            for helper in ('client.py', 'protocol.py'):
+                shutil.copyfile(source / helper, release / helper)
+            shutil.copyfile(source.parent / 'ci/ci-runner/github_app.py', ci / 'github_app.py')
+            marker = root / 'unpinned-transport-executed'
+            (release / 'github_app.py').write_text(
+                "from pathlib import Path\nPath(" + repr(str(marker)) + ").write_text('executed')\n")
+            result = subprocess.run([sys.executable, '-I', '-S', str(release / 'client.py'), '--help'],
+                                    capture_output=True, timeout=15)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+            self.assertFalse(marker.exists())
 
     def test_staging_privileged_helpers_run_only_in_fresh_isolated_jobs(self):
         workflows = Path(__file__).resolve().parents[3] / '.github/workflows'
