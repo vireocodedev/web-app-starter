@@ -210,6 +210,9 @@ It verifies:
    and smoke helper at the selected source commit, plus the actual in-progress
    request job. Branches may change application code, not bypass the trusted
    verification/handoff implementation.
+   The shared HTTPS implementation in
+   [github_app.py](../ci/ci-runner/github_app.py) is also pinned. Source checkouts
+   load that canonical path, not an optional sibling added by a branch.
 5. For production, successful staging workflow and a matching durable host
    receipt for that exact staging run attempt and image pair.
 

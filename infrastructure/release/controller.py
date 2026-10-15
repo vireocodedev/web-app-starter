@@ -22,6 +22,7 @@ TRUSTED = (
     'infrastructure/release/client.py',
     'infrastructure/release/protocol.py',
     'infrastructure/release/smoke_images.py',
+    'infrastructure/ci/ci-runner/github_app.py',
 )
 
 

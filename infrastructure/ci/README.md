@@ -27,7 +27,9 @@ Historical acceptance does not certify this modified source.
 
 The public lifecycle interface is [manage.py](manage.py): `inspect`, `install`,
 `prepare-app-auth`, `register`, `recover-registration`, and an explicitly
-unsupported general `upgrade`.
+unsupported general `upgrade`. The narrow `repair-https-memory` operation below
+updates only the reviewed HTTP client/controller modules; it is not a general
+upgrade or an activation command.
 The [ci-runner/](ci-runner/) implementation stays behind that interface. Jobs
 cannot supply root commands, source paths, or repository allowlists to it.
 
@@ -57,6 +59,62 @@ Tests use temporary files and mocked system/GitHub operations; they never
 install packages, alter services, or contact GitHub. Privileged lifecycle,
 isolation, or credential-handling changes require independent review and
 source-bound disposable-host validation before activation.
+
+## Bounded HTTPS memory and controlled repair
+
+The controller polls continuously. Creating a new verified TLS context for every
+request loads another native certificate trust store. HTTP reference cycles can
+retain those allocations until garbage collection, even when Python's live heap
+is small. The isolated real polling reproduction exceeded 64 MiB RSS growth
+after 52 polls; shared verified context reuse held 80 polls near 34 MiB RSS.
+Forced garbage collection was diagnostic only, not the production fix.
+
+The shared App module owns a lazily cached default TLS context, with certificate
+and hostname verification and HTTP/1.1 ALPN preserved. Each request still gets a
+new opener/handlers and explicit credential headers: no token, redirect state,
+or response is cached. CI discovery, App renewal, registration probes and the
+deployment transport reuse this implementation. Do not raise memory limits,
+disable verification, add periodic forced GC or schedule restarts to hide growth.
+After deliberate CA/trust-store configuration changes, restart the reviewed
+controllers under their normal idle/validation safeguards to reload trust.
+
+For an existing compatible installation, after independent review and fresh
+disposable-host validation of the exact candidate commit:
+
+1. Drain genuine CI jobs. Stop and disable the CI controller and verify its user
+   manager, processes, mounts, namespace and job state are idle. Keep application
+   and deployment services running; this repair does not alter their workloads.
+2. Record the exact protected configuration SHA-256 and installed
+   `controller.py`/`github_app.py` SHA-256 values. Transfer a clean root-controlled
+   checkout of the reviewed commit. Do not introduce new credentials.
+3. Run its operator interface:
+
+   ```sh
+   python3 -B infrastructure/ci/manage.py repair-https-memory \
+     --expected-config-sha256 ACTUAL_CONFIG_SHA256 \
+     --expected-controller-sha256 ACTUAL_OLD_CONTROLLER_SHA256 \
+     --expected-github-app-sha256 ACTUAL_OLD_APP_MODULE_SHA256
+   ```
+
+   It requires the stopped/disabled/idle lifecycle lock, no pending registration
+   proof, unchanged configuration, exact expected old module hashes, safe
+   root-controlled destinations, and byte-identical unchanged validation/job/
+   service sources. It invalidates the old receipt before replacing the two
+   files and fsyncs each replacement. It changes no config, key, unit, resource
+   limit or network policy and never enables the controller.
+4. Run full installed-source `controller.py validate` and inspect its fresh
+   current-boot/configuration/source receipt before an explicit activation.
+   Repeat the original read-only memory replay and genuine jobs afterwards.
+   An interrupted repair leaves the receipt invalid and controller disabled;
+   inspect exact file hashes before any recovery rather than blindly rerun.
+
+The deployment controller and isolated workflow client use the same transport.
+Its operator must separately stop/confirm idle, verify its installed receipt,
+apply the exact reviewed source, and refresh its workflow/helper source pins.
+The canonical source `infrastructure/ci/ci-runner/github_app.py` is now an
+explicit pinned dependency; an unpinned file beside a checkout helper cannot
+replace it. Old handoff-helper revisions are not silently accepted after the
+pin update. Existing running application images/databases are not redeployed.
 
 ## Fresh-host prerequisites
 

@@ -236,6 +236,15 @@ receipt before an approved activation. The single-repository format is
 intentional: separate `frontend`/`backend` repository fields are not supported.
 Keep the credential on the controller host, never in the consumer checkout or
 workflow secrets. Do not request its value in chat.
+Long-running controllers must use the reviewed bounded HTTPS transport. For an
+older pool, only its operator may apply the
+[guarded HTTPS memory repair](../infrastructure/ci/README.md#bounded-https-memory-and-controlled-repair)
+with exact installed/configuration hashes, stopped/idle guards and fresh
+validation; a consumer must not patch the shared host itself. The deployment
+operator must also refresh its installed source and pins for the canonical
+shared `infrastructure/ci/ci-runner/github_app.py` dependency before dispatching
+workflows that use the updated transport. Preserve certificate verification,
+existing memory limits, isolated Python imports and the worker trust boundary.
 Follow [GitHub CI App setup](github-ci-app.md) for the organization-owned App,
 minimal permissions, protected PEM/metadata, automatic token renewal, and guarded
 credential-free adapter preparation. Do not substitute a personal token into
