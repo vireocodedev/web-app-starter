@@ -15,6 +15,10 @@ import runtime
 from test_release_protocol import PAIR, REPO
 
 
+def fixture_path(path, directory=False):
+    return Path(path)
+
+
 class RuntimeTests(unittest.TestCase):
     def config(self):
         return {'slug': 'web-app-starter', 'repository': REPO,
@@ -61,7 +65,7 @@ class RuntimeTests(unittest.TestCase):
             with mock.patch.object(runtime, 'validate'), \
                     mock.patch.object(runtime, 'private_packages'), \
                     mock.patch.object(runtime, 'locked', locked), \
-                    mock.patch.object(runtime, 'protected', side_effect=Path), \
+                    mock.patch.object(runtime, 'protected', side_effect=fixture_path), \
                     mock.patch.object(runtime, 'scalar', return_value='1'), \
                     mock.patch.object(runtime, 'verify_running'), \
                     mock.patch.object(runtime, 'command'), \
@@ -86,7 +90,7 @@ class RuntimeTests(unittest.TestCase):
             with mock.patch.object(runtime, 'validate'), \
                     mock.patch.object(runtime, 'private_packages'), \
                     mock.patch.object(runtime, 'locked', locked), \
-                    mock.patch.object(runtime, 'protected', side_effect=Path), \
+                    mock.patch.object(runtime, 'protected', side_effect=fixture_path), \
                     mock.patch.object(runtime, 'command') as command, \
                     self.assertRaisesRegex(ReleaseError, 'operator-reconciliation'):
                 runtime.deploy(self.config(), {'environment': 'staging', 'pair': PAIR}, mock.Mock(), 'brunotot')
@@ -108,7 +112,7 @@ class RuntimeTests(unittest.TestCase):
             recent.write_text('fresh')
             unrelated = root / 'operator-notes'
             unrelated.write_text('keep')
-            with mock.patch.object(runtime, 'protected', side_effect=Path):
+            with mock.patch.object(runtime, 'protected', side_effect=fixture_path):
                 runtime.prune_backups(root)
                 runtime.prune_backups(root)
             self.assertEqual({path.name for path in root.iterdir()}, {recent.name, unrelated.name})
@@ -120,7 +124,7 @@ class RuntimeTests(unittest.TestCase):
             def failed_dump(*args, **kwargs):
                 kwargs['stdout'].write(b'incomplete')
                 return mock.Mock(returncode=1)
-            with mock.patch.object(runtime, 'protected', side_effect=Path), \
+            with mock.patch.object(runtime, 'protected', side_effect=fixture_path), \
                     mock.patch.object(runtime.subprocess, 'run', side_effect=failed_dump), \
                     self.assertRaisesRegex(ReleaseError, 'dump-failed'):
                 runtime.backup(self.config(), 'production', root)
@@ -140,7 +144,7 @@ class RuntimeTests(unittest.TestCase):
                     kwargs['stdout'].write(b'PGDMP' + b'x' * 1024)
                     return mock.Mock(returncode=0)
                 return mock.Mock(returncode=0, stdout=b'TOC Entries: 5')
-            with mock.patch.object(runtime, 'protected', side_effect=Path), \
+            with mock.patch.object(runtime, 'protected', side_effect=fixture_path), \
                     mock.patch.object(runtime.subprocess, 'run', side_effect=archive), \
                     mock.patch.object(runtime, 'scalar', side_effect=['t', '1']):
                 result = runtime.backup(self.config(), 'production', root)
