@@ -1,8 +1,8 @@
 # VireoCode Web App Starter
 
 A single-repository starter with a Java Spring Boot backend and a Vite React
-TypeScript frontend. GHCR publishing and Hetzner staging/production deployment
-will be added separately; this skeleton does not configure or deploy them.
+TypeScript frontend. Manual paired GHCR/Hetzner release workflows require the
+explicit operator setup below; copying this template does not deploy an app.
 
 ## Create your project from this template
 
@@ -162,12 +162,15 @@ access, exact check names, and the main-branch policy. See
 [live acceptance evidence](docs/ci-acceptance.json); no GitHub settings are inherited automatically
 when creating a repository from this template.
 
-## Future staging and production
+## Staging and production
 
 Production frontend/backend images and their restricted runtime smoke tests
 are defined in [paired releases](infrastructure/release/README.md). CI verifies
-each selected image; GHCR publication and the two manual whole-app deployments
-remain a separate step.
+each selected image. Manual **Deploy staging** and **Deploy production** use a
+host-side controller, private immutable GHCR pairs and staging-to-production
+promotion. Follow the
+[operator setup](infrastructure/release/README.md#operator-installation-and-activation)
+before dispatch; the controller never grants PR workers host access.
 
 Deployed accounts require
 [explicit one-time operator provisioning](infrastructure/release/README.md#one-time-deployed-user-provisioning).

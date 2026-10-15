@@ -122,9 +122,175 @@ precede every production backend migration/replacement. Staging has no scheduled
 backups. Daily time/timezone and initialized restore evidence must be recorded
 when provisioning.
 
-Two manual whole-app workflow entrypoints, private GHCR publication, trusted
-server execution, isolated environment Compose state, TLS, initial-account
-installation, backup scheduling and restore acceptance are still pending.
-PR workers must retain their existing production-access denial; deployment
-credentials/execution need a distinct reviewed trust path before those
-workflows can become operational.
+The two manual workflows and host controller are implemented below. Their live
+activation, first GHCR publication, real deployments/TLS/accounts and initialized
+restore acceptance require the operator gates below; source alone is not evidence.
+
+## Manual workflow contract
+
+- [Deploy staging](../../.github/workflows/deploy-staging.yaml) uses GitHub's
+  native branch selector, verifies the exact checkout and both applications,
+  builds candidate images in a read-only-token worker, then independently
+  smoke-tests/publishes them in a fresh worker which has not executed branch
+  Gradle/npm code. It records
+  `release-pair-<attempt>` with both immutable digests.
+- [Deploy production](../../.github/workflows/deploy-production.yaml) takes a
+  successful staging run ID. Select the same source commit with the branch
+  selector; a moved branch or a different commit fails. It promotes the exact
+  recorded pair without rebuilding. A successful host-side staging receipt is
+  also required; a fabricated artifact or unrelated green workflow cannot
+  authorize promotion.
+- Both use only the disposable Hetzner pool, one concurrency group per
+  environment, and `cancel-in-progress: false`. No component selector, automatic
+  production promotion, GitHub-hosted runner, or required approving review.
+- Only staging's fresh verification/publication job has package-write permission.
+  All privileged workflow helpers use isolated Python (`-I -S`); the client
+  loads only its explicitly pinned transport file without adding the checkout
+  to Python's import path. Branch-added sibling modules cannot shadow standard
+  library imports, and build processes cannot rewrite another worker's helpers.
+  The request/wait jobs have
+  only contents/actions/package read and deployment-status write. PR CI remains
+  read-only, without deployment credentials or host access.
+
+The jobs never SSH to the host. [client.py](client.py) encrypts their short-lived
+request-job `GITHUB_TOKEN` and release ticket to the host's public certificate
+using OpenSSL CMS (AES-256-GCM, RSA-OAEP/SHA-256). Only ciphertext is uploaded as
+the one-day `deploy-request-<attempt>` artifact. The private key stays on the
+host. This avoids a permanent GHCR password/PAT: the controller pulls while the
+job is still alive, uses a root-only temporary Docker login directory, and
+removes that directory afterwards. The job waits for the host's GitHub
+Deployment status; image upload alone never produces success.
+
+[controller.py](controller.py) polls GitHub using a repository-scoped
+**Actions-read-only** installation token from the existing reviewed CI App
+signer. Its App configuration/permissions are not expanded; the CI service,
+worker filesystem/network policy and isolation receipt are not changed.
+The deployment service has its own code, state, locks and per-project unit.
+It verifies:
+
+1. The actual active `workflow_dispatch` run/attempt, exact repository numeric
+   IDs, expected workflow ID/path, and allowlisted original/triggering actors.
+   Runner labels and the CI controller's observed candidate job are never
+   deployment authorization.
+2. The artifact inventory, compressed SHA-256 digest, bounded single zip member,
+   allowlisted Azure HTTPS download host, and authenticated CMS decryption.
+   Signed artifact downloads receive no GitHub Authorization header.
+3. The request-job token's private repository access, exact Deployment payload
+   and environment/source identity.
+4. Installed SHA-256 pins of both workflows and the workflow client, transport
+   and smoke helper at the selected source commit, plus the actual in-progress
+   request job. Branches may change application code, not bypass the trusted
+   verification/handoff implementation.
+5. For production, successful staging workflow and a matching durable host
+   receipt for that exact staging run attempt and image pair.
+
+No repository code, shell command, Compose file, mount or server path is accepted
+from an artifact. [runtime.py](runtime.py) generates the fixed app services from
+protected host configuration. It pulls/inspects exact digests before mutation,
+locks the environment, reconciles prior active state, preserves the separate
+PostgreSQL project/volume, and validates actual container image IDs, health and
+public routes/environment headers. Production stops the old backend and verifies
+a fresh persisted dump/TOC/checksum before the candidate can start Flyway.
+A backup failure starts the old backend again; a failure after replacement
+leaves explicit transaction evidence and requires operator reconciliation.
+There is no automatic database restore or unproven application rollback.
+
+## Operator installation and activation
+
+Consumers require an operator-approved host, exact repository/numeric IDs,
+authorized maintainer logins, two hostnames, four unused loopback ports, initial
+account identity, and protected CI App metadata/key references. Extend the
+App's selected-repository access and register CI first; do not copy the
+template's repository/workflow IDs, hostnames, ports or generated credentials.
+The current target uses `18080/18081` for staging frontend/backend and
+`18180/18181` for production. Other projects must allocate unused ports.
+
+1. Merge the reviewed implementation with green CI. Obtain actual workflow IDs
+   from GitHub. Transfer a **clean exact committed checkout**, including its Git
+   identity, into an operator-controlled root-owned directory. Independent
+   review and real supported-host validation are required before activation.
+2. Run [install.py](install.py) as root from that protected checkout. It accepts
+   `--repository`, `--repository-id`, `--slug`, repeatable `--actor`,
+   `--staging-workflow-id`, `--production-workflow-id`, `--staging-hostname`,
+   `--production-hostname`, the four `--<environment>-<component>-port` arguments,
+   `--username`, `--display-name`, and `--email`. Optional `--app-settings` and
+   `--app-key` are protected **paths**, not secret values.
+   It refuses an existing project installation rather than overwrite it.
+3. Installation creates these project-scoped, root-only paths:
+   - `/etc/web-app-deploy/<slug>/`: protected controller/runtime configuration,
+     source receipt, CMS private key/public certificate, separate environment
+     DB and provisioning credentials.
+   - `/usr/local/lib/web-app-deploy/<slug>/`: reviewed installed controller,
+     runtime, transport and unchanged shared App signer.
+   - `/var/lib/web-app-deploy/<slug>/`: request journals, staging receipts,
+     environment locks, immutable app snapshots, active/transaction records,
+     and production backups.
+   - Disabled `web-app-deploy-<slug>.service`,
+     `web-app-backup-<slug>.service` and `web-app-backup-<slug>.timer`.
+   Unit hardening includes a read-only host filesystem and only the project's
+   state writable; access to the host Docker socket is privileged and confined
+   to this reviewed host process, never a runner.
+4. Publish **only** the generated public `controller.crt` as the repository
+   Actions variable `DEPLOY_CONTROLLER_CERT`. No server private key, SSH key,
+   DB password, App key, registry password, or plaintext workflow token belongs
+   in an Actions variable/artifact.
+5. Run [prepare.py](prepare.py) with `--config` pointing to the protected
+   `controller.json`. It checks free ports and absent project resources,
+   records creation intent, provisions separate labeled networks/volumes and
+   pinned PostgreSQL instances without public DB ports, and adds only
+   `/etc/caddy/sites/<slug>.caddy`. It validates the full Caddy configuration
+   before reload, preserves `/api`, and adds `X-Vireo-Environment`.
+   Interrupted preparation must be inspected, not blindly rerun or erased.
+6. Verify installed source hashes, root-only paths, DB readiness/isolation,
+   App Actions-read access and rejected untrusted requests on the actual host.
+   Retain source/configuration/host-bound evidence. Enable the project controller
+   only after review and validation, then run **Deploy staging** manually.
+   Verify private GHCR visibility/access and exact pair/source/container/public
+   identities. Follow with **Deploy production** using that successful staging
+   run ID and the same selected source commit.
+7. Run explicit one-time user provisioning using the active backend digest,
+   separate protected credential file and DB network under the environment
+   lock; production needs another fresh verified backup. Verify real HTTPS
+   login/session/logout without exposing credentials. Ordinary app containers
+   must not receive provisioning credentials.
+8. Verify a real initialized production dump, retrieve it to a protected
+   operator destination, and restore it into an isolated temporary database.
+   Only after recovery evidence exists, enable the production backup timer.
+   Its approved schedule is **03:00 Europe/Zagreb daily**, 30-day retention,
+   same-server storage with acknowledged server-loss limitation. No staging
+   backup timer exists.
+
+GitHub Environments need no required reviewers or main-only restrictions.
+Template-created repositories inherit none of these remote settings or host
+registrations. The controller's workflow source pins intentionally require an
+explicit reviewed stopped/idle operator update when trusted workflow/helper
+bytes change; there is no generic live-upgrade command. Adding another project
+uses separate paths/units/ports and leaves existing consumers untouched.
+
+## Failure and recovery
+
+Do not retry a timed-out mutation, rerun installation, delete a volume, change
+an active pointer, or restore PostgreSQL merely to turn a workflow green.
+Inspect `requests/<run>-<attempt>.json`, `<environment>/transaction.json`,
+`active.json`, the referenced immutable snapshot, exact running image IDs,
+database health/migration history and the GitHub run first.
+
+A started request journal is never replayed automatically after a controller
+restart. A non-successful replacement transaction blocks subsequent mutations.
+Resolve it explicitly under the environment lock, preserving the evidence;
+after data migrations, prefer a reviewed forward fix. The old image's presence
+does not prove rollback compatibility. A lost final GitHub status can leave a
+verified server deployment with a failing/waiting workflow: reconcile actual
+state and report honestly rather than deploy twice.
+
+Rejected runs and inventory failures are isolated per run/environment; one
+unauthorized staging request cannot prevent production polling. Backup dumps
+remain `.partial` until verification and durable metadata exist. Failed partials
+are removed; retention handles legacy orphan dumps/metadata and interrupted
+pruning without poisoning future verified backups.
+
+Use `journalctl -u web-app-deploy-<slug>.service` for fixed credential-free
+categories. Never dump container environments, resolved secret-bearing Compose,
+CMS plaintext, Docker login files, database contents, or raw application logs.
+Scheduled/manual backups use the same environment lock; the backup CLI is
+`runtime.py backup --config <protected-runtime.json>`.

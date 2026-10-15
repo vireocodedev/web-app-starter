@@ -331,11 +331,19 @@ production can use the same immutable image pair. Environment hostnames, DB
 credentials, and production users belong in protected deployment provisioning,
 not Docker contexts/images.
 
-The current CI builds/smoke-tests each selected owner image independently; whole
-app deployment will verify/build/publish the pair. Two manual workflows remain
-the target: **Deploy staging** and **Deploy production**, without a component
-dropdown. They are not yet implemented; copy neither imaginary secret names nor
-an unverified publish/deploy command into a consumer.
+The current CI builds/smoke-tests each selected owner image independently.
+The two manual entrypoints are
+[Deploy staging](../.github/workflows/deploy-staging.yaml) and
+[Deploy production](../.github/workflows/deploy-production.yaml), without a
+component dropdown. Staging verifies/builds/publishes the pair; production
+promotes the exact successful staging pair without rebuilding and requires
+the same selected source SHA. Follow
+[operator installation and activation](../infrastructure/release/README.md#operator-installation-and-activation)
+for all affected host files, workflow IDs, maintainer allowlist, public
+`DEPLOY_CONTROLLER_CERT` variable, protected App/DB/account credentials,
+port allocation, Caddy, backup schedule, source pins and recovery safeguards.
+Do not place server credentials in PR CI or widen its host/private-network
+access. Root execution validates actual manual run identity, not runner labels.
 
 For initial deployed accounts, follow
 [one-time operator provisioning](../infrastructure/release/README.md#one-time-deployed-user-provisioning).
@@ -350,8 +358,11 @@ app containers and preserve conflicts rather than resetting users.
 Production backup storage was explicitly selected as same-server, retention
 30 days, with server-loss limitation. Obtain the consumer's backup destination
 decision instead of inheriting that exception silently. No staging schedule.
-Deployment, public TLS, account provisioning, and initialized backup restoration
-still require their own setup steps and actual acceptance.
+The approved template schedule is 03:00 Europe/Zagreb daily. Obtain/record the
+consumer's timezone/time rather than silently inheriting it. Deployment, public
+TLS, account installation, and initialized backup restoration require the
+linked operator steps and actual acceptance; source implementation is not proof
+that the corresponding host/remote settings exist.
 
 **Done when:** the exact committed image pair passes real restricted runtime
 checks and its immutable provenance is known, or the precise build/platform
