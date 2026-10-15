@@ -314,7 +314,9 @@ authoritative nameservers and two public recursive resolvers using the correct
 DNS-project credential. [DNS acceptance](dns-acceptance.json) records the exact
 changes. Local recursive `NXDOMAIN` was still observed at inspection time;
 resolver/cache readiness is separate from successful authoritative writes.
-Container publishing, deployment routing, public TLS, and backups remain pending.
+The template's later container, routing, public TLS and backup activation is
+recorded separately in [release acceptance](release-acceptance.json); DNS alone
+did not certify those outcomes.
 
 **Done when:** the intended records are verified at the selected existing
 authoritative zone, with conflicts resolved and access/negative-cache blockers
@@ -367,6 +369,17 @@ that the corresponding host/remote settings exist.
 **Done when:** the exact committed image pair passes real restricted runtime
 checks and its immutable provenance is known, or the precise build/platform
 blocker is reported. Working containers alone are not GHCR/deployment evidence.
+
+**Template activation evidence:** [release acceptance](release-acceptance.json)
+records the actual successful staging run, exact-pair production promotion from
+a non-main release branch, private GHCR digests, installed host source, real
+HTTPS/browser authentication, pre-migration backups, initialized retrieval and
+isolated restore, and enabled 03:00 Europe/Zagreb production timer. Follow
+[deployment operation](../infrastructure/release/README.md#deploy-an-initialized-project)
+and [recovery rehearsal](../infrastructure/release/README.md#rehearse-recovery-without-touching-a-live-database)
+for ongoing actions. The accounts, protected secret files, public certificate
+variable, remote settings, host registration and backup evidence are specific to
+the template instance, not inherited by a consumer.
 
 ## 9. Report the result
 
