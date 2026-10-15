@@ -7,25 +7,31 @@ explicit operator setup below; copying this template does not deploy an app.
 ## Create your project from this template
 
 Use GitHub's **Use this template**, create your repository, and clone it locally.
-Before starting the local database, ask your AI coding agent to follow the
-[template initialization runbook](docs/template-initialization.md). For example:
+Open the consumer as a trusted VS Code workspace, start a fresh agent chat and
+invoke the repository-local skill with **no arguments**:
 
 ```text
-Follow docs/template-initialization.md to initialize this template consumer.
-Project slug: inventory-portal
-Display name: Inventory Portal
-Java base package: com.acme.inventory
-PWA short name: Inventory
-Keep the existing artwork for now and report branding as deferred.
-Apply the documented naming changes and verify the app.
-Do not commit, publish, or deploy.
+/initialize-project
 ```
 
-The runbook maps application-owned names to their files and covers Java package
-moves, frontend titles, Gradle/VS Code identity, local database isolation, and
-test expectations. The agent makes ordinary scoped edits; there is no project
-renaming script. Missing inputs are clarified before editing, and existing local
-credentials or database volumes are preserved.
+The [skill](.github/skills/initialize-project/SKILL.md) ships with the template;
+no personal/global skill is required. It collects missing configuration and
+access prerequisites upfront, presents a bounded plan for approval, then prepares
+and verifies local development, shared CI, both real deployments and recovery.
+Tool/provider approvals and out-of-scope decisions remain explicit boundaries.
+Its status controls whether verified blocker lessons can update reusable guidance
+automatically; it is not a simulation flag or additional infrastructure authority.
+
+See the [initialization contract](docs/initialization-contract.md) for inputs,
+operator profile, readiness, resume and acceptance, and the
+[runbook](docs/template-initialization.md) for exact identity edits and setup
+owners. There is no renaming generator. Existing credentials/data are preserved.
+An explicitly requested personalization-only task can use the runbook without
+authorizing remote publication or deployment.
+
+The first fresh-consumer rehearsal is still required to prove the complete
+no-follow-up experience and cross-repository pool access. Template deployment
+evidence below is not evidence that a new consumer has been initialized.
 
 ## Local development
 

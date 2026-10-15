@@ -1,15 +1,19 @@
 # Initialize a project from this template
 
-Follow this runbook when a user asks to personalize a freshly cloned GitHub
-template consumer. Make scoped edits directly; this workflow needs no renaming
-script, generator, new dependencies, or runtime identity configuration.
+This is the authoritative map of application identity edits and setup owners.
+The explicit no-argument
+[initialize-project skill](../.github/skills/initialize-project/SKILL.md) owns
+execution and maturity/learning behavior. Its
+[initialization contract](initialization-contract.md) owns upfront questions,
+protected operator inputs, readiness, approval, local resume state and full
+acceptance. Read both before full initialization.
 
-Initialization covers project naming, local development, and the shared CI
-access and main-protection setup below. Server rebuild/installation/activation
-are separately approved operator actions. Container publishing,
-staging/production configuration, and deployment will gain their exact setup
-steps here as they are implemented; their absence is pending work, not permission
-to improvise a deployment.
+Full setup includes local development, shared CI/main protection, DNS, private
+images, two real paired deployments and verified recovery under one approved
+consumer scope. An explicitly requested personalization-only task stays local.
+Make scoped edits directly; no renaming generator or runtime identity framework
+is required. Shared host rebuilds, foundation installation/upgrades and data
+replacement remain separately approved operator work, not initialization effects.
 
 ## 1. Confirm the target and identity
 
@@ -23,7 +27,7 @@ Obtain these values from the request, asking for missing inputs one at a time:
 
 | Input             | Example              | Rule                                                                                                                                                                                          |
 | ----------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project slug      | `inventory-portal`   | Lowercase ASCII letters/digits separated by single hyphens; start with a letter; at most 50 characters.                                                                                       |
+| Project slug      | `inventory-portal`   | 3-40 lowercase ASCII letters/digits separated by single hyphens; start with a letter. This satisfies both application names and deployed project paths.                                                                                       |
 | Display name      | `Inventory Portal`   | Nonempty human-readable product name. Keep it the same across locales unless localized names are supplied.                                                                                    |
 | Java base package | `com.acme.inventory` | Explicit dotted namespace of lowercase ASCII Java identifiers; each segment starts with a letter; exclude Java keywords. This is the application's package, not just its organization prefix. |
 | PWA short name    | `Inventory`          | Use the display name if it is at most 12 characters; otherwise obtain an approved short name.                                                                                                 |
@@ -66,6 +70,9 @@ environment file uses the old identity, explain the mismatch and obtain a
 decision before changing that identity or starting a different database. Preserve
 existing passwords, volumes, and data. Data migration, volume deletion, and
 password resets are outside this runbook.
+Resolve known mismatches during upfront intake. A newly discovered mismatch
+during execution blocks the affected phase until safely reconciled within the
+approved scope; it is not permission to reset data.
 
 **Done when:** initialization can proceed without replacing an existing identity
 or hiding an existing database behind newly generated resource names.
@@ -287,6 +294,8 @@ settings here rather than treating configured labels as working CI.
 acceptance plus genuine repository CI are verified, or the precise pending
 operator/workflow prerequisites are reported. Do not rebuild a host, enable
 services, publish, or deploy as a side effect of identity personalization.
+Full-mode registration/activation and deployments follow their explicit
+approved contract and operator gates instead.
 
 ## 6. Configure GitHub CI and main protection
 
@@ -398,10 +407,15 @@ the template instance, not inherited by a consumer.
 
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without
-revealing credentials. Leave changes uncommitted unless a commit is requested;
-remote publication and deployment are separate work.
+revealing credentials. For personalization-only scope, leave changes uncommitted
+unless a commit is requested; publication/deployment need separate approval.
+For full `/initialize-project` scope, perform the approved commits/PRs and remote
+actions, and require every acceptance phase in the
+[contract](initialization-contract.md#completion-and-rehearsal) before reporting
+ready. Record consumer-specific evidence, not copied template receipts.
 Include the shared CI registration/verification state without treating a
 template copy as inherited GitHub access.
 
 **Done when:** the consumer can distinguish completed personalization, verified
-behavior, and remaining work without relying on a generic "setup complete" claim.
+full initialization, and blocked/remaining work without relying on a generic
+"setup complete" claim. Unverified required checks cannot be waived by reporting.
