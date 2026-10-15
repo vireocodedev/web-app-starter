@@ -288,6 +288,9 @@ unauthorized staging request cannot prevent production polling. Backup dumps
 remain `.partial` until verification and durable metadata exist. Failed partials
 are removed; retention handles legacy orphan dumps/metadata and interrupted
 pruning without poisoning future verified backups.
+The finalized backup filename is also directory-fsynced before the production
+gate returns, so verification is not limited to the contents of an inode whose
+final name could be lost on a crash.
 
 Use `journalctl -u web-app-deploy-<slug>.service` for fixed credential-free
 categories. Never dump container environments, resolved secret-bearing Compose,

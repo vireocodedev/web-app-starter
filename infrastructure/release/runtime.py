@@ -144,6 +144,11 @@ def backup(config, environment, root):
                     'initialized': exists, 'created_at': datetime.now(timezone.utc).isoformat()}
         write_json(destination.with_suffix('.dump.json'), metadata)
         os.replace(pending, destination)
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
         # Read the persisted destination, not just the bytes emitted by pg_dump.
         if sha256_file(destination) != metadata['sha256']:
             raise ReleaseError('production-backup-destination-mismatch')

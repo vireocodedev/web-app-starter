@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import stat
 import tempfile
 import time
 import unittest
@@ -151,6 +152,33 @@ class RuntimeTests(unittest.TestCase):
             self.assertFalse(orphan.exists())
             self.assertTrue(result.exists())
             self.assertEqual(json.loads(result.with_suffix('.dump.json').read_text())['users'], 1)
+
+    def test_completed_backup_filename_is_durable_before_the_gate_returns(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'backups').mkdir()
+            events = []
+            original_replace, original_fsync = os.replace, os.fsync
+            def replace(source, destination):
+                original_replace(source, destination)
+                if Path(destination).suffix == '.dump':
+                    events.append('finalized-dump')
+            def fsync(descriptor):
+                original_fsync(descriptor)
+                if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+                    events.append('directory-synced')
+            def archive(*args, **kwargs):
+                if 'stdout' in kwargs:
+                    kwargs['stdout'].write(b'PGDMP' + b'x' * 1024)
+                    return mock.Mock(returncode=0)
+                return mock.Mock(returncode=0, stdout=b'TOC Entries: 5')
+            with mock.patch.object(runtime, 'protected', side_effect=fixture_path), \
+                    mock.patch.object(runtime.subprocess, 'run', side_effect=archive), \
+                    mock.patch.object(runtime, 'scalar', side_effect=['t', '1']), \
+                    mock.patch.object(runtime.os, 'replace', side_effect=replace), \
+                    mock.patch.object(runtime.os, 'fsync', side_effect=fsync):
+                runtime.backup(self.config(), 'production', root)
+            self.assertIn('directory-synced', events[events.index('finalized-dump') + 1:])
 
 
 if __name__ == '__main__':
