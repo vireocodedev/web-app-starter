@@ -650,24 +650,26 @@ export function renderWorkbook(schema, draft) {
   let section = 0,
     prerequisite = 0,
     approval = 0;
-  const lines = schema.markdown.split("\n").map((line) => {
-    const heading = /^## (\d+)\. /.exec(line);
-    if (heading) section = +heading[1];
-    if (/^\| `[a-z_]+` \|/.test(line)) {
-      const row = cells(line);
-      const id = row[0].slice(1, -1);
-      if (!fields.has(id)) throw new Error("Unknown workbook field");
-      return `| \`${id}\` | ${escapeCell(draft.answers[id] || "REQUIRED")} | ${escapeCell(row[2])} |`;
-    }
-    if (/^- \[[ xX]\] /.test(line) && (section === 7 || section === 8)) {
-      const checked =
-        section === 7
-          ? draft.prerequisites[prerequisite++]
-          : draft.approvals[approval++];
-      return line.replace(/^- \[[ xX]\]/, `- [${checked ? "x" : " "}]`);
-    }
-    return line;
-  });
+  const lines = workbookTemplate(schema.markdown)
+    .split("\n")
+    .map((line) => {
+      const heading = /^## (\d+)\. /.exec(line);
+      if (heading) section = +heading[1];
+      if (/^\| `[a-z_]+` \|/.test(line)) {
+        const row = cells(line);
+        const id = row[0].slice(1, -1);
+        if (!fields.has(id)) throw new Error("Unknown workbook field");
+        return `| \`${id}\` | ${escapeCell(draft.answers[id] || "REQUIRED")} | ${escapeCell(row[2])} |`;
+      }
+      if (/^- \[[ xX]\] /.test(line) && (section === 7 || section === 8)) {
+        const checked =
+          section === 7
+            ? draft.prerequisites[prerequisite++]
+            : draft.approvals[approval++];
+        return line.replace(/^- \[[ xX]\]/, `- [${checked ? "x" : " "}]`);
+      }
+      return line;
+    });
   const header = lines.findIndex((line) =>
     line.startsWith("| Exact package name |"),
   );
@@ -682,7 +684,7 @@ export function renderWorkbook(schema, draft) {
         `| ${[row.name, row.id, row.repository, row.versions].map(escapeCell).join(" | ")} |`,
     ),
   );
-  return workbookTemplate(lines.join("\n"));
+  return lines.join("\n");
 }
 
 export function importWorkbook(schema, markdown) {

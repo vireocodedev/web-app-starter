@@ -46,7 +46,7 @@ test("the authoritative template cannot silently lose fields or gain checked app
 test("the exact Markdown contract round-trips literal cells, replacement rows and human checks", async () => {
   const schema = await schemaForTests();
   const draft = executionDraft(schema);
-  draft.answers.display_name = "Example | Supply\\Workshop";
+  draft.answers.display_name = "Example [Guide](./guide.md) | Supply\\Workshop";
   draft.answers.registry_policy = "replace-listed-only";
   draft.answers.registry_delete_auth = "completed";
   draft.answers.old_image_loss_acknowledged = "yes";
@@ -61,7 +61,10 @@ test("the exact Markdown contract round-trips literal cells, replacement rows an
   const output = renderWorkbook(schema, draft);
   const imported = importWorkbook(schema, output);
   assert.deepEqual(imported, draft);
-  assert.match(output, /Example \\\| Supply\\\\Workshop/);
+  assert.match(
+    output,
+    /Example \[Guide\]\(\.\/guide\.md\) \\\| Supply\\\\Workshop/,
+  );
   assert.equal((output.match(/^- \[x\]/gm) ?? []).length, 20);
 });
 
