@@ -16,6 +16,7 @@ not settings inherited by **Use this template**.
 | `infrastructure/ci/**`                                 | Foundation verification           |
 | `infrastructure/release/**`                            | All verifications                 |
 | `.github/**`, `.vscode/**`, or the CI selection helper | All verifications                 |
+| `.agents/skills/initialize-project/**`                  | All verifications                 |
 | Documentation outside the app folders                  | Detection/package/docs verification and aggregate gate only |
 | Manual dispatch or the first branch push               | All verifications                 |
 
@@ -25,7 +26,7 @@ between owners selects both. Main pushes compare the event's prior commit.
 CI configuration changes force all relevant checks.
 
 The detection job always verifies the
-[portable initialization package](../.github/skills/initialize-project/SKILL.md),
+[portable initialization package](../.agents/skills/initialize-project/SKILL.md),
 including on documentation-only PRs. It selects Node/npm from the skill's
 manifest, installs only that package's lockfile, runs contract/model/server,
 documentation and Chromium desktop/mobile accessibility/flow tests, checks

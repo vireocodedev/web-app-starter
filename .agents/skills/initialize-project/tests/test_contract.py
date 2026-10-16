@@ -55,6 +55,21 @@ class InitializerSkillTests(unittest.TestCase):
         self.assertLess(body.index('## Start'), body.index('## Workflow'))
         self.assertLess(body.index('## Workflow'), body.index('## Finish'))
 
+    def test_task_selection_keeps_bare_and_readiness_requests_bounded(self):
+        skill = ' '.join(SKILL.read_text().split())
+        start = skill.split('## Start', 1)[1].split('## Workflow', 1)[0]
+        for value in ('bare `$initialize-project` or `/initialize-project` invocation',
+                      'saved workbook', 'readiness only', 'resuming an incomplete run',
+                      'free-text input', 'Wait for the answer before inspecting or changing task files',
+                      'For a concrete request, proceed directly',
+                      'Explanation and skill-maintenance requests stay within that scope',
+                      'they do not initialize the checkout',
+                      'writes only the private readiness report',
+                      'or execute initialization for a readiness-only request'):
+            self.assertIn(value, start)
+        self.assertIn('For readiness-only requests or `plan-only`, stop after this report', skill)
+        self.assertIn("Never write the human's answers, attestations, signature or expiry for them", skill)
+
     def test_both_user_maturity_values_work_without_changing_the_workflow(self):
         text = SKILL.read_text()
         current = maturity(text)
@@ -169,7 +184,7 @@ class InitializerSkillTests(unittest.TestCase):
                       '.template-initialization/readiness.md', 'plan-only',
                       'execute-listed-scope', 'SHA-256', 'signed/unexpired'):
             self.assertIn(value, skill)
-        self.assertIn('do not start a chat questionnaire', skill)
+        self.assertIn('Do not start a chat questionnaire for workbook inputs', skill)
         self.assertNotIn('asking one focused question at a time', skill)
         self.assertNotIn('Ask one question at a time', contract)
         self.assertLess(skill.index('If completion is recorded'),
@@ -220,17 +235,17 @@ class InitializerSkillTests(unittest.TestCase):
     def test_project_dashboard_is_checked_even_for_documentation_only_ci(self):
         self.assertTrue((ROOT / 'docs/project.html').is_file())
         changes_job = (ROOT / '.github/workflows/ci.yml').read_text().split('\n  backend:')[0]
-        self.assertIn('package=.github/skills/initialize-project', changes_job)
+        self.assertIn('package=.agents/skills/initialize-project', changes_job)
         self.assertIn('npm --prefix "$package" run verify', changes_job)
         self.assertNotIn('npm --prefix frontend ci', changes_job)
-        self.assertIn('npm --prefix .github/skills/initialize-project run docs:build', SKILL.read_text())
+        self.assertIn('npm --prefix .agents/skills/initialize-project run docs:build', SKILL.read_text())
         self.assertIn('docs/project.html', CONTRACT.read_text())
 
     def test_guided_browser_produces_the_same_private_workbook_not_an_executor(self):
         scripts = json.loads((PACKAGE / 'package.json').read_text())['scripts']
         self.assertEqual(scripts['init:prepare'], 'node scripts/prepare.mjs')
         self.assertIn('test:preparation', scripts['test'])
-        self.assertIn('node .github/skills/initialize-project/scripts/prepare.mjs', SKILL.read_text())
+        self.assertIn('node .agents/skills/initialize-project/scripts/prepare.mjs', SKILL.read_text())
         self.assertIn('preparation-draft.json', PREPARATION.read_text())
         self.assertIn('Browser drafts and checked UI steps alone are not input', SKILL.read_text())
         self.assertIn('never probes providers', CONTRACT.read_text())
@@ -241,7 +256,7 @@ class InitializerSkillTests(unittest.TestCase):
         for document in (ROOT / 'README.md', ROOT / 'AGENTS.md'):
             text = document.read_text()
             self.assertIn('/initialize-project', text)
-            self.assertIn('.github/skills/initialize-project/SKILL.md', text)
+            self.assertIn('.agents/skills/initialize-project/SKILL.md', text)
         self.assertIn('./references/contract.md', SKILL.read_text())
 
 

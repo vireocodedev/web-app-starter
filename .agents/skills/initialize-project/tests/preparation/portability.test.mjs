@@ -11,7 +11,7 @@ const execute = promisify(execFile);
 
 test("only the installed skill starts from another working directory without application files or dependencies", async () => {
   const fixture = await workspaceFixture();
-  const installed = join(fixture.root, ".github/skills/initialize-project");
+  const installed = join(fixture.root, ".agents/skills/initialize-project");
   let child;
   try {
     await cp(skillDirectory, installed, {
@@ -34,13 +34,13 @@ test("only the installed skill starts from another working directory without app
     );
     assert.match(
       exported.stdout,
-      /\]\(\.\.\/\.github\/skills\/initialize-project\/references\/contract.md\)/,
+      /\]\(\.\.\/\.agents\/skills\/initialize-project\/references\/contract.md\)/,
     );
     assert.doesNotMatch(exported.stdout, /^- \[x\]/m);
     for (const [, target] of exported.stdout.matchAll(
       /\]\((\.{1,2}\/[^)\s]*)\)/g,
     )) {
-      if (target.startsWith("../.github/"))
+      if (target.startsWith("../.agents/"))
         assert.ok(
           await lstat(
             join(

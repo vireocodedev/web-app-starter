@@ -11,10 +11,16 @@ Status: In Development
 
 ## Start
 
-`/initialize-project` with no arguments is a concrete request to initialize the
-current consumer from its completed private preparation workbook. Read files;
-do not start a chat questionnaire or action menu. Explanation/maintenance
-requests stay in that scope and never initialize the checkout.
+For a bare `$initialize-project` or `/initialize-project` invocation, ask one
+short question offering initialization from the saved workbook, readiness only,
+or resuming an incomplete run, with free-text input for another task. Wait for
+the answer before inspecting or changing task files. For a concrete request,
+proceed directly. Explanation and skill-maintenance requests stay within that
+scope; they do not initialize the checkout.
+
+A readiness-only request follows the preparation checks and writes only the
+private readiness report. Do not start a chat questionnaire for workbook inputs
+or execute initialization for a readiness-only request.
 
 Read this status on invocation, resume, and before changing reusable guidance.
 The only valid values are `In Development` and `Stable`; an absent or invalid
@@ -33,7 +39,7 @@ If completion is recorded, verify its existing evidence without mutations or
 requiring a new workbook. Do not recreate resources or downgrade completed
 acceptance because the new preparation workflow was added later.
 
-**Gate:** the target is a verified consumer, its existing state is understood,
+**Gate for initialization/readiness:** the target is a verified consumer, its existing state is understood,
 and an incomplete setup proceeds only through the file-first readiness gate.
 
 ## Workflow
@@ -41,7 +47,7 @@ and an incomplete setup proceeds only through the file-first readiness gate.
 ### 1. Read preparation and verify readiness
 
 Read the complete ignored `.template-initialization/preparation.md`, explicitly
-saved by the human through `node .github/skills/initialize-project/scripts/prepare.mjs` or the manual
+saved by the human through `node .agents/skills/initialize-project/scripts/prepare.mjs` or the manual
 Markdown fallback. Browser drafts and checked UI steps alone are not input or
 authorization. Resolve the saved workbook's literal field values,
 conditional replacement rows, preparation attestations, explicit action scope,
@@ -74,7 +80,7 @@ observed repository identity/actor, resolved targets/actions/bounds, approval
 provenance, missing field IDs and exact blocking manual steps. This report is
 agent-owned evidence, not another approval form or a new public receipt.
 
-For `plan-only`, stop after this report with no bulk initialization. For
+For readiness-only requests or `plan-only`, stop after this report with no bulk initialization. For
 `execute-listed-scope`, proceed only when the current user invocation,
 human-completed signed/unexpired workbook and verified in-scope plan agree.
 A profile, checked box or old `approved` flag alone is not authorization; no
@@ -127,8 +133,8 @@ explicitly select another consumer Git worktree.
 After every public documentation or bundled-reference change, regenerate the
 self-contained bundled reference view and
 [project dashboard](../../../docs/project.html) with
-`npm --prefix .github/skills/initialize-project run docs:build`, then run
-`npm --prefix .github/skills/initialize-project run docs:check`. Commit the page with its source changes.
+`npm --prefix .agents/skills/initialize-project run docs:build`, then run
+`npm --prefix .agents/skills/initialize-project run docs:check`. Commit the page with its source changes.
 It combines every `docs/*.md`, `docs/acceptance/*-acceptance.json` and bundled reference, shows
 current consumer phases separately from historical receipts, and runs offline
 without fetching assets or data. The page is derived evidence, not an authority
@@ -168,6 +174,11 @@ Keep upstream-ready changes in the consumer and report them for user review;
 upstream publication requires separate authorization.
 
 ## Finish
+
+For readiness only, return the private report path, verified checks and exact
+blockers. Explanation or maintenance tasks finish when their requested result
+is delivered and applicable checks pass. The remaining criteria apply to
+initialization and resumed setup.
 
 Store documentation acceptance records as `docs/acceptance/*-acceptance.json`,
 including the consumer's `initialization-acceptance.json`; keep those records out

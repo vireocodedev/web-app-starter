@@ -8,24 +8,31 @@ explicit operator setup below; copying this template does not deploy an app.
 
 Use GitHub's **Use this template**, create your repository, and clone it locally.
 Open the consumer as a trusted VS Code workspace. Before invoking the skill,
-follow the [preparation guide](.github/skills/initialize-project/references/preparation.md)
+follow the [preparation guide](.agents/skills/initialize-project/references/preparation.md)
 and start its local browser wizard on Linux with Node 24 and Git:
 
 ```sh
-node .github/skills/initialize-project/scripts/prepare.mjs
+node .agents/skills/initialize-project/scripts/prepare.mjs
 ```
 
 The wizard needs no frontend or npm installation. It saves private drafts and,
 after explicit human review, the ignored Markdown workbook. Keep the server
-terminal open while preparing. Then start a fresh agent chat and invoke the
-repository-local skill with **no arguments**:
+terminal open while preparing. Then start a fresh Codex chat in VS Code and
+invoke the repository-local skill:
 
 ```text
-/initialize-project
+$initialize-project
 ```
 
-The [skill](.github/skills/initialize-project/SKILL.md) ships with the template;
-no personal/global skill is required. It reads the saved workbook, verifies
+Choose initialization from the action menu, or include the task directly:
+`$initialize-project initialize this consumer from its saved preparation workbook`.
+Codex uses `$` skill mentions; `/initialize-project` is the entry point for
+agents that support skill slash commands.
+
+The [project skill](.agents/skills/initialize-project/SKILL.md) ships with the template;
+no personal/global skill is required. See the
+[registration guidance](.agents/skills/initialize-project/references/runbook.md#codex-skill-registration)
+if the skill does not appear. It reads the saved workbook, verifies
 live readiness and current written scope, then prepares and verifies local
 development, shared CI, both real deployments and recovery. Missing inputs or
 access produce a private readiness report, not another configuration interview.
@@ -44,9 +51,9 @@ The file-first workflow still needs a clean fresh-consumer rehearsal to prove
 the complete no-follow-up experience. Template deployment
 evidence below is not evidence that a new consumer has been initialized.
 
-The [portable package](.github/skills/initialize-project/) contains the wizard,
+The [portable package](.agents/skills/initialize-project/) contains the wizard,
 generic procedures, documentation generator and tests. Its
-[dashboard verification](.github/skills/initialize-project/references/runbook.md#project-documentation-dashboard)
+[dashboard verification](.agents/skills/initialize-project/references/runbook.md#project-documentation-dashboard)
 is independent of frontend dependencies. The [project dashboard](docs/project.html)
 shows only committed public documentation and evidence, never private preparation.
 
@@ -165,7 +172,7 @@ This repository owns the [shared CI foundation](infrastructure/ci/README.md):
 one isolated, disposable worker pool for explicitly registered private monorepos.
 Template consumers register their repository for that pool rather than install
 another permanent runner. The
-[initialization runbook](.github/skills/initialize-project/references/runbook.md#5-configure-shared-ci-access)
+[initialization runbook](.agents/skills/initialize-project/references/runbook.md#5-configure-shared-ci-access)
 covers the required inputs and operator handoff.
 
 The selected template host has been rebuilt, installed, and passed

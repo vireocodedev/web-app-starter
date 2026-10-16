@@ -38,12 +38,12 @@ jobs:
         env:
           RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
         with:
-          node-version-file: .github/skills/initialize-project/package.json
+          node-version-file: .agents/skills/initialize-project/package.json
           package-manager-cache: false
       - name: Verify portable initialization package and public documentation
         run: |
-          package=.github/skills/initialize-project
-          package_manager=$(node -p 'require("./.github/skills/initialize-project/package.json").packageManager')
+          package=.agents/skills/initialize-project
+          package_manager=$(node -p 'require("./.agents/skills/initialize-project/package.json").packageManager')
           [[ "$package_manager" =~ ^npm@[0-9]+\.[0-9]+\.[0-9]+$ ]]
           npm install --global --prefix "$RUNNER_TEMP/npm" "$package_manager"
           export PATH="$RUNNER_TEMP/npm/bin:$PATH"

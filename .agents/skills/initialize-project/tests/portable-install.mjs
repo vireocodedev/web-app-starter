@@ -9,7 +9,7 @@ import { workspaceFixture } from "./preparation/test-support.mjs";
 const execute = promisify(execFile);
 const workspace = await workspaceFixture();
 try {
-  const installed = join(workspace.root, ".github/skills/initialize-project");
+  const installed = join(workspace.root, ".agents/skills/initialize-project");
   await cp(skillDirectory, installed, {
     recursive: true,
     filter: (path) => !path.split("/").includes("node_modules"),
@@ -18,7 +18,7 @@ try {
     "frontend",
     "backend",
     "docs",
-    ".github/skills/initialize-project/node_modules",
+    ".agents/skills/initialize-project/node_modules",
   ])
     await assert.rejects(lstat(join(workspace.root, path)), { code: "ENOENT" });
   for (const args of [
