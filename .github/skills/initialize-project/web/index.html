@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project preparation · Guided setup</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./client.mjs"></script>
+  </head>
+  <body>
+    <a class="skip" href="#panel">Skip to current step</a>
+    <div class="shell">
+      <aside>
+        <div class="brand">Prepare<span> /</span></div>
+        <p class="side-intro">
+          One small decision at a time.<br />Your draft stays on this machine.
+        </p>
+        <nav aria-label="Preparation steps"><ol id="navigation"></ol></nav>
+        <a
+          href="./reference#source-githubskillsinitialize-projectreferencespreparationmd"
+          target="_blank"
+          rel="noreferrer noopener"
+          >Full reference guide ↗</a
+        >
+        <p class="side-note">
+          No cloud actions. No passwords or tokens. No automatic initialization.
+        </p>
+      </aside>
+      <main>
+        <header>
+          <p class="eyebrow">Private local preparation</p>
+          <div class="topline">
+            <span id="repository">Loading workspace…</span
+            ><span id="save-status" role="status" aria-live="polite"
+              >Connecting…</span
+            >
+          </div>
+          <p id="existing" class="notice" hidden>
+            This checkout is already initialized. This tool edits preparation
+            files only; it never reruns setup. Use a new consumer checkout for a
+            new project.
+          </p>
+          <label for="progress" id="progress-label">Preparation progress</label>
+          <progress id="progress" value="0" max="1"></progress>
+        </header>
+        <div id="global-error" class="error" role="alert" hidden></div>
+        <section id="panel" tabindex="-1" aria-labelledby="step-title">
+          <p id="step-number" class="eyebrow"></p>
+          <h1 id="step-title" tabindex="-1">Opening your preparation…</h1>
+          <p id="intro" class="intro"></p>
+          <div id="content"></div>
+          <footer id="controls" hidden>
+            <button id="back" type="button">Back</button>
+            <div class="forward">
+              <button id="skip" type="button" class="quiet">
+                Do this later</button
+              ><button id="next" type="button" class="primary">Continue</button>
+            </div>
+          </footer>
+        </section>
+        <p class="privacy">
+          References only. Never paste service tokens, passwords, private keys
+          or recovery codes. Draft changes are not consumed by the skill until
+          you explicitly save the workbook.
+        </p>
+      </main>
+    </div>
+  </body>
+</html>

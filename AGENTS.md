@@ -7,6 +7,12 @@ The explicit no-argument entry point is `/initialize-project`, provided by the
 learning-edit policy. Use the linked contract for full setup versus local-only scope.
 Apply that workflow only when requested, not during ordinary application work.
 
+Generic initialization procedures and tools live in the
+[portable skill](.github/skills/initialize-project/SKILL.md). Update its bundled
+references at their source; keep consumer-specific setup in the runbook entry
+point. After changes to public project documents or bundled references, follow
+the [dashboard verification procedure](.github/skills/initialize-project/references/runbook.md#project-documentation-dashboard).
+
 When an implementation adds or changes consumer-specific values, configuration,
 prerequisites, or setup steps, update that runbook in the same change. Include
 the affected files, required inputs, setup actions, safeguards, and verification.

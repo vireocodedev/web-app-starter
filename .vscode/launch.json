@@ -19,7 +19,6 @@
       "type": "java",
       "request": "launch",
       "mainClass": "com.vireocode.backend.BackendApplication",
-      "projectName": "backend",
       "cwd": "${workspaceFolder}/backend",
       "envFile": "${workspaceFolder}/backend/.env",
       "args": "--spring.profiles.active=local",

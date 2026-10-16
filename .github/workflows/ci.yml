@@ -34,6 +34,24 @@ jobs:
           CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' }}
         run: python3 -B infrastructure/ci/ci_scope.py detect
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        env:
+          RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
+        with:
+          node-version-file: .github/skills/initialize-project/package.json
+          package-manager-cache: false
+      - name: Verify portable initialization package and public documentation
+        run: |
+          package=.github/skills/initialize-project
+          package_manager=$(node -p 'require("./.github/skills/initialize-project/package.json").packageManager')
+          [[ "$package_manager" =~ ^npm@[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          npm install --global --prefix "$RUNNER_TEMP/npm" "$package_manager"
+          export PATH="$RUNNER_TEMP/npm/bin:$PATH"
+          npm --prefix "$package" ci
+          export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/preparation-browsers"
+          npm --prefix "$package" run browser:install
+          npm --prefix "$package" run verify
+          npm --prefix "$package" run test:portable-install
 
   backend:
     name: Backend verification

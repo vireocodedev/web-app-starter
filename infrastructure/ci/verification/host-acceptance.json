@@ -71,7 +71,7 @@
   ],
   "current_controller_acceptance": {
     "source_commit": "b5089d15730e2b45e68a95af4d991d06f2c31edf",
-    "record": "../../../docs/controller-memory-acceptance.json",
+    "record": "../../../docs/acceptance/controller-memory-acceptance.json",
     "configuration_sha256_unchanged": "c696a337fc7523a232b8b94aa1b72edfa8b923c3dbca9616ba5bd8b3b64d3502",
     "boundary_sha256": "9803f13989211091d18a4d181ee4f9574e62a9edcff96c2130074daa37da2633",
     "live_probe_count": 273,

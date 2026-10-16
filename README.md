@@ -7,17 +7,28 @@ explicit operator setup below; copying this template does not deploy an app.
 ## Create your project from this template
 
 Use GitHub's **Use this template**, create your repository, and clone it locally.
-Open the consumer as a trusted VS Code workspace, start a fresh agent chat and
-invoke the repository-local skill with **no arguments**:
+Open the consumer as a trusted VS Code workspace. Before invoking the skill,
+follow the [preparation guide](.github/skills/initialize-project/references/preparation.md)
+and start its local browser wizard on Linux with Node 24 and Git:
+
+```sh
+node .github/skills/initialize-project/scripts/prepare.mjs
+```
+
+The wizard needs no frontend or npm installation. It saves private drafts and,
+after explicit human review, the ignored Markdown workbook. Keep the server
+terminal open while preparing. Then start a fresh agent chat and invoke the
+repository-local skill with **no arguments**:
 
 ```text
 /initialize-project
 ```
 
 The [skill](.github/skills/initialize-project/SKILL.md) ships with the template;
-no personal/global skill is required. It collects missing configuration and
-access prerequisites upfront, presents a bounded plan for approval, then prepares
-and verifies local development, shared CI, both real deployments and recovery.
+no personal/global skill is required. It reads the saved workbook, verifies
+live readiness and current written scope, then prepares and verifies local
+development, shared CI, both real deployments and recovery. Missing inputs or
+access produce a private readiness report, not another configuration interview.
 Tool/provider approvals and out-of-scope decisions remain explicit boundaries.
 Its status controls whether verified blocker lessons can update reusable guidance
 automatically; it is not a simulation flag or additional infrastructure authority.
@@ -29,9 +40,15 @@ owners. There is no renaming generator. Existing credentials/data are preserved.
 An explicitly requested personalization-only task can use the runbook without
 authorizing remote publication or deployment.
 
-The first fresh-consumer rehearsal is still required to prove the complete
-no-follow-up experience and cross-repository pool access. Template deployment
+The file-first workflow still needs a clean fresh-consumer rehearsal to prove
+the complete no-follow-up experience. Template deployment
 evidence below is not evidence that a new consumer has been initialized.
+
+The [portable package](.github/skills/initialize-project/) contains the wizard,
+generic procedures, documentation generator and tests. Its
+[dashboard verification](.github/skills/initialize-project/references/runbook.md#project-documentation-dashboard)
+is independent of frontend dependencies. The [project dashboard](docs/project.html)
+shows only committed public documentation and evidence, never private preparation.
 
 ## Local development
 
@@ -148,7 +165,7 @@ This repository owns the [shared CI foundation](infrastructure/ci/README.md):
 one isolated, disposable worker pool for explicitly registered private monorepos.
 Template consumers register their repository for that pool rather than install
 another permanent runner. The
-[initialization runbook](docs/template-initialization.md#5-configure-shared-ci-access)
+[initialization runbook](.github/skills/initialize-project/references/runbook.md#5-configure-shared-ci-access)
 covers the required inputs and operator handoff.
 
 The selected template host has been rebuilt, installed, and passed
@@ -165,7 +182,7 @@ by changed folder, plus foundation checks for infrastructure changes. Every job
 uses the shared Hetzner pool, and the aggregate `CI gate` always reports.
 See [consumer CI/protection setup](docs/github-ci.md) for required repository
 access, exact check names, and the main-branch policy. See
-[live acceptance evidence](docs/ci-acceptance.json); no GitHub settings are inherited automatically
+[live acceptance evidence](docs/acceptance/ci-acceptance.json); no GitHub settings are inherited automatically
 when creating a repository from this template.
 
 ## Staging and production
@@ -193,5 +210,5 @@ and [production](https://starter.vireocode.com) run the same private immutable
 frontend/backend pair. Both manual workflows, actual browser authentication,
 production pre-migration backups, initialized backup retrieval/isolated restore,
 and the enabled daily 03:00 Europe/Zagreb production timer are recorded in
-[release acceptance](docs/release-acceptance.json). These are the template's
+[release acceptance](docs/acceptance/release-acceptance.json). These are the template's
 instances, not settings or credentials inherited by a new consumer.

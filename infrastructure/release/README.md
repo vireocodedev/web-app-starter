@@ -126,7 +126,7 @@ The two manual workflows and host controller are implemented below. Their live
 activation, first GHCR publication, real deployments/TLS/accounts and initialized
 restore acceptance require the operator gates below; source alone is not evidence.
 The template's completed activation and exact digests/run IDs are recorded in
-[release acceptance](../../docs/release-acceptance.json).
+[release acceptance](../../docs/acceptance/release-acceptance.json).
 
 ## Deploy an initialized project
 
@@ -378,7 +378,7 @@ compatibility from the existence of an old digest.
 passed, and the production timer is enabled only after the initialized restore
 passed. Its first scheduled firing is still future evidence. Shared CI
 cross-repository acceptance remains a follow-up. The controller-memory OOM was
-resolved by the [reviewed and validated transport repair](../../docs/controller-memory-acceptance.json),
+resolved by the [reviewed and validated transport repair](../../docs/acceptance/controller-memory-acceptance.json),
 including this deployment controller, without redeploying apps or changing limits.
 Ubuntu unattended security updates were identified as the cause of
 the interrupted initial CI run; updates were not disabled or protections relaxed.
