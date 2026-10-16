@@ -1303,7 +1303,7 @@ requests targeting <code>main</code>, pushes to <code>main</code>, and manual di
 The shared App installation and protected host registration are prerequisites,
 not settings inherited by <strong>Use this template</strong>.</p>
 <h4 id="source-docsgithub-cimd--verification-selection">Verification selection</h4>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Changed paths</th><th>Jobs selected</th></tr></thead><tbody><tr><td><code>backend/**</code></td><td>Backend verification</td></tr><tr><td><code>frontend/**</code></td><td>Frontend verification</td></tr><tr><td>Both app folders</td><td>Both app verifications</td></tr><tr><td><code>infrastructure/ci/**</code></td><td>Foundation verification</td></tr><tr><td><code>infrastructure/release/**</code></td><td>All verifications</td></tr><tr><td><code>.github/**</code>, <code>.vscode/**</code>, or the CI selection helper</td><td>All verifications</td></tr><tr><td>Documentation outside the app folders</td><td>Detection/package/docs verification and aggregate gate only</td></tr><tr><td>Manual dispatch or the first branch push</td><td>All verifications</td></tr></tbody></table></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Changed paths</th><th>Jobs selected</th></tr></thead><tbody><tr><td><code>backend/**</code></td><td>Backend verification</td></tr><tr><td><code>frontend/**</code></td><td>Frontend verification</td></tr><tr><td>Both app folders</td><td>Both app verifications</td></tr><tr><td><code>infrastructure/ci/**</code></td><td>Foundation verification</td></tr><tr><td><code>infrastructure/release/**</code></td><td>All verifications</td></tr><tr><td><code>.github/**</code>, <code>.vscode/**</code>, or the CI selection helper</td><td>All verifications</td></tr><tr><td><code>.agents/skills/initialize-project/**</code></td><td>All verifications</td></tr><tr><td>Documentation outside the app folders</td><td>Detection/package/docs verification and aggregate gate only</td></tr><tr><td>Manual dispatch or the first branch push</td><td>All verifications</td></tr></tbody></table></div>
 <p>The change job compares the checked-out prospective PR merge commit against
 the event&#x27;s base commit. Renames are treated as deletion/addition so a move
 between owners selects both. Main pushes compare the event&#x27;s prior commit.
@@ -1385,7 +1385,7 @@ This documents the template repository, not inherited settings for a consumer.
 The historical documentation-only run also passed with all app/foundation jobs
 skipped and <code>CI gate</code> reported successfully; it predates the always-run package
 checks described above. Cross-repository shared-pool acceptance remains
-a separate pending gate.</p></div><div class="digest">Source SHA-256 · 4bf38e7f7c605b6efa69ff0e92c6f03fd865255f71a214ab2c676dadadbeaea0</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencespreparationmd">
+a separate pending gate.</p></div><div class="digest">Source SHA-256 · 249edc42378cce20c91e7efae63809080d897c56df1d7fead798fb668d3ee7b2</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencespreparationmd">
 <div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/preparation.md</div><h2>Prepare a consumer before initialization</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencespreparationmd--prepare-a-consumer-before-initialization">Prepare a consumer before initialization</h3>
 <p>Prepare <strong>before</strong> invoking the initialize-project skill, preferably through the
@@ -1705,7 +1705,7 @@ authority remain human tasks. The wizard collects preparation; only live
 verification can establish runtime, CI, deployment and initialized recovery
 acceptance. Unexpected post-intake assistance is a preparation defect to record,
 not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · e13708bb731703ac20d33e381c7bea5767d91fd7259e164c63423851f838d577</div></section>
-<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · a77b75cc2bbcf3848c08eba0fdddaa6abbd77a2126763d2b0f8f61879c958585</p></footer>
+<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · 1afb2096305f64ff96ec0c1cb0bbfcee7d8db3fcc1ce8fe773384d1086a079ad</p></footer>
 </main></div><script>
 const records = [...document.querySelectorAll(".record")];
 const search = document.querySelector("#search");

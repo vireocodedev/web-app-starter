@@ -16,6 +16,7 @@ not settings inherited by **Use this template**.
 | `infrastructure/ci/**`                                 | Foundation verification           |
 | `infrastructure/release/**`                            | All verifications                 |
 | `.github/**`, `.vscode/**`, or the CI selection helper | All verifications                 |
+| `.agents/skills/initialize-project/**`                  | All verifications                 |
 | Documentation outside the app folders                  | Detection/package/docs verification and aggregate gate only |
 | Manual dispatch or the first branch push               | All verifications                 |
 
