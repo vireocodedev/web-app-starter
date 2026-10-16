@@ -1,7 +1,7 @@
 # Prepare a consumer before initialization
 
 Use the authoritative
-[preparation guide and blank form](../.github/skills/initialize-project/references/preparation.md)
+[preparation guide and blank form](../.agents/skills/initialize-project/references/preparation.md)
 inside the portable skill. It documents the Node-only browser wizard, private
 draft/workbook persistence, explicit review/signature and manual fallback.
 

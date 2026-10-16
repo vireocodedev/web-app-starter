@@ -638,7 +638,7 @@ export function workbookTemplate(markdown) {
   return markdown.replace(/\]\((\.{1,2}\/[^)\s]*)\)/g, (_, target) => {
     const url = new URL(
       target,
-      "https://workspace/.github/skills/initialize-project/references/preparation.md",
+      "https://workspace/.agents/skills/initialize-project/references/preparation.md",
     );
     return `](..${url.pathname}${url.hash})`;
   });

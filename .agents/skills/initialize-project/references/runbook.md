@@ -1,14 +1,14 @@
 # Initialize a project from this template
 
 This is the authoritative map of application identity edits and setup owners.
-The explicit no-argument
+The repository-local
 [initialize-project skill](../SKILL.md) owns
 execution and maturity/learning behavior. Its
 [initialization contract](./contract.md) owns written preparation,
 protected operator inputs, readiness, approval, local resume state and full
 acceptance. Before fresh initialization, use the
 [preparation guide](./preparation.md) to save the private workbook through
-`node .github/skills/initialize-project/scripts/prepare.mjs`.
+`node .agents/skills/initialize-project/scripts/prepare.mjs`.
 Browser drafts are not authority; the skill reads the reviewed workbook.
 
 Full setup includes local development, shared CI/main protection, DNS, private
@@ -197,6 +197,13 @@ npm run test:browser:development -- tests/browser/documentation.development.spec
 Restore dependencies only when a chosen check reports them missing. Use `npm ci`
 for the existing lockfile; keep dependency upgrades outside initialization.
 
+On Linux, inspect available inotify capacity during local readiness. If Vite
+exits before startup with an `ENOSPC` file-watcher error, retry that exact check
+with `CHOKIDAR_USEPOLLING=true`. After verifying the retry, carry polling into the
+consumer's frontend launch environment and local command when needed. Preserve
+other projects and host limits; record the failed check and verified workaround
+in private run evidence.
+
 Search tracked/owned application files for the old Java package, package name,
 Spring/Compose names, and application-title strings. Exclude dependencies,
 generated build/test output, environment secrets, and Git internals. Classify
@@ -375,6 +382,15 @@ port allocation, Caddy, backup schedule, source pins and recovery safeguards.
 Do not place server credentials in PR CI or widen its host/private-network
 access. Root execution validates actual manual run identity, not runner labels.
 
+Before installation, reject collisions at every generated systemd unit path
+and loaded unit name, including the deployment service, backup service and
+backup timer. Check all containers, including stopped ones, for exact generated
+names, as well as networks, volumes, ports and project directories. Compare the
+shared App signer and release helpers with the approved operator source pin.
+After preparation, verify exact configuration identities, unit bytes/hardening,
+running database image/mount/isolation and protected account fields; retain
+configuration, unit and proxy hashes before independent activation review.
+
 For initial deployed accounts, follow
 [one-time operator provisioning](../../../../infrastructure/release/README.md#one-time-deployed-user-provisioning).
 Use the workbook's deliberate consumer account decision and separately generated
@@ -384,6 +400,15 @@ existing DB network, separate `PROVISION_USER_*` settings and explicit
 `--provision-user` command under the environment lock; verify termination,
 repeat safety and real HTTPS login. Keep provisioning credentials out of normal
 app containers and preserve conflicts rather than resetting users.
+
+Resolve the active digest under the environment lock and hold that lock through
+the fresh production backup, provisioning, matching-repeat and postchecks.
+Avoid nested locks; an operator transaction using the reviewed backup helper
+must preserve its root, protected-path and `umask 0077` safeguards. Persist
+exact task container names and ownership labels before creation, and reconcile
+uncertain Docker responses before releasing the lock or retrying. Recovery
+cleanup must inspect the exact owned scratch name even after a lost creation
+response; retain its intent and stop on uncertain ownership.
 
 Use the consumer's explicit backup destination/risk decision and daily
 time/timezone rather than inheriting a template exception or schedule.
@@ -420,6 +445,30 @@ template copy as inherited GitHub access.
 full initialization, and blocked/remaining work without relying on a generic
 "setup complete" claim. Unverified required checks cannot be waived by reporting.
 
+## Codex skill registration
+
+Codex in VS Code discovers the complete [project skill](../SKILL.md) under
+`.agents/skills/initialize-project/`. Its `agents/openai.yaml` provides the picker
+label and explicit invocation policy. The workflow, references, wizard and tests
+all live in this one package; no global skill installation or credentials are
+required for discovery.
+
+Open this repository as the VS Code workspace and type `$initialize-project` in
+Codex chat. A bare invocation offers initialization, readiness checking and
+resume; including a concrete task proceeds directly. `/initialize-project`
+applies to agents with skill slash commands and uses the same task selection.
+If Codex's skill picker is stale, run **Developer: Reload Window** and start a
+new Codex chat. Verify that typing `$initialize` offers **Initialize project**,
+and that selecting it refers to this repository's
+`.agents/skills/initialize-project/SKILL.md`. A readiness-only request follows
+the preparation checks and reports missing inputs without initializing the
+consumer.
+
+When installing elsewhere, copy this entire package, including `agents/`, into
+`.agents/skills/initialize-project/`, excluding `node_modules`. Verify bare
+invocation waits for task selection, a concrete initialization request reaches
+the saved-workbook gate, and readiness only stops after the private report.
+
 ## Project documentation dashboard
 
 The skill owns the generic preparation, contract, runbook and
@@ -432,11 +481,11 @@ the generic procedure. Add consumer-specific setup decisions there when needed.
 Documentation generation has its own dependency graph and lockfile:
 
 ```sh
-npm --prefix .github/skills/initialize-project ci
-npm --prefix .github/skills/initialize-project run browser:install
-npm --prefix .github/skills/initialize-project run docs:build
-npm --prefix .github/skills/initialize-project run verify
-npm --prefix .github/skills/initialize-project run test:portable-install
+npm --prefix .agents/skills/initialize-project ci
+npm --prefix .agents/skills/initialize-project run browser:install
+npm --prefix .agents/skills/initialize-project run docs:build
+npm --prefix .agents/skills/initialize-project run verify
+npm --prefix .agents/skills/initialize-project run test:portable-install
 ```
 
 Browser tests use the skill's pinned Playwright and Chromium, with isolated
@@ -456,7 +505,7 @@ loads private state or remote assets. The reference page remains unrecorded/not
 ready, even when a consumer's dashboard reports completion.
 
 The wizard needs no npm dependencies. A portable installation copies only this
-skill directory (excluding `node_modules`) into `.github/skills/` of a consumer,
+skill directory (excluding `node_modules`) into `.agents/skills/` of a consumer,
 adds `/.template-initialization/` to its Git ignore rules and runs the Node entry
 point. Full initialization still requires the template's application,
 infrastructure guides and operator prerequisites; portability of the human

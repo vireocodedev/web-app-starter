@@ -14,7 +14,7 @@ import {
 } from "./workspace.mjs";
 
 const workspace = defaultRoot;
-const skillPath = ".github/skills/initialize-project";
+const skillPath = ".agents/skills/initialize-project";
 const compare = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
 const slug = (value) =>
   value
@@ -393,7 +393,7 @@ ${consumer?.limitations?.length ? `<details open><summary>Known limitations</sum
 <div class="toolbar"><label class="field">Search all source content<input id="search" type="search" placeholder="Try backups, CI gate, credentials…" autocomplete="off"></label><label class="field filter">Source type<select id="kind"><option value="all">All sources</option><option value="consumer">Consumer evidence</option><option value="reference">Upstream / reference</option><option value="procedure">Guides &amp; procedures</option></select></label><button id="reset" type="button">Reset</button></div>
 <p class="search-status" id="results" role="status" aria-live="polite">Showing all ${sources.length} sources</p><div class="panel empty" id="empty" hidden><h2>No matching sources</h2><p>Try a broader search or reset the source filter.</p></div>
 ${evidenceHtml}${documentsHtml}
-<footer class="footer">Generated from ${reference ? "bundled skill references only" : "every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference"}. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .github/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · ${fingerprint}</p></footer>
+<footer class="footer">Generated from ${reference ? "bundled skill references only" : "every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference"}. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · ${fingerprint}</p></footer>
 </main></div><script>${interaction}</script></body></html>
 `;
 }
@@ -404,7 +404,7 @@ export async function syncProjectPage(root = workspace, check = false) {
   if (check) {
     if ((await readFile(destination, "utf8")) !== html) {
       throw new Error(
-        "docs/project.html is stale. Run npm --prefix .github/skills/initialize-project run docs:build and commit the updated page.",
+        "docs/project.html is stale. Run npm --prefix .agents/skills/initialize-project run docs:build and commit the updated page.",
       );
     }
   } else {

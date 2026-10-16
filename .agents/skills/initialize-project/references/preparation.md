@@ -1,6 +1,6 @@
 # Prepare a consumer before initialization
 
-Prepare **before** invoking `/initialize-project`, preferably through the
+Prepare **before** invoking the initialize-project skill, preferably through the
 guided local web app below. It replaces the configuration interview with short
 browser steps and a private Markdown workbook saved for the skill. The
 [contract](./contract.md) owns verification and authority;
@@ -15,7 +15,7 @@ An already completed consumer does not need to be initialized again.
 From the consumer Git worktree root, with Node 24 and Git available on Linux:
 
 ```sh
-node .github/skills/initialize-project/scripts/prepare.mjs
+node .agents/skills/initialize-project/scripts/prepare.mjs
 ```
 
 No frontend, dependency installation or application server is needed. The
@@ -73,7 +73,7 @@ umask 077
 mkdir -p .template-initialization
 chmod 700 .template-initialization
 set -C
-node .github/skills/initialize-project/scripts/prepare.mjs --template > .template-initialization/preparation.md
+node .agents/skills/initialize-project/scripts/prepare.mjs --template > .template-initialization/preparation.md
 chmod 600 .template-initialization/preparation.md
 ```
 
@@ -360,11 +360,13 @@ fields for you.
 
 ## 9. Invoke once prepared
 
-Open a fresh agent chat in this trusted consumer workspace and invoke:
+Open a fresh Codex chat in this trusted consumer workspace and invoke:
 
 ```text
-/initialize-project
+$initialize-project initialize this consumer from its saved preparation workbook
 ```
+
+For other agents with skill slash commands, use `/initialize-project`.
 
 The skill reads `.template-initialization/preparation.md`, discovers/verifies
 facts, and writes a nonsecret `.template-initialization/readiness.md` containing

@@ -1,7 +1,7 @@
 # Consumer initialization contract
 
 This is the preparation, authorization, resume and acceptance contract for
-[/initialize-project](../SKILL.md). The
+[initialize-project](../SKILL.md). The
 [runbook](./runbook.md) owns exact edits and links to operator
 procedures. The [preparation workbook](./preparation.md) owns human
 service steps and answers. The skill alone owns maturity and learning-edit policy.
@@ -25,7 +25,7 @@ Preserve data and credentials; a later project rename is not fresh setup.
 ## Written preparation
 
 Before a fresh initialization, the human uses the guided local web app
-(`node .github/skills/initialize-project/scripts/prepare.mjs`) or the Markdown fallback to save
+(`node .agents/skills/initialize-project/scripts/prepare.mjs`) or the Markdown fallback to save
 `/.template-initialization/preparation.md` in a
 user-owned `0700` directory with a regular `0600` file. Read the complete
 workbook; do not replace it with a chat interview, action menu, personal skill,
@@ -82,7 +82,7 @@ do not echo them, copy them to public documents or rotate unrelated credentials.
 
 For execution, require **all** of:
 
-- A current user `/initialize-project` request for this consumer.
+- A current user initialize-project request to initialize or resume this consumer.
 - Complete supported answers, `execution_mode: execute-listed-scope`, explicit
   actions, an authorized signer matching the verified selected account, valid
   UTC signed/expiry times, and the selected repository/identity/bounds.

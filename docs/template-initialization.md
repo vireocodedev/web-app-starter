@@ -1,28 +1,31 @@
 # Initialize a project from this template
 
 The authoritative reusable setup procedure is bundled with the
-[initialize-project skill](../.github/skills/initialize-project/SKILL.md):
+[initialize-project skill](../.agents/skills/initialize-project/SKILL.md):
 
-- [Preparation and blank workbook](../.github/skills/initialize-project/references/preparation.md):
+- [Preparation and blank workbook](../.agents/skills/initialize-project/references/preparation.md):
   required human inputs, protected references, login/App consent, safeguards
   and the local browser wizard or manual fallback.
-- [Contract](../.github/skills/initialize-project/references/contract.md):
+- [Contract](../.agents/skills/initialize-project/references/contract.md):
   written authority, live readiness, private resume state and acceptance.
-- [Runbook](../.github/skills/initialize-project/references/runbook.md):
+- [Runbook](../.agents/skills/initialize-project/references/runbook.md):
   affected identity/configuration files, setup actions, owners and verification.
-- [Rehearsal lessons](../.github/skills/initialize-project/references/rehearsal-lessons.md):
+- [Rehearsal lessons](../.agents/skills/initialize-project/references/rehearsal-lessons.md):
   generic prevention rules, not a consumer execution receipt.
 
 From the consumer Git worktree root on Linux with Node 24 and Git:
 
 ```sh
-node .github/skills/initialize-project/scripts/prepare.mjs
+node .agents/skills/initialize-project/scripts/prepare.mjs
 ```
 
 No application startup or npm install is needed for the wizard. Keep
 `/.template-initialization/` Git-ignored; private drafts/workbooks and readiness
-reports stay there. Save the reviewed workbook, then invoke
-`/initialize-project` with no arguments. Completed browser steps do not prove
+reports stay there. Save the reviewed workbook, then invoke `$initialize-project`
+in Codex and choose initialization, or provide that task in the same prompt.
+Agents supporting skill slash commands can use `/initialize-project` with the
+same task selection. See [Codex registration and verification](../.agents/skills/initialize-project/references/runbook.md#codex-skill-registration).
+Completed browser steps do not prove
 provider access or authorize the agent to manufacture a signature.
 
 Full initialization preserves the stack and existing resources and uses the
@@ -41,7 +44,7 @@ private run evidence, not this document.
 ## Documentation verification
 
 Follow the bundled
-[dashboard procedure](../.github/skills/initialize-project/references/runbook.md#project-documentation-dashboard).
+[dashboard procedure](../.agents/skills/initialize-project/references/runbook.md#project-documentation-dashboard).
 The skill owns its documentation dependencies and lockfile; the public
 [project dashboard](project.html) combines project documents and bundled
 references, while its bundled reference page never includes consumer evidence.

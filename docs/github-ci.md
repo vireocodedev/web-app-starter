@@ -25,7 +25,7 @@ between owners selects both. Main pushes compare the event's prior commit.
 CI configuration changes force all relevant checks.
 
 The detection job always verifies the
-[portable initialization package](../.github/skills/initialize-project/SKILL.md),
+[portable initialization package](../.agents/skills/initialize-project/SKILL.md),
 including on documentation-only PRs. It selects Node/npm from the skill's
 manifest, installs only that package's lockfile, runs contract/model/server,
 documentation and Chromium desktop/mobile accessibility/flow tests, checks
