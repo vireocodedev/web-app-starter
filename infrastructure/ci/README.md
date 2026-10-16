@@ -12,11 +12,11 @@ every consumer's copy of this directory.
 complete cleanup. See [host acceptance](verification/host-acceptance.json) for
 source/configuration/boot-bound evidence. The App and private template repository are registered, and the controller is
 active for controlled acceptance. Genuine template PR/main jobs and path-aware
-gate/protection acceptance passed; see [CI acceptance](../../docs/ci-acceptance.json).
+gate/protection acceptance passed; see [CI acceptance](../../docs/acceptance/ci-acceptance.json).
 The reviewed HTTPS memory repair subsequently passed fresh installation and
 actual predecessor-to-repair validation on a disposable host, full current live
 validation, the original polling replay and genuine post-repair jobs. See
-[current controller acceptance](../../docs/controller-memory-acceptance.json).
+[current controller acceptance](../../docs/acceptance/controller-memory-acceptance.json).
 Cross-repository shared-pool acceptance is still pending. This evidence describes the
 template host, not automatic readiness for a consumer or a different boot.
 

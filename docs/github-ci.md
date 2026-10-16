@@ -16,13 +16,24 @@ not settings inherited by **Use this template**.
 | `infrastructure/ci/**`                                 | Foundation verification           |
 | `infrastructure/release/**`                            | All verifications                 |
 | `.github/**`, `.vscode/**`, or the CI selection helper | All verifications                 |
-| Documentation outside the app folders                  | Detection and aggregate gate only |
+| Documentation outside the app folders                  | Detection/package/docs verification and aggregate gate only |
 | Manual dispatch or the first branch push               | All verifications                 |
 
 The change job compares the checked-out prospective PR merge commit against
 the event's base commit. Renames are treated as deletion/addition so a move
 between owners selects both. Main pushes compare the event's prior commit.
 CI configuration changes force all relevant checks.
+
+The detection job always verifies the
+[portable initialization package](../.github/skills/initialize-project/SKILL.md),
+including on documentation-only PRs. It selects Node/npm from the skill's
+manifest, installs only that package's lockfile, runs contract/model/server,
+documentation and Chromium desktop/mobile accessibility/flow tests, checks
+both generated pages for freshness and repeats verification in an isolated
+skill-only consumer. Browser binaries use the disposable job's temporary
+directory; no frontend dependencies or application/provider startup is needed.
+Template-only application/CI/receipt/pointer assertions remain required in the
+real checkout and are explicitly inapplicable only in the skill-only fixture.
 
 Backend verification selects Java 21 in the disposable job tool cache and runs
 the Gradle wrapper's tests/boot JAR build, including isolated PostgreSQL and auth
@@ -92,8 +103,9 @@ administrator enforcement, zero reviews, and blocked force pushes/deletion.
 A controlled backend-only failure selected no frontend/foundation work and
 blocked merging; the fixture was removed, a frontend-only green result skipped
 backend/foundation and became mergeable with no approving review. See
-[source-bound acceptance](ci-acceptance.json) for runs and policy observations.
+[source-bound acceptance](acceptance/ci-acceptance.json) for runs and policy observations.
 This documents the template repository, not inherited settings for a consumer.
-The documentation-only run also passed with all app/foundation jobs skipped and
-`CI gate` reported successfully. Cross-repository shared-pool acceptance remains
+The historical documentation-only run also passed with all app/foundation jobs
+skipped and `CI gate` reported successfully; it predates the always-run package
+checks described above. Cross-repository shared-pool acceptance remains
 a separate pending gate.
