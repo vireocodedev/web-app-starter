@@ -129,6 +129,11 @@ local links. Generation and validation make no GitHub calls. The separate
 publication procedure in the output contract requires an explicit target and
 publication instruction; this skill's normal task ends with local files.
 
+After both checks pass, set only `state/generation.json`'s `status` to `complete`,
+preserving its identity and owned-file digests, and validate the final checkpoint.
+This records completed generation; keep review status and implementation state
+unchanged until their separate authorized workflows advance them.
+
 **Done when:** source integrity, complete coverage, documents and issue graph pass
 validation, or a precise unresolved verification failure is reported.
 
