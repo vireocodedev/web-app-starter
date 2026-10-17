@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -116,6 +116,8 @@ test('profile is protected dotenv data, with no shell execution', async t => {
   assert.equal((await readProfile(path)).DISCOVERY_PASSWORD, '$(echo never-execute)');
   const unsafe = join(directory, 'unsafe.env');
   await writeFile(unsafe, 'DISCOVERY_PASSWORD=synthetic', { mode: 0o644 });
+  // Creation modes are filtered by the runner's umask; set the unsafe fixture explicitly.
+  await chmod(unsafe, 0o644);
   await assert.rejects(readProfile(unsafe), /owner-only/);
   await symlink(path, join(directory, 'linked.env'));
   await assert.rejects(readProfile(join(directory, 'linked.env')), /regular file/);
