@@ -1,11 +1,17 @@
 # Initialize a project from this template
 
+For the journey through business V1 acceptance and production delivery, use
+[From a cloned template to a production V1](v1-workflow.md). Initialization and
+client scope collection can proceed independently; this page owns setup.
+
 The authoritative reusable setup procedure is bundled with the
 [initialize-project skill](../.agents/skills/initialize-project/SKILL.md):
 
 - [Preparation and blank workbook](../.agents/skills/initialize-project/references/preparation.md):
   required human inputs, protected references, login/App consent, safeguards
-  and the local browser wizard or manual fallback.
+  and reviewed Client Discovery preparation or an existing manual workbook.
+- [Project status](../.agents/skills/initialize-project/references/project-status.md):
+  current preparation, recorded setup, scope approvals/lock and the next action.
 - [Contract](../.agents/skills/initialize-project/references/contract.md):
   written authority, live readiness, private resume state and acceptance.
 - [Runbook](../.agents/skills/initialize-project/references/runbook.md):
@@ -13,20 +19,24 @@ The authoritative reusable setup procedure is bundled with the
 - [Rehearsal lessons](../.agents/skills/initialize-project/references/rehearsal-lessons.md):
   generic prevention rules, not a consumer execution receipt.
 
-From the consumer Git worktree root on Linux with Node 24 and Git:
+Invoke `$initialize-project` in the trusted consumer workspace to see the current
+phase and next action. Supply the production project ID once; the skill remembers
+its local association and checks preparation and scope independently. It reports
+which approvals are missing and whether a locked baseline is eligible for export,
+then offers setup, readiness, specification generation or refreshed status.
 
-```sh
-node .agents/skills/initialize-project/scripts/prepare.mjs
+To explicitly initialize after completing and reviewing developer preparation:
+
+```text
+$initialize-project initialize this consumer from production project PROJECT_UUID
 ```
 
-No application startup or npm install is needed for the wizard. Keep
-`/.template-initialization/` Git-ignored; private drafts/workbooks and readiness
-reports stay there. Save the reviewed workbook, then invoke `$initialize-project`
-in Codex and choose initialization, or provide that task in the same prompt.
-Agents supporting skill slash commands can use `/initialize-project` with the
-same task selection. See [Codex registration and verification](../.agents/skills/initialize-project/references/runbook.md#codex-skill-registration).
-Completed browser steps do not prove
-provider access or authorize the agent to manufacture a signature.
+The skill automatically captures the reviewed workbook using the protected
+user-local administrator profile. Keep `/.template-initialization/` Git-ignored;
+workbook, provenance and readiness reports remain private. Differing input needs
+an explicit refresh request; accepted setup is preserved. Existing manual
+workbooks and legacy resumes remain supported. Agents with skill slash commands
+can use `/initialize-project`. See [registration and verification](../.agents/skills/initialize-project/references/runbook.md#codex-skill-registration).
 
 Full initialization preserves the stack and existing resources and uses the
 existing approved operator. It verifies local development, real CI, both paired

@@ -1,5 +1,8 @@
 # Discovery scope to implementation specification
 
+For the preceding Client Discovery checklist and the later issue, implementation
+and release stages, follow [From a cloned template to a production V1](v1-workflow.md).
+
 After initializing a consumer, invoke the bundled
 [Discovery specification skill](../.agents/skills/discovery-specification/SKILL.md)
 with a production Client Discovery project UUID and an explicit output folder:

@@ -1,10 +1,14 @@
 # Workspace agent guide
 
+For coordinating a consumer from clone through accepted production business V1,
+read [the V1 workflow](docs/v1-workflow.md); follow its linked owners for each task.
+
 For initializing a consumer from this template, or resuming incomplete template
 personalization, follow [Template initialization](docs/template-initialization.md).
 Invoke the [project skill](.agents/skills/initialize-project/SKILL.md) with
 `$initialize-project` in Codex or `/initialize-project` in agents supporting skill
-slash commands. A bare invocation asks for the task; a concrete request proceeds
+slash commands. A bare invocation reports the associated project's preparation,
+setup and approved-scope phase before offering tasks; a concrete request proceeds
 directly. This canonical package owns the workflow and learning-edit status.
 Use the linked contract for full setup versus local-only scope.
 Apply that workflow only when requested, not during ordinary application work.

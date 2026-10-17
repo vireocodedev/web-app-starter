@@ -4,28 +4,33 @@ A single-repository starter with a Java Spring Boot backend and a Vite React
 TypeScript frontend. Manual paired GHCR/Hetzner release workflows require the
 explicit operator setup below; copying this template does not deploy an app.
 
+For the complete journey, follow [From a cloned template to a production V1](docs/v1-workflow.md):
+developer setup, the Client Discovery scope checklist, specification/issue handoff,
+implementation, staging acceptance and production promotion.
+
 ## Create your project from this template
 
 Use GitHub's **Use this template**, create your repository, and clone it locally.
-Open the consumer as a trusted VS Code workspace. Before invoking the skill,
-follow the [preparation guide](.agents/skills/initialize-project/references/preparation.md)
-and start its local browser wizard on Linux with Node 24 and Git:
-
-```sh
-node .agents/skills/initialize-project/scripts/prepare.mjs
-```
-
-The wizard needs no frontend or npm installation. It saves private drafts and,
-after explicit human review, the ignored Markdown workbook. Keep the server
-terminal open while preparing. Then start a fresh Codex chat in VS Code and
-invoke the repository-local skill:
+Open the consumer as a trusted VS Code workspace and invoke `$initialize-project`.
+Supply the production Client Discovery project ID once. The skill remembers the
+association locally and reports developer preparation, recorded setup progress,
+client approvals, scope locking and export eligibility before offering the next
+task. Configure the protected user-local administrator profile once using the
+[preparation guide](.agents/skills/initialize-project/references/preparation.md).
+See [project status](.agents/skills/initialize-project/references/project-status.md)
+for status meanings. To explicitly initialize after completing and reviewing the
+project's **Developer preparation**:
 
 ```text
-$initialize-project
+$initialize-project initialize this consumer from production project PROJECT_UUID
 ```
 
-Choose initialization from the action menu, or include the task directly:
-`$initialize-project initialize this consumer from its saved preparation workbook`.
+The agent automatically captures the reviewed workbook and provenance, checks
+the actual checkout and live readiness, and executes the signed bounded scope.
+Existing manual workbooks and incomplete runs can still be resumed. A bare
+`$initialize-project` shows current status and offers a short task menu; no
+configuration interview or manual download is required. Status inspection starts
+no setup, export download or deployment.
 Codex uses `$` skill mentions; `/initialize-project` is the entry point for
 agents that support skill slash commands.
 
@@ -51,7 +56,7 @@ The file-first workflow still needs a clean fresh-consumer rehearsal to prove
 the complete no-follow-up experience. Template deployment
 evidence below is not evidence that a new consumer has been initialized.
 
-The [portable package](.agents/skills/initialize-project/) contains the wizard,
+The [portable package](.agents/skills/initialize-project/) contains the standalone capture helper,
 generic procedures, documentation generator and tests. Its
 [dashboard verification](.agents/skills/initialize-project/references/runbook.md#project-documentation-dashboard)
 is independent of frontend dependencies. The [project dashboard](docs/project.html)

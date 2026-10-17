@@ -7,6 +7,11 @@ description: "Create, resume or validate a specification and GitHub issue handof
 
 ## Start
 
+For the Client Discovery checklist and surrounding setup, implementation and
+release stages, read `docs/v1-workflow.md` when present in the target checkout;
+otherwise use the [canonical template overview](https://github.com/vireocodedev/web-app-starter#readme).
+This skill's bundled source and output contracts own the local specification/issue handoff.
+
 For a bare `$discovery-specification` or `/discovery-specification`, ask one short
 question offering Generate a specification, Resume a captured package, or Validate
 a package, with free-text input for another task. Wait before inspecting task

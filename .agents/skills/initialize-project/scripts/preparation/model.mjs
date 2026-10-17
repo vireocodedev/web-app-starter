@@ -2,7 +2,7 @@ export const steps = [
   {
     id: "mode",
     title: "Choose the outcome",
-    text: "Prepare a read-only plan, or authorize initialization only after the agent verifies live readiness. This wizard never executes either workflow.",
+    text: "Prepare a read-only plan, or authorize initialization only after the agent verifies live readiness. Client Discovery preparation never executes either workflow.",
     fields: ["execution_mode"],
   },
   {
@@ -172,7 +172,7 @@ export const steps = [
   {
     id: "signature",
     title: "Sign the bounded request",
-    text: "Enter your authorized GitHub account and an explicit UTC validity window. Time buttons are optional human actions, not automatic approval or renewal. Any later edit requires another final review.",
+    text: "Enter your authorized GitHub account and an explicit UTC validity window. Signing is an explicit developer action, never automatic approval or renewal. Any later edit requires another final review.",
     fields: [
       "approval_signer",
       "approval_signed_at",
@@ -183,8 +183,8 @@ export const steps = [
   },
   {
     id: "save",
-    title: "Save the workbook, not a deployment",
-    text: "Review once more and save the private Markdown workbook. Then invoke /initialize-project in a fresh agent chat. Missing live prerequisites produce a readiness report; the wizard never runs provider commands.",
+    title: "Review preparation for initialization",
+    text: "Review and save the preparation revision in Client Discovery. Invoke /initialize-project with this production project ID in a fresh agent chat. The initializer captures the reviewed workbook and verifies live readiness.",
     fields: [],
     save: true,
   },
@@ -269,7 +269,7 @@ export function parseTemplate(markdown) {
     grouped.length !== new Set(grouped).size ||
     [...ids].sort().join() !== [...grouped].sort().join()
   )
-    throw new Error("Wizard steps and Markdown answer fields differ");
+    throw new Error("Preparation topics and Markdown answer fields differ");
   const prerequisites = checkboxes(markdown, 7);
   const approvals = checkboxes(markdown, 8);
   if (
@@ -717,7 +717,7 @@ export function importWorkbook(schema, markdown) {
       values.some((item, index) => item.text !== schema[key][index])
     )
       throw new Error(
-        "Existing consent wording differs; preserve it and reconcile before using the wizard",
+        "Existing consent wording differs; preserve it and reconcile before using the preparation",
       );
     draft[key] = values.map((value) => value.checked);
   }

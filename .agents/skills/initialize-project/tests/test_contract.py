@@ -60,11 +60,13 @@ class InitializerSkillTests(unittest.TestCase):
         start = skill.split('## Start', 1)[1].split('## Workflow', 1)[0]
         for value in ('bare `$initialize-project` or `/initialize-project` invocation',
                       'saved workbook', 'readiness only', 'resuming an incomplete run',
-                      'free-text input', 'Wait for the answer before inspecting or changing task files',
+                      'free-text input', 'first show the advisory project status',
+                      'Wait for the answer before starting that work',
+                      'specification generation', 'refresh status',
                       'For a concrete request, proceed directly',
                       'Explanation and skill-maintenance requests stay within that scope',
                       'they do not initialize the checkout',
-                      'writes only the private readiness report',
+                      'private capture and readiness report',
                       'or execute initialization for a readiness-only request'):
             self.assertIn(value, start)
         self.assertIn('For readiness-only requests or `plan-only`, stop after this report', skill)
@@ -83,7 +85,8 @@ class InitializerSkillTests(unittest.TestCase):
                 maturity(altered)
 
     def test_skill_and_contract_references_ship_inside_the_repository(self):
-        documents = [SKILL, CONTRACT, PREPARATION, REHEARSAL, PACKAGE / 'references/runbook.md']
+        documents = [SKILL, CONTRACT, PREPARATION, REHEARSAL,
+                     PACKAGE / 'references/runbook.md', PACKAGE / 'references/project-status.md']
         if HAS_TEMPLATE:
             documents += [ROOT / 'AGENTS.md', ROOT / 'README.md', ROOT / 'docs/template-initialization.md']
         for document in documents:
@@ -116,7 +119,8 @@ class InitializerSkillTests(unittest.TestCase):
     def test_preparation_answers_and_readiness_report_stay_private(self):
         for name in ('preparation.md', 'readiness.md', 'preparation-draft.json',
                      'preparation-launch.html', 'preparation-session.json',
-                     'preparation-server.lock'):
+                     'preparation-server.lock', 'preparation-provenance.json',
+                     'preparation-capture.lock', 'discovery-project.json'):
             result = subprocess.run(
                 ['git', 'check-ignore', '--quiet', '.template-initialization/' + name],
                 cwd=ROOT, capture_output=True, timeout=5)
@@ -241,15 +245,21 @@ class InitializerSkillTests(unittest.TestCase):
         self.assertIn('npm --prefix .agents/skills/initialize-project run docs:build', SKILL.read_text())
         self.assertIn('docs/project.html', CONTRACT.read_text())
 
-    def test_guided_browser_produces_the_same_private_workbook_not_an_executor(self):
+    def test_reviewed_app_capture_is_standalone_and_preserves_private_authority(self):
         scripts = json.loads((PACKAGE / 'package.json').read_text())['scripts']
-        self.assertEqual(scripts['init:prepare'], 'node scripts/prepare.mjs')
+        self.assertEqual(scripts['init:capture'], 'node scripts/fetch-preparation.mjs')
+        self.assertEqual(scripts['init:status'], 'node scripts/project-status.mjs')
+        self.assertNotIn('init:prepare', scripts)
         self.assertIn('test:preparation', scripts['test'])
-        self.assertIn('node .agents/skills/initialize-project/scripts/prepare.mjs', SKILL.read_text())
-        self.assertIn('preparation-draft.json', PREPARATION.read_text())
+        self.assertIn('scripts/fetch-preparation.mjs PROJECT_UUID', SKILL.read_text())
+        self.assertIn('preparation-provenance.json', PREPARATION.read_text())
         self.assertIn('Browser drafts and checked UI steps alone are not input', SKILL.read_text())
         self.assertIn('never probes providers', CONTRACT.read_text())
-        self.assertIn('matching file revision', PREPARATION.read_text())
+        self.assertIn('request a refresh', PREPARATION.read_text())
+        self.assertTrue((PACKAGE / 'references/preparation-contract.json').is_file())
+        for retired in ('scripts/prepare.mjs', 'scripts/preparation/server.mjs',
+                        'web/index.html', 'web/client.mjs', 'web/styles.css'):
+            self.assertFalse((PACKAGE / retired).exists())
 
     @unittest.skipUnless(HAS_TEMPLATE, 'Template workspace entry points are not part of a skill-only installation.')
     def test_readme_and_agent_pointer_reach_the_same_entry_point(self):
