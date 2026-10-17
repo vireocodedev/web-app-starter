@@ -430,6 +430,13 @@ to each consumer, not inherited from historical template receipts.
 
 ## 9. Report the result
 
+After initialization, a consumer with locked Client Discovery scope can use
+[the specification handoff](../../../../docs/discovery-specification.md).
+Its package owns the source profile, output contract and verification procedure;
+credentials are developer-local and independent of this consumer's admin account.
+Keep generated client data outside the public dashboard's source directories.
+This optional next step does not add requirements to completed initialization.
+
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without
 revealing credentials. For personalization-only scope, leave changes uncommitted

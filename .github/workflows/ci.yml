@@ -40,6 +40,8 @@ jobs:
         with:
           node-version-file: .agents/skills/initialize-project/package.json
           package-manager-cache: false
+      - name: Verify portable discovery specification skill
+        run: npm --prefix .agents/skills/discovery-specification run verify
       - name: Verify portable initialization package and public documentation
         run: |
           package=.agents/skills/initialize-project

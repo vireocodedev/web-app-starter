@@ -9,6 +9,10 @@ directly. This canonical package owns the workflow and learning-edit status.
 Use the linked contract for full setup versus local-only scope.
 Apply that workflow only when requested, not during ordinary application work.
 
+After initialization, use [Discovery specification](.agents/skills/discovery-specification/SKILL.md)
+to generate, resume or validate a specification and issue handoff from a production
+locked scope. The invocation supplies the project ID and output folder.
+
 Generic initialization procedures and tools live in the
 [portable skill](.agents/skills/initialize-project/SKILL.md). Update its bundled
 references at their source; keep consumer-specific setup in the runbook entry

@@ -57,6 +57,22 @@ generic procedures, documentation generator and tests. Its
 is independent of frontend dependencies. The [project dashboard](docs/project.html)
 shows only committed public documentation and evidence, never private preparation.
 
+## Generate the implementation specification
+
+After initialization, use the bundled
+[Discovery specification skill](docs/discovery-specification.md) to turn a locked
+production discovery scope into a specification and GitHub issue handoff:
+
+```text
+$discovery-specification Generate from production project PROJECT_UUID into ./docs/specifications/my-project
+```
+
+Configure the protected Discovery credential profile once using the linked guide.
+The skill uses the initialized application's architecture, records technical
+choices and unresolved client inputs, and validates source coverage and issue
+dependencies. It generates local files; GitHub publication is a separate explicit
+action. Existing consumers can copy the complete skill package to adopt it.
+
 ## Local development
 
 Requirements: JDK 21, Docker with Compose, Node 24, and npm 12. The backend uses

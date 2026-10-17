@@ -196,3 +196,9 @@ references (no values), backup/recovery evidence, and any remaining limitations.
 Report reusable learning changes and whether the run needed post-intake human
 intervention. Leave the user ready to build business features; do not add them
 as part of initialization.
+
+When the consumer has a locked Client Discovery scope, point to the separate
+[Discovery specification skill](../discovery-specification/SKILL.md) as the next
+step, with its production project ID and explicit output folder. Initialization
+does not invoke that workflow automatically. A portable installation containing
+only this initialization package may adopt the specification package separately.
