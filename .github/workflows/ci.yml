@@ -40,6 +40,8 @@ jobs:
         with:
           node-version-file: .agents/skills/initialize-project/package.json
           package-manager-cache: false
+      - name: Verify portable discovery specification skill
+        run: npm --prefix .agents/skills/discovery-specification run verify
       - name: Verify portable initialization package and public documentation
         run: |
           package=.agents/skills/initialize-project
@@ -48,7 +50,7 @@ jobs:
           npm install --global --prefix "$RUNNER_TEMP/npm" "$package_manager"
           export PATH="$RUNNER_TEMP/npm/bin:$PATH"
           npm --prefix "$package" ci
-          export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/preparation-browsers"
+          export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/documentation-browsers"
           npm --prefix "$package" run browser:install
           npm --prefix "$package" run verify
           npm --prefix "$package" run test:portable-install

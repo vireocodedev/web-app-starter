@@ -24,11 +24,29 @@ Preserve data and credentials; a later project rename is not fresh setup.
 
 ## Written preparation
 
-Before a fresh initialization, the human uses the guided local web app
-(`node .agents/skills/initialize-project/scripts/prepare.mjs`) or the Markdown fallback to save
-`/.template-initialization/preparation.md` in a
-user-owned `0700` directory with a regular `0600` file. Read the complete
-workbook; do not replace it with a chat interview, action menu, personal skill,
+### Advisory project phase
+
+A bare skill invocation first reports the intended production project's
+developer preparation, recorded consumer initialization and client scope using
+[the status contract](./project-status.md). This is metadata inspection, not
+live deployment acceptance or authorization to initialize, lock, export or
+generate specifications. The optional protected project association remembers
+the user-supplied ID; conflicting repository/project/API bindings are preserved
+for explicit reconciliation. Preparation and client approvals remain independent.
+An older locked export may remain available while a newer scope is unfinished.
+
+### Preparation for selected initialization
+
+Before fresh initialization, the developer completes and explicitly reviews
+preparation in Client Discovery for the intended production project. The
+initializer automatically fetches that reviewed revision with the supplied
+`projectId`, using the protected user-local profile described in the
+[preparation guide](./preparation.md). The standalone helper verifies schema,
+project/revision/review metadata, exact workbook SHA-256 and the actual consumer
+Git remote. It stores `/.template-initialization/preparation.md` and its
+nonsecret `preparation-provenance.json` under a user-owned `0700` directory as
+regular `0600` files. Existing manual format-1 workbooks remain supported.
+Read the complete workbook; do not replace it with a configuration interview,
 old conversation or guessed defaults. Only supported `use-profile` answers
 delegate values to the explicitly selected protected operator profile.
 
@@ -54,26 +72,27 @@ preparation happen before invocation. Secret input uses protected stores or
 hidden mechanisms, never Markdown/chat. A completed checkbox is an attestation,
 not proof of API access, actual launch behavior or a passed execution gate.
 
-### Guided browser input
+### Reviewed app source and safe capture
 
-The local wizard is a human input surface, not another initialization executor.
-It groups the existing field IDs and consent text into short steps, restores
-private drafts and writes the same workbook only after explicit final review.
-An existing file needs separate replacement confirmation and an unchanged
-revision; malformed or externally changed private data is preserved, not reset.
-It never probes providers, dereferences arbitrary entered paths or changes
-`state.json`, credentials, databases, deployments or acceptance records.
+Developer preparation is administrator-only and separate from client
+requirements/approvals/baseline locks. The developer explicitly reviews the exact
+preparation revision; any edit clears review. The app never probes providers or
+executes initialization. Export of an unreviewed revision returns HTTP 409.
+Authentication and authorization failures remain errors, not absent input.
 
-Its loopback-only server uses a per-run private access path and exact-origin
-write checks. Draft, launcher, session and lock files remain under the ignored
-private directory; the access link must not be shared. No browser local-storage
-copy of the answers or secret-input fields is used. Those runtime/draft files
-are not authority and are not consumed by the skill.
+The helper requests only the selected project and never enumerates projects.
+A matching private workbook is reusable. Differing workbook bytes, project or
+pinned review/revision require an explicit refresh request; existing files are
+preserved otherwise. Capture uses protected private files and rejects symlinks,
+changed files and malformed provenance. Completed state or acceptance is
+preserved without fetching a replacement. It never changes `state.json`,
+credentials, databases, deployments or acceptance records. The retired local
+Node preparation server and browser wizard are no longer input entry points.
 
 ### Written authority and readiness report
 
-The tracked preparation guide stays blank. The human edits only the ignored
-copy, directly or through the wizard, including literal field values,
+The tracked preparation guide stays blank. The developer edits the app preparation, or an existing ignored manual
+copy, including literal field values,
 conditional replacement rows, applicable
 attestations and action approvals. The agent never fills human approvals,
 signature or expiry, and never interprets Markdown/profile values as commands.
@@ -106,8 +125,8 @@ Preserve relevant verified/recovery evidence when refreshing the report.
 It contains references only, not secret values or a verbatim filled workbook.
 
 If answers/access/authority/tool capability are missing or conflicting, write
-that report and stop before affected writes. The human corrects/re-signs the
-workbook and invokes again; do not launch another chat questionnaire. A
+that report and stop before affected writes. The developer corrects/re-signs the app preparation, reviews it and explicitly
+requests refresh (or updates an existing manual workbook), then invokes again; do not launch another chat questionnaire. A
 `plan-only` invocation stops at read-only discovery/reporting even with a
 completed form. Mandatory tool/provider approvals still apply.
 

@@ -237,7 +237,7 @@ test("loads exactly top-level Markdown and acceptance JSON, and rejects malforme
 
 test("bundled reference freshness and anchors do not depend on consumer documents or acceptance", async () => {
   const sources = await loadReferences();
-  assert.equal(sources.length, 4);
+  assert.equal(sources.length, 5);
   const html = buildProjectHtml(sources, { reference: true });
   const { document } = new JSDOM(html).window;
   assert.match(document.body.textContent, /Bundled template reference only/);

@@ -7,9 +7,10 @@ execution and maturity/learning behavior. Its
 [initialization contract](./contract.md) owns written preparation,
 protected operator inputs, readiness, approval, local resume state and full
 acceptance. Before fresh initialization, use the
-[preparation guide](./preparation.md) to save the private workbook through
-`node .agents/skills/initialize-project/scripts/prepare.mjs`.
-Browser drafts are not authority; the skill reads the reviewed workbook.
+[preparation guide](./preparation.md) to complete and review developer preparation
+in Client Discovery. Supply the production project ID to the skill; it captures
+the reviewed private workbook automatically. Existing manual workbooks remain
+valid. Browser drafts are not authority; the skill reads the reviewed workbook.
 
 Full setup includes local development, shared CI/main protection, DNS, private
 images, two real paired deployments and verified recovery under one approved
@@ -19,6 +20,21 @@ is required. Shared host rebuilds, foundation installation/upgrades and data
 replacement remain separately approved operator work, not initialization effects.
 
 ## 1. Confirm the target and identity
+
+### Advisory phase inspection
+
+Before a task is selected on a bare skill invocation, run the standalone
+`scripts/project-status.mjs` from this package. The
+[status contract](./project-status.md) owns its production profile, remembered
+project association, preparation and scope classifications, and next-action
+report. No provider probes or project mutations run during inspection.
+`--remember` records only the explicitly supplied project/source/repository in
+ignored `.template-initialization/discovery-project.json` (0700 directory,
+0600 file), preserving prior captures and setup evidence. Missing credentials,
+API/schema incompatibility and identity conflicts are distinct unknown/error
+states. Verify with the package's preparation and contract tests, portable
+installation, then dashboard generation/freshness. Consumer initialization below
+starts only after that task has been selected.
 
 Read the root and scoped agent guides. Inspect the actual files listed below,
 the working tree, and the consumer's Git remote. GitHub copies template files
@@ -430,6 +446,13 @@ to each consumer, not inherited from historical template receipts.
 
 ## 9. Report the result
 
+After initialization, a consumer with locked Client Discovery scope can use
+[the specification handoff](../../../../docs/discovery-specification.md).
+Its package owns the source profile, output contract and verification procedure;
+credentials are developer-local and independent of this consumer's admin account.
+Keep generated client data outside the public dashboard's source directories.
+This optional next step does not add requirements to completed initialization.
+
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without
 revealing credentials. For personalization-only scope, leave changes uncommitted
@@ -449,14 +472,16 @@ full initialization, and blocked/remaining work without relying on a generic
 
 Codex in VS Code discovers the complete [project skill](../SKILL.md) under
 `.agents/skills/initialize-project/`. Its `agents/openai.yaml` provides the picker
-label and explicit invocation policy. The workflow, references, wizard and tests
+label and explicit invocation policy. The workflow, references, capture helper and tests
 all live in this one package; no global skill installation or credentials are
 required for discovery.
 
 Open this repository as the VS Code workspace and type `$initialize-project` in
-Codex chat. A bare invocation offers initialization, readiness checking and
-resume; including a concrete task proceeds directly. `/initialize-project`
-applies to agents with skill slash commands and uses the same task selection.
+Codex chat. A bare invocation reports the associated project's phase and offers
+initialization/resume, readiness, specification generation or refreshed status.
+It asks for a production project ID when no association is known. Including a
+concrete task proceeds directly. `/initialize-project` applies to agents with
+skill slash commands and uses the same status and task selection.
 If Codex's skill picker is stale, run **Developer: Reload Window** and start a
 new Codex chat. Verify that typing `$initialize` offers **Initialize project**,
 and that selecting it refers to this repository's
@@ -466,8 +491,10 @@ consumer.
 
 When installing elsewhere, copy this entire package, including `agents/`, into
 `.agents/skills/initialize-project/`, excluding `node_modules`. Verify bare
-invocation waits for task selection, a concrete initialization request reaches
-the saved-workbook gate, and readiness only stops after the private report.
+invocation reports status before waiting for task selection, a concrete
+initialization request reaches the saved-workbook gate, and readiness only stops
+after the private report. A status request creates no workbook or readiness
+report and makes no scope-export request.
 
 ## Project documentation dashboard
 
@@ -488,9 +515,9 @@ npm --prefix .agents/skills/initialize-project run verify
 npm --prefix .agents/skills/initialize-project run test:portable-install
 ```
 
-Browser tests use the skill's pinned Playwright and Chromium, with isolated
-temporary consumer worktrees and synthetic answers. Browser installation is a
-test prerequisite only; the wizard itself needs neither Playwright nor npm.
+Browser tests use the skill's pinned Playwright and Chromium for the offline
+reference dashboard, including navigation, filters, mobile and accessibility.
+Browser installation is a test prerequisite only; capture itself needs neither Playwright nor npm.
 CI installs the browser under its disposable runner temporary directory.
 The portable-install check copies only the skill into a temporary Git worktree,
 installs its own lockfile and verifies generated docs and browser flows.
@@ -504,12 +531,19 @@ After editing any bundled reference, top-level `docs/*.md` or
 loads private state or remote assets. The reference page remains unrecorded/not
 ready, even when a consumer's dashboard reports completion.
 
-The wizard needs no npm dependencies. A portable installation copies only this
-skill directory (excluding `node_modules`) into `.agents/skills/` of a consumer,
-adds `/.template-initialization/` to its Git ignore rules and runs the Node entry
-point. Full initialization still requires the template's application,
-infrastructure guides and operator prerequisites; portability of the human
-input tool does not make unrelated applications supported consumers.
+The capture helper needs no npm dependencies. A portable installation copies
+only this skill directory (excluding `node_modules`) into `.agents/skills/` of
+a consumer and ignores `/.template-initialization/`. Its affected files are
+`scripts/fetch-preparation.mjs`, `scripts/preparation/model.mjs`, the pinned
+`references/preparation-contract.json` and blank `references/preparation.md`.
+Required inputs are the production project ID, protected administrator profile,
+reviewed revision and verified consumer Git remote. The agent captures the
+workbook and provenance automatically before readiness; explicit refresh is
+required for changed pinned input, and initialized acceptance is preserved.
+Verify with synthetic HTTP/profile/private-file tests and the complete/plan
+render/hash fixtures mirrored in Client Discovery's backend. Runtime capture
+never depends on the sibling Discovery specification package. Full initialization
+still requires the template application, infrastructure and operator prerequisites.
 
 **Done when:** isolated skill tests and documentation freshness checks pass;
 private inputs are excluded, reference links work, and consumer status comes

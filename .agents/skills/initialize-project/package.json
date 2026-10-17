@@ -9,7 +9,8 @@
     "npm": "12.x"
   },
   "scripts": {
-    "init:prepare": "node scripts/prepare.mjs",
+    "init:status": "node scripts/project-status.mjs",
+    "init:capture": "node scripts/fetch-preparation.mjs",
     "docs:build": "node scripts/project-docs.mjs",
     "docs:check": "node scripts/project-docs.mjs --check",
     "test:preparation": "node --test tests/preparation/*.test.mjs",

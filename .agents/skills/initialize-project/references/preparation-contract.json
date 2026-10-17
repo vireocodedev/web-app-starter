@@ -1,0 +1,543 @@
+{
+  "formatVersion": 1,
+  "fields": [
+    {
+      "id": "form_version",
+      "value": "1",
+      "description": "Workbook format, not permission."
+    },
+    {
+      "id": "repository",
+      "value": "REQUIRED",
+      "description": "Exact private `owner/repository`; the agent discovers/verifies numeric ID."
+    },
+    {
+      "id": "github_account",
+      "value": "use-profile",
+      "description": "Existing protected CLI login, or exact account."
+    },
+    {
+      "id": "operator_profile",
+      "value": "REQUIRED",
+      "description": "Protected external JSON path/reference; no secret values."
+    },
+    {
+      "id": "reuse_existing_operator",
+      "value": "REQUIRED",
+      "description": "`yes`; another foundation/bootstrap is separate work."
+    },
+    {
+      "id": "allow_global_cli_switch",
+      "value": "no",
+      "description": "Prefer scoped authentication; change only if explicitly `yes`."
+    },
+    {
+      "id": "project_slug",
+      "value": "REQUIRED",
+      "description": "Approved lowercase/hyphen identity."
+    },
+    {
+      "id": "display_name",
+      "value": "REQUIRED",
+      "description": "Product name."
+    },
+    {
+      "id": "java_base_package",
+      "value": "REQUIRED",
+      "description": "Explicit dotted application namespace."
+    },
+    {
+      "id": "pwa_short_name",
+      "value": "REQUIRED",
+      "description": "At most 12 characters."
+    },
+    {
+      "id": "localization_policy",
+      "value": "same-name-across-locales",
+      "description": "Or list exact approved names per locale."
+    },
+    {
+      "id": "artwork_source",
+      "value": "retain-template",
+      "description": "Or an exact supplied image directory/reference; report deferred branding if retained."
+    },
+    {
+      "id": "theme_policy",
+      "value": "retain",
+      "description": "Keep the template theme unless a separate change is explicitly requested."
+    },
+    {
+      "id": "data_boundary",
+      "value": "REQUIRED",
+      "description": "`fresh-isolated` or `resume-same-identity`; a different identity/DB migration is separate work."
+    },
+    {
+      "id": "preserve_resources",
+      "value": "all-existing",
+      "description": "Add known unrelated names/paths/volumes; never secret contents."
+    },
+    {
+      "id": "production_hostname",
+      "value": "REQUIRED",
+      "description": "Owned production FQDN."
+    },
+    {
+      "id": "staging_hostname",
+      "value": "REQUIRED",
+      "description": "Different owned staging FQDN."
+    },
+    {
+      "id": "dns_mode",
+      "value": "REQUIRED",
+      "description": "`user-prepared` or `agent-create-missing`; conflicts always preserve and block."
+    },
+    {
+      "id": "authorized_maintainers",
+      "value": "use-profile",
+      "description": "Explicit GitHub login allowlist, not all repository writers."
+    },
+    {
+      "id": "initial_username",
+      "value": "REQUIRED",
+      "description": "A name such as `admin` does not add an administrator role."
+    },
+    {
+      "id": "initial_display_name",
+      "value": "REQUIRED",
+      "description": "Initial account display name."
+    },
+    {
+      "id": "initial_email",
+      "value": "REQUIRED",
+      "description": "Approved initial account email."
+    },
+    {
+      "id": "backup_destination",
+      "value": "REQUIRED",
+      "description": "`same-server` or an already supported operator destination reference."
+    },
+    {
+      "id": "same_server_loss_acknowledged",
+      "value": "REQUIRED",
+      "description": "`yes` for same-server; otherwise `not-required`. Do not inherit acceptance from the profile."
+    },
+    {
+      "id": "backup_time",
+      "value": "REQUIRED",
+      "description": "Daily local time, e.g. `03:00`; must match the supported operator schedule."
+    },
+    {
+      "id": "backup_timezone",
+      "value": "REQUIRED",
+      "description": "Explicit IANA zone, e.g. `Europe/Zagreb`."
+    },
+    {
+      "id": "backup_retention_days",
+      "value": "30",
+      "description": "Fixed supported policy; staging scheduling remains disabled."
+    },
+    {
+      "id": "deployment_port_range",
+      "value": "use-profile",
+      "description": "Unused loopback ports within the operator-approved range."
+    },
+    {
+      "id": "local_port_policy",
+      "value": "REQUIRED",
+      "description": "`allocate-free-loopback` or `preserve-defaults-and-block`; update all related configuration consistently."
+    },
+    {
+      "id": "prerequisite_policy",
+      "value": "locked-project-dependencies-only",
+      "description": "Or `none`; no system install or dependency upgrade is implied."
+    },
+    {
+      "id": "new_paid_resource_ceiling",
+      "value": "0",
+      "description": "No host/subscription/resize/rebuild in this workflow."
+    },
+    {
+      "id": "registry_policy",
+      "value": "require-absent",
+      "description": "Or `same-repository-resume` / `replace-listed-only`."
+    },
+    {
+      "id": "registry_delete_auth",
+      "value": "not-required",
+      "description": "Set `completed` only for approved replacement after the conditional CLI authorization."
+    },
+    {
+      "id": "old_image_loss_acknowledged",
+      "value": "not-required",
+      "description": "Required `yes` for listed replacement; old digests will no longer be pullable."
+    },
+    {
+      "id": "execution_mode",
+      "value": "REQUIRED",
+      "description": "`plan-only` or `execute-listed-scope`."
+    },
+    {
+      "id": "approval_signer",
+      "value": "REQUIRED",
+      "description": "Your authorized GitHub account, matching the selected actor."
+    },
+    {
+      "id": "approval_signed_at",
+      "value": "REQUIRED",
+      "description": "ISO-8601 UTC timestamp."
+    },
+    {
+      "id": "approval_expires_at",
+      "value": "REQUIRED",
+      "description": "Later ISO-8601 UTC expiry; stale/expired authority blocks writes."
+    },
+    {
+      "id": "stable_learning_proposals",
+      "value": "none",
+      "description": "Only explicit proposal IDs from the readiness report if Stable-mode guidance edits are later approved."
+    }
+  ],
+  "topics": [
+    {
+      "id": "mode",
+      "title": "Choose the outcome",
+      "text": "Prepare a read-only plan, or authorize initialization only after the agent verifies live readiness. Client Discovery preparation never executes either workflow.",
+      "fields": [
+        "execution_mode"
+      ]
+    },
+    {
+      "id": "repository",
+      "title": "Connect your repository",
+      "text": "Create a private consumer from the template, clone it, and sign in to the intended GitHub CLI account. Browser login and CLI login are separate.",
+      "fields": [
+        "repository",
+        "github_account",
+        "allow_global_cli_switch"
+      ],
+      "prerequisites": [
+        1
+      ],
+      "links": [
+        [
+          "Create a consumer",
+          "https://github.com/vireocodedev/web-app-starter"
+        ],
+        [
+          "GitHub CLI login",
+          "https://cli.github.com/manual/gh_auth_login"
+        ]
+      ],
+      "command": "gh auth status"
+    },
+    {
+      "id": "operator",
+      "title": "Reuse the existing operator",
+      "text": "Ask the authorized operator for its existing protected profile reference. Do not create another server, pool or App. Enter only a path/reference, never the profile's credentials.",
+      "fields": [
+        "operator_profile",
+        "reuse_existing_operator",
+        "authorized_maintainers"
+      ],
+      "prerequisites": [
+        4
+      ]
+    },
+    {
+      "id": "identity",
+      "title": "Name your application",
+      "text": "Choose the consumer identity deliberately. The slug scopes new resources; the display name is what people see.",
+      "fields": [
+        "project_slug",
+        "display_name"
+      ]
+    },
+    {
+      "id": "namespace",
+      "title": "Set code and installed-app names",
+      "text": "Use an explicit Java application namespace. The short installed-app name has a 12-character limit; keep names consistent across locales unless you supply exact localized names.",
+      "fields": [
+        "java_base_package",
+        "pwa_short_name",
+        "localization_policy"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "Keep artwork and existing data safe",
+      "text": "Retain the current theme. Supply an image directory or deliberately retain template artwork. A fresh isolated app preserves every older app and database; a rename or migration is separate work.",
+      "fields": [
+        "artwork_source",
+        "theme_policy",
+        "data_boundary",
+        "preserve_resources"
+      ],
+      "prerequisites": [
+        0
+      ]
+    },
+    {
+      "id": "actions",
+      "title": "Check GitHub repository access",
+      "text": "Open repository Settings → Actions → General. The pinned template Actions must be permitted, and the operator needs repository administration and private required-check support. The agent binds main protection only after genuine CI exists.",
+      "fields": [],
+      "prerequisites": [
+        2
+      ],
+      "service": "actions"
+    },
+    {
+      "id": "app",
+      "title": "Save the App's repository selection",
+      "text": "In organization Settings → GitHub Apps, configure the existing shared App. Add only this repository under selected repositories, preserve existing selections and save. Obtain owner consent now if your account cannot do this.",
+      "fields": [],
+      "prerequisites": [
+        3
+      ],
+      "service": "app",
+      "links": [
+        [
+          "Why installation and authorization differ",
+          "https://docs.github.com/en/apps/using-github-apps/installing-a-github-app-from-a-third-party"
+        ]
+      ]
+    },
+    {
+      "id": "registry",
+      "title": "Resolve package ownership",
+      "text": "Inspect the repository-derived frontend/backend packages before approving writes. Preserve unrelated packages by default. Replacement needs exact IDs, owners, all-version counts and explicit old-image-loss consent.",
+      "fields": [
+        "registry_policy",
+        "registry_delete_auth",
+        "old_image_loss_acknowledged"
+      ],
+      "prerequisites": [
+        6,
+        7
+      ],
+      "replacements": true,
+      "service": "packages",
+      "command": "gh auth refresh --hostname github.com --scopes delete:packages"
+    },
+    {
+      "id": "dns",
+      "title": "Prepare the two DNS names",
+      "text": "Select the existing project that owns the DNS zone. Check A/AAAA/CNAME and wildcard conflicts. Preserve matching records. Either prepare the two records yourself or authorize only missing-record creation using the operator's protected reference.",
+      "fields": [
+        "production_hostname",
+        "staging_hostname",
+        "dns_mode"
+      ],
+      "prerequisites": [
+        5
+      ],
+      "links": [
+        [
+          "Open Hetzner Console",
+          "https://console.hetzner.com/"
+        ]
+      ]
+    },
+    {
+      "id": "account",
+      "title": "Choose the initial account",
+      "text": "Supply identity only. The agent generates distinct local/staging/production passwords into protected files later. An account named admin still has the standard USER authority.",
+      "fields": [
+        "initial_username",
+        "initial_display_name",
+        "initial_email"
+      ]
+    },
+    {
+      "id": "destination",
+      "title": "Choose the backup destination",
+      "text": "Same-server storage cannot survive loss of that server. Accept that risk explicitly or supply an already supported operator destination. A downloaded rehearsal copy is not an automatic off-server backup service.",
+      "fields": [
+        "backup_destination",
+        "same_server_loss_acknowledged"
+      ]
+    },
+    {
+      "id": "schedule",
+      "title": "Set the recovery schedule",
+      "text": "Choose an operator-supported daily time and IANA timezone. Retention stays 30 days, staging stays unscheduled, and the production timer is enabled only after real initialized retrieval and isolated restoration pass.",
+      "fields": [
+        "backup_time",
+        "backup_timezone",
+        "backup_retention_days"
+      ]
+    },
+    {
+      "id": "ports",
+      "title": "Bound mechanical allocation",
+      "text": "The agent may choose only genuinely unused ports within these bounds, preserving existing workloads. Changing a local port also updates every related launch/proxy/configuration reference.",
+      "fields": [
+        "deployment_port_range",
+        "local_port_policy"
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "Prepare your trusted workspace",
+      "text": "Prepare JDK 21, Node 24/npm 12, Docker/Compose and trusted VS Code Java/Gradle/debugger extensions. Allow import to finish, but do not start an old-identity database. Actual personalized IDE launches still need a verified unattended tool path.",
+      "fields": [
+        "prerequisite_policy",
+        "new_paid_resource_ceiling",
+        "form_version"
+      ],
+      "prerequisites": [
+        8
+      ],
+      "links": [
+        [
+          "VS Code Java debugging",
+          "https://code.visualstudio.com/docs/java/java-debugging"
+        ]
+      ]
+    },
+    {
+      "id": "review",
+      "title": "Review the exact preparation",
+      "text": "Review the names, boundaries and references before authorizing actions. These attestations do not prove provider access or runtime success; the agent independently verifies them.",
+      "fields": [],
+      "prerequisites": [
+        9
+      ],
+      "review": true
+    },
+    {
+      "id": "scope-app",
+      "title": "Authorize application and CI work",
+      "text": "Check only actions you actually authorize for this exact consumer. No checkbox authorizes an upstream publication, new host, privileged-source upgrade or database reset.",
+      "fields": [],
+      "approvals": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "executionOnly": true
+    },
+    {
+      "id": "scope-release",
+      "title": "Authorize isolated release preparation",
+      "text": "Limit changes to the declared DNS names, approved namespace and available capacity. Production must promote the exact successful staging pair without rebuilding.",
+      "fields": [],
+      "approvals": [
+        4,
+        5,
+        6
+      ],
+      "executionOnly": true
+    },
+    {
+      "id": "scope-recovery",
+      "title": "Authorize recovery and exact cleanup",
+      "text": "Live database restoration and password resets remain excluded. Optional package deletion applies only to the exact listed packages/versions; no list means no deletion authority.",
+      "fields": [],
+      "approvals": [
+        7,
+        8,
+        9
+      ],
+      "executionOnly": true
+    },
+    {
+      "id": "signature",
+      "title": "Sign the bounded request",
+      "text": "Enter your authorized GitHub account and an explicit UTC validity window. Signing is an explicit developer action, never automatic approval or renewal. Any later edit requires another final review.",
+      "fields": [
+        "approval_signer",
+        "approval_signed_at",
+        "approval_expires_at",
+        "stable_learning_proposals"
+      ],
+      "executionOnly": true
+    },
+    {
+      "id": "save",
+      "title": "Review preparation for initialization",
+      "text": "Review and save the preparation revision in Client Discovery. Invoke /initialize-project with this production project ID in a fresh agent chat. The initializer captures the reviewed workbook and verifies live readiness.",
+      "fields": [],
+      "save": true
+    }
+  ],
+  "prerequisites": [
+    "Private consumer created/cloned; exact repository and fresh/resume boundary entered.",
+    "Intended GitHub account is authenticated in the protected CLI store.",
+    "Repository administration, private Actions and required-check plan support confirmed.",
+    "Existing shared App has this selected repository; owner/browser consent saved.",
+    "Existing protected operator profile is available; host trust/source/receipt and capacity are the operator's responsibility.",
+    "Correct DNS zone/project authority is available; names/conflicts and chosen record-creation mode resolved.",
+    "Package names inspected; no conflict, same-consumer resume, or exact replacement rows and digest-loss acknowledgement recorded.",
+    "Conditional `delete:packages` authorization completed, **or** `registry_delete_auth` is `not-required` because no deletion is requested.",
+    "Local tools, Docker and trusted VS Code/Java import/extension consent prepared.",
+    "Identity, artwork, account, backup destination/risk/schedule and allocation bounds answered."
+  ],
+  "approvals": [
+    "Personalize this consumer's approved identity/assets and generate protected distinct credentials.",
+    "Build/test, launch the real native/IDE/browser flows and allocate only approved unused local ports.",
+    "Register this exact repository through the existing reviewed operator at an idle maintenance point; validate before reactivation and preserve existing registrations.",
+    "Create scoped consumer commits/branches/PRs/pushes and configure main with the genuine `CI gate`, strict PRs, zero approving reviews and administrator enforcement.",
+    "Use only the declared DNS names, existing host/namespace and permitted free ports; preserve matching records and block conflicts.",
+    "Prepare isolated consumer databases/volumes/networks/controller/TLS and publish only the public controller certificate variable.",
+    "Run real Deploy staging and promote its exact successful immutable pair with Deploy production at the same selected source.",
+    "Explicitly provision the approved users, verify both real HTTPS/browser flows, retrieve and isolated-restore an initialized production dump, then enable only the approved production schedule.",
+    "Remove only exact task-owned scratch containers/temporary transfer or credential files; retain protected backups and all unrelated resources.",
+    "If and only if exact replacement rows are present and approved above, replace only those packages/versions; otherwise no old image/package deletion."
+  ],
+  "options": {
+    "execution_mode": [
+      "plan-only",
+      "execute-listed-scope"
+    ],
+    "reuse_existing_operator": [
+      "yes"
+    ],
+    "allow_global_cli_switch": [
+      "no",
+      "yes"
+    ],
+    "theme_policy": [
+      "retain"
+    ],
+    "data_boundary": [
+      "fresh-isolated",
+      "resume-same-identity"
+    ],
+    "dns_mode": [
+      "user-prepared",
+      "agent-create-missing"
+    ],
+    "same_server_loss_acknowledged": [
+      "yes",
+      "not-required"
+    ],
+    "local_port_policy": [
+      "allocate-free-loopback",
+      "preserve-defaults-and-block"
+    ],
+    "prerequisite_policy": [
+      "locked-project-dependencies-only",
+      "none"
+    ],
+    "registry_policy": [
+      "require-absent",
+      "same-repository-resume",
+      "replace-listed-only"
+    ],
+    "registry_delete_auth": [
+      "not-required",
+      "completed"
+    ],
+    "old_image_loss_acknowledged": [
+      "not-required",
+      "yes"
+    ]
+  },
+  "fixed": {
+    "form_version": "1",
+    "backup_retention_days": "30",
+    "new_paid_resource_ceiling": "0"
+  }
+}

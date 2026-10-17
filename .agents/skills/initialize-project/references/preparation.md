@@ -1,109 +1,68 @@
 # Prepare a consumer before initialization
 
-Prepare **before** invoking the initialize-project skill, preferably through the
-guided local web app below. It replaces the configuration interview with short
-browser steps and a private Markdown workbook saved for the skill. The
-[contract](./contract.md) owns verification and authority;
-the [runbook](./runbook.md) owns application edits and
-operator procedures. This document owns the human preparation steps and answers.
+Prepare and review initialization in **Client Discovery**, on the production
+project's **Developer preparation** page. The developer completes the identity,
+operator references, prerequisites, bounded action scope and signature there.
+Clients do not see or approve developer preparation. Its revision and review
+are independent of the client requirements baseline.
 
-This is a blank, reusable template, not evidence that any consumer is prepared.
-An already completed consumer does not need to be initialized again.
+The [contract](./contract.md) owns verification and authority; the
+[runbook](./runbook.md) owns application edits and operator procedures. This is
+the blank format-1 template, not preparation evidence or execution authority.
+An accepted consumer retains its completion evidence.
 
-## 0. Use the guided local web app
+## 0. Prepare and review in Client Discovery
 
-From the consumer Git worktree root, with Node 24 and Git available on Linux:
+Open the intended project in production Client Discovery as an administrator.
+Complete the short preparation topics using protected file references rather
+than credentials. Review the exact answers and explicitly save the review.
+Any subsequent edit clears review until the developer reviews that revision
+again. Plan-only preparation may contain unresolved answers; execution requires
+complete prerequisites, the applicable action consents and unexpired signature.
 
-```sh
-node .agents/skills/initialize-project/scripts/prepare.mjs
+Configure the administrator's owner-only Discovery profile once at
+`~/.config/client-discovery/production.env` (mode `0600`):
+
+```dotenv
+DISCOVERY_API_URL=https://clientdiscovery.vireocode.com/api
+DISCOVERY_USERNAME=your-administrator-login
+DISCOVERY_PASSWORD=your-protected-password
 ```
 
-No frontend, dependency installation or application server is needed. The
-installed skill locates its own assets/references and defaults to that consumer
-root, independently of the terminal directory. To select another Git worktree,
-pass `--root /absolute/path/to/consumer`; `--no-open` leaves browser opening to
-you. The private directory must be ignored by Git before startup.
+Store credential values only in that protected file, never in preparation,
+Git, public documentation or chat. Environment variables with the same names
+can supply the profile values. This is a user-local configuration shared with
+the Discovery specification workflow; the portable initializer is standalone.
 
-Keep that terminal running. The local-only server opens a protected browser
-launcher, then walks through small steps: identity, operator references,
-GitHub/App consent, package ownership, DNS, account, backups, bounds and
-authorization. Each step explains what to do and links to the relevant service.
-Use **Back**, the step list, or **Do this later** to work in your own order.
-Incomplete items remain visible at final review.
+## 1. Let the initializer capture the reviewed workbook
 
-Drafts automatically save to ignored
-`.template-initialization/preparation-draft.json`, mode `0600` under a
-user-owned `0700` directory. Restarting the command restores the draft/step.
-An existing valid Markdown workbook can be imported; it is not overwritten
-without your explicit replacement confirmation and a matching file revision.
-Changing answers clears the final review confirmation. Signing timestamps are
-set only by your input or an explicit time-button click, never auto-approved.
+Invoke the repository-local skill with the production project ID:
 
-At final review, **Save private workbook** writes
-`.template-initialization/preparation.md` atomically. That is the same input
-consumed by `/initialize-project`; you do not need to edit Markdown. A planning
-request may retain unresolved inputs; execution requires the complete scope,
-attestations, valid values and a current explicit signature.
-
-The browser app binds only to `127.0.0.1`, uses an unguessable per-run access
-path and rejects cross-origin writes. Open the private
-`.template-initialization/preparation-launch.html` if automatic browser opening
-is unavailable. The launcher/session file contains a temporary local access
-link: do not share it, commit it or place it in chat. Answers are not stored in
-browser local storage or sent to providers. The server does not read arbitrary
-referenced files, execute the displayed commands, log into services, deploy,
-or alter existing initialization state. External service links open only when
-you choose them.
-
-Stop the server with **Ctrl+C**. Drafts and saved workbooks remain private;
-only that server's owned launcher/session/lock files are removed. An unexpected
-stale lock is reported rather than deleted blindly: verify the recorded PID in
-`.template-initialization/preparation-server.lock` before removing only a stale
-lock. Already initialized checkouts show a warning and retain their accepted
-setup; use a different consumer checkout for another project.
-
-The remaining sections are the detailed reference and **manual fallback**.
-
-## 1. Make your private working copy
-
-From the new consumer's workspace root on the supported Linux setup:
-
-```sh
-umask 077
-mkdir -p .template-initialization
-chmod 700 .template-initialization
-set -C
-node .agents/skills/initialize-project/scripts/prepare.mjs --template > .template-initialization/preparation.md
-chmod 600 .template-initialization/preparation.md
+```text
+$initialize-project initialize this consumer from production project PROJECT_UUID
 ```
 
-This copying step is unnecessary when using the web app. If a manual copy
-already exists, keep its answers and update it instead of replacing
-it. Fill **that ignored copy**, not this tracked template. Both locations have
-working links to the shipped guides. The template-export command relocates
-links for the private destination and supplies blank fields only; it does not
-sign or authorize anything. Shell no-clobber mode (`set -C`) preserves an
-existing workbook.
+The agent automatically fetches the exact reviewed Markdown export and records
+its project, revision, reviewer, review time and SHA-256 in ignored
+`.template-initialization/preparation-provenance.json`. It saves the private
+`.template-initialization/preparation.md` with mode `0600` in a user-owned
+`0700` directory, then verifies the actual checkout and live readiness.
+No download command, Markdown editing or extra routine approval is needed.
+An unreviewed revision blocks capture. Authentication/authorization failures
+are reported as errors, never interpreted as missing preparation.
 
-Never put passwords, tokens, PEM contents, recovery codes, database dumps or
-secret environment values in either Markdown file. Enter service credentials
-through the service's own login or a hidden terminal/secret-store mechanism.
-Record protected **file/tool references** only. The private workbook and the
-agent's `.template-initialization/readiness.md` report are excluded from the
-public documentation dashboard and from Git.
-CI lints the tracked template's unfilled answers/approvals even on
-documentation-only changes. Keep your filled copy private; do not turn the
-shared template into a saved execution approval.
+An existing identical workbook can be reused. A differing private workbook,
+a changed pinned revision or accepted initialization is preserved. Explicitly
+request a refresh from the chosen production project before replacing a prior
+capture; refresh cannot alter accepted initialization evidence. Existing manual
+format-1 workbooks and incomplete legacy runs remain supported without a
+project ID. Keep their answers and reconcile them deliberately when adopting
+the app source.
 
-Replace every `REQUIRED` answer below. Keep `use-profile` only where explicitly
-offered: it means resolve and verify that field from the selected protected
-operator profile, not guess a template value. Check applicable preparation
-items only after completing them. An unchecked conditional item must have its
-documented `not-required` answer, not an unexplained blank.
-For `plan-only`, unknown answers and unsigned approval fields may remain
-unfilled: they are reported as unresolved, never treated as execution authority.
-Use table escaping for a literal `|` in a value; formatting escapes are not
-part of the product name or other destination value.
+The remaining sections explain the exact fields and consents. The tracked
+answer table stays blank. For an existing manual workbook, use table escaping
+for literal pipes, retain `use-profile` only where offered, and keep credentials
+in protected stores. Plan-only unresolved answers grant no execution authority.
 
 ## 2. Prepare GitHub access and App consent
 
@@ -360,32 +319,24 @@ fields for you.
 
 ## 9. Invoke once prepared
 
-Open a fresh Codex chat in this trusted consumer workspace and invoke:
+Open a fresh agent chat in the trusted consumer workspace and invoke:
 
 ```text
-$initialize-project initialize this consumer from its saved preparation workbook
+$initialize-project initialize this consumer from production project PROJECT_UUID
 ```
 
-For other agents with skill slash commands, use `/initialize-project`.
+Other agents supporting skill slash commands use `/initialize-project`.
+The skill captures the reviewed workbook, verifies live readiness and writes
+`.template-initialization/readiness.md` with the resolved plan, provenance,
+checks and exact blockers. Within current signed bounds it proceeds without a
+configuration interview or another routine approval round.
 
-The skill reads `.template-initialization/preparation.md`, discovers/verifies
-facts, and writes a nonsecret `.template-initialization/readiness.md` containing
-the resolved plan, checks, missing fields and exact blockers. Within your
-written bounds it proceeds without a chat questionnaire or another routine
-configuration/approval round.
-
-If missing/expired/conflicting input, access or tool capability blocks the
-gate, read that report, complete the named manual steps, amend/re-sign the
-private workbook and invoke again. The agent does not edit your answers,
-claim checkboxes as proof, reset data, or bypass provider prompts. A new scope,
-cost or destructive decision needs written authorization before affected work.
-Stable-mode reusable-learning proposals likewise require explicit written
-proposal IDs; `none` leaves those edits unapproved while otherwise authorized
-operations may continue.
-
-No filled copy is required merely to explain/maintain this skill or to verify
-an already completed consumer without mutations. Existing accepted completion
-evidence is preserved; adopting this workbook does not rerun completed setup.
+Correct missing, expired or conflicting preparation in Client Discovery,
+review the changed revision, then explicitly request a refresh and resume.
+The agent preserves completed work and accepted evidence. Existing manual
+workbooks can still be used directly. Stable-mode learning edits require the
+explicit proposal IDs; `none` grants no such edits. Explanation or maintenance
+and verification of completed consumers do not require a new workbook.
 
 Sources: [GitHub App installation/access](https://docs.github.com/en/apps/using-github-apps/installing-a-github-app-from-a-third-party)
 and [GitHub CLI scope refresh](https://cli.github.com/manual/gh_auth_refresh).

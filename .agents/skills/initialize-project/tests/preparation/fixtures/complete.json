@@ -1,0 +1,88 @@
+{
+  "now": "2026-10-17T12:00:00Z",
+  "repository": "example/portal",
+  "draft": {
+    "version": 1,
+    "answers": {
+      "form_version": "1",
+      "repository": "example/portal",
+      "github_account": "use-profile",
+      "operator_profile": "/protected/operator-profile.json",
+      "reuse_existing_operator": "yes",
+      "allow_global_cli_switch": "no",
+      "project_slug": "portal",
+      "display_name": "Portal | Supply\\Workshop",
+      "java_base_package": "com.example.portal",
+      "pwa_short_name": "Portal",
+      "localization_policy": "same-name-across-locales",
+      "artwork_source": "retain-template",
+      "theme_policy": "retain",
+      "data_boundary": "fresh-isolated",
+      "preserve_resources": "all-existing",
+      "production_hostname": "portal.example.com",
+      "staging_hostname": "portal-staging.example.com",
+      "dns_mode": "agent-create-missing",
+      "authorized_maintainers": "use-profile",
+      "initial_username": "admin",
+      "initial_display_name": "Example User",
+      "initial_email": "admin@example.com",
+      "backup_destination": "same-server",
+      "same_server_loss_acknowledged": "yes",
+      "backup_time": "03:00",
+      "backup_timezone": "Europe/Zagreb",
+      "backup_retention_days": "30",
+      "deployment_port_range": "use-profile",
+      "local_port_policy": "allocate-free-loopback",
+      "prerequisite_policy": "locked-project-dependencies-only",
+      "new_paid_resource_ceiling": "0",
+      "registry_policy": "replace-listed-only",
+      "registry_delete_auth": "completed",
+      "old_image_loss_acknowledged": "yes",
+      "execution_mode": "execute-listed-scope",
+      "approval_signer": "example",
+      "approval_signed_at": "2026-10-17T11:59:00.000Z",
+      "approval_expires_at": "2026-10-18T12:00:00.000Z",
+      "stable_learning_proposals": "none"
+    },
+    "prerequisites": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "approvals": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "replacements": [
+      {
+        "name": "portal-frontend",
+        "id": "1234",
+        "repository": "example/old-ui",
+        "versions": "2"
+      },
+      {
+        "name": "portal-backend",
+        "id": "1235",
+        "repository": "example/old-api",
+        "versions": "3"
+      }
+    ],
+    "step": 0
+  },
+  "workbookSha256": "08879d5e69fd36ba0febe4cce1bddf654035454fbe57a65e44071eb3f667b8e8"
+}

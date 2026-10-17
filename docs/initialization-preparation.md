@@ -1,10 +1,10 @@
 # Prepare a consumer before initialization
 
-Use the authoritative
-[preparation guide and blank form](../.agents/skills/initialize-project/references/preparation.md)
-inside the portable skill. It documents the Node-only browser wizard, private
-draft/workbook persistence, explicit review/signature and manual fallback.
+Use the authoritative [preparation guide](../.agents/skills/initialize-project/references/preparation.md)
+to complete and review the production project's developer preparation in Client
+Discovery. Invoke the initializer with its production project ID; the agent
+captures the exact reviewed workbook and provenance automatically. The guide
+owns the protected profile, refresh safeguards and legacy workbook support.
 
 The [setup runbook](template-initialization.md) records consumer-specific setup.
-Fill only the ignored private workbook, never this entry point or the bundled
-blank form.
+Keep credentials and filled workbooks out of tracked documents.

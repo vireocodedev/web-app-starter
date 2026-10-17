@@ -1,7 +1,7 @@
 interface:
   display_name: "Initialize project"
-  short_description: "Initialize, check readiness, or resume project setup"
-  default_prompt: "Use $initialize-project to initialize this consumer from its saved preparation workbook."
+  short_description: "Show project phase, initialize, or resume setup"
+  default_prompt: "Use $initialize-project to show this consumer's developer preparation, initialization and approved-scope status, then offer the next step."
 
 policy:
   allow_implicit_invocation: false

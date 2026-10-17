@@ -12,7 +12,7 @@ import {
 } from "../../scripts/preparation/model.mjs";
 import { executionDraft, schemaForTests, template } from "./test-support.mjs";
 
-test("every workbook answer belongs to one short wizard step with no preset approval", async () => {
+test("every workbook answer belongs to one preparation topic with no preset approval", async () => {
   const schema = await schemaForTests();
   assert.equal(schema.fields.length, 39);
   assert.equal(new Set(steps.flatMap((step) => step.fields)).size, 39);

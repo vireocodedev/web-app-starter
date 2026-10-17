@@ -46,7 +46,7 @@ export function executionDraft(schema, now = Date.now()) {
 }
 
 export async function workspaceFixture() {
-  const root = await mkdtemp(join(tmpdir(), "preparation-wizard-"));
+  const root = await mkdtemp(join(tmpdir(), "preparation-capture-"));
   await writeFile(join(root, ".gitignore"), "/.template-initialization/\n");
   await execute("git", ["init", "--quiet"], { cwd: root });
   await execute(

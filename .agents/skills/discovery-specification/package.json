@@ -1,0 +1,11 @@
+{
+  "name": "discovery-specification-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "verify": "npm test"
+  }
+}

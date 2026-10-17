@@ -22,7 +22,7 @@ initialization experience.
 | A transient container startup failed CI | Keep the failing required check; diagnose/retry within scope without weakening isolation. |
 
 Human login/2FA, App consent, credential entry, identity/risk choices and written
-authority remain human tasks. The wizard collects preparation; only live
+authority remain human tasks. Client Discovery collects preparation; only live
 verification can establish runtime, CI, deployment and initialized recovery
 acceptance. Unexpected post-intake assistance is a preparation defect to record,
 not a reason to claim a no-follow-up success.
