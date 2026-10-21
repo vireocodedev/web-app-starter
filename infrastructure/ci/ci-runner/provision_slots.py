@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 import pwd
 import shutil
+import stat
+import sys
 
 
 def identity(config, index):
@@ -191,8 +193,37 @@ def remove_extra_slots(config, systemd, atomic_file, trusted_executable):
         path.unlink()
 
 
-if __name__ == '__main__':
-    import controller as ctl
+def reviewed_source(value):
+    source = Path(value)
+    if not source.is_absolute() or '..' in source.parts:
+        raise ctl.BoundaryError('absolute-reviewed-pool-source-required')
+    for path in (source, *source.parents):
+        info = path.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+            raise ctl.BoundaryError('untrusted-pool-source-directory')
+    for name in ('validate-job.py', 'busctl-compat.py', 'docker.service',
+                 'web-app-job.service', 'web-app-validation.service'):
+        info = (source / name).lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+            raise ctl.BoundaryError('untrusted-pool-source-file')
+    return source
+
+
+def main(argv=None):
     if os.geteuid() != 0:
         raise ctl.BoundaryError('root-pool-provisioning-required')
-    provision(ctl.load_config(), Path(__file__).parent)
+    arguments = sys.argv[1:] if argv is None else argv
+    if len(arguments) != 1:
+        raise ctl.BoundaryError('one-reviewed-pool-source-required')
+    source = reviewed_source(arguments[0])
+    provision(ctl.load_config(), source)
+    return 0
+
+
+if __name__ == '__main__':
+    import controller as ctl
+    try:
+        sys.exit(main())
+    except (ctl.BoundaryError, OSError, ValueError):
+        print('pool-provisioning-rejected; controller remains disabled', file=sys.stderr)
+        sys.exit(1)

@@ -279,7 +279,7 @@ profile web-app-ci flags=(unconfined) {
 AA
 apparmor_parser --replace /etc/apparmor.d/web-app-ci
 install -m 0644 "$WEB_APP_SOURCE/web-app-ci-controller.service" /etc/systemd/system/
-python3 /usr/local/lib/web-app-ci/provision_slots.py
+python3 /usr/local/lib/web-app-ci/provision_slots.py "$WEB_APP_SOURCE"
 systemctl daemon-reload
 python3 /usr/local/lib/web-app-ci/controller.py check-config
 echo 'Installation prepared. Controller remains disabled. Run credential-free validation before adding the GitHub App key or enabling CI.'
