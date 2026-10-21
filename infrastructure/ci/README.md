@@ -8,12 +8,14 @@ GitHub runner, filesystem, network namespace, and rootless Docker daemon.
 Registration and installation are operator tasks, not steps to repeat from
 every consumer's copy of this directory.
 
-**Pool change status:** source implementation has passed independent review;
-the six-worker source at `3a94332` passed disposable-host installation, migration
-and exact rollback, full installed live validation and genuine four/six-worker
-cohorts on 2026-10-21. Cancellation cleanup also passed. The dispatch repair
-described below is a later candidate and requires its own review and validation
-before activation. Earlier receipts certify only their exact source/configuration/boot.
+**Pool status:** the six-slot pool is installed. The controller from `015d9ad`
+passed independent review, exact-source disposable repair and rollback, and full
+installed-source validation before explicit live activation on 2026-10-21.
+Each of the six live boundaries passed all 273 validation observations; the
+original migration history and four repository registrations were preserved.
+Genuine workflow and latency acceptance is recorded separately in
+[performance acceptance](../../docs/acceptance/ci-performance-acceptance.json).
+Earlier receipts certify only their exact source, configuration and boot.
 
 **Previous serial-host status:** the selected template host was rebuilt and this source passed
 273 actual current-source isolation probes, including a second fresh job and
@@ -25,8 +27,8 @@ The reviewed HTTPS memory repair subsequently passed fresh installation and
 actual predecessor-to-repair validation on a disposable host, full current live
 validation, the original polling replay and genuine post-repair jobs. See
 [current controller acceptance](../../docs/acceptance/controller-memory-acceptance.json).
-Cross-repository shared-pool acceptance is still pending. This evidence describes the
-template host, not automatic readiness for a consumer or a different boot.
+These earlier records describe the serial template host; they do not establish
+readiness for the current pool, a consumer or a different boot.
 
 The isolation machinery was extracted from the experimental
 `vireocodedev/web-app-infrastructure` source at commit
@@ -629,8 +631,8 @@ Select Java 21 inside each backend job using a reviewed, SHA-pinned
 disposable job workspace (for example `${{ runner.temp }}/toolcache`). Set
 `JAVA_HOME` and `PATH` for that job only. Do not request writes to `/opt/jdk` or
 the deployment host's Java installation. Genuine runner execution must verify
-the download, cache location, and Gradle toolchain before this is accepted as
-working; that workflow is the next implementation step.
+the download, cache location, and Gradle toolchain for each new consumer or host.
+The linked acceptance records identify the sources already exercised.
 
 PR jobs use read-only repository token permissions and do not receive deployment
 or registry-write credentials. Use ordinary `pull_request`, not privileged
@@ -644,9 +646,9 @@ reports `CI gate`. See [CI/protection setup](../../docs/github-ci.md) for
 consumer activation and branch policy. The inactive nested frontend workflow
 was removed to keep one authoritative monorepo configuration.
 
-## Host acceptance still required
+## Host acceptance checklist
 
-Before declaring this pool ready:
+Before declaring a new or changed installation ready:
 
 1. Observe a fresh install and all current-boot isolation probes on the approved
    clean host using this exact committed source.
@@ -662,4 +664,5 @@ Before declaring this pool ready:
 A runner inventory may be empty while the ephemeral pool is idle. A configured
 label or a unit-test pass is not proof that a GitHub job can run. Record actual
 run URLs, source commits, fixed-code diagnostics, and cleanup results without
-secrets. Pending host acceptance blocks activation for normal consumer use.
+secrets. Pending host acceptance blocks activation of a new or changed
+installation; use the linked current evidence for the existing pool.

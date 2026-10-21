@@ -93,12 +93,19 @@ preserve that contract.
 
 Concurrency is bounded by the shared pool's configured slots, not the number of
 matrix entries. Each test lane uses one worker/fork; aggregate CPU/memory/application
-reserves remain operator controls. An under-ten-minute total is an acceptance
-target, **not a result established by these configuration changes**. Record cold
-and warm commit-to-gate time, queue/startup time, peak memory, CPU pressure, full
-inventory counts and two simultaneous PRs before declaring the target met. The
-[shared-pool operator guide](../infrastructure/ci/README.md) owns provisioning,
-isolation, fresh-host validation and activation.
+reserves remain operator controls. Complete green CI with unchanged coverage and
+safeguards is the acceptance requirement. The original ten-minute performance
+target was relaxed on 2026-10-21; elapsed time is recorded rather than enforced as
+a new gate. Queue/startup time, resource pressure and the complete test inventory
+remain useful diagnostics. Extra cold/warm or simultaneous-PR benchmarks are not
+required for this delivery. The [shared-pool operator guide](../infrastructure/ci/README.md)
+owns provisioning, isolation, fresh-host validation and activation.
+Source-bound measurements, failed experiments and the accepted workload envelope
+belong in [performance acceptance](acceptance/ci-performance-acceptance.json).
+Refresh timing weights from successful complete reports as the suite grows.
+When the slowest indivisible test or required build exceeds the budget, shorten
+that work or add reviewed capacity; additional matrix entries alone do not add
+server capacity. Concurrent workflows need their own queue-time measurement.
 
 ## Configure a consumer
 
@@ -154,5 +161,5 @@ backend/foundation and became mergeable with no approving review. See
 This documents the template repository, not inherited settings for a consumer.
 The historical documentation-only run also passed with all app/foundation jobs
 skipped and `CI gate` reported successfully; it predates the always-run package
-checks described above. Cross-repository shared-pool acceptance remains
-a separate pending gate.
+checks described above. Current shared-pool controls and measured latency are
+recorded in [performance acceptance](acceptance/ci-performance-acceptance.json).

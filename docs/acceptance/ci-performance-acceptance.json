@@ -1,0 +1,503 @@
+{
+  "schemaVersion": 1,
+  "recordedDate": "2026-10-21",
+  "status": "installed-runtime-controls-accepted",
+  "targetSeconds": 600,
+  "timingContract": "Full required CI, including queue, fresh-worker startup, all selected checks and final gate.",
+  "repositories": {
+    "canonical": "vireocodedev/web-app-starter",
+    "consumer": "vireocodedev/client-discovery-app"
+  },
+  "changePRs": [
+    "https://github.com/vireocodedev/web-app-starter/pull/19",
+    "https://github.com/vireocodedev/web-app-starter/pull/20",
+    "https://github.com/vireocodedev/web-app-starter/pull/21",
+    "https://github.com/vireocodedev/web-app-starter/pull/22",
+    "https://github.com/vireocodedev/client-discovery-app/pull/106"
+  ],
+  "baseline": {
+    "runId": "39579498063",
+    "sourceSha": "46697f556438fa09241408c0199f902db7bd8281",
+    "conclusion": "success",
+    "completeToGateSeconds": 3449,
+    "workers": 1
+  },
+  "capacity": {
+    "slots": 6,
+    "perSlotCpuPercent": 200,
+    "perSlotMemoryMaxMiB": 3072,
+    "cpuBudgetPercent": 1200,
+    "memoryBudgetMiB": 22528,
+    "hostReserveMiB": 8192,
+    "configurationSha256": "74dc95cf888666650c928970b6053be3bcdb2f955750b9e3eb1329ce0af08d6c"
+  },
+  "runtime": {
+    "sourceSha": "015d9ade366b14a0a712cfa2e7a7bcac2725bbe2",
+    "controllerSha256": "13a9d1bc042ac861284ae64436d8ca09688dfde785bb3a0f91cae660bf40e0ea",
+    "independentSourceReview": "GO",
+    "independentDisposableEvidenceReview": "GO",
+    "disposableArchiveSha256": "f32aa9b93308a776ce7ffed0f8bf84a929cc5067b22f855761cfbd6bcfc286b6",
+    "liveArchiveSha256": "45b85c4cada6a746a5315679c212402d7e9ab9d5b9fa5f16f9f2cf6daa8c3eb1",
+    "independentLiveEvidenceReview": "GO",
+    "liveValidation": {
+      "slotCount": 6,
+      "observationsPerSlot": 273,
+      "poolPassed": true,
+      "seconds": 924.87
+    },
+    "activated": true,
+    "genuineCurrentRuntimeAcceptance": "six-worker-canary-and-four-worker-cancellation-passed"
+  },
+  "memoryRepair": {
+    "originalFailureUTC": "2026-10-21T14:54:16Z",
+    "originalControllerOOMKills": 1,
+    "controllerLimitMiB": 512,
+    "hostAvailableApproxGiBAtFailure": 18,
+    "cause": "Concurrent trusted runner copies charged dirty pages, writeback and inode cache to the controller cgroup.",
+    "change": "Serialize trusted copy, ownership and filesystem flush only; workers still execute concurrently.",
+    "boundedDisposableReplay": {
+      "waves": 2,
+      "preparersPerWave": 6,
+      "copyOverlap": 1,
+      "memoryMiB": 512,
+      "cpuPercent": 25,
+      "tasksMax": 64,
+      "oom": 0,
+      "oomKill": 0,
+      "elapsedSeconds": 68.7
+    },
+    "cleanCacheCanReachLimit": true
+  },
+  "historicalFullRuns": [
+    {
+      "repository": "web-app-starter",
+      "runId": "39611243014",
+      "sourceSha": "5b617310dcf62b59ef67098254dbca35a4f698fe",
+      "conclusion": "success",
+      "completeToGateSeconds": 491,
+      "frontendFiles": 87,
+      "frontendAssertions": 533,
+      "backendClasses": 4,
+      "backendTests": 21
+    },
+    {
+      "repository": "client-discovery-app",
+      "runId": "39612884817",
+      "sourceSha": "944879f34e604c5876220d447b16622986eb712d",
+      "conclusion": "failure",
+      "completeToGateSeconds": 1203,
+      "failureScopes": [
+        "Split-test location architecture guard",
+        "One PostgreSQL container-launch failure"
+      ],
+      "allFrontendAssertionsPassed": 3458
+    },
+    {
+      "repository": "client-discovery-app",
+      "runId": "39615609736",
+      "sourceHeadSha": "524b266ea8afd82043ea8d58dd7ce350b303eba8",
+      "checkoutSha": "4a45b0e3567a4b495880e99b0ee3da93b1d909d4",
+      "conclusion": "success",
+      "completeToGateSeconds": 989,
+      "frontendFiles": 304,
+      "frontendAssertions": 3458,
+      "backendClasses": 65,
+      "backendTests": 492,
+      "frontendShards": 4,
+      "backendShards": 3,
+      "independentInventoryAuditPassed": true
+    },
+    {
+      "repository": "client-discovery-app",
+      "runId": "39651674749",
+      "attempt": 1,
+      "sourceHeadSha": "97388838736e7880775b76839548370838e2dac7",
+      "checkoutSha": "3b2f268376fd74a3c5636614f55f5c5413f1de3c",
+      "conclusion": "failure",
+      "completeToGateSeconds": 646.0,
+      "frontendShards": 3,
+      "backendShards": 2,
+      "utilityLanes": 1,
+      "targetMet": false,
+      "failureScopes": [
+        "Existing editor test queried navigation synchronously before asynchronous save completed; reproduced locally and fixed by awaiting the link."
+      ],
+      "passingBackendInventory": {
+        "classes": 65,
+        "tests": 492,
+        "exactlyOnce": true,
+        "unexpectedSkips": 0
+      },
+      "resources": {
+        "start_epoch": 1792606769.0,
+        "end_epoch": 1792607415.0,
+        "samples": 124,
+        "maximum_slot_managers": 6,
+        "pool_observed_peak_memory_current_mib": 15162.7,
+        "pool_slice_lifetime_memory_peak_mib": 15492.5,
+        "pool_observed_peak_anon_mib": 9218.9,
+        "host_min_available_memory_mib": 17211.8,
+        "pool_oom_delta": 0,
+        "pool_oom_kill_delta": 0,
+        "pool_memory_max_event_delta": 0,
+        "maximum_host_cpu_pressure_avg10": 28.49,
+        "maximum_host_memory_pressure_avg10": 0.22,
+        "maximum_host_io_pressure_avg10": 27.33,
+        "host_cpu_steal_percent": 0.0,
+        "application_min_healthy_count": 24,
+        "application_max_unhealthy_count": 0,
+        "application_min_running_count": 24,
+        "application_inspection_interval_seconds": 60,
+        "ci_disk_min_free_gib": 535.6,
+        "controller_observed_peak_memory_current_mib": 512.0,
+        "controller_memory_events_observed_max": {
+          "oom": 0,
+          "oom_kill": 0,
+          "max": 118956
+        },
+        "worker_memory_events_observed_max": {
+          "oom": 0,
+          "oom_kill": 0,
+          "max": 0
+        },
+        "worker_observed_peak_memory_current_mib": 2560.0
+      }
+    },
+    {
+      "repository": "client-discovery-app",
+      "runId": "39656947740",
+      "attempt": 1,
+      "sourceHeadSha": "db093ede3ac0ead943c5554740ff95ad0659cebb",
+      "conclusion": "failure",
+      "completeToGateSeconds": 726.0,
+      "frontendShards": 2,
+      "threadsPerFrontendShard": 2,
+      "backendShards": 3,
+      "utilityLanes": 1,
+      "attemptedFrontendFiles": 304,
+      "attemptedFrontendTests": 3458,
+      "failedFrontendTests": 12,
+      "failureScopes": [
+        "Two-thread frontend execution exceeded existing UI deadlines and produced asynchronous assertion failures; rejected without increasing timeouts."
+      ],
+      "targetMet": false,
+      "resources": {
+        "start_epoch": 1792608878.0,
+        "end_epoch": 1792609604.0,
+        "samples": 139,
+        "maximum_slot_managers": 6,
+        "pool_observed_peak_memory_current_mib": 15251.9,
+        "pool_slice_lifetime_memory_peak_mib": 15492.5,
+        "pool_observed_peak_anon_mib": 8842.7,
+        "host_min_available_memory_mib": 17608.3,
+        "pool_oom_delta": 0,
+        "pool_oom_kill_delta": 0,
+        "pool_memory_max_event_delta": 0,
+        "maximum_host_cpu_pressure_avg10": 37.42,
+        "maximum_host_memory_pressure_avg10": 0.18,
+        "maximum_host_io_pressure_avg10": 19.02,
+        "host_cpu_steal_percent": 0.0,
+        "application_min_healthy_count": 24,
+        "application_max_unhealthy_count": 0,
+        "application_min_running_count": 24,
+        "application_inspection_interval_seconds": 60,
+        "ci_disk_min_free_gib": 535.5,
+        "controller_observed_peak_memory_current_mib": 512.0,
+        "controller_memory_events_observed_max": {
+          "oom": 0,
+          "oom_kill": 0,
+          "max": 148176
+        },
+        "worker_memory_events_observed_max": {
+          "oom": 0,
+          "oom_kill": 0,
+          "max": 0
+        },
+        "worker_observed_peak_memory_current_mib": 2560.1,
+        "worker_cpu_deltas": {
+          "0": {
+            "counter_reset_observed": false,
+            "usage_usec": 428219501,
+            "nr_periods": 3521,
+            "nr_throttled": 692,
+            "throttled_usec": 68291976,
+            "throttled_period_percent": 19.654
+          },
+          "1": {
+            "counter_reset_observed": false,
+            "usage_usec": 1085026689,
+            "nr_periods": 5695,
+            "nr_throttled": 5148,
+            "throttled_usec": 625232271,
+            "throttled_period_percent": 90.395
+          },
+          "2": {
+            "counter_reset_observed": false,
+            "usage_usec": 440188854,
+            "nr_periods": 3296,
+            "nr_throttled": 989,
+            "throttled_usec": 69101234,
+            "throttled_period_percent": 30.006
+          },
+          "3": {
+            "counter_reset_observed": false,
+            "usage_usec": 1067680555,
+            "nr_periods": 5749,
+            "nr_throttled": 4871,
+            "throttled_usec": 621159115,
+            "throttled_period_percent": 84.728
+          },
+          "4": {
+            "counter_reset_observed": false,
+            "usage_usec": 624629863,
+            "nr_periods": 4423,
+            "nr_throttled": 1414,
+            "throttled_usec": 150872967,
+            "throttled_period_percent": 31.969
+          },
+          "5": {
+            "counter_reset_observed": false,
+            "usage_usec": 438128541,
+            "nr_periods": 3313,
+            "nr_throttled": 789,
+            "throttled_usec": 63690112,
+            "throttled_period_percent": 23.815
+          }
+        },
+        "worker_cpu_note": "Sampled cgroup counters include worker-manager lifetime during this window; throttled_usec is aggregate CPU throttling, not wall time."
+      },
+      "checkoutSha": "9ab20773e5d6dfbf92be30fd913c68a5567ffc56",
+      "allWorkersAndRemoteRegistrationsCleanAfterFailure": true
+    },
+    {
+      "repository": "client-discovery-app",
+      "runId": "39659539695",
+      "attempt": 1,
+      "sourceHeadSha": "495c33f758703927f228fc9bce1bc27937f9639a",
+      "checkoutSha": "2a5b900f86c27d1cbb4bf48825d17322cecc6b9c",
+      "conclusion": "failure",
+      "completeToGateSeconds": 661.0,
+      "frontendShards": 3,
+      "workersPerFrontendShard": 1,
+      "backendShards": 2,
+      "utilityLanes": 1,
+      "failedFrontendTests": 1,
+      "failureScopes": [
+        "Feature row queried synchronously after router pathname changed, before React DOM commit; fixed by awaiting the same accessible row, retaining all focus/href/count assertions and deadlines."
+      ],
+      "resources": {
+        "start_epoch": 1792609930.0,
+        "end_epoch": 1792610591.0,
+        "samples": 126,
+        "maximum_slot_managers": 6,
+        "pool_observed_peak_memory_current_mib": 15418.8,
+        "pool_slice_lifetime_memory_peak_mib": 15492.5,
+        "pool_observed_peak_anon_mib": 8887.7,
+        "host_min_available_memory_mib": 17505.2,
+        "pool_oom_delta": 0,
+        "pool_oom_kill_delta": 0,
+        "pool_memory_max_event_delta": 0,
+        "maximum_host_cpu_pressure_avg10": 27.06,
+        "maximum_host_memory_pressure_avg10": 0.54,
+        "maximum_host_io_pressure_avg10": 19.69,
+        "host_cpu_steal_percent": 0.0,
+        "application_min_healthy_count": 24,
+        "application_max_unhealthy_count": 0,
+        "application_min_running_count": 24,
+        "application_inspection_interval_seconds": 60,
+        "ci_disk_min_free_gib": 535.0,
+        "controller_observed_peak_memory_current_mib": 512.0,
+        "controller_memory_events_observed_max": {
+          "oom": 0,
+          "oom_kill": 0,
+          "max": 181267
+        },
+        "worker_memory_events_observed_max": {
+          "oom": 0,
+          "oom_kill": 0,
+          "max": 0
+        },
+        "worker_observed_peak_memory_current_mib": 2560.3,
+        "worker_cpu_deltas": {
+          "0": {
+            "counter_reset_observed": false,
+            "usage_usec": 660504854,
+            "nr_periods": 4651,
+            "nr_throttled": 1648,
+            "throttled_usec": 163258296,
+            "throttled_period_percent": 35.433
+          },
+          "1": {
+            "counter_reset_observed": false,
+            "usage_usec": 587090683,
+            "nr_periods": 4651,
+            "nr_throttled": 952,
+            "throttled_usec": 80124181,
+            "throttled_period_percent": 20.469
+          },
+          "2": {
+            "counter_reset_observed": false,
+            "usage_usec": 596607358,
+            "nr_periods": 4607,
+            "nr_throttled": 887,
+            "throttled_usec": 72882868,
+            "throttled_period_percent": 19.253
+          },
+          "3": {
+            "counter_reset_observed": false,
+            "usage_usec": 660891098,
+            "nr_periods": 4984,
+            "nr_throttled": 347,
+            "throttled_usec": 15015935,
+            "throttled_period_percent": 6.962
+          },
+          "4": {
+            "counter_reset_observed": false,
+            "usage_usec": 662141582,
+            "nr_periods": 4997,
+            "nr_throttled": 375,
+            "throttled_usec": 17294887,
+            "throttled_period_percent": 7.505
+          },
+          "5": {
+            "counter_reset_observed": false,
+            "usage_usec": 639134714,
+            "nr_periods": 4855,
+            "nr_throttled": 341,
+            "throttled_usec": 14905872,
+            "throttled_period_percent": 7.024
+          }
+        },
+        "worker_cpu_note": "Sampled cgroup counters include worker-manager lifetime during this window; throttled_usec is aggregate CPU throttling, not wall time."
+      }
+    }
+  ],
+  "currentRuntimeControls": {
+    "status": "passed",
+    "canary": {
+      "runId": "39650153208",
+      "sourceSha": "a905d58d8ce8358e388a0406879da93871d2fda1",
+      "workerCount": 6,
+      "allWorkersOverlapSeconds": 58.315,
+      "distinctUsersAndNamespaces": true,
+      "freshRootlessDocker": true,
+      "independentAudit": "GO"
+    },
+    "cancellation": {
+      "runId": "39651020587",
+      "sourceSha": "a905d58d8ce8358e388a0406879da93871d2fda1",
+      "runningWorkersBeforeCancellation": 4,
+      "conclusion": "cancelled",
+      "requestUTC": "2026-10-21T18:17:10.892610+00:00",
+      "allSixSlotsAndFourRepositoryRunnerInventoriesClean": true,
+      "independentAudit": "PASS"
+    }
+  },
+  "safeguards": {
+    "requiredChecksRemoved": false,
+    "testInventoryReduced": false,
+    "permissionsExpanded": false,
+    "writableCrossJobCacheAdded": false,
+    "applicationImagesDeployed": false,
+    "mainProtectionChanged": false
+  },
+  "limitations": [
+    "A fixed six-slot pool has finite throughput; simultaneous complete workflows can queue. Timing evidence is workload-specific, not a guarantee for unlimited suite growth.",
+    "Two restored-predecessor full validations encountered an intermittent native user-bus positive-control failure. Its cause remains unresolved; original failures are preserved, no assertion was removed and no automatic probe retry was added. A subsequent unchanged full validation passed after full-flow diagnostics."
+  ],
+  "disposableCleanup": {
+    "serversCreated": 2,
+    "serversDeleted": 2,
+    "serverAndAllocatedIPAbsenceConfirmed": true,
+    "approvedBudgetEUR": 3
+  },
+  "firstRepairedRuntimeFullRun": {
+    "repository": "vireocodedev/client-discovery-app",
+    "runId": "39618818648",
+    "attempt": 2,
+    "event": "pull_request",
+    "sourceHeadSha": "341ee880996c4fd150c0e434bd7525888ba1fdb2",
+    "checkoutSha": "135268fbcc069396141162971b461224f3563e61",
+    "conclusion": "success",
+    "completeToGateSeconds": 815.372,
+    "timingOrigin": "recorded-full-rerun-request-including-queue-and-request-overhead",
+    "frontendShards": 3,
+    "backendShards": 3,
+    "targetMet": false,
+    "resources": {
+      "start_epoch": 1792605288.628347,
+      "end_epoch": 1792606104.0,
+      "samples": 156,
+      "maximum_slot_managers": 6,
+      "pool_observed_peak_memory_current_mib": 15287.1,
+      "pool_slice_lifetime_memory_peak_mib": 15492.5,
+      "pool_observed_peak_anon_mib": 7858.0,
+      "host_min_available_memory_mib": 18572.2,
+      "pool_oom_delta": 0,
+      "pool_oom_kill_delta": 0,
+      "pool_memory_max_event_delta": 0,
+      "maximum_host_cpu_pressure_avg10": 25.71,
+      "maximum_host_memory_pressure_avg10": 0.36,
+      "maximum_host_io_pressure_avg10": 17.2,
+      "host_cpu_steal_percent": 0.0,
+      "application_min_healthy_count": 24,
+      "application_max_unhealthy_count": 0,
+      "application_min_running_count": 24,
+      "application_inspection_interval_seconds": 60,
+      "ci_disk_min_free_gib": 530.3,
+      "controller_observed_peak_memory_current_mib": 512.0,
+      "controller_memory_events_observed_max": {
+        "oom": 0,
+        "oom_kill": 0,
+        "max": 45673
+      },
+      "worker_memory_events_observed_max": {
+        "oom": 0,
+        "oom_kill": 0,
+        "max": 0
+      },
+      "worker_observed_peak_memory_current_mib": 2560.4
+    },
+    "independentInventoryAudit": "PASS",
+    "frontendFiles": 304,
+    "frontendTests": 3458,
+    "backendClasses": 65,
+    "backendTests": 492,
+    "unexpectedSkips": 0,
+    "completeInventoriesExactlyOnce": true
+  },
+  "timingRequirement": {
+    "originalTargetSeconds": 600,
+    "hardLimitRequired": false,
+    "changedByUserUTCDate": "2026-10-21",
+    "currentAcceptance": "Green complete CI with unchanged test coverage and safeguards; timings are informational.",
+    "extraColdWarmContentionBenchmarksRequired": false
+  },
+  "recordedUTC": "2026-10-21T19:25:34.231713+00:00",
+  "acceptanceScope": "This dated record accepts the installed runtime, fresh-host/live boundary validation, six-worker canary and cancellation cleanup. Application delivery is decided by current required PR checks and independent complete-inventory audits linked in the PR descriptions.",
+  "consumerWorkflowProfile": {
+    "frontendShards": 3,
+    "workersPerFrontendShard": 1,
+    "backendShards": 2,
+    "forksPerBackendShard": 1,
+    "utilityLanes": 1,
+    "utilityStartsAlongsideDetection": true,
+    "duplicateScopeSelectionMustAgreeAtFinalGate": true,
+    "nodeEnvironmentPureTestFiles": 47,
+    "localWorkerCountUnchanged": 1,
+    "experimentalTwoThreadProfileRejected": true,
+    "testTimeoutsIncreased": false,
+    "duplicateHostTypecheckRemoved": true,
+    "actualDockerProductionTypecheckRetained": true,
+    "typecheckContractRunsForEverySelectedFrontend": true,
+    "sourceHeadSha": "a4ecf42a23adfd3d137d8d9bf84cfac2de670cf2"
+  },
+  "applicationVerification": {
+    "authoritativeRequiredCheck": "CI gate",
+    "checkSourceAppId": 15368,
+    "strictMainProtectionRetained": true,
+    "consumerPullRequest": "https://github.com/vireocodedev/client-discovery-app/pull/106",
+    "canonicalBranch": "fix/ci-final-performance-gates",
+    "whereFinalEvidenceIsRecorded": "Current PR checks and descriptions contain the final exact-head run, checkout and full-inventory audit. Historical failures above never serve as passing proof for the current candidate."
+  }
+}
