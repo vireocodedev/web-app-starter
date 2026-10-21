@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -69,17 +70,22 @@ def state_of(unit, property_name):
 def require_idle(config):
     if state_of(SERVICE, 'ActiveState') not in ('inactive', 'failed') or state_of(SERVICE, 'UnitFileState') not in ('disabled', 'masked'):
         raise ctl.BoundaryError('controller-must-be-stopped-and-disabled')
-    if state_of(ctl.manager_unit(config), 'ActiveState') not in ('inactive', 'failed'):
-        raise ctl.BoundaryError('ci-manager-must-be-stopped')
-    if ctl.remaining_processes(config):
-        raise ctl.BoundaryError('ci-processes-still-active')
-    if ctl.STATE.exists() and json.loads(ctl.protected_file(ctl.STATE)) != {}:
-        raise ctl.BoundaryError('job-state-not-empty')
-    if (ctl.BASE / 'job.img').exists() or Path('/run/netns/web-app-ci').exists():
-        raise ctl.BoundaryError('job-boundary-still-present')
-    for entry in ctl.mount_entries():
-        if entry['target'] == str(ctl.BASE) or entry['target'].startswith(str(ctl.BASE) + '/'):
-            raise ctl.BoundaryError('ci-mounts-still-active')
+    for index in range(config.get('worker_slots', 1)):
+        worker = ctl.slot_config(config, index)
+        with ctl.slot_context(index):
+            if state_of(ctl.manager_unit(worker), 'ActiveState') not in ('inactive', 'failed'):
+                raise ctl.BoundaryError('ci-manager-must-be-stopped')
+            if ctl.remaining_processes(worker):
+                raise ctl.BoundaryError('ci-processes-still-active')
+            if ctl.STATE.exists() and json.loads(ctl.protected_file(ctl.STATE)) != {}:
+                raise ctl.BoundaryError('job-state-not-empty')
+            if (ctl.BASE / 'job.img').exists() or Path('/run/netns', ctl.NETNS).exists():
+                raise ctl.BoundaryError('job-boundary-still-present')
+            for entry in ctl.mount_entries():
+                if entry['target'] == str(ctl.BASE) or entry['target'].startswith(str(ctl.BASE) + '/'):
+                    raise ctl.BoundaryError('ci-mounts-still-active')
+    if ctl.pool_state():
+        raise ctl.BoundaryError('pool-reservations-not-empty')
 
 
 def expected_digest(value):
@@ -437,11 +443,221 @@ def register(project_path, expected_sha):
                 'full_validation_required': True}
 
 
+POOL_PREDECESSOR = 'bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f'
+POOL_MIGRATION = 'serial-to-slots-v1'
+
+
+def pool_migration_directory():
+    return ctl.POOL_BASE / 'migration-v1'
+
+
+def atomic_file(path, content, mode):
+    descriptor, name = tempfile.mkstemp(prefix='.pool-migration-', dir=path.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, 'wb') as stream:
+            os.fchmod(stream.fileno(), mode)
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        sync_directory(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def migration_destinations(config):
+    uid = config['uid']
+    return {'controller.py': INSTALLED / 'controller.py',
+            'validation.py': INSTALLED / 'validation.py',
+            'service': SYSTEMD / SERVICE,
+            'manager': SYSTEMD / f'user@{uid}.service.d/web-app-ci.conf',
+            'slice': SYSTEMD / f'user-{uid}.slice.d/web-app-ci.conf',
+            'config': ctl.CONFIG}
+
+
+def invalidate_pool_receipts(config):
+    for index in range(config.get('worker_slots', 1)):
+        with ctl.slot_context(index):
+            for name in ('validation.json', 'validation-failure.json'):
+                path = ctl.BASE / name
+                if path.exists():
+                    ctl.protected_path(path)
+                    path.unlink()
+                    sync_directory(path.parent)
+    path = ctl.POOL_BASE / 'pool-validation.json'
+    if path.exists():
+        ctl.protected_path(path)
+        path.unlink()
+        sync_directory(path.parent)
+
+
+def read_pool_migration():
+    directory = ctl.protected_path(pool_migration_directory(), directory=True)
+    ledger = json.loads(ctl.protected_file(directory / 'ledger.json'), object_pairs_hook=ctl.unique_object)
+    if (type(ledger) is not dict or set(ledger) != {'migration', 'phase', 'old_config', 'new_config', 'backups', 'candidate'}
+            or ledger['migration'] != POOL_MIGRATION
+            or ledger['phase'] not in ('prepared', 'applying', 'applied', 'rolling-back', 'rolled-back')):
+        raise ctl.BoundaryError('invalid-pool-migration-ledger')
+    ctl.validate_config(ledger['old_config'])
+    ctl.validate_config(ledger['new_config'])
+    if (ledger['old_config'].get('worker_slots', 1) != 1
+            or set(ledger['backups']) != set(migration_destinations(ledger['old_config']))
+            or set(ledger['candidate']) != {'controller.py', 'validation.py', 'provision_slots.py'}):
+        raise ctl.BoundaryError('invalid-pool-migration-ledger')
+    for name, digest in ledger['backups'].items():
+        if not re.fullmatch('[0-9a-f]{64}', digest) or hashlib.sha256(ctl.protected_file(directory / name).encode()).hexdigest() != digest:
+            raise ctl.BoundaryError('pool-migration-backup-changed')
+    return ledger
+
+
+def migrate_pool(config_path, expected_sha, expected_controller_sha):
+    root_required()
+    source_protected()
+    with lifecycle_lock():
+        expected_digest(expected_sha)
+        old = ctl.load_config()
+        require_idle(old)
+        require_no_ledger()
+        if old.get('worker_slots', 1) != 1 or pool_migration_directory().exists():
+            raise ctl.BoundaryError('pool-migration-already-started-or-not-serial')
+        if expected_controller_sha != POOL_PREDECESSOR:
+            raise ctl.BoundaryError('unsupported-pool-predecessor')
+        previous_path = INSTALLED / 'controller.py'
+        trusted_executable(previous_path)
+        if hashlib.sha256(previous_path.read_bytes()).hexdigest() != POOL_PREDECESSOR:
+            raise ctl.BoundaryError('installed-pool-predecessor-changed')
+        proposed = ctl.validate_config(json.loads(ctl.protected_file(Path(config_path)), object_pairs_hook=ctl.unique_object))
+        # A pool migration changes capacity only; repository authorization,
+        # identity roots, host denylist and timeout/storage contracts stay fixed.
+        capacity = {'worker_slots', 'ci_cpu_budget_percent', 'ci_memory_budget_mib', 'host_reserve_mib',
+                    'memory_high_mib', 'memory_max_mib', 'swap_max_mib', 'cpu_quota_percent', 'poll_seconds'}
+        if {key: value for key, value in old.items() if key not in capacity} != {key: value for key, value in proposed.items() if key not in capacity}:
+            raise ctl.BoundaryError('pool-migration-unrelated-configuration-change')
+        if proposed.get('worker_slots', 1) < 2:
+            raise ctl.BoundaryError('pool-migration-needs-multiple-slots')
+        # Verify the predecessor's full source/config/boot-bound receipt before
+        # replacing anything; stale receipts never authorize migration.
+        spec = importlib.util.spec_from_file_location('verified_pool_predecessor', previous_path)
+        predecessor = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(predecessor)
+        receipt = json.loads(ctl.protected_file(ctl.POOL_BASE / 'validation.json'))
+        if (receipt.get('passed') is not True or receipt.get('configuration_sha256') != expected_sha
+                or receipt.get('boundary_sha256') != predecessor.boundary_digest(old)
+                or receipt.get('boot_id') != Path('/proc/sys/kernel/random/boot_id').read_text().strip()):
+            raise ctl.BoundaryError('pool-predecessor-validation-required')
+        module = load_slot_provisioner()
+        module.preflight(proposed)
+        for path in migration_destinations(old).values():
+            trusted_executable(path) if path != ctl.CONFIG else ctl.protected_path(path)
+        if (INSTALLED / 'provision_slots.py').exists():
+            raise ctl.BoundaryError('unexpected-installed-pool-provisioner')
+        directory = pool_migration_directory()
+        # Publish the complete backup+ledger directory atomically. A power loss
+        # before publication leaves only an unreferenced staging directory,
+        # never a final migration directory without a recoverable ledger.
+        staging = Path(tempfile.mkdtemp(prefix='.migration-v1-', dir=ctl.POOL_BASE))
+        try:
+            backups = {}
+            for name, destination in migration_destinations(old).items():
+                content = destination.read_bytes()
+                atomic_file(staging / name, content, 0o600)
+                backups[name] = hashlib.sha256(content).hexdigest()
+            candidate = {name: hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
+                         for name in ('controller.py', 'validation.py', 'provision_slots.py')}
+            ledger = {'migration': POOL_MIGRATION, 'phase': 'prepared', 'old_config': old,
+                      'new_config': proposed, 'backups': backups, 'candidate': candidate}
+            ctl.atomic_json(staging / 'ledger.json', ledger)
+            sync_directory(staging)
+            os.rename(staging, directory)
+            sync_directory(ctl.POOL_BASE)
+        finally:
+            if staging.exists():
+                shutil.rmtree(staging)
+        expected_digest(expected_sha)
+        require_idle(old)
+        invalidate_pool_receipts(old)
+        ledger['phase'] = 'applying'
+        ctl.atomic_json(directory / 'ledger.json', ledger)
+        # Independent trusted rootfs copies are created before config commits.
+        # A crash leaves the controller disabled and a recoverable explicit ledger.
+        module.provision(proposed, SOURCE)
+        for name in candidate:
+            atomic_file(INSTALLED / name, (SOURCE / name).read_bytes(), 0o755)
+        atomic_config(proposed)
+        ledger['phase'] = 'applied'
+        ctl.atomic_json(directory / 'ledger.json', ledger)
+        return {'operation': 'migrate-pool', 'migration': POOL_MIGRATION,
+                'worker_slots': proposed['worker_slots'], 'controller_enabled': False,
+                'configuration_sha256': ctl.config_digest(), 'full_validation_required': True}
+
+
+def trusted_executable(path):
+    # Unlike secret files these installed source/unit files are world-readable.
+    for parent in (path.parent, *path.parent.parents):
+        info = parent.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+            raise ctl.BoundaryError('untrusted-pool-migration-parent')
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+        raise ctl.BoundaryError('untrusted-pool-migration-destination')
+
+
+def load_slot_provisioner():
+    spec = importlib.util.spec_from_file_location('pool_provisioner', SOURCE / 'provision_slots.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.ctl = ctl
+    return module
+
+
+def rollback_pool(expected_sha):
+    root_required()
+    source_protected()
+    with lifecycle_lock():
+        expected_digest(expected_sha)
+        ledger = read_pool_migration()
+        if ledger['phase'] == 'rolled-back':
+            raise ctl.BoundaryError('pool-already-rolled-back')
+        old, proposed = ledger['old_config'], ledger['new_config']
+        current = ctl.load_config()
+        if current not in (old, proposed):
+            raise ctl.BoundaryError('pool-rollback-configuration-changed')
+        require_idle(proposed)
+        require_no_ledger()
+        # Never roll back over an unknown later source revision.
+        for name, digest in ledger['candidate'].items():
+            path = INSTALLED / name
+            if path.exists():
+                trusted_executable(path)
+                actual = hashlib.sha256(path.read_bytes()).hexdigest()
+                if actual not in {digest, ledger['backups'].get(name)}:
+                    raise ctl.BoundaryError('pool-rollback-installed-source-changed')
+        invalidate_pool_receipts(proposed)
+        ledger['phase'] = 'rolling-back'
+        ctl.atomic_json(pool_migration_directory() / 'ledger.json', ledger)
+        # Slots only contain trusted baselines now: require_idle proved there are
+        # no mounts/processes/registrations. Remove only exact derived resources.
+        provisioner = load_slot_provisioner()
+        provisioner.remove_extra_slots(proposed, SYSTEMD, atomic_file, trusted_executable)
+        for name, destination in migration_destinations(old).items():
+            content = ctl.protected_file(pool_migration_directory() / name).encode()
+            atomic_file(destination, content, 0o600 if name == 'config' else 0o755 if name.endswith('.py') else 0o644)
+        (INSTALLED / 'provision_slots.py').unlink(missing_ok=True)
+        ctl.command('systemctl', 'daemon-reload')
+        ledger['phase'] = 'rolled-back'
+        ctl.atomic_json(pool_migration_directory() / 'ledger.json', ledger)
+        return {'operation': 'rollback-pool', 'controller_enabled': False,
+                'configuration_sha256': ctl.config_digest(), 'full_validation_required': True}
+
+
 def inspect():
-    result = {'operation': 'inspect', 'installed': ctl.CONFIG.exists(), 'supported_migration': False}
+    result = {'operation': 'inspect', 'installed': ctl.CONFIG.exists(), 'supported_migration': POOL_MIGRATION}
     if result['installed']:
         config = ctl.load_config()
         result.update(configuration_sha256=ctl.config_digest(), projects=config['projects'],
+                      worker_slots=config.get('worker_slots', 1),
+                      migration_ledger_present=pool_migration_directory().exists(),
                       controller_active_state=state_of(SERVICE, 'ActiveState'),
                       controller_unit_file_state=state_of(SERVICE, 'UnitFileState'),
                       validation_receipt_present=(ctl.BASE / 'validation.json').exists(),
@@ -453,6 +669,12 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     operations = parser.add_subparsers(dest='operation', required=True)
     operations.add_parser('inspect')
+    pool = operations.add_parser('migrate-pool')
+    pool.add_argument('--config', required=True)
+    pool.add_argument('--expected-config-sha256', required=True)
+    pool.add_argument('--expected-controller-sha256', required=True)
+    rollback = operations.add_parser('rollback-pool')
+    rollback.add_argument('--expected-config-sha256', required=True)
     installer = operations.add_parser('install')
     installer.add_argument('--config', required=True)
     registration = operations.add_parser('register')
@@ -474,6 +696,10 @@ def main(argv=None):
     root_required()
     if args.operation == 'inspect':
         result = inspect()
+    elif args.operation == 'migrate-pool':
+        result = migrate_pool(args.config, args.expected_config_sha256, args.expected_controller_sha256)
+    elif args.operation == 'rollback-pool':
+        result = rollback_pool(args.expected_config_sha256)
     elif args.operation == 'register':
         result = register(args.project, args.expected_config_sha256)
     elif args.operation == 'prepare-app-auth':

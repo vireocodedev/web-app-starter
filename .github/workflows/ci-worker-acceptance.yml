@@ -1,0 +1,96 @@
+name: CI worker acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      slots:
+        description: 'Controlled simultaneous worker count: four-slot canary, then six-slot acceptance'
+        type: choice
+        options: ['4', '6']
+        default: '4'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-worker-acceptance
+  cancel-in-progress: false
+
+jobs:
+  select:
+    name: Select bounded worker cohort
+    runs-on: [self-hosted, Linux, X64, web-app-ci]
+    timeout-minutes: 3
+    outputs:
+      cohort: ${{ steps.cohort.outputs.value }}
+    steps:
+      - name: Select fixed acceptance cohort
+        id: cohort
+        env:
+          REQUESTED_SLOTS: ${{ inputs.slots }}
+        run: |
+          python3 -B - <<'PY'
+          import json, os
+          count = os.environ['REQUESTED_SLOTS']
+          if count not in ('4', '6'):
+              raise SystemExit('invalid fixed worker cohort')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write('value=' + json.dumps(list(range(int(count)))) + '\n')
+          PY
+
+  workers:
+    name: Isolated worker ${{ matrix.slot }}
+    needs: select
+    strategy:
+      fail-fast: false
+      matrix:
+        slot: ${{ fromJSON(needs.select.outputs.cohort) }}
+    runs-on: [self-hosted, Linux, X64, web-app-ci]
+    timeout-minutes: 5
+    steps:
+      - name: Verify fixed unprivileged fresh-worker controls
+        env:
+          ACCEPTANCE_SLOT: ${{ matrix.slot }}
+        run: |
+          python3 -B - <<'PY'
+          import json, os, subprocess, time
+          from pathlib import Path
+          uid = os.getuid()
+          assert 60000 <= uid <= 65000
+          assert set(os.getgroups()) <= {uid}
+          status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines() if ':' in line)
+          assert all(int(status[field].strip(), 16) == 0 for field in ('CapEff', 'CapPrm', 'CapAmb'))
+          assert Path('/etc/web-app-ci-boundary').read_text().strip() == 'web-app-ci-minimal-rootfs'
+          for target in ('/etc/web-app-ci/github-app.pem', '/etc/web-app-ci/github-app.json', '/srv/web-app'):
+              assert not Path(target).exists()
+          def docker(*args):
+              return subprocess.check_output(['docker', *args], text=True, timeout=30).strip()
+          assert not docker('ps', '-aq')
+          assert not docker('volume', 'ls', '--format', '{{.Name}}')
+          security = json.loads(docker('info', '--format', '{{json .SecurityOptions}}'))
+          assert any('rootless' in item for item in security)
+          volume = 'worker-acceptance-' + os.environ['ACCEPTANCE_SLOT']
+          docker('volume', 'create', volume)
+          started = time.time()
+          try:
+              # Hold all cohort jobs long enough to prove actual overlap from
+              # their artifact intervals and root-side live resource inspection.
+              time.sleep(30)
+              assert docker('volume', 'ls', '--format', '{{.Name}}') == volume
+              result = {'slot': int(os.environ['ACCEPTANCE_SLOT']), 'uid': uid,
+                        'started_epoch': started, 'finished_epoch': time.time(),
+                        'private_network_namespace': str(Path('/proc/self/ns/net').readlink()),
+                        'private_cgroup_namespace': str(Path('/proc/self/ns/cgroup').readlink()),
+                        'fresh_docker': True, 'rootless_docker': True, 'passed': True}
+              (Path(os.environ['RUNNER_TEMP']) / 'worker-acceptance.json').write_text(json.dumps(result))
+          finally:
+              docker('volume', 'rm', volume)
+          PY
+      - name: Retain nonsecret fixed-probe receipt
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: worker-acceptance-${{ matrix.slot }}
+          path: ${{ runner.temp }}/worker-acceptance.json
+          if-no-files-found: error
+          retention-days: 7

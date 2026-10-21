@@ -42,7 +42,8 @@ module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
 module.CONFIG=pathlib.Path(config_path)
 config=module.load_config()
 uid=config['uid']; start=config['subuid_start']; end=start+65536
-assert int(ram) >= config['memory_max_mib']+config['host_reserve_mib'], 'RAM reserve too small'
+assert int(ram) >= config.get('ci_memory_budget_mib', config['memory_max_mib'])+config['host_reserve_mib'], 'RAM reserve too small'
+module.pool_capacity(config)
 assert not any(p.pw_name=='web-app-ci' or p.pw_uid==uid or start<=p.pw_uid<end for p in pwd.getpwall()), 'UID conflict'
 assert not any(g.gr_name=='web-app-ci' or g.gr_gid==uid or start<=g.gr_gid<end for g in grp.getgrall()), 'GID conflict'
 for name in ('/etc/subuid','/etc/subgid'):
@@ -63,7 +64,7 @@ test "$(df --output=avail -B1 /var/lib | tail -n 1)" -ge 26843545600 || { echo '
 install -d -m 0700 /etc/web-app-ci "$WEB_APP_BASE"
 install -m 0600 "$WEB_APP_CONFIG" /etc/web-app-ci/config.json
 install -d -m 0755 /usr/local/lib/web-app-ci
-install -m 0755 "$WEB_APP_SOURCE/controller.py" "$WEB_APP_SOURCE/validation.py" "$WEB_APP_SOURCE/github_app.py" /usr/local/lib/web-app-ci/
+install -m 0755 "$WEB_APP_SOURCE/controller.py" "$WEB_APP_SOURCE/validation.py" "$WEB_APP_SOURCE/github_app.py" "$WEB_APP_SOURCE/provision_slots.py" /usr/local/lib/web-app-ci/
 printf '%s\n' '{"app_id":null,"installation_id":null,"owner":"vireocodedev"}' > /etc/web-app-ci/github-app.json
 WEB_APP_PROC_MOUNTED=0
 trap 'if test "$WEB_APP_PROC_MOUNTED" = 1; then umount "$WEB_APP_ROOTFS/proc"; fi' EXIT
@@ -278,6 +279,7 @@ profile web-app-ci flags=(unconfined) {
 AA
 apparmor_parser --replace /etc/apparmor.d/web-app-ci
 install -m 0644 "$WEB_APP_SOURCE/web-app-ci-controller.service" /etc/systemd/system/
+python3 /usr/local/lib/web-app-ci/provision_slots.py
 systemctl daemon-reload
 python3 /usr/local/lib/web-app-ci/controller.py check-config
 echo 'Installation prepared. Controller remains disabled. Run credential-free validation before adding the GitHub App key or enabling CI.'

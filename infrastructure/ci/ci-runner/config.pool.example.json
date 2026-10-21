@@ -1,0 +1,18 @@
+{
+  "uid": 62041,
+  "subuid_start": 1048576,
+  "worker_slots": 6,
+  "memory_high_mib": 2560,
+  "memory_max_mib": 3072,
+  "swap_max_mib": 0,
+  "cpu_quota_percent": 200,
+  "ci_cpu_budget_percent": 1200,
+  "ci_memory_budget_mib": 22528,
+  "tasks_max": 1024,
+  "job_disk_gib": 12,
+  "host_reserve_mib": 8192,
+  "host_public_ipv4": ["203.0.113.10"],
+  "job_timeout_seconds": 3600,
+  "poll_seconds": 15,
+  "projects": {}
+}

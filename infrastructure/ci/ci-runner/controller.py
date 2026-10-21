@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Root controller. Fixed commands; repository access comes from protected config."""
 import argparse
+import contextlib
 import errno
 import fcntl
 from functools import lru_cache
@@ -16,6 +17,7 @@ import signal
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -35,10 +37,17 @@ PEER = 'webcic'
 SUBNET = '10.203.241.0/30'
 CLIENT = '10.203.241.2'
 STOP = False
+POOL_BASE = BASE
+GATEWAY = '10.203.241.1'
+FIREWALL = 'web_app_ci'
 
 
 class BoundaryError(Exception):
     """Messages are fixed codes, never API bodies, argv or job output."""
+
+
+class RegistrationRecoveryRequired(BoundaryError):
+    """Local teardown proved complete; only remote runner absence is unknown."""
 
 
 class RejectRedirect(urllib.request.HTTPRedirectHandler):
@@ -129,7 +138,9 @@ def validate_config(config):
               'tasks_max': (256, 2048), 'job_disk_gib': (8, 24),
               'host_reserve_mib': (2048, 65536),
               'job_timeout_seconds': (600, 7200), 'poll_seconds': (15, 120)}
-    if set(config) != set(bounds) | {'host_public_ipv4', 'projects'}:
+    optional = {'worker_slots', 'ci_cpu_budget_percent', 'ci_memory_budget_mib'}
+    required = set(bounds) | {'host_public_ipv4', 'projects'}
+    if not required <= set(config) or set(config) - required - optional:
         raise BoundaryError('invalid-configuration-keys')
     for key, (low, high) in bounds.items():
         value = config[key]
@@ -137,6 +148,18 @@ def validate_config(config):
             raise BoundaryError('invalid-configuration-value')
     if config['memory_high_mib'] > config['memory_max_mib']:
         raise BoundaryError('invalid-memory-bounds')
+    slots = config.get('worker_slots', 1)
+    if type(slots) is not int or not 1 <= slots <= 8:
+        raise BoundaryError('invalid-worker-slot-count')
+    for key, default, ceiling in (('ci_cpu_budget_percent', slots * config['cpu_quota_percent'], 12800),
+                                  ('ci_memory_budget_mib', slots * config['memory_max_mib'], 65536)):
+        value = config.get(key, default)
+        if type(value) is not int or not default <= value <= ceiling:
+            raise BoundaryError('invalid-pool-resource-budget')
+    if slots > 1 and not optional <= set(config):
+        raise BoundaryError('explicit-pool-resource-budget-required')
+    if config['uid'] + slots - 1 > 65000 or config['subuid_start'] + slots * 65536 > 2000065536:
+        raise BoundaryError('worker-identity-range-exhausted')
     addresses = config['host_public_ipv4']
     if not isinstance(addresses, list) or not addresses:
         raise BoundaryError('host-public-ipv4-required')
@@ -146,6 +169,112 @@ def validate_config(config):
     validate_projects(config['projects'])
     return config
 
+
+
+def slot_config(config, index):
+    if type(index) is not int or not 0 <= index < config.get('worker_slots', 1):
+        raise BoundaryError('invalid-worker-slot')
+    result = dict(config)
+    result['uid'] += index
+    result['subuid_start'] += index * 65536
+    return result
+
+
+@contextlib.contextmanager
+def slot_context(index):
+    """Process-local boundary addresses; never use threads for boundary work."""
+    global BASE, HOME, ROOTFS, STATE, WITNESS_STATE, NETNS, VETH, PEER, SUBNET, CLIENT, GATEWAY, FIREWALL
+    names = ('BASE', 'HOME', 'ROOTFS', 'STATE', 'WITNESS_STATE', 'NETNS', 'VETH', 'PEER',
+             'SUBNET', 'CLIENT', 'GATEWAY', 'FIREWALL')
+    saved = {name: globals()[name] for name in names}
+    try:
+        if index:
+            BASE = POOL_BASE / 'slots' / str(index)
+            HOME, ROOTFS = BASE / 'job/home', BASE / 'rootfs'
+            STATE, WITNESS_STATE = BASE / 'controller.json', BASE / 'witness-mounts.json'
+            NETNS, VETH, PEER = f'web-app-ci-{index}', f'webcih{index}', f'webcic{index}'
+            network = ipaddress.IPv4Network(f'10.203.{241 + index}.0/30')
+            SUBNET, GATEWAY, CLIENT = str(network), str(network[1]), str(network[2])
+            FIREWALL = f'web_app_ci_{index}'
+        yield
+    finally:
+        globals().update(saved)
+
+
+def pool_capacity(config):
+    slots = config.get('worker_slots', 1)
+    total = next(int(line.split()[1]) // 1024 for line in Path('/proc/meminfo').read_text().splitlines()
+                 if line.startswith('MemTotal:'))
+    if total < config.get('ci_memory_budget_mib', slots * config['memory_max_mib']) + config['host_reserve_mib']:
+        raise BoundaryError('pool-exceeds-host-memory-budget')
+    if config.get('ci_cpu_budget_percent', slots * config['cpu_quota_percent']) > (os.cpu_count() or 1) * 100:
+        raise BoundaryError('pool-exceeds-host-cpu-budget')
+
+
+def admission_headroom(config, children):
+    """Reserve every live/preparing worker's growth before starting another.
+
+    Current usage is already reflected in MemAvailable/free disk. Reserve the
+    remaining per-worker ceiling, including workers not yet through prepare,
+    so simultaneous preparations cannot all spend the same available capacity.
+    """
+    available = next(int(line.split()[1]) // 1024 for line in Path('/proc/meminfo').read_text().splitlines()
+                     if line.startswith('MemAvailable:'))
+    memory_growth = config['memory_max_mib']
+    disk_growth = config['job_disk_gib'] * 1024 ** 3
+    for index in children:
+        if config.get('worker_slots', 1) > 1:
+            current_file = Path(f'/sys/fs/cgroup/webappci.slice/webappci-worker{index}.slice/memory.current')
+        else:
+            current_file = Path(f"/sys/fs/cgroup/user.slice/user-{config['uid']}.slice/memory.current")
+        try:
+            current = int(current_file.read_text().strip()) // 1024 ** 2
+        except FileNotFoundError:
+            current = 0  # Not yet prepared: reserve its entire ceiling.
+        memory_growth += max(0, config['memory_max_mib'] - current)
+        base = POOL_BASE if index == 0 else POOL_BASE / 'slots' / str(index)
+        try:
+            allocated = (base / 'job.img').stat().st_blocks * 512
+        except FileNotFoundError:
+            allocated = 0
+        disk_growth += max(0, config['job_disk_gib'] * 1024 ** 3 - allocated)
+    return (available >= config['host_reserve_mib'] + memory_growth
+            and shutil.disk_usage(POOL_BASE).free >= disk_growth + 8 * 1024 ** 3)
+
+
+def pool_state(value=None):
+    path = POOL_BASE / 'pool.json'
+    if value is None:
+        result = json.loads(protected_file(path), object_pairs_hook=unique_object) if path.exists() else {}
+        if type(result) is not dict:
+            raise BoundaryError('invalid-pool-recovery-state')
+        for index, record in result.items():
+            if not re.fullmatch('[0-7]', index) or type(record) is not dict or set(record) != {'repo', 'job_id'}:
+                raise BoundaryError('invalid-pool-recovery-state')
+            validate_repository(record['repo'])
+            if type(record['job_id']) is not int or record['job_id'] <= 0:
+                raise BoundaryError('invalid-pool-recovery-state')
+        return result
+    atomic_json(path, value)
+    return value
+
+
+def atomic_json(path, value):
+    descriptor, name = tempfile.mkstemp(prefix='.pool-state-', dir=path.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, 'w') as stream:
+            json.dump(value, stream, sort_keys=True)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
+        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def load_config():
@@ -231,17 +360,21 @@ def minimal_devices():
 
 def boundary_digest(config):
     paths = [CONFIG, APP_SETTINGS, Path(__file__), Path(__file__).with_name('validation.py'),
-             Path(__file__).with_name('github_app.py'),
+             Path(__file__).with_name('github_app.py'), Path(__file__).with_name('provision_slots.py'),
              ROOTFS / 'usr/local/lib/web-app-ci/start-job.sh',
              ROOTFS / 'usr/local/lib/web-app-ci/validate-job.py',
              ROOTFS / 'etc/systemd/user/docker.service',
              ROOTFS / 'etc/systemd/user/web-app-job.service',
              ROOTFS / 'etc/systemd/user/web-app-validation.service',
              Path(f"/etc/systemd/system/user@{config['uid']}.service.d/web-app-ci.conf"),
-             Path(f"/etc/systemd/system/user-{config['uid']}.slice.d/web-app-ci.conf"),
+             *([] if config.get('worker_slots', 1) > 1 else [Path(f"/etc/systemd/system/user-{config['uid']}.slice.d/web-app-ci.conf")]),
              Path('/etc/apparmor.d/web-app-ci'), BASE / 'baseline-packages.tsv',
              ROOTFS / 'usr/bin/newuidmap', ROOTFS / 'usr/bin/newgidmap',
              ROOTFS / 'usr/local/lib/web-app-ci/runtime-bin/busctl', ROOTFS / 'usr/bin/busctl']
+    if config.get('worker_slots', 1) > 1:
+        index = config['uid'] - load_config()['uid']
+        paths += [Path('/etc/systemd/system/webappci.slice'),
+                  Path(f'/etc/systemd/system/webappci-worker{index}.slice')]
     digest = hashlib.sha256()
     for path in paths:
         digest.update(str(path).encode())
@@ -361,7 +494,7 @@ def witnesses_start():
                     'rw,nosuid,nodev,noexec,relatime,hidepid=invisible,subset=pid', 'proc', str(target))
         else:
             # Only NET entry: retain the HOST mount namespace and fixed source.
-            command('nsenter', '--net=/run/netns/web-app-ci', 'mount', '-t', 'sysfs', '-o',
+            command('nsenter', f'--net=/run/netns/{NETNS}', 'mount', '-t', 'sysfs', '-o',
                     'ro,nosuid,nodev,noexec,relatime', 'sysfs', str(target))
         records[name] = witness_mount(mount_entries(), target, kind)
         save_witness_state(records)
@@ -511,7 +644,7 @@ def delete_owned_runner(request, token, repo, runner):
         raise BoundaryError('runner-registration-cleanup-required')
 
 
-def find_job(token):
+def find_jobs(token, reserved=()):
     candidates = []
     for repo in repositories(load_config()):
         # An in-progress multi-job workflow may still have queued later jobs.
@@ -525,13 +658,25 @@ def find_job(token):
                         jobs = api(token, repo, f"actions/runs/{int(run['id'])}/jobs?filter=latest&per_page=100&page={job_page}")['jobs']
                         for job in jobs:
                             labels = set(job.get('labels', []))
-                            if job['status'] == 'queued' and 'web-app-ci' in labels and labels <= LABELS:
+                            if job['status'] == 'queued' and 'web-app-ci' in labels and labels <= LABELS and (repo, int(job['id'])) not in reserved:
                                 candidates.append((job['created_at'], repo, int(job['id'])))
                         if len(jobs) < 100:
                             break
                 if len(runs) < 100:
                     break
-    return min(candidates)[1:] if candidates else None
+    return tuple(item[1:] for item in sorted(set(candidates)))
+
+
+def find_job(token, reserved=()):
+    candidates = find_jobs(token, reserved)
+    return candidates[0] if candidates else None
+
+
+def manager_cgroup(config):
+    if config.get('worker_slots', 1) > 1:
+        index = config['uid'] - load_config()['uid']
+        return f"/webappci.slice/webappci-worker{index}.slice/user@{config['uid']}.service"
+    return f"/user.slice/user-{config['uid']}.slice/user@{config['uid']}.service"
 
 
 def manager_unit(config):
@@ -560,9 +705,9 @@ def inside(config, *args, timeout=120, check=True):
 
 
 def forward_rules():
-    return [('-i', VETH, '-m', 'comment', '--comment', 'web-app-ci-egress', '-j', 'ACCEPT'),
+    return [('-i', VETH, '-m', 'comment', '--comment', FIREWALL + '-egress', '-j', 'ACCEPT'),
             ('-o', VETH, '-m', 'conntrack', '--ctstate', 'ESTABLISHED,RELATED',
-             '-m', 'comment', '--comment', 'web-app-ci-return', '-j', 'ACCEPT')]
+             '-m', 'comment', '--comment', FIREWALL + '-return', '-j', 'ACCEPT')]
 
 
 def network_start(config):
@@ -574,14 +719,14 @@ def network_start(config):
         destination = route.get('dst', 'default')
         if destination != 'default' and network.overlaps(ipaddress.IPv4Network(destination)):
             raise BoundaryError('ci-subnet-conflicts-with-host-route')
-    if command('nft', 'list', 'table', 'inet', 'web_app_ci', check=False).returncode == 0:
+    if command('nft', 'list', 'table', 'inet', FIREWALL, check=False).returncode == 0:
         raise BoundaryError('ci-firewall-table-already-exists')
     # Drop rules are installed before the interface exists or any job starts.
     blocked = ['0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8',
                '169.254.0.0/16', '172.16.0.0/12', '192.0.0.0/24', '192.0.2.0/24',
                '192.168.0.0/16', '198.18.0.0/15', '198.51.100.0/24',
                '203.0.113.0/24', '224.0.0.0/4', '240.0.0.0/4'] + config['host_public_ipv4']
-    rules = f'''table inet web_app_ci {{
+    rules = f'''table inet {FIREWALL} {{
       set forbidden4 {{ type ipv4_addr; flags interval; auto-merge; elements = {{ {', '.join(blocked)} }} }}
       chain ingress {{ type filter hook prerouting priority -310; policy accept;
         iifname "{VETH}" meta nfproto ipv6 drop
@@ -598,7 +743,7 @@ def network_start(config):
         oifname "{VETH}" drop
       }}
     }}
-    table ip web_app_ci_nat {{
+    table ip {FIREWALL}_nat {{
       chain postrouting {{ type nat hook postrouting priority srcnat; policy accept;
         ip saddr {CLIENT} masquerade
       }}
@@ -608,14 +753,14 @@ def network_start(config):
     command('ip', 'link', 'add', VETH, 'type', 'veth', 'peer', 'name', PEER)
     command('ip', 'link', 'set', PEER, 'netns', NETNS)
     command('sysctl', '-q', '-w', f'net.ipv6.conf.{VETH}.disable_ipv6=1')
-    command('ip', 'address', 'add', '10.203.241.1/30', 'dev', VETH)
+    command('ip', 'address', 'add', f'{GATEWAY}/30', 'dev', VETH)
     command('ip', 'link', 'set', VETH, 'up')
     command('ip', 'netns', 'exec', NETNS, 'sysctl', '-q', '-w',
             'net.ipv6.conf.all.disable_ipv6=1', 'net.ipv6.conf.default.disable_ipv6=1')
     command('ip', '-n', NETNS, 'address', 'add', f'{CLIENT}/30', 'dev', PEER)
     command('ip', '-n', NETNS, 'link', 'set', PEER, 'up')
     command('ip', '-n', NETNS, 'link', 'set', 'lo', 'up')
-    command('ip', '-n', NETNS, 'route', 'add', 'default', 'via', '10.203.241.1')
+    command('ip', '-n', NETNS, 'route', 'add', 'default', 'via', GATEWAY)
     for rule in forward_rules():
         command('iptables', '-w', '10', '-I', 'FORWARD', '1', *rule)
 
@@ -630,7 +775,7 @@ def network_stop():
     namespaces = command('ip', 'netns', 'list').stdout.splitlines()
     if any(line.split()[0] == NETNS for line in namespaces if line.split()):
         command('ip', 'netns', 'delete', NETNS)
-    for family, table in [('inet', 'web_app_ci'), ('ip', 'web_app_ci_nat')]:
+    for family, table in [('inet', FIREWALL), ('ip', FIREWALL + '_nat')]:
         if command('nft', 'list', 'table', family, table, check=False).returncode == 0:
             command('nft', 'delete', 'table', family, table)
 
@@ -693,13 +838,21 @@ def cleanup(config, token=None):
         raise BoundaryError('job-mount-cleanup-incomplete')
     (BASE / 'job.img').unlink(missing_ok=True)
     if previous:
-        if token is None:
-            raise BoundaryError('stale-runner-registration-needs-controller-token')
-        runner = owned_runner(api, token, previous['repo'], previous['runner_name'], previous['runner_id'])
-        if runner is not None:
-            previous['runner_id'] = runner['id']
-            save_state(previous)
-            delete_owned_runner(api, token, previous['repo'], runner)
+        # All local teardown above succeeded: manager/UID/runtime, witnesses,
+        # network, job mount and image are gone. Only this remote reconciliation
+        # seam may produce a deferral; local cleanup failures never do.
+        try:
+            if token is None:
+                raise BoundaryError('stale-runner-registration-needs-controller-token')
+            runner = owned_runner(api, token, previous['repo'], previous['runner_name'], previous['runner_id'])
+            if runner is not None:
+                previous['runner_id'] = runner['id']
+                save_state(previous)
+                delete_owned_runner(api, token, previous['repo'], runner)
+        except BoundaryError as error:
+            # Preserve intent and the fixed error code. A transient API failure
+            # must quarantine this slot, not cancel unrelated healthy jobs.
+            raise RegistrationRecoveryRequired(str(error)) from None
     save_state({})
 
 
@@ -712,7 +865,7 @@ def prepare(config):
         raise BoundaryError('fixed-uid-has-existing-processes')
     available = next(int(line.split()[1]) // 1024 for line in Path('/proc/meminfo').read_text().splitlines()
                      if line.startswith('MemAvailable:'))
-    if available < config['memory_max_mib'] + 512:
+    if available < config['memory_max_mib'] + config['host_reserve_mib']:
         raise BoundaryError('insufficient-current-memory-headroom')
     free_bytes = shutil.disk_usage(BASE).free
     disk_bytes = config['job_disk_gib'] * 1024 ** 3
@@ -792,25 +945,158 @@ def serve(config):
     if not credentials_dir:
         raise BoundaryError('systemd-controller-credential-required')
     token = app_credentials(Path(credentials_dir) / 'github-app-key')
-    cleanup(config, token)
-    receipt = json.loads(protected_file(BASE / 'validation.json'))
-    if (receipt.get('configuration_sha256') != config_digest() or receipt.get('passed') is not True
-            or receipt.get('boundary_sha256') != boundary_digest(config)
-            or receipt.get('boot_id') != Path('/proc/sys/kernel/random/boot_id').read_text().strip()):
-        raise BoundaryError('current-configuration-not-validated')
-    while not STOP:
-        try:
-            candidate = find_job(token)
-            if candidate:
+    pool_capacity(config)
+    reservations = pool_state()
+    if any(int(index) >= config.get('worker_slots', 1) or record['repo'] not in repositories(config)
+           for index, record in reservations.items()):
+        raise BoundaryError('pool-recovery-configuration-mismatch')
+    # Recover EVERY slot before admitting work, including an interrupted prepare
+    # that had not yet reached the per-slot registration intent.
+    for index in range(config.get('worker_slots', 1)):
+        with slot_context(index):
+            cleanup(slot_config(config, index), token)
+    pool_state({})
+    verify_pool_receipts(config)
+    children = {}
+    reservations = {}
+    quarantined = set()
+    next_discovery = 0
+    empty_polls = 0
+    failed_polls = 0
+    try:
+        while not STOP:
+            for index, pid in tuple(children.items()):
+                completed, status = os.waitpid(pid, os.WNOHANG)
+                if completed:
+                    del children[index]
+                    exit_code = os.waitstatus_to_exitcode(status)
+                    if exit_code == 76:
+                        # This trusted child code is emitted only after local
+                        # teardown completed and remote absence was unresolved.
+                        quarantined.add(index)
+                        print(f'worker-quarantined slot={index}; admissions-paused', flush=True)
+                        continue
+                    if status and exit_code != 75:
+                        raise BoundaryError('worker-slot-failed')
+                    if exit_code == 75:
+                        print(f'worker-admission-deferred slot={index}', flush=True)
+                        next_discovery = max(next_discovery, time.monotonic() + config['poll_seconds'])
+                    del reservations[str(index)]
+                    pool_state(reservations)
+            if quarantined and not children:
+                # Healthy jobs have drained naturally. Retain registration and
+                # pool intents; startup recovery must prove remote absence.
+                raise RegistrationRecoveryRequired('quarantined-registration-recovery-required')
+            now = time.monotonic()
+            if not quarantined and len(children) < config.get('worker_slots', 1) and now >= next_discovery:
                 try:
-                    run_one(config, token, *candidate)
-                finally:
-                    cleanup(config, token)
+                    # One shared snapshot fills ALL free slots. Do not rescan
+                    # every registered repository once per worker admission.
+                    candidates = find_jobs(token, {(record['repo'], record['job_id'])
+                                                   for record in reservations.values()})
+                except BoundaryError:
+                    # GitHub outages/rate limits pause admission, not healthy
+                    # running workers. Continue reaping every second while a
+                    # bounded backoff limits further discovery API requests.
+                    failed_polls += 1
+                    next_discovery = now + min(300, config['poll_seconds'] * 2 ** min(failed_polls, 5))
+                    print('discovery-unavailable; admissions-paused', flush=True)
+                    candidates = ()
+                else:
+                    failed_polls = 0
+                    empty_polls = 0 if candidates else min(empty_polls + 1, 4)
+                    next_discovery = now + min(120, config['poll_seconds'] * 2 ** empty_polls)
+                for repo, job_id in candidates:
+                    if STOP or len(children) >= config.get('worker_slots', 1):
+                        break
+                    if not admission_headroom(config, children):
+                        print('admissions-deferred resource-headroom', flush=True)
+                        break
+                    index = next(index for index in range(config.get('worker_slots', 1)) if index not in children)
+                    reservations[str(index)] = {'repo': repo, 'job_id': job_id}
+                    pool_state(reservations)  # fsync intent BEFORE fork/prepare/JIT.
+                    pid = os.fork()
+                    if pid == 0:
+                        exit_code = 1
+                        try:
+                            with slot_context(index):
+                                worker = slot_config(config, index)
+                                try:
+                                    run_one(worker, token, repo, job_id)
+                                finally:
+                                    cleanup(worker, token)
+                            exit_code = 0
+                        except RegistrationRecoveryRequired:
+                            exit_code = 76
+                        except BoundaryError as error:
+                            if str(error) in {'insufficient-current-memory-headroom', 'insufficient-disk-headroom'}:
+                                # This is a non-admission only after cleanup has
+                                # succeeded; cleanup failures remain fatal.
+                                exit_code = 75
+                            else:
+                                print(f'worker-slot-failed slot={index}', flush=True)
+                        except Exception:
+                            print(f'worker-slot-failed slot={index}', flush=True)
+                        os._exit(exit_code)
+                    children[index] = pid
+            # Worker lifecycle monitoring is independent of API polling cadence.
+            time.sleep(1)
+
+    finally:
+        # Worker processes retain their own signal handlers and stop job loops.
+        # Parent waits before cleanup so it cannot race another root preparer.
+        for pid in children.values():
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+        for pid in children.values():
+            os.waitpid(pid, 0)
+        if reservations:
+            for index in range(config.get('worker_slots', 1)):
+                if index in quarantined:
+                    continue  # Local teardown already proved; keep remote intent.
+                try:
+                    with slot_context(index):
+                        cleanup(slot_config(config, index), token)
+                except RegistrationRecoveryRequired:
+                    quarantined.add(index)
+            if quarantined:
+                # Do not clear either ledger until accessible remote inventory
+                # proves absence. Successful peers have no pending reservation.
+                if any(str(index) not in reservations for index in quarantined):
+                    raise BoundaryError('quarantine-slot-reservation-missing')
+                pool_state({str(index): reservations[str(index)] for index in quarantined})
+                if sys.exc_info()[0] is None:
+                    raise RegistrationRecoveryRequired('quarantined-registration-recovery-required')
             else:
-                time.sleep(config['poll_seconds'])
-        except BoundaryError as error:
-            print(f'controller-stopped reason={error}', flush=True)
-            raise
+                pool_state({})
+
+
+def verify_pool_receipts(config):
+    for index in range(config.get('worker_slots', 1)):
+        with slot_context(index):
+            receipt = json.loads(protected_file(BASE / 'validation.json'))
+            if (receipt.get('configuration_sha256') != config_digest() or receipt.get('passed') is not True
+                    or receipt.get('boundary_sha256') != boundary_digest(slot_config(config, index))
+                    or receipt.get('boot_id') != Path('/proc/sys/kernel/random/boot_id').read_text().strip()):
+                raise BoundaryError('current-configuration-not-validated')
+    if config.get('worker_slots', 1) > 1:
+        receipt = json.loads(protected_file(POOL_BASE / 'pool-validation.json'))
+        if receipt != pool_receipt(config):
+            raise BoundaryError('current-pool-not-validated')
+
+
+def pool_receipt(config):
+    return {'schema_version': 1, 'passed': True, 'worker_slots': config.get('worker_slots', 1),
+            'configuration_sha256': config_digest(),
+            'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+            'boundaries': [slot_boundary_digest(config, index) for index in range(config.get('worker_slots', 1))]}
+
+
+def slot_boundary_digest(config, index):
+    with slot_context(index):
+        return boundary_digest(slot_config(config, index))
 
 
 def main():
@@ -830,10 +1116,12 @@ def main():
         if args.operation == 'serve':
             serve(config)
         elif args.operation == 'cleanup':
-            cleanup(config)
+            for index in range(config.get('worker_slots', 1)):
+                with slot_context(index):
+                    cleanup(slot_config(config, index))
         else:
-            from validation import validate
-            validate(config)
+            from validation import validate_pool
+            validate_pool(config)
 
 
 def stop_requested(_signal, _frame):

@@ -7,10 +7,14 @@ Copy `.env.example` to `.env.local`; this starter uses `/api` for the local
 Spring Boot backend. See the [workspace setup guide](../README.md) to start
 PostgreSQL and the backend and obtain the initial login credentials. Do not
 commit `.env.local`, tokens, or an `.npmrc` containing credentials. The public
-`@rgo-web/frontend` package installs from npm without authentication. GitHub
-Actions runs `npm ci` and `npm run verify` for pull requests and pushes to `main`.
+`@rgo-web/frontend` package installs from npm without authentication. For pull
+requests and pushes to `main`, GitHub Actions distributes the frontend checks
+across required lanes: formatting, lint, architecture and typechecks; four
+complete-suite test shards; and Storybook, production image build and smoke
+verification. Each Node lane installs the locked dependencies with `npm ci`;
+local `npm run verify` still runs the complete frontend checks sequentially.
 The workflow belongs to the workspace root and runs on the shared isolated
-Hetzner pool. Frontend-only changes select frontend verification; unrelated
+Hetzner pool. Frontend-only changes select the frontend lanes; unrelated
 backend checks are skipped. See [CI and branch protection](../docs/github-ci.md)
 for the consumer's required runner access and GitHub settings.
 

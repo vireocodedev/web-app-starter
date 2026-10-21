@@ -28,6 +28,12 @@ def retain_failure(config, stage, error):
             payload['user_stage'] = result['stage']
             if isinstance(result.get('checks'), list) and len(result['checks']) <= 512:
                 payload['user_check_count'] = len(result['checks'])
+                # Probe check names are fixed source codes, never exception or
+                # job text. Persist only bounded ASCII identifiers.
+                import re
+                checks = result['checks']
+                if checks and type(checks[-1]) is str and re.fullmatch(r'[a-z0-9_-]{1,100}', checks[-1]):
+                    payload['last_completed_check'] = checks[-1]
     except (OSError, ValueError, TypeError):
         pass
     try:
@@ -110,7 +116,8 @@ def baseline_privileges():
 
 
 def parent_limits(config):
-    group = Path('/sys/fs/cgroup/user.slice') / f"user-{config['uid']}.slice"
+    manager_path_expected = ctl.manager_cgroup(config)
+    group = (Path('/sys/fs/cgroup') / manager_path_expected.lstrip('/')).parent
     expected = {'memory.max': str(config['memory_max_mib'] * 1024 ** 2),
                 'memory.high': str(config['memory_high_mib'] * 1024 ** 2),
                 'memory.swap.max': str(config['swap_max_mib'] * 1024 ** 2),
@@ -122,11 +129,18 @@ def parent_limits(config):
     quota, period = (group / 'cpu.max').read_text().split()
     if quota == 'max' or int(quota) * 100 != int(period) * config['cpu_quota_percent']:
         raise ctl.BoundaryError('immutable-parent-cpu-limit-mismatch')
+    if config.get('worker_slots', 1) > 1:
+        pool = Path('/sys/fs/cgroup/webappci.slice')
+        if (pool / 'memory.max').read_text().strip() != str(config['ci_memory_budget_mib'] * 1024 ** 2):
+            raise ctl.BoundaryError('immutable-pool-memory-limit-mismatch')
+        quota, period = (pool / 'cpu.max').read_text().split()
+        if quota == 'max' or int(quota) * 100 != int(period) * config['ci_cpu_budget_percent']:
+            raise ctl.BoundaryError('immutable-pool-cpu-limit-mismatch')
     # Compare actual mount identities. CI can legitimately create a private
     # user.slice hierarchy; names alone cannot distinguish it from host exposure.
     manager_path = ctl.command('systemctl', 'show', ctl.manager_unit(config),
                                '-p', 'ControlGroup', '--value').stdout.strip()
-    expected_path = f"/user.slice/user-{config['uid']}.slice/user@{config['uid']}.service"
+    expected_path = manager_path_expected
     if manager_path != expected_path:
         raise ctl.BoundaryError('unexpected-host-manager-cgroup-path')
     manager_group = Path('/sys/fs/cgroup') / manager_path.lstrip('/')
@@ -181,7 +195,7 @@ assert retained <= 1
 
 def docker_cgroups(config):
     uid = config['uid']
-    manager_group = Path('/sys/fs/cgroup/user.slice') / f'user-{uid}.slice' / f'user@{uid}.service'
+    manager_group = Path('/sys/fs/cgroup') / ctl.manager_cgroup(config).lstrip('/')
     child = manager_group / 'user.slice' / f'user-{uid}.slice'
     child_identity = child.stat()
     immutable = manager_group.parent.stat()
@@ -274,7 +288,7 @@ def validate(config):
             # Caddy is known to listen on this host's HTTPS port. A positive
             # host-side connection makes the job-side gateway denial meaningful.
             stage = 'host-gateway-positive'
-            with socket.create_connection(('10.203.241.1', 443), timeout=5):
+            with socket.create_connection((ctl.GATEWAY, 443), timeout=5):
                 pass
             incoming = ctl.HOME / 'validation-input.json'
             incoming.write_text(json.dumps({'host_public_ipv4': config['host_public_ipv4']}))
@@ -352,3 +366,99 @@ def validate(config):
         print('credential-free-boundary-validation-passed; GitHub job verification remains separate')
     finally:
         canary.unlink(missing_ok=True)
+
+
+def validate_pool(config):
+    """Require every ordinary boundary probe AND simultaneous hostile isolation."""
+    ctl.pool_capacity(config)
+    receipt = ctl.POOL_BASE / 'pool-validation.json'
+    receipt.unlink(missing_ok=True)
+    for index in range(config.get('worker_slots', 1)):
+        with ctl.slot_context(index):
+            validate(ctl.slot_config(config, index))
+    if config.get('worker_slots', 1) == 1:
+        return
+    prepared = []
+    managers = {}
+    try:
+        for index in range(config['worker_slots']):
+            with ctl.slot_context(index):
+                worker = ctl.slot_config(config, index)
+                prepared.append(index)  # A partial prepare also requires cleanup.
+                ctl.prepare(worker)
+                parent_limits(worker)
+                ctl.inside(worker, 'systemctl', '--user', 'start', 'docker.service')
+                ctl.inside(worker, 'docker', 'volume', 'create', f'pool-slot-{index}')
+                ctl.inside(worker, 'systemd-run', '--user', '--unit=web-app-peer-probe',
+                           '--property=StandardOutput=null', '--property=StandardError=null',
+                           '/usr/bin/python3', '-m', 'http.server', '8080')
+                managers[index] = (ctl.manager_pid(worker), ctl.CLIENT)
+                (ctl.HOME / 'pool-marker').write_text(str(index))
+                os.chown(ctl.HOME / 'pool-marker', worker['uid'], worker['uid'])
+        # All workers are alive concurrently. The peer's own namespace makes
+        # the positive connection: the host deliberately cannot receive new
+        # connections from CI, so a host TCP handshake is not a valid control.
+        for index, (_pid, address) in managers.items():
+            with ctl.slot_context(index):
+                ctl.inside(ctl.slot_config(config, index), 'python3', '-c',
+                           "import socket, time; deadline=time.monotonic()+10\n"
+                           "while True:\n"
+                           " try:\n"
+                           f"  connection=socket.create_connection(({address!r},8080),timeout=1); connection.close(); break\n"
+                           " except OSError:\n"
+                           "  if time.monotonic()>=deadline: raise\n"
+                           "  time.sleep(0.2)\n", timeout=15)
+        for index in prepared:
+            with ctl.slot_context(index):
+                worker = ctl.slot_config(config, index)
+                for other, (pid, address) in managers.items():
+                    if other == index:
+                        continue
+                    other_uid = ctl.slot_config(config, other)['uid']
+                    peer_home = (ctl.POOL_BASE if other == 0 else ctl.POOL_BASE / 'slots' / str(other)) / 'job/home/pool-marker'
+                    probe = f'''import os, socket
+from pathlib import Path
+for target in ({str(peer_home)!r},
+               '/run/user/{other_uid}/bus', '/run/user/{other_uid}/docker.sock',
+               '/proc/{pid}/root/home/web-app-ci/pool-marker', '/proc/{pid}/environ'):
+    try:
+        Path(target).read_bytes()
+    except (FileNotFoundError, PermissionError, IsADirectoryError):
+        pass
+    else:
+        raise AssertionError('cross-slot-filesystem-access')
+try:
+    with socket.create_connection(({address!r}, 8080), timeout=2):
+        raise AssertionError('cross-slot-network-access')
+except OSError:
+    pass
+'''
+                    ctl.inside(worker, 'python3', '-c', probe)
+                    if f'pool-slot-{other}' in ctl.inside(worker, 'docker', 'volume', 'ls', '--format', '{{.Name}}').stdout.split():
+                        raise ctl.BoundaryError('cross-slot-docker-state-visible')
+                volumes = ctl.inside(worker, 'docker', 'volume', 'ls', '--format', '{{.Name}}').stdout.split()
+                if volumes != [f'pool-slot-{index}']:
+                    raise ctl.BoundaryError('pool-private-docker-volume-mismatch')
+        # Destroy one live slot while every other one remains active. Root-side
+        # namespace identity and live in-boundary Docker checks must still pass.
+        with ctl.slot_context(0):
+            ctl.cleanup(ctl.slot_config(config, 0))
+        prepared.remove(0)
+        for index in prepared:
+            with ctl.slot_context(index):
+                worker = ctl.slot_config(config, index)
+                if ctl.manager_pid(worker) != managers[index][0]:
+                    raise ctl.BoundaryError('pool-cleanup-changed-peer-manager')
+                ctl.witnesses_verify(worker)
+                parent_limits(worker)
+                ctl.inside(worker, 'python3', '-c',
+                           f"from pathlib import Path; assert Path('/home/web-app-ci/pool-marker').read_text() == '{index}'")
+                volumes = ctl.inside(worker, 'docker', 'volume', 'ls', '--format', '{{.Name}}').stdout.split()
+                if volumes != [f'pool-slot-{index}']:
+                    raise ctl.BoundaryError('pool-cleanup-damaged-peer-docker')
+    finally:
+        for index in reversed(prepared):
+            with ctl.slot_context(index):
+                ctl.cleanup(ctl.slot_config(config, index))
+    ctl.atomic_json(receipt, ctl.pool_receipt(config))
+    print('simultaneous-pool-boundary-validation-passed')
