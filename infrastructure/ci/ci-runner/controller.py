@@ -1099,7 +1099,8 @@ def serve(config):
                 else:
                     failed_polls = 0
                     empty_polls = 0 if candidates or children else min(empty_polls + 1, 4)
-                    next_discovery = now + min(120, config['poll_seconds'] * 2 ** empty_polls)
+                    idle_cap = max(30, config['poll_seconds'])
+                    next_discovery = now + min(idle_cap, config['poll_seconds'] * 2 ** empty_polls)
                 for repo, job_id in candidates:
                     if STOP or len(children) >= config.get('worker_slots', 1):
                         break

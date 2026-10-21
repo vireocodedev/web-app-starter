@@ -154,7 +154,8 @@ quarantine outcome.
 Discovery takes one shared snapshot for all free slots. Polling starts at a
 15-second minimum. While workers are active, empty snapshots retain that base
 cadence so dependent jobs and the final gate are discovered promptly. A fully idle
-pool backs off to 120 seconds; API/rate-limit failures back off to 300 seconds. Worker monitoring/reaping continues every
+pool backs off to 30 seconds (or the configured polling minimum when higher);
+API/rate-limit failures still back off to 300 seconds. Worker monitoring/reaping continues every
 second independently; discovery failures pause admission without cancelling
 healthy jobs. Before each fork, reserve current available memory/disk against
 the remaining growth of every live or still-preparing worker. An expected child

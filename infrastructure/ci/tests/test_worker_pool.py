@@ -359,9 +359,29 @@ class DiscoveryBudgetTests(SchedulerFixture, unittest.TestCase):
                 mock.patch.object(ctl, 'api', return_value={'workflow_runs': []}) as api, \
                 mock.patch.object(os, 'fork') as fork:
             ctl.serve(self.config)
-        # Snapshots at 0s, 30s, 90s; each scans two states for four repos.
-        self.assertEqual(api.call_count, 24)
+        # Snapshots at 0s, 30s, 60s, 90s; two states for four repos.
+        self.assertEqual(api.call_count, 32)
         fork.assert_not_called()
+
+    def test_repeated_fully_idle_polls_stay_within_thirty_seconds_or_configured_minimum(self):
+        for poll_seconds in (15, 45, 120):
+            with self.subTest(poll_seconds=poll_seconds):
+                ctl.STOP = False
+                self.config['poll_seconds'] = poll_seconds
+                cap = max(30, poll_seconds)
+                current = self.clock(cap * 7 + 1)
+                polls = []
+                def discover(_token):
+                    polls.append(current[0])
+                    return ctl.JobSnapshot(())
+                with mock.patch.object(ctl, 'discover_jobs', side_effect=discover), \
+                        mock.patch.object(os, 'fork') as fork:
+                    ctl.serve(self.config)
+                self.assertEqual(polls, list(range(0, cap * 7 + 1, cap)))
+                self.assertGreater(len(polls), 4, 'Exercise the fully backed-off idle state.')
+                self.assertTrue(all(poll_seconds <= later - earlier <= cap
+                                    for earlier, later in zip(polls, polls[1:])))
+                fork.assert_not_called()
 
     def test_one_discovery_snapshot_dispatches_all_available_slots(self):
         self.clock(1)
