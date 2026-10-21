@@ -446,6 +446,145 @@ def register(project_path, expected_sha):
 POOL_PREDECESSOR = 'bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f'
 POOL_MIGRATION = 'serial-to-slots-v1'
 POOL_PREDECESSOR_PROBE = 'afce2ec9cde27440259a07fdf0fd97edd5bb11ef07fb741ab33b9e826dd4e44e'
+POSTGRES_READINESS_PROBE = '135f72e42b52296bcd285bee160121042570392b4e83f983755905a42f045855'
+# Exact serial foundation at 9750814; this repair does not upgrade its modules.
+POSTGRES_LEGACY_COMPONENT_SHA256 = {
+    'controller.py': 'bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f',
+    'validation.py': '2b40e7b4e014a500e585a1054946414b9d63fbc452dea4571e104d0332ab1d0c',
+    'github_app.py': '9e308019dca0561ccd1486690f186141ccbfa22740c307a36f30015aa0f06430',
+    'start-job.sh': '34b58e84b3d23e85c7315a6adc8c93476c8eed0c92071d136b1b44be4ba2eecb',
+    'service': '1ffbf352a7152a63d1f4ebd7062db965fe4a21cfd116726bf61eea9effb74a69',
+}
+
+
+def supported_predecessor_probes():
+    return {POOL_PREDECESSOR_PROBE, POSTGRES_READINESS_PROBE}
+
+
+def serial_readiness_components():
+    return {'controller.py': INSTALLED / 'controller.py',
+            'validation.py': INSTALLED / 'validation.py',
+            'github_app.py': INSTALLED / 'github_app.py',
+            'start-job.sh': ctl.ROOTFS / 'usr/local/lib/web-app-ci/start-job.sh',
+            'service': SYSTEMD / SERVICE}
+
+
+def require_serial_readiness_components():
+    for name, path in serial_readiness_components().items():
+        trusted_executable(path)
+        if hashlib.sha256(path.read_bytes()).hexdigest() != POSTGRES_LEGACY_COMPONENT_SHA256[name]:
+            raise ctl.BoundaryError('postgres-repair-legacy-component-changed')
+
+
+def readiness_repair_ledger(config, configuration_sha):
+    directory = pool_migration_directory()
+    if not directory.exists() and not directory.is_symlink():
+        return None
+    ledger = read_pool_migration()
+    if ledger['phase'] != 'rolled-back':
+        raise ctl.BoundaryError('postgres-repair-requires-completed-rollback')
+    if ledger['old_config'] != config or ledger['backups']['config'] != configuration_sha:
+        raise ctl.BoundaryError('postgres-repair-rollback-configuration-mismatch')
+    # A retained audit ledger is allowed only after exact predecessor restore.
+    # The probe is the sole deliberate exception: an earlier repair may have
+    # already replaced it with the other explicitly supported serial variant.
+    for name, path in migration_destinations(config).items():
+        if name == 'validate-job.py':
+            continue
+        if path == ctl.CONFIG:
+            ctl.protected_path(path)
+        else:
+            trusted_executable(path)
+        if hashlib.sha256(path.read_bytes()).hexdigest() != ledger['backups'][name]:
+            raise ctl.BoundaryError('postgres-repair-rollback-components-changed')
+    for name, (source, _destination) in migration_candidates().items():
+        if hashlib.sha256(source.read_bytes()).hexdigest() != ledger['candidate'][name]:
+            raise ctl.BoundaryError('postgres-repair-rollback-candidate-changed')
+    # Also prove that no former slot still has a manager/process/mount/intent.
+    require_idle(ledger['new_config'])
+    path = directory / 'ledger.json'
+    ctl.protected_file(path)
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def require_readiness_boundary(config, expected_boundary_sha):
+    if type(expected_boundary_sha) is not str or not re.fullmatch('[0-9a-f]{64}', expected_boundary_sha):
+        raise ctl.BoundaryError('invalid-expected-boundary-sha256')
+    path = serial_readiness_components()['controller.py']
+    # Hash/metadata checks occur before this exact installed legacy code executes.
+    spec = importlib.util.spec_from_file_location('verified_postgres_serial_controller', path)
+    legacy = importlib.util.module_from_spec(spec)
+    content = path.read_bytes()
+    if hashlib.sha256(content).hexdigest() != POSTGRES_LEGACY_COMPONENT_SHA256['controller.py']:
+        raise ctl.BoundaryError('postgres-repair-legacy-component-changed')
+    # Execute the exact pinned file without creating an installed __pycache__
+    # directory; the probe is the only component this repair may replace.
+    exec(compile(content, str(path), 'exec'), legacy.__dict__)
+    try:
+        actual = legacy.boundary_digest(config)
+    except Exception:
+        raise ctl.BoundaryError('postgres-repair-current-boundary-unavailable') from None
+    if actual != expected_boundary_sha:
+        raise ctl.BoundaryError('postgres-repair-boundary-changed')
+
+
+def repair_postgres_readiness(expected_sha, expected_boundary_sha):
+    root_required()
+    source_protected()
+    with lifecycle_lock():
+        expected_digest(expected_sha)
+        configuration_sha = ctl.config_digest()
+        if configuration_sha != expected_sha:
+            raise ctl.BoundaryError('configuration-changed')
+        config = ctl.load_config()
+        if config.get('worker_slots', 1) != 1:
+            raise ctl.BoundaryError('postgres-repair-requires-serial-installation')
+        require_idle(config)
+        require_no_ledger()
+        require_serial_readiness_components()
+        helper = INSTALLED / 'provision_slots.py'
+        slots = ctl.POOL_BASE / 'slots'
+        if helper.exists() or helper.is_symlink() or slots.is_symlink() or (slots.exists() and any(slots.iterdir())):
+            raise ctl.BoundaryError('postgres-repair-requires-serial-installation')
+        probe = migration_destinations(config)['validate-job.py']
+        trusted_executable(probe)
+        probe_sha = hashlib.sha256(probe.read_bytes()).hexdigest()
+        if probe_sha not in supported_predecessor_probes():
+            raise ctl.BoundaryError('postgres-repair-unknown-probe')
+        replacement = (SOURCE / 'validate-job.py').read_bytes()
+        if hashlib.sha256(replacement).hexdigest() != POSTGRES_READINESS_PROBE:
+            raise ctl.BoundaryError('postgres-repair-source-probe-changed')
+        ledger_sha = readiness_repair_ledger(config, configuration_sha)
+        # No previous passing receipt is required: the known readiness race can
+        # prevent one. Actual pinned legacy code must still prove the complete
+        # current boundary against the operator's explicit expected hash.
+        expected_digest(expected_sha)
+        if ctl.config_digest() != configuration_sha:
+            raise ctl.BoundaryError('configuration-changed')
+        require_idle(config)
+        require_serial_readiness_components()
+        trusted_executable(probe)
+        probe_sha = hashlib.sha256(probe.read_bytes()).hexdigest()
+        if probe_sha not in supported_predecessor_probes():
+            raise ctl.BoundaryError('postgres-repair-unknown-probe')
+        require_readiness_boundary(config, expected_boundary_sha)
+        result = {'operation': 'repair-postgres-readiness-v1', 'controller_enabled': False,
+                  'credential_introduced': False, 'configuration_changed': False,
+                  'configuration_sha256': configuration_sha, 'probe_sha256': POSTGRES_READINESS_PROBE,
+                  'full_validation_required': True, 'mutation_performed': False}
+        if probe_sha == POSTGRES_READINESS_PROBE:
+            # Literal no-write idempotence; this does not certify validation.
+            return result
+        invalidate_pool_receipts(config)
+        atomic_file(probe, replacement, 0o755)
+        if ledger_sha is not None:
+            ledger_path = pool_migration_directory() / 'ledger.json'
+            ctl.protected_file(ledger_path)
+            current = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
+            if current != ledger_sha:
+                raise ctl.BoundaryError('postgres-repair-rollback-ledger-changed')
+        result['mutation_performed'] = True
+        return result
 
 
 def pool_migration_directory():
@@ -517,11 +656,13 @@ def read_pool_migration():
             or set(ledger['backups']) != set(migration_destinations(ledger['old_config']))
             or set(ledger['candidate']) != set(migration_candidates())):
         raise ctl.BoundaryError('invalid-pool-migration-ledger')
-    if ledger['backups']['validate-job.py'] != POOL_PREDECESSOR_PROBE:
+    if ledger['backups']['validate-job.py'] not in supported_predecessor_probes():
         raise ctl.BoundaryError('pool-migration-predecessor-probe-backup-mismatch')
     if any(type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest)
            for digest in ledger['candidate'].values()):
         raise ctl.BoundaryError('invalid-pool-migration-candidate-hash')
+    if ledger['candidate']['validate-job.py'] != POSTGRES_READINESS_PROBE:
+        raise ctl.BoundaryError('pool-migration-candidate-probe-mismatch')
     for name, digest in ledger['backups'].items():
         if type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest) or hashlib.sha256(ctl.protected_file(directory / name).encode()).hexdigest() != digest:
             raise ctl.BoundaryError('pool-migration-backup-changed')
@@ -546,7 +687,7 @@ def migrate_pool(config_path, expected_sha, expected_controller_sha):
             raise ctl.BoundaryError('installed-pool-predecessor-changed')
         probe_path = migration_destinations(old)['validate-job.py']
         trusted_executable(probe_path)
-        if hashlib.sha256(probe_path.read_bytes()).hexdigest() != POOL_PREDECESSOR_PROBE:
+        if hashlib.sha256(probe_path.read_bytes()).hexdigest() not in supported_predecessor_probes():
             raise ctl.BoundaryError('installed-pool-predecessor-probe-changed')
         proposed = ctl.validate_config(json.loads(ctl.protected_file(Path(config_path)), object_pairs_hook=ctl.unique_object))
         # A pool migration changes capacity only; repository authorization,
@@ -575,6 +716,8 @@ def migrate_pool(config_path, expected_sha, expected_controller_sha):
             raise ctl.BoundaryError('unexpected-installed-pool-provisioner')
         candidate_paths = migration_candidates()
         candidate_contents = {name: source.read_bytes() for name, (source, _destination) in candidate_paths.items()}
+        if hashlib.sha256(candidate_contents['validate-job.py']).hexdigest() != POSTGRES_READINESS_PROBE:
+            raise ctl.BoundaryError('pool-migration-source-probe-changed')
         directory = pool_migration_directory()
         # Publish the complete backup+ledger directory atomically. A power loss
         # before publication leaves only an unreferenced staging directory,
@@ -585,7 +728,7 @@ def migrate_pool(config_path, expected_sha, expected_controller_sha):
             for name, destination in migration_destinations(old).items():
                 content = destination.read_bytes()
                 digest = hashlib.sha256(content).hexdigest()
-                if name == 'validate-job.py' and digest != POOL_PREDECESSOR_PROBE:
+                if name == 'validate-job.py' and digest not in supported_predecessor_probes():
                     raise ctl.BoundaryError('installed-pool-predecessor-probe-changed')
                 atomic_file(staging / name, content, 0o600)
                 backups[name] = digest
@@ -699,6 +842,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     operations = parser.add_subparsers(dest='operation', required=True)
     operations.add_parser('inspect')
+    postgres = operations.add_parser('repair-postgres-readiness-v1')
+    postgres.add_argument('--expected-config-sha256', required=True)
+    postgres.add_argument('--expected-boundary-sha256', required=True)
     pool = operations.add_parser('migrate-pool')
     pool.add_argument('--config', required=True)
     pool.add_argument('--expected-config-sha256', required=True)
@@ -726,6 +872,8 @@ def main(argv=None):
     root_required()
     if args.operation == 'inspect':
         result = inspect()
+    elif args.operation == 'repair-postgres-readiness-v1':
+        result = repair_postgres_readiness(args.expected_config_sha256, args.expected_boundary_sha256)
     elif args.operation == 'migrate-pool':
         result = migrate_pool(args.config, args.expected_config_sha256, args.expected_controller_sha256)
     elif args.operation == 'rollback-pool':
