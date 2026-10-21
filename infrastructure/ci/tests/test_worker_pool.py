@@ -721,5 +721,61 @@ class ProbeMigrationTests(MigrationTransactionFixture, unittest.TestCase):
             provisioner.require_probe(self.rootfs, candidate_probe)
 
 
+class RepairedPredecessorMigrationTests(MigrationTransactionFixture, unittest.TestCase):
+    def test_repaired_serial_probe_is_backed_up_as_actual_variant(self):
+        repaired = (manage.SOURCE / 'validate-job.py').read_bytes()
+        self.probe.write_bytes(repaired)
+        self.migrate()
+        ledger = manage.read_pool_migration()
+        self.assertEqual(ledger['backups']['validate-job.py'], manage.POSTGRES_READINESS_PROBE)
+        self.assertEqual((manage.pool_migration_directory() / 'validate-job.py').read_bytes(), repaired)
+        manage.rollback_pool(ctl.config_digest())
+        self.assertEqual(self.probe.read_bytes(), repaired)
+        self.assertEqual(self.probe.stat().st_mode & 0o777, 0o755)
+
+    def test_repaired_probe_still_requires_genuine_matching_passing_receipt(self):
+        self.probe.write_bytes((manage.SOURCE / 'validate-job.py').read_bytes())
+        receipt = json.loads(self.receipt.read_text())
+        receipt['passed'] = False
+        self.receipt.write_text(json.dumps(receipt))
+        with self.assertRaisesRegex(ctl.BoundaryError, 'pool-predecessor-validation-required'):
+            self.migrate()
+        self.assertFalse(manage.pool_migration_directory().exists())
+        self.provisioner.provision.assert_not_called()
+        receipt['passed'] = True
+        receipt['boundary_sha256'] = 'wrong-current-boundary'
+        self.receipt.write_text(json.dumps(receipt))
+        with self.assertRaisesRegex(ctl.BoundaryError, 'pool-predecessor-validation-required'):
+            self.migrate()
+        self.assertFalse(manage.pool_migration_directory().exists())
+
+    def test_repaired_predecessor_interruption_rollback_restores_repaired_variant(self):
+        repaired = (manage.SOURCE / 'validate-job.py').read_bytes()
+        self.probe.write_bytes(repaired)
+        self.provisioner.provision.side_effect = ctl.BoundaryError('fixture-interrupted-repaired-provision')
+        with self.assertRaisesRegex(ctl.BoundaryError, 'fixture-interrupted-repaired-provision'):
+            self.migrate()
+        self.assertEqual(manage.read_pool_migration()['phase'], 'applying')
+        self.assertEqual(manage.read_pool_migration()['backups']['validate-job.py'], manage.POSTGRES_READINESS_PROBE)
+        manage.rollback_pool(ctl.config_digest())
+        self.assertEqual(self.probe.read_bytes(), repaired)
+        self.assertNotEqual(self.probe.read_bytes(), self.original_probe)
+        self.assertEqual(json.loads(self.config_path.read_text()), BASELINE)
+        self.assertFalse(self.receipt.exists())
+
+    def test_migration_candidate_probe_is_pinned_before_ledger_publication(self):
+        source = self.directory / 'candidate-source'
+        source.mkdir()
+        for name in ('controller.py', 'validation.py', 'provision_slots.py', 'validate-job.py'):
+            (source / name).write_bytes((manage.SOURCE / name).read_bytes())
+        (source / 'validate-job.py').write_bytes(b'unknown later migration probe\n')
+        with mock.patch.object(manage, 'SOURCE', source), self.assertRaisesRegex(ctl.BoundaryError, 'pool-migration-source-probe-changed'):
+            self.migrate()
+        self.assertFalse(manage.pool_migration_directory().exists())
+        self.assertTrue(self.receipt.exists())
+        self.assertEqual(self.probe.read_bytes(), self.original_probe)
+        self.provisioner.provision.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

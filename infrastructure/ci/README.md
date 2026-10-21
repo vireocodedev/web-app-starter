@@ -37,7 +37,8 @@ Historical acceptance does not certify this modified source.
 
 The public lifecycle interface is [manage.py](manage.py): `inspect`, `install`,
 `prepare-app-auth`, `register`, `recover-registration`, and an explicitly
-unsupported general `upgrade`, plus the versioned `migrate-pool` and
+unsupported general `upgrade`, the narrow `repair-postgres-readiness-v1`,
+plus the versioned `migrate-pool` and
 `rollback-pool` operations described below. The narrow `repair-https-memory` operation below
 updates only the reviewed HTTP client/controller modules; it is not a general
 upgrade or an activation command.
@@ -198,12 +199,78 @@ requires current memory/disk headroom. Do not increase slots without checking
 UID/range/route/unit conflicts and rerunning source/config/boot-bound validation.
 No API accepts arbitrary root commands or writable cache locations.
 
+### Explicit serial PostgreSQL readiness repair
+
+The original probe may see the PostgreSQL container's temporary Unix-socket
+initialization server as ready, then run its SQL query while that server stops.
+The reviewed probe waits for the final TCP listener. This narrowly supported
+repair changes only that probe; it does not install pool modules or repair HTTPS.
+Its acceptance remains pending exact-source independent review and disposable-host
+repair/validation/rollback proof; earlier pool receipts do not certify this tool.
+
+Use `repair-postgres-readiness-v1` only on the stopped, disabled, fully idle
+serial foundation. It pins the installed controller (`bef4b316…`), validation
+(`2b40e7b4…`), App module (`9e308019…`), start-job script (`34b58e84…`) and
+controller service (`1ffbf352…`) to the exact `9750814` sources. It accepts only
+the original probe (`afce2ec9…`) or the reviewed TCP-readiness probe (`135f72e4…`),
+and the replacement source must match the latter's complete SHA-256. Unknown
+components, config/boundary drift, active slots and registration recovery fail
+before mutation. It uses no GitHub credential and never enables the controller.
+
+After independently reviewing the protected candidate checkout, stop/disable CI,
+prove it fully idle and record the actual config and boundary hashes using the
+installed legacy controller whose hash you have verified against the pins:
+
+```sh
+python3 -I -B - <<'PY'
+import json, sys
+sys.path.insert(0, '/usr/local/lib/web-app-ci')
+import controller
+config = controller.load_config()
+print(json.dumps({'configuration_sha256': controller.config_digest(),
+                  'boundary_sha256': controller.boundary_digest(config)}))
+PY
+python3 -B infrastructure/ci/manage.py repair-postgres-readiness-v1 \
+  --expected-config-sha256 ACTUAL_CURRENT_CONFIG_SHA256 \
+  --expected-boundary-sha256 ACTUAL_CURRENT_LEGACY_BOUNDARY_SHA256
+```
+
+The operation rechecks the exact config bytes, idle state, pinned components and
+actual legacy boundary immediately before mutation. A previous passing receipt
+is not required: the known bug can prevent validation from completing. It
+invalidates all serial validation receipts and fsyncs that invalidation before
+atomically replacing the probe as root-owned mode `0755`. It creates no passing
+receipt and changes no other component, config, credential, unit or resource
+setting. Run the installed legacy `controller.py validate` completely afterwards;
+only its genuine current-boot/config/source receipt establishes validation.
+
+An interrupted write leaves either the known original or repaired probe, with
+old receipts invalid. Recompute the current boundary before rerunning. If the
+probe is already repaired, every guard still applies; the operation returns
+`mutation_performed: false` without any writes and still reports
+`full_validation_required: true`. This response does not establish acceptance
+or replace the controller's independent startup receipt checks.
+
+The repair can also follow an exact pool rollback while retaining its audit
+history. An existing `migration-v1` is permitted only when all protected backups
+and candidate hashes validate, its phase is `rolled-back`, current config bytes
+match the sealed config backup, all restored legacy components match and every
+recorded runtime candidate hash equals the current reviewed source. Former slots
+must also be idle. The entire ledger and all backups remain byte-for-byte
+unchanged. Prepared/applying/applied/rolling-back, unknown or tampered ledgers
+are rejected. Repair does not reuse a completed migration ledger: a later
+`migrate-pool` still rejects that retained directory.
+
 ### Versioned serial predecessor migration and rollback
 
 The only supported predecessor is controller SHA-256
 `bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f`,
-with user-side validation probe SHA-256
-`afce2ec9cde27440259a07fdf0fd97edd5bb11ef07fb741ab33b9e826dd4e44e`.
+with either supported user-side validation probe SHA-256:
+`afce2ec9cde27440259a07fdf0fd97edd5bb11ef07fb741ab33b9e826dd4e44e`
+(original) or
+`135f72e42b52296bcd285bee160121042570392b4e83f983755905a42f045855`
+(explicitly repaired). Both variants still require the same genuine passing
+current-boot/config/legacy-boundary receipt.
 A general upgrade remains unsupported. This operation changes pool capacity,
 resource settings and the PostgreSQL readiness probe; it must preserve projects, identity roots, host IP deny
 list, storage/task/timeout bounds, GitHub App files and existing deployments.
@@ -213,7 +280,7 @@ server can accept Unix-socket readiness checks and then stop before the existing
 SQL query runs. Migration backs up the exact predecessor probe, invalidates
 receipts, and atomically installs the reviewed probe before cloning workers.
 Every clone must match that source. Rollback verifies and restores the original
-probe alongside the original controller and configuration; unknown later probe
+actual predecessor probe variant alongside the original controller and configuration; unknown later probe
 revisions cannot be overwritten by rollback.
 
 After independent review and disposable-host proof of the exact candidate:
@@ -221,7 +288,9 @@ After independent review and disposable-host proof of the exact candidate:
 1. Drain CI, stop **and disable** the controller. Keep application/deployment
    services running. Require no slot managers, owned/subordinate processes,
    job/witness mounts, namespace/image, registration proof or reservations.
-2. Refresh predecessor validation on the current boot if necessary. Record the
+2. If the original serial probe repeatedly hits the known readiness race, use
+   [the explicit serial repair](#explicit-serial-postgresql-readiness-repair) first.
+   Refresh predecessor validation on the current boot if necessary. Record the
    exact config/controller hashes and keep the reviewed candidate checkout
    root-owned with protected ancestors. Copy the protected configuration to a
    root-only candidate file and change capacity fields only. Provision and validate all six
@@ -272,7 +341,10 @@ python3 -B infrastructure/ci/manage.py rollback-pool \
   --expected-config-sha256 ACTUAL_CURRENT_CONFIG_SHA256
 ```
 
-Run the restored predecessor's full validation before activation. Preserve the
+Run the restored predecessor's full validation before activation. Rollback of a
+repaired predecessor restores the repaired probe; rollback of an original one
+restores the original probe. If the latter blocks validation, use the explicit
+serial repair under its completed-rollback guards. Preserve the
 migration ledger/backups for audit; reusing a completed migration ledger is
 intentionally rejected. Further capacity changes need a separately reviewed
 migration rather than editing a validated config while the controller runs.

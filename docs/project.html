@@ -1533,14 +1533,15 @@ workers remain bounded even when the pool runs jobs concurrently. Initial timing
 weights are planning seeds; measure the new consumer and rebalance without
 omitting tests. No deployment credentials or application data belong in shard
 reports. Follow <a href="#source-docsgithub-cimd">CI setup, inventory proofs and validation</a> and the
-<a href="../infrastructure/ci/README.md">canonical pool operator guide</a>, including fresh-host
+<a href="../infrastructure/ci/README.md">canonical pool operator guide</a>, including the
+<a href="../infrastructure/ci/README.md#explicit-serial-postgresql-readiness-repair">explicit serial PostgreSQL readiness repair</a>, fresh-host
 validation before changing isolation or lifecycle settings.</p>
 <h4 id="source-docstemplate-initializationmd--documentation-verification">Documentation verification</h4>
 <p>Follow the bundled
 <a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--project-documentation-dashboard">dashboard procedure</a>.
 The skill owns its documentation dependencies and lockfile; the public
 <a href="project.html">project dashboard</a> combines project documents and bundled
-references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · 2357b84075404b50a7f88bffe51b042bdaaf1cec3dd110b0b628942b53242653</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
+references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · 1e2ad71351f4f55e83f9458a65d8fc0542ce88675ce82ee58018962cb1e78a80</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
 <div class="panel-heading"><div><div class="source-path">docs/github-ci.md</div><h2>Monorepo CI and main-branch protection</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsgithub-cimd--monorepo-ci-and-main-branch-protection">Monorepo CI and main-branch protection</h3>
 <p>GitHub runs <a href="../.github/workflows/ci.yml">.github/workflows/ci.yml</a> on pull
@@ -2016,7 +2017,7 @@ authority remain human tasks. Client Discovery collects preparation; only live
 verification can establish runtime, CI, deployment and initialized recovery
 acceptance. Unexpected post-intake assistance is a preparation defect to record,
 not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · e2c96b5e68a2815894eac7877def221c7c3413e2b7ef9d6025950f3d581d828e</div></section>
-<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · 04e56cdddea40efbf192ff6e1b15fc01a0e0b0b93958b7ab5b63360567a88235</p></footer>
+<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · b2347c0c5e45c4092956d26778b50e8fd3e5f2d75d6f7c9aa484c076a78936b5</p></footer>
 </main></div><script>
 const records = [...document.querySelectorAll(".record")];
 const search = document.querySelector("#search");
