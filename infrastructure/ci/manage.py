@@ -787,6 +787,7 @@ def rollback_pool(expected_sha):
     source_protected()
     with lifecycle_lock():
         expected_digest(expected_sha)
+        require_no_active_dispatch_repair()
         ledger = read_pool_migration()
         if ledger['phase'] == 'rolled-back':
             raise ctl.BoundaryError('pool-already-rolled-back')
@@ -824,6 +825,229 @@ def rollback_pool(expected_sha):
                 'configuration_sha256': ctl.config_digest(), 'full_validation_required': True}
 
 
+# One reviewed scheduler replacement, not a general foundation upgrade.
+DISPATCH_PREDECESSOR = '74f0c86bfd96997e004ef21efd733e2f9bc4618b4beb76937e0271de3e9e0866'
+DISPATCH_REPAIR = 'pool-dispatch-v1'
+DISPATCH_UNCHANGED_SHA256 = {
+    'validation.py': 'd1a3a750a133ccb00351075cefac96f3bfd856939e6320221ff185be90a76101',
+    'github_app.py': '9e308019dca0561ccd1486690f186141ccbfa22740c307a36f30015aa0f06430',
+    'provision_slots.py': '23ee33c6123f24a31bcce0454766521577ecd3ec8c617642accd20bb0cbf1489',
+    'start-job.sh': '34b58e84b3d23e85c7315a6adc8c93476c8eed0c92071d136b1b44be4ba2eecb',
+    'validate-job.py': '135f72e42b52296bcd285bee160121042570392b4e83f983755905a42f045855',
+    'busctl-compat.py': '85b67d17a65b1f5245fb1b9878c792544e154d5f6b1122566f3fd4c2273b916d',
+    'web-app-ci-controller.service': '1ffbf352a7152a63d1f4ebd7062db965fe4a21cfd116726bf61eea9effb74a69',
+    'web-app-job.service': 'df1522603f2fc981dae95d992aa90353137e9afc834bf8d588162ebefbf5128d',
+    'web-app-validation.service': 'fce15f1533d602eeee195e282e78e5e5a77bd3b3507f668f822adc572555e9ad',
+    'docker.service': 'c010a6730cdbe56a7515205a508760e2450789bc98bb4ebfdd5cd7c44cd6584f',
+}
+
+
+def dispatch_repair_directory():
+    return ctl.POOL_BASE / 'dispatch-repair-v1'
+
+
+def dispatch_configuration(expected_sha):
+    expected_digest(expected_sha)
+    if ctl.config_digest() != expected_sha:
+        raise ctl.BoundaryError('configuration-changed')
+    config = ctl.load_config()
+    if config.get('worker_slots', 1) < 2:
+        raise ctl.BoundaryError('dispatch-repair-requires-worker-pool')
+    require_idle(config)
+    require_no_ledger()
+    return config
+
+
+def dispatch_components(config):
+    # Pin both the reviewed templates and all installed/generated copies. No
+    # module, unit, probe or UID-specific adapter changes in this repair.
+    result = {}
+    for name, digest in DISPATCH_UNCHANGED_SHA256.items():
+        path = SOURCE / name
+        trusted_executable(path)
+        if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+            raise ctl.BoundaryError('dispatch-repair-source-component-changed')
+    paths = [(name, INSTALLED / name, (SOURCE / name).read_bytes())
+             for name in ('validation.py', 'github_app.py', 'provision_slots.py')]
+    paths.append(('service', SYSTEMD / SERVICE, (SOURCE / SERVICE).read_bytes()))
+    for index in range(config['worker_slots']):
+        worker = ctl.slot_config(config, index)
+        with ctl.slot_context(index):
+            rootfs = ctl.ROOTFS
+        for name in ('start-job.sh', 'validate-job.py'):
+            paths.append((f'{index}/{name}', rootfs / 'usr/local/lib/web-app-ci' / name, (SOURCE / name).read_bytes()))
+        adapter = (SOURCE / 'busctl-compat.py').read_text().replace('@UID@', str(worker['uid']))
+        adapter = adapter.replace('@SUBUID@', str(worker['subuid_start'])).replace('@SUBGID@', str(worker['subuid_start']))
+        paths.append((f'{index}/busctl', rootfs / 'usr/local/lib/web-app-ci/runtime-bin/busctl', adapter.encode()))
+        for name in ('docker.service', 'web-app-job.service', 'web-app-validation.service'):
+            content = (SOURCE / name).read_text().replace('@UID@', str(worker['uid'])).encode()
+            paths.append((f'{index}/{name}', rootfs / 'etc/systemd/user' / name, content))
+    for name, path, expected in paths:
+        trusted_executable(path)
+        content = path.read_bytes()
+        if content != expected:
+            raise ctl.BoundaryError('dispatch-repair-installed-component-changed')
+        result[name] = hashlib.sha256(content).hexdigest()
+    return result
+
+
+def dispatch_migration_digest(config):
+    directory = pool_migration_directory()
+    if not directory.exists() and not directory.is_symlink():
+        return None
+    ledger = read_pool_migration()
+    if ledger['phase'] != 'applied' or ledger['new_config'] != config:
+        raise ctl.BoundaryError('dispatch-repair-migration-not-applied')
+    expected = {'controller.py': DISPATCH_PREDECESSOR,
+                **{name: DISPATCH_UNCHANGED_SHA256[name]
+                   for name in ('validation.py', 'provision_slots.py', 'validate-job.py')}}
+    if ledger['candidate'] != expected:
+        raise ctl.BoundaryError('dispatch-repair-migration-candidate-changed')
+    if {path.name for path in directory.iterdir()} != {'ledger.json', *ledger['backups']}:
+        raise ctl.BoundaryError('dispatch-repair-migration-shape-changed')
+    digest = hashlib.sha256()
+    for path in sorted(directory.iterdir()):
+        ctl.protected_file(path)
+        content = path.read_bytes()
+        digest.update(path.name.encode() + b'\0' + hashlib.sha256(content).digest())
+    return digest.hexdigest()
+
+
+def dispatch_controller_bytes(allowed):
+    path = INSTALLED / 'controller.py'
+    trusted_executable(path)
+    content = path.read_bytes()
+    if hashlib.sha256(content).hexdigest() not in allowed:
+        raise ctl.BoundaryError('dispatch-repair-installed-controller-changed')
+    return content
+
+
+def verify_dispatch_predecessor(config, content):
+    # Execute only the pinned installed predecessor, without writing bytecode.
+    if hashlib.sha256(content).hexdigest() != DISPATCH_PREDECESSOR:
+        raise ctl.BoundaryError('dispatch-repair-installed-controller-changed')
+    path = INSTALLED / 'controller.py'
+    module = importlib.util.module_from_spec(importlib.util.spec_from_file_location('verified_dispatch_predecessor', path))
+    exec(compile(content, str(path), 'exec'), module.__dict__)
+    try:
+        module.verify_pool_receipts(config)
+    except Exception:
+        raise ctl.BoundaryError('dispatch-repair-current-validation-required') from None
+
+
+def read_dispatch_repair():
+    directory = ctl.protected_path(dispatch_repair_directory(), directory=True)
+    if {path.name for path in directory.iterdir()} != {'ledger.json', 'controller.py'}:
+        raise ctl.BoundaryError('invalid-dispatch-repair-directory')
+    try:
+        value = json.loads(ctl.protected_file(directory / 'ledger.json'), object_pairs_hook=ctl.unique_object)
+    except (ValueError, TypeError):
+        raise ctl.BoundaryError('invalid-dispatch-repair-ledger') from None
+    keys = {'repair', 'phase', 'configuration_sha256', 'predecessor_sha256', 'candidate_sha256', 'unchanged', 'migration_sha256'}
+    if (type(value) is not dict or set(value) != keys or value['repair'] != DISPATCH_REPAIR
+            or type(value['phase']) is not str
+            or value['phase'] not in {'prepared', 'applying', 'applied', 'rolling-back', 'rolled-back'}
+            or value['predecessor_sha256'] != DISPATCH_PREDECESSOR
+            or any(type(value[name]) is not str or not re.fullmatch('[0-9a-f]{64}', value[name])
+                   for name in ('configuration_sha256', 'candidate_sha256'))
+            or value['candidate_sha256'] == value['predecessor_sha256']
+            or type(value['unchanged']) is not dict
+            or any(type(name) is not str or type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest)
+                   for name, digest in value['unchanged'].items())
+            or value['migration_sha256'] is not None and (
+                type(value['migration_sha256']) is not str or not re.fullmatch('[0-9a-f]{64}', value['migration_sha256']))):
+        raise ctl.BoundaryError('invalid-dispatch-repair-ledger')
+    ctl.protected_file(directory / 'controller.py')
+    backup = (directory / 'controller.py').read_bytes()
+    if hashlib.sha256(backup).hexdigest() != DISPATCH_PREDECESSOR:
+        raise ctl.BoundaryError('dispatch-repair-backup-changed')
+    return value, backup
+
+
+def require_no_active_dispatch_repair():
+    directory = dispatch_repair_directory()
+    if directory.exists() or directory.is_symlink():
+        ledger, _backup = read_dispatch_repair()
+        if ledger['phase'] != 'rolled-back':
+            raise ctl.BoundaryError('dispatch-repair-must-be-rolled-back-first')
+
+
+def repair_pool_dispatch(expected_sha):
+    root_required()
+    source_protected()
+    with lifecycle_lock():
+        config = dispatch_configuration(expected_sha)
+        directory = dispatch_repair_directory()
+        if directory.exists() or directory.is_symlink():
+            raise ctl.BoundaryError('dispatch-repair-already-started')
+        previous = dispatch_controller_bytes({DISPATCH_PREDECESSOR})
+        replacement = (SOURCE / 'controller.py').read_bytes()
+        candidate = hashlib.sha256(replacement).hexdigest()
+        if candidate == DISPATCH_PREDECESSOR:
+            raise ctl.BoundaryError('dispatch-repair-source-not-updated')
+        unchanged = dispatch_components(config)
+        migration = dispatch_migration_digest(config)
+        verify_dispatch_predecessor(config, previous)
+        # Recheck immediately before the first durable transaction mutation.
+        dispatch_configuration(expected_sha)
+        if (dispatch_controller_bytes({DISPATCH_PREDECESSOR}) != previous
+                or dispatch_components(config) != unchanged or dispatch_migration_digest(config) != migration
+                or (SOURCE / 'controller.py').read_bytes() != replacement):
+            raise ctl.BoundaryError('dispatch-repair-precondition-changed')
+        verify_dispatch_predecessor(config, previous)
+        ledger = {'repair': DISPATCH_REPAIR, 'phase': 'prepared', 'configuration_sha256': expected_sha,
+                  'predecessor_sha256': DISPATCH_PREDECESSOR, 'candidate_sha256': candidate,
+                  'unchanged': unchanged, 'migration_sha256': migration}
+        ctl.protected_path(ctl.POOL_BASE, directory=True)
+        staging = Path(tempfile.mkdtemp(prefix='.dispatch-repair-v1-', dir=ctl.POOL_BASE))
+        try:
+            atomic_file(staging / 'controller.py', previous, 0o600)
+            ctl.atomic_json(staging / 'ledger.json', ledger)
+            sync_directory(staging)
+            os.rename(staging, directory)
+            sync_directory(directory.parent)
+        finally:
+            if staging.exists():
+                shutil.rmtree(staging)
+        invalidate_pool_receipts(config)
+        ledger['phase'] = 'applying'
+        ctl.atomic_json(directory / 'ledger.json', ledger)
+        atomic_file(INSTALLED / 'controller.py', replacement, 0o755)
+        ledger['phase'] = 'applied'
+        ctl.atomic_json(directory / 'ledger.json', ledger)
+        return dispatch_repair_result('repair-pool-dispatch-v1', expected_sha, candidate)
+
+
+def rollback_pool_dispatch(expected_sha):
+    root_required()
+    source_protected()
+    with lifecycle_lock():
+        config = dispatch_configuration(expected_sha)
+        ledger, backup = read_dispatch_repair()
+        if ledger['phase'] == 'rolled-back':
+            raise ctl.BoundaryError('dispatch-repair-already-rolled-back')
+        if (ledger['configuration_sha256'] != expected_sha
+                or ledger['candidate_sha256'] != hashlib.sha256((SOURCE / 'controller.py').read_bytes()).hexdigest()
+                or ledger['unchanged'] != dispatch_components(config)
+                or ledger['migration_sha256'] != dispatch_migration_digest(config)):
+            raise ctl.BoundaryError('dispatch-repair-rollback-precondition-changed')
+        dispatch_controller_bytes({DISPATCH_PREDECESSOR, ledger['candidate_sha256']})
+        dispatch_configuration(expected_sha)
+        invalidate_pool_receipts(config)
+        ledger['phase'] = 'rolling-back'
+        ctl.atomic_json(dispatch_repair_directory() / 'ledger.json', ledger)
+        atomic_file(INSTALLED / 'controller.py', backup, 0o755)
+        ledger['phase'] = 'rolled-back'
+        ctl.atomic_json(dispatch_repair_directory() / 'ledger.json', ledger)
+        return dispatch_repair_result('rollback-pool-dispatch-v1', expected_sha, DISPATCH_PREDECESSOR)
+
+
+def dispatch_repair_result(operation, configuration_sha, controller_sha):
+    return {'operation': operation, 'controller_enabled': False, 'configuration_changed': False,
+            'credential_introduced': False, 'configuration_sha256': configuration_sha,
+            'controller_sha256': controller_sha, 'full_validation_required': True}
+
+
 def inspect():
     result = {'operation': 'inspect', 'installed': ctl.CONFIG.exists(), 'supported_migration': POOL_MIGRATION}
     if result['installed']:
@@ -842,6 +1066,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     operations = parser.add_subparsers(dest='operation', required=True)
     operations.add_parser('inspect')
+    for operation in ('repair-pool-dispatch-v1', 'rollback-pool-dispatch-v1'):
+        dispatch = operations.add_parser(operation)
+        dispatch.add_argument('--expected-config-sha256', required=True)
     postgres = operations.add_parser('repair-postgres-readiness-v1')
     postgres.add_argument('--expected-config-sha256', required=True)
     postgres.add_argument('--expected-boundary-sha256', required=True)
@@ -872,6 +1099,10 @@ def main(argv=None):
     root_required()
     if args.operation == 'inspect':
         result = inspect()
+    elif args.operation == 'repair-pool-dispatch-v1':
+        result = repair_pool_dispatch(args.expected_config_sha256)
+    elif args.operation == 'rollback-pool-dispatch-v1':
+        result = rollback_pool_dispatch(args.expected_config_sha256)
     elif args.operation == 'repair-postgres-readiness-v1':
         result = repair_postgres_readiness(args.expected_config_sha256, args.expected_boundary_sha256)
     elif args.operation == 'migrate-pool':

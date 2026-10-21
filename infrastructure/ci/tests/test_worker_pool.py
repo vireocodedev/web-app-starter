@@ -115,6 +115,7 @@ class SchedulerFixture:
                       mock.patch.object(ctl, 'app_credentials', return_value='fixture'),
                       mock.patch.object(ctl, 'pool_capacity'), mock.patch.object(ctl, 'verify_pool_receipts'),
                       mock.patch.object(ctl, 'admission_headroom', return_value=True),
+                      mock.patch.object(ctl, 'read_job_state', return_value={}),
                       mock.patch.object(ctl, 'cleanup', side_effect=lambda config, *_: self.events.append(('cleanup', config['uid']))),
                       mock.patch.object(ctl, 'pool_state', side_effect=state),
                       mock.patch.object(ctl, 'STOP', False)):
@@ -128,7 +129,7 @@ class SchedulerTests(SchedulerFixture, unittest.TestCase):
         def sleep(_delay):
             self.assertEqual(len(self.saved), 2)
             ctl.STOP = True
-        with mock.patch.object(ctl, 'find_jobs', return_value=(('Acme/app', 1), ('Acme/app', 2))), \
+        with mock.patch.object(ctl, 'discover_jobs', return_value=ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1), ('2026-10-21', 'Acme/app', 2)))), \
                 mock.patch.object(os, 'fork', side_effect=fork), \
                 mock.patch.object(os, 'waitpid', return_value=(0, 0)), \
                 mock.patch.object(os, 'kill') as kill, mock.patch.object(ctl.time, 'sleep', side_effect=sleep):
@@ -156,7 +157,7 @@ class SchedulerTests(SchedulerFixture, unittest.TestCase):
         self.assertEqual(self.events, [])
 
     def test_worker_failure_stops_admission_and_preserves_cleanup_before_clear(self):
-        with mock.patch.object(ctl, 'find_jobs', return_value=(('Acme/app', 1),)) as find, \
+        with mock.patch.object(ctl, 'discover_jobs', return_value=ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1),))) as find, \
                 mock.patch.object(os, 'fork', return_value=101), \
                 mock.patch.object(os, 'waitpid', return_value=(101, 256)), \
                 mock.patch.object(os, 'kill'), self.assertRaisesRegex(ctl.BoundaryError, 'worker-slot-failed'):
@@ -358,13 +359,33 @@ class DiscoveryBudgetTests(SchedulerFixture, unittest.TestCase):
                 mock.patch.object(ctl, 'api', return_value={'workflow_runs': []}) as api, \
                 mock.patch.object(os, 'fork') as fork:
             ctl.serve(self.config)
-        # Snapshots at 0s, 30s, 90s; each scans two states for four repos.
-        self.assertEqual(api.call_count, 24)
+        # Snapshots at 0s, 30s, 60s, 90s; two states for four repos.
+        self.assertEqual(api.call_count, 32)
         fork.assert_not_called()
+
+    def test_repeated_fully_idle_polls_stay_within_thirty_seconds_or_configured_minimum(self):
+        for poll_seconds in (15, 45, 120):
+            with self.subTest(poll_seconds=poll_seconds):
+                ctl.STOP = False
+                self.config['poll_seconds'] = poll_seconds
+                cap = max(30, poll_seconds)
+                current = self.clock(cap * 7 + 1)
+                polls = []
+                def discover(_token):
+                    polls.append(current[0])
+                    return ctl.JobSnapshot(())
+                with mock.patch.object(ctl, 'discover_jobs', side_effect=discover), \
+                        mock.patch.object(os, 'fork') as fork:
+                    ctl.serve(self.config)
+                self.assertEqual(polls, list(range(0, cap * 7 + 1, cap)))
+                self.assertGreater(len(polls), 4, 'Exercise the fully backed-off idle state.')
+                self.assertTrue(all(poll_seconds <= later - earlier <= cap
+                                    for earlier, later in zip(polls, polls[1:])))
+                fork.assert_not_called()
 
     def test_one_discovery_snapshot_dispatches_all_available_slots(self):
         self.clock(1)
-        with mock.patch.object(ctl, 'find_jobs', return_value=(('Acme/app', 1), ('Acme/app', 2))) as find, \
+        with mock.patch.object(ctl, 'discover_jobs', return_value=ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1), ('2026-10-21', 'Acme/app', 2)))) as find, \
                 mock.patch.object(os, 'fork', side_effect=[101, 102]), \
                 mock.patch.object(os, 'waitpid', return_value=(0, 0)), mock.patch.object(os, 'kill'):
             ctl.serve(self.config)
@@ -379,7 +400,7 @@ class DiscoveryBudgetTests(SchedulerFixture, unittest.TestCase):
                 self.clock(20)
                 def kill(*_args):
                     self.assertTrue(ctl.STOP, 'Discovery failure must not terminate healthy workers.')
-                with mock.patch.object(ctl, 'find_jobs', side_effect=[(('Acme/app', 1),), ctl.BoundaryError(error)]) as find, \
+                with mock.patch.object(ctl, 'discover_jobs', side_effect=[ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1),)), ctl.BoundaryError(error)]) as find, \
                         mock.patch.object(os, 'fork', return_value=101) as fork, \
                         mock.patch.object(os, 'waitpid', return_value=(0, 0)), mock.patch.object(os, 'kill', side_effect=kill) as kill_mock:
                     ctl.serve(self.config)
@@ -412,7 +433,7 @@ class ResourceAdmissionTests(SchedulerFixture, unittest.TestCase):
         def admission(_config, children):
             states.append(dict(children))
             return len(states) == 1
-        with mock.patch.object(ctl, 'find_jobs', return_value=(('Acme/app', 1), ('Acme/app', 2))), \
+        with mock.patch.object(ctl, 'discover_jobs', return_value=ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1), ('2026-10-21', 'Acme/app', 2)))), \
                 mock.patch.object(ctl, 'admission_headroom', side_effect=admission), \
                 mock.patch.object(os, 'fork', return_value=101) as fork, \
                 mock.patch.object(os, 'waitpid', return_value=(0, 0)), \
@@ -437,7 +458,7 @@ class ResourceAdmissionTests(SchedulerFixture, unittest.TestCase):
             self.assertEqual(pid, 101)
         with mock.patch.object(ctl.time, 'monotonic', side_effect=lambda: clock[0]), \
                 mock.patch.object(ctl.time, 'sleep', side_effect=sleep), \
-                mock.patch.object(ctl, 'find_jobs', return_value=(('Acme/app', 1), ('Acme/app', 2))) as find, \
+                mock.patch.object(ctl, 'discover_jobs', return_value=ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1), ('2026-10-21', 'Acme/app', 2)))) as find, \
                 mock.patch.object(os, 'fork', side_effect=[101, 102]), \
                 mock.patch.object(os, 'waitpid', side_effect=wait), mock.patch.object(os, 'kill', side_effect=kill) as kill_mock:
             ctl.serve(self.config)
@@ -493,7 +514,7 @@ class RegistrationQuarantineTests(SchedulerFixture, unittest.TestCase):
             return 0, 0
         with mock.patch.object(ctl.time, 'monotonic', side_effect=lambda: clock[0]), \
                 mock.patch.object(ctl.time, 'sleep', side_effect=sleep), \
-                mock.patch.object(ctl, 'find_jobs', return_value=(('Acme/app', 1), ('Acme/app', 2))) as find, \
+                mock.patch.object(ctl, 'discover_jobs', return_value=ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1), ('2026-10-21', 'Acme/app', 2)))) as find, \
                 mock.patch.object(os, 'fork', side_effect=[101, 102]) as fork, \
                 mock.patch.object(os, 'waitpid', side_effect=wait), mock.patch.object(os, 'kill') as kill, \
                 self.assertRaisesRegex(ctl.RegistrationRecoveryRequired, 'quarantined-registration-recovery-required'):
@@ -509,7 +530,7 @@ class RegistrationQuarantineTests(SchedulerFixture, unittest.TestCase):
     def test_unexpected_local_failure_still_stops_healthy_peer(self):
         # Existing fail-closed behavior is deliberate for an unproven local
         # boundary: unlike quarantine76, an ordinary child failure kills peers.
-        with mock.patch.object(ctl, 'find_jobs', return_value=(('Acme/app', 1), ('Acme/app', 2))), \
+        with mock.patch.object(ctl, 'discover_jobs', return_value=ctl.JobSnapshot((('2026-10-21', 'Acme/app', 1), ('2026-10-21', 'Acme/app', 2)))), \
                 mock.patch.object(os, 'fork', side_effect=[101, 102]), \
                 mock.patch.object(ctl.time, 'sleep'), \
                 mock.patch.object(os, 'waitpid', side_effect=[(101, 1 << 8), (102, 0)]), \

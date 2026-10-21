@@ -15,7 +15,7 @@ import time
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
-COUNTS = {'frontend': 4, 'backend': 3}
+COUNTS = {'frontend': 3, 'backend': 3}
 
 
 def read_json(path):

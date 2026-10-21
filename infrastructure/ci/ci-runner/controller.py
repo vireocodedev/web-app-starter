@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from typing import NamedTuple
 import urllib.error
 import urllib.request
 
@@ -644,27 +645,126 @@ def delete_owned_runner(request, token, repo, runner):
         raise BoundaryError('runner-registration-cleanup-required')
 
 
-def find_jobs(token, reserved=()):
-    candidates = []
+class JobSnapshot(NamedTuple):
+    # Immutable, sanitized observations shared by every admission in this poll.
+    queued: tuple  # (created_at, repository, job_id), oldest first
+    assignments: tuple = ()  # (repository, runner_id, runner_name, actual_job_id)
+
+
+def discover_jobs(token):
+    candidates, assignments, assigned_jobs = set(), {}, set()
+    runner_names, job_runners = {}, {}
     for repo in repositories(load_config()):
-        # An in-progress multi-job workflow may still have queued later jobs.
+        seen_runs = set()
+        # A run can move between listings during this scan. Read its jobs once.
         for status in ('queued', 'in_progress'):
             for page in range(1, 6):
-                runs = api(token, repo, f'actions/runs?status={status}&per_page=100&page={page}')['workflow_runs']
+                response = api(token, repo, f'actions/runs?status={status}&per_page=100&page={page}')
+                runs = response.get('workflow_runs') if type(response) is dict else None
+                if type(runs) is not list:
+                    raise BoundaryError('invalid-discovery-runs')
                 for run in runs:
-                    if run['event'] not in ('pull_request', 'push', 'schedule', 'workflow_dispatch'):
+                    if (type(run) is not dict or type(run.get('id')) is not int or run['id'] <= 0
+                            or type(run.get('event')) is not str):
+                        raise BoundaryError('invalid-discovery-run')
+                    if run['event'] not in ('pull_request', 'push', 'schedule', 'workflow_dispatch') or run['id'] in seen_runs:
                         continue
+                    seen_runs.add(run['id'])
                     for job_page in range(1, 6):
-                        jobs = api(token, repo, f"actions/runs/{int(run['id'])}/jobs?filter=latest&per_page=100&page={job_page}")['jobs']
+                        response = api(token, repo, f"actions/runs/{run['id']}/jobs?filter=latest&per_page=100&page={job_page}")
+                        jobs = response.get('jobs') if type(response) is dict else None
+                        if type(jobs) is not list:
+                            raise BoundaryError('invalid-discovery-jobs')
                         for job in jobs:
-                            labels = set(job.get('labels', []))
-                            if job['status'] == 'queued' and 'web-app-ci' in labels and labels <= LABELS and (repo, int(job['id'])) not in reserved:
-                                candidates.append((job['created_at'], repo, int(job['id'])))
+                            if (type(job) is not dict or type(job.get('id')) is not int or job['id'] <= 0
+                                    or type(job.get('status')) is not str):
+                                raise BoundaryError('invalid-discovery-job')
+                            if job['status'] == 'queued':
+                                labels = job.get('labels', [])
+                                if type(labels) is not list or any(type(label) is not str for label in labels):
+                                    raise BoundaryError('invalid-discovery-labels')
+                                if 'web-app-ci' in labels and set(labels) <= LABELS:
+                                    if type(job.get('created_at')) is not str or not job['created_at']:
+                                        raise BoundaryError('invalid-discovery-created-at')
+                                    candidates.add((job['created_at'], repo, job['id']))
+                            elif job['status'] in ('in_progress', 'completed'):
+                                name = job.get('runner_name')
+                                if type(name) is not str or not re.fullmatch('web-app-ci-job-[0-9a-f]{32}', name):
+                                    continue
+                                runner_id = job.get('runner_id')
+                                if type(runner_id) is not int or runner_id <= 0:
+                                    raise BoundaryError('invalid-discovery-runner')
+                                identity = (repo, runner_id, name)
+                                if (identity in assignments and assignments[identity] != job['id']
+                                        or (repo, runner_id) in runner_names and runner_names[repo, runner_id] != name
+                                        or (repo, job['id']) in job_runners and job_runners[repo, job['id']] != identity):
+                                    raise BoundaryError('conflicting-discovery-assignment')
+                                assignments[identity] = job['id']
+                                runner_names[repo, runner_id] = name
+                                job_runners[repo, job['id']] = identity
+                                assigned_jobs.add((repo, job['id']))
                         if len(jobs) < 100:
                             break
                 if len(runs) < 100:
                     break
-    return tuple(item[1:] for item in sorted(set(candidates)))
+    queued = tuple(item for item in sorted(candidates) if item[1:] not in assigned_jobs)
+    return JobSnapshot(queued, tuple(sorted((*identity, job) for identity, job in assignments.items())))
+
+
+def find_jobs(token, reserved=()):
+    return tuple(item[1:] for item in discover_jobs(token).queued if item[1:] not in reserved)
+
+
+def read_job_state(config):
+    try:
+        previous = json.loads(protected_file(STATE), object_pairs_hook=unique_object)
+    except FileNotFoundError:
+        return {}
+    except (ValueError, TypeError):
+        raise BoundaryError('invalid-job-recovery-state') from None
+    if (type(previous) is not dict or previous and (
+            set(previous) != {'repo', 'runner_id', 'runner_name', 'job_id'}
+            or previous['repo'] not in repositories(config)
+            or type(previous['job_id']) is not int or previous['job_id'] <= 0
+            or type(previous['runner_name']) is not str
+            or not re.fullmatch('web-app-ci-job-[0-9a-f]{32}', previous['runner_name'])
+            or previous['runner_id'] is not None and (
+                type(previous['runner_id']) is not int or previous['runner_id'] <= 0))):
+        raise BoundaryError('invalid-job-recovery-state')
+    return previous
+
+
+def dispatch_candidates(config, snapshot, children, reservations, assigned):
+    # A JIT runner may take ANY compatible queued job, not its observed job.
+    # Only GitHub's exact identity plus protected root intent proves assignment.
+    positive = {row[:3]: row[3] for row in snapshot.assignments}
+    pending = []
+    for index in children:
+        reservation = reservations[str(index)]
+        if index in assigned:
+            continue  # A confirmed ephemeral identity remains consumed until reap.
+        with slot_context(index):
+            intent = read_job_state(slot_config(config, index))
+        if intent and (intent['repo'], intent['job_id']) != (reservation['repo'], reservation['job_id']):
+            raise BoundaryError('slot-intent-reservation-mismatch')
+        identity = (intent['repo'], intent['runner_id'], intent['runner_name']) if intent else None
+        if identity in positive:
+            assigned[index] = (*identity, positive[identity])
+        else:
+            pending.append((reservation['repo'], reservation['job_id']))
+    actual = {(row[0], row[3]) for row in (*snapshot.assignments, *assigned.values())}
+    candidates = list(dict.fromkeys(row[1:] for row in snapshot.queued if row[1:] not in actual))
+    for repo, observed in pending:
+        # An awaiting runner still represents one unsatisfied queued demand,
+        # even if another runner took its original observation in the meantime.
+        preferred = (repo, observed)
+        if preferred in candidates:
+            candidates.remove(preferred)
+        else:
+            replacement = next((row for row in candidates if row[0] == repo), None)
+            if replacement is not None:
+                candidates.remove(replacement)
+    return tuple(candidates)
 
 
 def find_job(token, reserved=()):
@@ -796,18 +896,7 @@ def remaining_processes(config):
 
 
 def cleanup(config, token=None):
-    previous = json.loads(protected_file(STATE), object_pairs_hook=unique_object) if STATE.exists() else {}
-    if type(previous) is not dict:
-        raise BoundaryError('invalid-job-recovery-state')
-    if previous:
-        if (set(previous) != {'repo', 'runner_id', 'runner_name', 'job_id'}
-                or previous['repo'] not in repositories(config)
-                or type(previous['job_id']) is not int or previous['job_id'] <= 0
-                or type(previous['runner_name']) is not str
-                or not re.fullmatch('web-app-ci-job-[0-9a-f]{32}', previous['runner_name'])
-                or (previous['runner_id'] is not None
-                    and (type(previous['runner_id']) is not int or previous['runner_id'] <= 0))):
-            raise BoundaryError('invalid-job-recovery-state')
+    previous = read_job_state(config)
     command('systemctl', 'stop', manager_unit(config))
     for pid in remaining_processes(config):
         try:
@@ -960,6 +1049,7 @@ def serve(config):
     children = {}
     reservations = {}
     quarantined = set()
+    assigned = {}
     next_discovery = 0
     empty_polls = 0
     failed_polls = 0
@@ -969,6 +1059,10 @@ def serve(config):
                 completed, status = os.waitpid(pid, os.WNOHANG)
                 if completed:
                     del children[index]
+                    assigned.pop(index, None)
+                    empty_polls = 0
+                    if not failed_polls:
+                        next_discovery = min(next_discovery, time.monotonic() + config['poll_seconds'])
                     exit_code = os.waitstatus_to_exitcode(status)
                     if exit_code == 76:
                         # This trusted child code is emitted only after local
@@ -992,8 +1086,8 @@ def serve(config):
                 try:
                     # One shared snapshot fills ALL free slots. Do not rescan
                     # every registered repository once per worker admission.
-                    candidates = find_jobs(token, {(record['repo'], record['job_id'])
-                                                   for record in reservations.values()})
+                    snapshot = discover_jobs(token)
+                    candidates = dispatch_candidates(config, snapshot, children, reservations, assigned)
                 except BoundaryError:
                     # GitHub outages/rate limits pause admission, not healthy
                     # running workers. Continue reaping every second while a
@@ -1004,8 +1098,9 @@ def serve(config):
                     candidates = ()
                 else:
                     failed_polls = 0
-                    empty_polls = 0 if candidates else min(empty_polls + 1, 4)
-                    next_discovery = now + min(120, config['poll_seconds'] * 2 ** empty_polls)
+                    empty_polls = 0 if candidates or children else min(empty_polls + 1, 4)
+                    idle_cap = max(30, config['poll_seconds'])
+                    next_discovery = now + min(idle_cap, config['poll_seconds'] * 2 ** empty_polls)
                 for repo, job_id in candidates:
                     if STOP or len(children) >= config.get('worker_slots', 1):
                         break

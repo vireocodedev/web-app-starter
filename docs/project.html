@@ -1534,14 +1534,15 @@ weights are planning seeds; measure the new consumer and rebalance without
 omitting tests. No deployment credentials or application data belong in shard
 reports. Follow <a href="#source-docsgithub-cimd">CI setup, inventory proofs and validation</a> and the
 <a href="../infrastructure/ci/README.md">canonical pool operator guide</a>, including the
-<a href="../infrastructure/ci/README.md#explicit-serial-postgresql-readiness-repair">explicit serial PostgreSQL readiness repair</a>, fresh-host
+<a href="../infrastructure/ci/README.md#explicit-serial-postgresql-readiness-repair">explicit serial PostgreSQL readiness repair</a>
+and <a href="../infrastructure/ci/README.md#versioned-pool-dispatch-repair-and-rollback">pool dispatch repair</a>, fresh-host
 validation before changing isolation or lifecycle settings.</p>
 <h4 id="source-docstemplate-initializationmd--documentation-verification">Documentation verification</h4>
 <p>Follow the bundled
 <a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--project-documentation-dashboard">dashboard procedure</a>.
 The skill owns its documentation dependencies and lockfile; the public
 <a href="project.html">project dashboard</a> combines project documents and bundled
-references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · 1e2ad71351f4f55e83f9458a65d8fc0542ce88675ce82ee58018962cb1e78a80</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
+references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · f6922160281b180a768cccf72c465f9244d7b5739ac44b86c0b0385a2a5ef372</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
 <div class="panel-heading"><div><div class="source-path">docs/github-ci.md</div><h2>Monorepo CI and main-branch protection</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsgithub-cimd--monorepo-ci-and-main-branch-protection">Monorepo CI and main-branch protection</h3>
 <p>GitHub runs <a href="../.github/workflows/ci.yml">.github/workflows/ci.yml</a> on pull
@@ -1550,7 +1551,7 @@ requests targeting <code>main</code>, pushes to <code>main</code>, and manual di
 The shared App installation and protected host registration are prerequisites,
 not settings inherited by <strong>Use this template</strong>.</p>
 <h4 id="source-docsgithub-cimd--verification-selection">Verification selection</h4>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Changed paths</th><th>Jobs selected</th></tr></thead><tbody><tr><td><code>backend/**</code></td><td>Backend image/smoke lane and three backend test shards</td></tr><tr><td><code>frontend/**</code></td><td>Frontend static, Storybook/image/smoke and four frontend test shards</td></tr><tr><td>Both app folders</td><td>All application lanes</td></tr><tr><td>Other <code>infrastructure/ci/**</code></td><td>Foundation verification</td></tr><tr><td><code>infrastructure/release/**</code>, <code>.github/**</code>, <code>.vscode/**</code>, routing or shard helper/config/tests</td><td>All lanes</td></tr><tr><td>Documentation outside the app folders</td><td>Portable initialization/docs and aggregate gate</td></tr><tr><td>Manual dispatch or the first branch push</td><td>All lanes</td></tr></tbody></table></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Changed paths</th><th>Jobs selected</th></tr></thead><tbody><tr><td><code>backend/**</code></td><td>Backend image/smoke lane and three backend test shards</td></tr><tr><td><code>frontend/**</code></td><td>Frontend static, Storybook/image/smoke and three frontend test shards</td></tr><tr><td>Both app folders</td><td>All application lanes</td></tr><tr><td>Other <code>infrastructure/ci/**</code></td><td>Foundation verification</td></tr><tr><td><code>infrastructure/release/**</code>, <code>.github/**</code>, <code>.vscode/**</code>, routing or shard helper/config/tests</td><td>All lanes</td></tr><tr><td>Documentation outside the app folders</td><td>Portable initialization/docs and aggregate gate</td></tr><tr><td>Manual dispatch or the first branch push</td><td>All lanes</td></tr></tbody></table></div>
 <p>The template also treats <code>.agents/skills/initialize-project/**</code> as shared setup
 changes. The change job only detects owners; it does not install Node, browsers
 or application dependencies. It compares the prospective PR merge commit with
@@ -1565,7 +1566,7 @@ the disposable job. Template-only assertions remain required in a real checkout.
 <p>Selected frontend work has separate static, build and test lanes. Static checks
 retain formatting, lint, architecture and every TypeScript project. The build
 lane retains Storybook and the real pinned Dockerfile&#x27;s production build and
-image smoke checks. Four deterministic test shards each use <strong>one</strong> Vitest
+image smoke checks. Three deterministic test shards each use <strong>one</strong> Vitest
 worker; local <code>npm run test</code> and <code>npm run verify</code> still execute the full suite.</p>
 <p>Selected backend work has a separate pinned Dockerfile/JAR/image smoke lane and
 three test shards. Every shard compiles the <strong>complete</strong> test source set, including
@@ -1673,7 +1674,7 @@ This documents the template repository, not inherited settings for a consumer.
 The historical documentation-only run also passed with all app/foundation jobs
 skipped and <code>CI gate</code> reported successfully; it predates the always-run package
 checks described above. Cross-repository shared-pool acceptance remains
-a separate pending gate.</p></div><div class="digest">Source SHA-256 · 90923caa4b4e430ee5cf505c56bff0738f5a17ae8d9a977b921095496a460466</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencespreparationmd">
+a separate pending gate.</p></div><div class="digest">Source SHA-256 · c43267825d090a2c5294e4c01e9afeab83d6caf9768ca315e8eb07549adb413b</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencespreparationmd">
 <div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/preparation.md</div><h2>Prepare a consumer before initialization</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencespreparationmd--prepare-a-consumer-before-initialization">Prepare a consumer before initialization</h3>
 <p>Prepare and review initialization in <strong>Client Discovery</strong>, on the production
@@ -2017,7 +2018,7 @@ authority remain human tasks. Client Discovery collects preparation; only live
 verification can establish runtime, CI, deployment and initialized recovery
 acceptance. Unexpected post-intake assistance is a preparation defect to record,
 not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · e2c96b5e68a2815894eac7877def221c7c3413e2b7ef9d6025950f3d581d828e</div></section>
-<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · b2347c0c5e45c4092956d26778b50e8fd3e5f2d75d6f7c9aa484c076a78936b5</p></footer>
+<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · 5a58e5fce1fe04529f1ed8a1ae2c72c2ebd98ff78a492e0bc9959428a007f749</p></footer>
 </main></div><script>
 const records = [...document.querySelectorAll(".record")];
 const search = document.querySelector("#search");

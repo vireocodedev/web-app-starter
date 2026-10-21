@@ -65,7 +65,8 @@ weights are planning seeds; measure the new consumer and rebalance without
 omitting tests. No deployment credentials or application data belong in shard
 reports. Follow [CI setup, inventory proofs and validation](github-ci.md) and the
 [canonical pool operator guide](../infrastructure/ci/README.md), including the
-[explicit serial PostgreSQL readiness repair](../infrastructure/ci/README.md#explicit-serial-postgresql-readiness-repair), fresh-host
+[explicit serial PostgreSQL readiness repair](../infrastructure/ci/README.md#explicit-serial-postgresql-readiness-repair)
+and [pool dispatch repair](../infrastructure/ci/README.md#versioned-pool-dispatch-repair-and-rollback), fresh-host
 validation before changing isolation or lifecycle settings.
 
 ## Documentation verification
