@@ -216,6 +216,13 @@ class MigrationTransactionFixture:
         self.installed.mkdir()
         self.base = self.directory / 'base'
         self.base.mkdir()
+        self.rootfs = self.base / 'rootfs'
+        self.probe = self.rootfs / 'usr/local/lib/web-app-ci/validate-job.py'
+        self.probe.parent.mkdir(parents=True)
+        self.original_probe = b"# predecessor probe fixture: pg_isready uses its default Unix socket\n"
+        self.probe.write_bytes(self.original_probe)
+        self.probe.chmod(0o755)
+        self.predecessor_probe = hashlib.sha256(self.original_probe).hexdigest()
         self.systemd = self.directory / 'systemd'
         self.systemd.mkdir()
         self.config_path = self.directory / 'config.json'
@@ -244,9 +251,11 @@ class MigrationTransactionFixture:
                       mock.patch.object(manage, 'lifecycle_lock', side_effect=contextlib.nullcontext),
                       mock.patch.object(manage, 'require_idle'), mock.patch.object(manage, 'trusted_executable'),
                       mock.patch.object(manage, 'POOL_PREDECESSOR', self.predecessor),
+                      mock.patch.object(manage, 'POOL_PREDECESSOR_PROBE', self.predecessor_probe),
                       mock.patch.object(manage, 'INSTALLED', self.installed), mock.patch.object(manage, 'SYSTEMD', self.systemd),
                       mock.patch.object(manage, 'load_slot_provisioner', return_value=self.provisioner),
                       mock.patch.object(ctl, 'BASE', self.base), mock.patch.object(ctl, 'POOL_BASE', self.base),
+                      mock.patch.object(ctl, 'ROOTFS', self.rootfs),
                       mock.patch.object(ctl, 'CONFIG', self.config_path),
                       mock.patch.object(ctl, 'protected_path', side_effect=lambda path, **_kwargs: Path(path)),
                       mock.patch.object(ctl, 'protected_file', side_effect=lambda path: Path(path).read_text()),
@@ -263,6 +272,8 @@ class MigrationTransactionTests(MigrationTransactionFixture, unittest.TestCase):
             self.assertEqual(json.loads(self.config_path.read_text()), BASELINE)
             self.assertEqual(manage.read_pool_migration()['phase'], 'applying')
             self.assertEqual((manage.pool_migration_directory() / 'controller.py').read_bytes(), self.original_controller)
+            self.assertEqual((manage.pool_migration_directory() / 'validate-job.py').read_bytes(), self.original_probe)
+            self.assertEqual(self.probe.read_bytes(), (manage.SOURCE / 'validate-job.py').read_bytes())
         self.provisioner.provision.side_effect = provision
         result = self.migrate()
         self.assertEqual(result['worker_slots'], 6)
@@ -320,6 +331,9 @@ class MigrationTransactionTests(MigrationTransactionFixture, unittest.TestCase):
         self.assertTrue(result['full_validation_required'])
         self.assertEqual(self.config_path.read_text(), json.dumps(BASELINE))
         self.assertEqual((self.installed / 'controller.py').read_bytes(), self.original_controller)
+        self.assertEqual(self.probe.read_bytes(), self.original_probe)
+        self.assertEqual(self.probe.stat().st_mode & 0o777, 0o755)
+        self.assertFalse((self.installed / 'validate-job.py').exists())
         self.assertFalse((self.installed / 'provision_slots.py').exists())
         self.assertFalse(self.receipt.exists())
         self.assertEqual(manage.read_pool_migration()['phase'], 'rolled-back')
@@ -562,6 +576,149 @@ class CleanupClassificationTests(unittest.TestCase):
         self.network_stop.assert_not_called()
         self.assertTrue(self.image.exists())
         self.assertEqual(json.loads(self.state.read_text()), self.intent)
+
+
+class ProbeMigrationTests(MigrationTransactionFixture, unittest.TestCase):
+    def test_old_probe_drift_is_rejected_before_backup_publication_or_writes(self):
+        self.probe.write_bytes(b'unknown predecessor probe drift\n')
+        with mock.patch.object(manage, 'atomic_file', wraps=manage.atomic_file) as write, \
+                self.assertRaisesRegex(ctl.BoundaryError, 'installed-pool-predecessor-probe-changed'):
+            self.migrate()
+        write.assert_not_called()
+        self.provisioner.preflight.assert_not_called()
+        self.provisioner.provision.assert_not_called()
+        self.assertFalse(manage.pool_migration_directory().exists())
+        self.assertTrue(self.receipt.exists())
+        self.assertEqual(json.loads(self.config_path.read_text()), BASELINE)
+
+    def test_probe_drift_during_preflight_is_rejected_before_ledger_publication(self):
+        self.provisioner.preflight.side_effect = lambda *_args: self.probe.write_bytes(b'probe changed during preflight\n')
+        with self.assertRaisesRegex(ctl.BoundaryError, 'installed-pool-predecessor-probe-changed'):
+            self.migrate()
+        self.assertFalse(manage.pool_migration_directory().exists())
+        self.assertTrue(self.receipt.exists())
+        self.assertEqual(json.loads(self.config_path.read_text()), BASELINE)
+        self.provisioner.provision.assert_not_called()
+
+    def test_probe_backup_candidate_hashes_and_rootfs_destination_are_bound(self):
+        self.migrate()
+        ledger = manage.read_pool_migration()
+        candidate_probe = (manage.SOURCE / 'validate-job.py').read_bytes()
+        self.assertEqual(ledger['backups']['validate-job.py'], self.predecessor_probe)
+        self.assertEqual(ledger['candidate']['validate-job.py'], self.hashlib.sha256(candidate_probe).hexdigest())
+        self.assertEqual(manage.migration_candidates()['validate-job.py'], (manage.SOURCE / 'validate-job.py', self.probe))
+        self.assertEqual((manage.pool_migration_directory() / 'validate-job.py').read_bytes(), self.original_probe)
+        self.assertEqual(self.probe.read_bytes(), candidate_probe)
+        self.assertEqual(self.probe.stat().st_mode & 0o777, 0o755)
+        self.assertFalse((self.installed / 'validate-job.py').exists())
+
+    def test_interruption_after_baseline_probe_update_restores_old_probe_and_source(self):
+        def fail_after_probe_update(*_args):
+            self.assertFalse(self.receipt.exists())
+            self.assertEqual(manage.read_pool_migration()['phase'], 'applying')
+            self.assertEqual(self.probe.read_bytes(), (manage.SOURCE / 'validate-job.py').read_bytes())
+            self.assertEqual(json.loads(self.config_path.read_text()), BASELINE)
+            raise ctl.BoundaryError('fixture-interrupted-after-probe-update')
+        self.provisioner.provision.side_effect = fail_after_probe_update
+        with self.assertRaisesRegex(ctl.BoundaryError, 'fixture-interrupted-after-probe-update'):
+            self.migrate()
+        self.assertEqual(manage.read_pool_migration()['phase'], 'applying')
+        self.assertEqual((self.installed / 'controller.py').read_bytes(), self.original_controller)
+        manage.rollback_pool(ctl.config_digest())
+        self.assertEqual(self.probe.read_bytes(), self.original_probe)
+        self.assertEqual(self.probe.stat().st_mode & 0o777, 0o755)
+        self.assertEqual(json.loads(self.config_path.read_text()), BASELINE)
+        self.assertFalse(self.receipt.exists())
+        self.assertEqual(manage.read_pool_migration()['phase'], 'rolled-back')
+
+    def test_mid_provision_clone_inherits_updated_probe_and_rollback_restores_baseline(self):
+        import shutil
+        clone = self.base / 'slots/1/rootfs'
+        candidate_probe = (manage.SOURCE / 'validate-job.py').read_bytes()
+        def partial_provision(*_args):
+            self.assertEqual(manage.read_pool_migration()['phase'], 'applying')
+            self.assertEqual(self.probe.read_bytes(), candidate_probe)
+            clone.parent.mkdir(parents=True)
+            # Stand in for privileged cp -a with an actual temporary filesystem
+            # copy at the provisioning boundary, then interrupt the transaction.
+            shutil.copytree(self.rootfs, clone)
+            self.assertEqual((clone / 'usr/local/lib/web-app-ci/validate-job.py').read_bytes(), candidate_probe)
+            raise ctl.BoundaryError('fixture-interrupted-mid-provision')
+        self.provisioner.provision.side_effect = partial_provision
+        self.provisioner.remove_extra_slots.side_effect = lambda *_args: shutil.rmtree(self.base / 'slots')
+        with self.assertRaisesRegex(ctl.BoundaryError, 'fixture-interrupted-mid-provision'):
+            self.migrate()
+        self.assertTrue(clone.exists())
+        self.assertFalse(self.receipt.exists())
+        manage.rollback_pool(ctl.config_digest())
+        self.provisioner.remove_extra_slots.assert_called_once()
+        self.assertFalse(clone.exists())
+        self.assertEqual(self.probe.read_bytes(), self.original_probe)
+        self.assertEqual((self.installed / 'controller.py').read_bytes(), self.original_controller)
+        self.assertEqual(manage.read_pool_migration()['phase'], 'rolled-back')
+
+    def test_unknown_later_probe_blocks_rollback_before_resource_removal(self):
+        self.migrate()
+        self.probe.write_bytes(b'unknown later installed probe\n')
+        with self.assertRaisesRegex(ctl.BoundaryError, 'pool-rollback-installed-source-changed'):
+            manage.rollback_pool(ctl.config_digest())
+        self.provisioner.remove_extra_slots.assert_not_called()
+        self.assertEqual(manage.read_pool_migration()['phase'], 'applied')
+        self.assertEqual(self.probe.read_bytes(), b'unknown later installed probe\n')
+
+    def test_missing_existing_probe_is_not_silently_overwritten_on_rollback(self):
+        self.migrate()
+        self.probe.unlink()
+        with self.assertRaisesRegex(ctl.BoundaryError, 'pool-rollback-installed-probe-missing'):
+            manage.rollback_pool(ctl.config_digest())
+        self.provisioner.remove_extra_slots.assert_not_called()
+        self.assertEqual(manage.read_pool_migration()['phase'], 'applied')
+
+    def test_tampered_probe_backup_prevents_rollback(self):
+        self.migrate()
+        (manage.pool_migration_directory() / 'validate-job.py').write_bytes(b'tampered predecessor probe backup\n')
+        with self.assertRaisesRegex(ctl.BoundaryError, 'pool-migration-backup-changed'):
+            manage.rollback_pool(ctl.config_digest())
+        self.provisioner.remove_extra_slots.assert_not_called()
+
+    def test_probe_backup_hash_cannot_be_rebound_to_an_unknown_predecessor(self):
+        self.migrate()
+        backup = manage.pool_migration_directory() / 'validate-job.py'
+        backup.write_bytes(b'unknown backup with matching ledger hash\n')
+        path = manage.pool_migration_directory() / 'ledger.json'
+        ledger = json.loads(path.read_text())
+        ledger['backups']['validate-job.py'] = self.hashlib.sha256(backup.read_bytes()).hexdigest()
+        ctl.atomic_json(path, ledger)
+        with self.assertRaisesRegex(ctl.BoundaryError, 'pool-migration-predecessor-probe-backup-mismatch'):
+            manage.rollback_pool(ctl.config_digest())
+        self.provisioner.remove_extra_slots.assert_not_called()
+
+    def test_candidate_probe_hash_and_key_schema_are_validated(self):
+        self.migrate()
+        path = manage.pool_migration_directory() / 'ledger.json'
+        original = json.loads(path.read_text())
+        invalid = copy.deepcopy(original)
+        invalid['candidate']['validate-job.py'] = 'not-a-sha256'
+        ctl.atomic_json(path, invalid)
+        with self.assertRaisesRegex(ctl.BoundaryError, 'invalid-pool-migration-candidate-hash'):
+            manage.read_pool_migration()
+        invalid = copy.deepcopy(original)
+        invalid['candidate']['../outside.py'] = invalid['candidate'].pop('validate-job.py')
+        ctl.atomic_json(path, invalid)
+        with self.assertRaisesRegex(ctl.BoundaryError, 'invalid-pool-migration-ledger'):
+            manage.read_pool_migration()
+
+    def test_clone_probe_verifier_rejects_drift_in_actual_temporary_rootfs(self):
+        spec = importlib.util.spec_from_file_location('probe_clone_verifier', manage.SOURCE / 'provision_slots.py')
+        provisioner = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(provisioner)
+        provisioner.ctl = ctl
+        candidate_probe = (manage.SOURCE / 'validate-job.py').read_bytes()
+        self.probe.write_bytes(candidate_probe)
+        provisioner.require_probe(self.rootfs, candidate_probe)
+        self.probe.write_bytes(self.original_probe)
+        with self.assertRaisesRegex(ctl.BoundaryError, 'pool-rootfs-probe-source-mismatch'):
+            provisioner.require_probe(self.rootfs, candidate_probe)
 
 
 if __name__ == '__main__':

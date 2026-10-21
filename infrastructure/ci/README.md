@@ -8,9 +8,9 @@ GitHub runner, filesystem, network namespace, and rootless Docker daemon.
 Registration and installation are operator tasks, not steps to repeat from
 every consumer's copy of this directory.
 
-**Pool change status:** source implementation is pending independent review,
+**Pool change status:** source implementation has passed independent review;
 current-source disposable-host fresh-install/migration/rollback validation and
-production canary acceptance. Earlier receipts below certify only their exact
+production canary acceptance remain pending. Earlier receipts below certify only their exact
 recorded sources and configuration; they do not certify the new worker pool.
 
 **Previous serial-host status:** the selected template host was rebuilt and this source passed
@@ -201,10 +201,20 @@ No API accepts arbitrary root commands or writable cache locations.
 ### Versioned serial predecessor migration and rollback
 
 The only supported predecessor is controller SHA-256
-`bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f`.
-A general upgrade remains unsupported. This operation changes pool capacity and
-resource settings only; it must preserve projects, identity roots, host IP deny
+`bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f`,
+with user-side validation probe SHA-256
+`afce2ec9cde27440259a07fdf0fd97edd5bb11ef07fb741ab33b9e826dd4e44e`.
+A general upgrade remains unsupported. This operation changes pool capacity,
+resource settings and the PostgreSQL readiness probe; it must preserve projects, identity roots, host IP deny
 list, storage/task/timeout bounds, GitHub App files and existing deployments.
+
+The probe waits for PostgreSQL's final TCP listener. Its temporary initialization
+server can accept Unix-socket readiness checks and then stop before the existing
+SQL query runs. Migration backs up the exact predecessor probe, invalidates
+receipts, and atomically installs the reviewed probe before cloning workers.
+Every clone must match that source. Rollback verifies and restores the original
+probe alongside the original controller and configuration; unknown later probe
+revisions cannot be overwritten by rollback.
 
 After independent review and disposable-host proof of the exact candidate:
 

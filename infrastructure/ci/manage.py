@@ -445,6 +445,7 @@ def register(project_path, expected_sha):
 
 POOL_PREDECESSOR = 'bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f'
 POOL_MIGRATION = 'serial-to-slots-v1'
+POOL_PREDECESSOR_PROBE = 'afce2ec9cde27440259a07fdf0fd97edd5bb11ef07fb741ab33b9e826dd4e44e'
 
 
 def pool_migration_directory():
@@ -470,10 +471,20 @@ def migration_destinations(config):
     uid = config['uid']
     return {'controller.py': INSTALLED / 'controller.py',
             'validation.py': INSTALLED / 'validation.py',
+            'validate-job.py': ctl.ROOTFS / 'usr/local/lib/web-app-ci/validate-job.py',
             'service': SYSTEMD / SERVICE,
             'manager': SYSTEMD / f'user@{uid}.service.d/web-app-ci.conf',
             'slice': SYSTEMD / f'user-{uid}.slice.d/web-app-ci.conf',
             'config': ctl.CONFIG}
+
+
+def migration_candidates():
+    # Explicit reviewed source/destination map: the user-side probe belongs in
+    # the trusted rootfs, never beside the root controller's installed modules.
+    return {'controller.py': (SOURCE / 'controller.py', INSTALLED / 'controller.py'),
+            'validation.py': (SOURCE / 'validation.py', INSTALLED / 'validation.py'),
+            'provision_slots.py': (SOURCE / 'provision_slots.py', INSTALLED / 'provision_slots.py'),
+            'validate-job.py': (SOURCE / 'validate-job.py', ctl.ROOTFS / 'usr/local/lib/web-app-ci/validate-job.py')}
 
 
 def invalidate_pool_receipts(config):
@@ -501,12 +512,18 @@ def read_pool_migration():
         raise ctl.BoundaryError('invalid-pool-migration-ledger')
     ctl.validate_config(ledger['old_config'])
     ctl.validate_config(ledger['new_config'])
-    if (ledger['old_config'].get('worker_slots', 1) != 1
+    if (type(ledger['backups']) is not dict or type(ledger['candidate']) is not dict
+            or ledger['old_config'].get('worker_slots', 1) != 1
             or set(ledger['backups']) != set(migration_destinations(ledger['old_config']))
-            or set(ledger['candidate']) != {'controller.py', 'validation.py', 'provision_slots.py'}):
+            or set(ledger['candidate']) != set(migration_candidates())):
         raise ctl.BoundaryError('invalid-pool-migration-ledger')
+    if ledger['backups']['validate-job.py'] != POOL_PREDECESSOR_PROBE:
+        raise ctl.BoundaryError('pool-migration-predecessor-probe-backup-mismatch')
+    if any(type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest)
+           for digest in ledger['candidate'].values()):
+        raise ctl.BoundaryError('invalid-pool-migration-candidate-hash')
     for name, digest in ledger['backups'].items():
-        if not re.fullmatch('[0-9a-f]{64}', digest) or hashlib.sha256(ctl.protected_file(directory / name).encode()).hexdigest() != digest:
+        if type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest) or hashlib.sha256(ctl.protected_file(directory / name).encode()).hexdigest() != digest:
             raise ctl.BoundaryError('pool-migration-backup-changed')
     return ledger
 
@@ -527,6 +544,10 @@ def migrate_pool(config_path, expected_sha, expected_controller_sha):
         trusted_executable(previous_path)
         if hashlib.sha256(previous_path.read_bytes()).hexdigest() != POOL_PREDECESSOR:
             raise ctl.BoundaryError('installed-pool-predecessor-changed')
+        probe_path = migration_destinations(old)['validate-job.py']
+        trusted_executable(probe_path)
+        if hashlib.sha256(probe_path.read_bytes()).hexdigest() != POOL_PREDECESSOR_PROBE:
+            raise ctl.BoundaryError('installed-pool-predecessor-probe-changed')
         proposed = ctl.validate_config(json.loads(ctl.protected_file(Path(config_path)), object_pairs_hook=ctl.unique_object))
         # A pool migration changes capacity only; repository authorization,
         # identity roots, host denylist and timeout/storage contracts stay fixed.
@@ -552,6 +573,8 @@ def migrate_pool(config_path, expected_sha, expected_controller_sha):
             trusted_executable(path) if path != ctl.CONFIG else ctl.protected_path(path)
         if (INSTALLED / 'provision_slots.py').exists():
             raise ctl.BoundaryError('unexpected-installed-pool-provisioner')
+        candidate_paths = migration_candidates()
+        candidate_contents = {name: source.read_bytes() for name, (source, _destination) in candidate_paths.items()}
         directory = pool_migration_directory()
         # Publish the complete backup+ledger directory atomically. A power loss
         # before publication leaves only an unreferenced staging directory,
@@ -561,10 +584,12 @@ def migrate_pool(config_path, expected_sha, expected_controller_sha):
             backups = {}
             for name, destination in migration_destinations(old).items():
                 content = destination.read_bytes()
+                digest = hashlib.sha256(content).hexdigest()
+                if name == 'validate-job.py' and digest != POOL_PREDECESSOR_PROBE:
+                    raise ctl.BoundaryError('installed-pool-predecessor-probe-changed')
                 atomic_file(staging / name, content, 0o600)
-                backups[name] = hashlib.sha256(content).hexdigest()
-            candidate = {name: hashlib.sha256((SOURCE / name).read_bytes()).hexdigest()
-                         for name in ('controller.py', 'validation.py', 'provision_slots.py')}
+                backups[name] = digest
+            candidate = {name: hashlib.sha256(content).hexdigest() for name, content in candidate_contents.items()}
             ledger = {'migration': POOL_MIGRATION, 'phase': 'prepared', 'old_config': old,
                       'new_config': proposed, 'backups': backups, 'candidate': candidate}
             ctl.atomic_json(staging / 'ledger.json', ledger)
@@ -579,11 +604,14 @@ def migrate_pool(config_path, expected_sha, expected_controller_sha):
         invalidate_pool_receipts(old)
         ledger['phase'] = 'applying'
         ctl.atomic_json(directory / 'ledger.json', ledger)
-        # Independent trusted rootfs copies are created before config commits.
-        # A crash leaves the controller disabled and a recoverable explicit ledger.
+        # Replace the trusted baseline probe before cloning any new rootfs. A
+        # crash here or mid-provision retains exact predecessor probe backup and
+        # applying ledger; receipts are invalid and the controller stays disabled.
+        atomic_file(candidate_paths['validate-job.py'][1], candidate_contents['validate-job.py'], 0o755)
         module.provision(proposed, SOURCE)
-        for name in candidate:
-            atomic_file(INSTALLED / name, (SOURCE / name).read_bytes(), 0o755)
+        for name, (_source, destination) in candidate_paths.items():
+            if name != 'validate-job.py':
+                atomic_file(destination, candidate_contents[name], 0o755)
         atomic_config(proposed)
         ledger['phase'] = 'applied'
         ctl.atomic_json(directory / 'ledger.json', ledger)
@@ -627,7 +655,9 @@ def rollback_pool(expected_sha):
         require_no_ledger()
         # Never roll back over an unknown later source revision.
         for name, digest in ledger['candidate'].items():
-            path = INSTALLED / name
+            path = migration_candidates()[name][1]
+            if name == 'validate-job.py' and not path.exists():
+                raise ctl.BoundaryError('pool-rollback-installed-probe-missing')
             if path.exists():
                 trusted_executable(path)
                 actual = hashlib.sha256(path.read_bytes()).hexdigest()

@@ -60,7 +60,14 @@ def configure_limits(config, index):
     path.chmod(0o644)
 
 
+def require_probe(rootfs, expected):
+    if (Path(rootfs) / 'usr/local/lib/web-app-ci/validate-job.py').read_bytes() != expected:
+        raise ctl.BoundaryError('pool-rootfs-probe-source-mismatch')
+
+
 def provision(config, source):
+    expected_probe = (Path(source) / 'validate-job.py').read_bytes()
+    require_probe(ctl.POOL_BASE / 'rootfs', expected_probe)
     preflight(config)
     baseline = ctl.POOL_BASE
     template = Path(f"/etc/systemd/system/user@{config['uid']}.service.d/web-app-ci.conf").read_text()
@@ -95,6 +102,7 @@ def provision(config, source):
         for entry in ('rootfs', 'minimal-dev', 'baseline-packages.tsv', 'proc-witness', 'sys-witness'):
             ctl.command('cp', '-a', '--reflink=auto', '--', str(baseline / entry), str(destination / entry), timeout=600)
         rootfs = destination / 'rootfs'
+        require_probe(rootfs, expected_probe)
         for entry in ('passwd', 'group'):
             path = rootfs / 'etc' / entry
             rows = []
