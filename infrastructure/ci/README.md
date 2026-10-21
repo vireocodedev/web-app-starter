@@ -218,10 +218,30 @@ No API accepts arbitrary root commands or writable cache locations.
 The original pool can reserve a queued job for a JIT runner that GitHub assigns
 elsewhere. A real Client Discovery run left one backend shard waiting 12m09s,
 including time with idle slots. The repair changes only the controller's demand
-accounting and active-pool discovery cadence. It preserves isolation, repository
-permissions, resource limits, App credentials and the original migration history.
+accounting, active-pool discovery cadence and trusted runner preparation. It
+preserves isolation, repository permissions, resource limits, App credentials
+and the original migration history.
 Its independent review, exact-source fresh-host proof and live activation must
 be recorded before declaring it accepted.
+
+Concurrent runner copies caused a real controller cgroup OOM even with about
+18 GiB available on the host: dirty filesystem pages, writeback and inode cache
+were charged to the controller's existing 512 MiB limit. The controller now
+serializes only copying the trusted runner bundle and assigning its ownership.
+A protected pool-wide lock is opened separately after each fork; fixed copy,
+ownership and flush helpers inherit its descriptor. Closing the Python owner
+does not release exclusion while a helper survives. Each copy attempt ends with
+`sync -f` on its job filesystem, including failures, before the next copy starts.
+Waiting checks shutdown and has a five-minute bound; failures still require the
+normal partial-worker cleanup and never authorize a runner registration.
+
+The flush makes filesystem cache reclaimable; it does not evict clean cache or
+increase the memory ceiling. Before activation, replay two waves of six actual
+full preparations, using real loop-backed job filesystems, under the controller's
+512 MiB / 25% CPU / 64-task limits. Record memory peak, dirty/writeback/slab,
+OOM events, copy overlap, completion and cleanup. Retain the original OOM and
+comparison evidence rather than treating a passing isolation probe outside the
+bounded service as proof of memory safety.
 
 The only supported installed predecessor is controller SHA-256
 `74f0c86bfd96997e004ef21efd733e2f9bc4618b4beb76937e0271de3e9e0866`.

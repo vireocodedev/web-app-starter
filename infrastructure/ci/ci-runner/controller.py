@@ -56,9 +56,10 @@ class RejectRedirect(urllib.request.HTTPRedirectHandler):
         raise BoundaryError('github-api-redirect-rejected')
 
 
-def command(*args, check=True, timeout=120, input_text=None):
+def command(*args, check=True, timeout=120, input_text=None, pass_fds=()):
+    options = {'pass_fds': pass_fds} if pass_fds else {}
     result = subprocess.run(args, input=input_text, text=True, capture_output=True,
-                            timeout=timeout, env={'PATH': '/usr/sbin:/usr/bin:/sbin:/bin'})
+                            timeout=timeout, env={'PATH': '/usr/sbin:/usr/bin:/sbin:/bin'}, **options)
     if check and result.returncode:
         raise BoundaryError('fixed-local-command-failed')
     return result
@@ -945,6 +946,52 @@ def cleanup(config, token=None):
     save_state({})
 
 
+@contextlib.contextmanager
+def runner_copy_lock(timeout=300):
+    # Open independently in each worker AFTER fork. A slot-specific lock would
+    # not bound the pool's shared controller-cgroup dirty/writeback memory.
+    directory = protected_path(POOL_BASE, directory=True)
+    try:
+        descriptor = os.open(directory / 'runner-copy.lock',
+                             os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, 0o600)
+    except OSError:
+        raise BoundaryError('unsafe-runner-copy-lock') from None
+    try:
+        information = os.fstat(descriptor)
+        if (not stat.S_ISREG(information.st_mode) or information.st_uid != 0
+                or information.st_gid != 0 or stat.S_IMODE(information.st_mode) != 0o600
+                or information.st_nlink != 1 or information.st_size != 0):
+            raise BoundaryError('unsafe-runner-copy-lock')
+        deadline = time.monotonic() + timeout
+        while True:
+            if STOP:
+                raise BoundaryError('runner-copy-lock-stopped')
+            if time.monotonic() >= deadline:
+                raise BoundaryError('runner-copy-lock-timeout')
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                time.sleep(0.2)
+        yield descriptor
+    finally:
+        # Never LOCK_UN: cp/chown/sync inherit this same open-file description.
+        # If this Python owner dies, the lock lasts until its helper also exits.
+        os.close(descriptor)
+
+
+def copy_runner(config):
+    with runner_copy_lock() as descriptor:
+        try:
+            command('cp', '-a', '--', str(ROOTFS / 'opt/runner'), str(HOME / 'runner'), pass_fds=(descriptor,))
+            # Ownership changes dirty metadata too; serialize them before flush.
+            # Only trusted baseline files are traversed before job startup.
+            command('chown', '-R', f"{config['uid']}:{config['uid']}", str(HOME), pass_fds=(descriptor,))
+        finally:
+            # Flush even a partially failed copy before the next slot enters.
+            command('sync', '-f', str(HOME), pass_fds=(descriptor,))
+
+
 def prepare(config):
     mapping_helpers()
     minimal_devices()
@@ -968,9 +1015,7 @@ def prepare(config):
     command('mkfs.ext4', '-q', '-F', '-m', '0', str(BASE / 'job.img'))
     command('mount', '-o', 'loop,nodev,nosuid', str(BASE / 'job.img'), str(BASE / 'job'))
     HOME.mkdir(mode=0o700)
-    command('cp', '-a', '--', str(ROOTFS / 'opt/runner'), str(HOME / 'runner'))
-    # Only trusted baseline files are traversed while root assigns ownership.
-    command('chown', '-R', f"{config['uid']}:{config['uid']}", str(HOME))
+    copy_runner(config)
     network_start(config)
     witnesses_start()
     command('systemctl', 'reset-failed', manager_unit(config), check=False)
