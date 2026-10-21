@@ -781,7 +781,7 @@ def main():
         port = int(run('docker', 'port', 'web-app-boundary-postgres', '5432/tcp').stdout.strip().rsplit(':', 1)[1])
         deadline = time.monotonic() + 45
         while time.monotonic() < deadline:
-            if run('docker', 'exec', 'web-app-boundary-postgres', 'pg_isready', '-U', 'postgres', check=False).returncode == 0:
+            if run('docker', 'exec', 'web-app-boundary-postgres', 'pg_isready', '-h', '127.0.0.1', '-U', 'postgres', check=False).returncode == 0:
                 break
             time.sleep(1)
         else:

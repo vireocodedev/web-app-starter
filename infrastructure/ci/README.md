@@ -1,13 +1,19 @@
 # Shared Hetzner CI foundation
 
 This repository owns the permanent runner foundation. One host controller
-serves explicitly registered private application repositories, serially, using
+serves explicitly registered private application repositories using a bounded pool
+of independently isolated worker slots and
 `[self-hosted, Linux, X64, web-app-ci]`. Every job gets a fresh repository-scoped
 GitHub runner, filesystem, network namespace, and rootless Docker daemon.
 Registration and installation are operator tasks, not steps to repeat from
 every consumer's copy of this directory.
 
-**Status:** the selected template host was rebuilt and this source passed
+**Pool change status:** source implementation has passed independent review;
+current-source disposable-host fresh-install/migration/rollback validation and
+production canary acceptance remain pending. Earlier receipts below certify only their exact
+recorded sources and configuration; they do not certify the new worker pool.
+
+**Previous serial-host status:** the selected template host was rebuilt and this source passed
 273 actual current-source isolation probes, including a second fresh job and
 complete cleanup. See [host acceptance](verification/host-acceptance.json) for
 source/configuration/boot-bound evidence. The App and private template repository are registered, and the controller is
@@ -31,7 +37,8 @@ Historical acceptance does not certify this modified source.
 
 The public lifecycle interface is [manage.py](manage.py): `inspect`, `install`,
 `prepare-app-auth`, `register`, `recover-registration`, and an explicitly
-unsupported general `upgrade`. The narrow `repair-https-memory` operation below
+unsupported general `upgrade`, plus the versioned `migrate-pool` and
+`rollback-pool` operations described below. The narrow `repair-https-memory` operation below
 updates only the reviewed HTTP client/controller modules; it is not a general
 upgrade or an activation command.
 The [ci-runner/](ci-runner/) implementation stays behind that interface. Jobs
@@ -125,6 +132,163 @@ explicit pinned dependency; an unpinned file beside a checkout helper cannot
 replace it. Old handoff-helper revisions are not silently accepted after the
 pin update. Existing running application images/databases are not redeployed.
 
+## Bounded concurrent worker pool
+
+One root scheduler retains the controller lock and repository allowlist. Before
+forking a worker or requesting a JIT registration it fsyncs a nonsecret slot/job
+reservation in `pool.json`. Each worker retains the existing durable unique-name
+JIT registration intent and exact inventory-based deletion/recovery. A failed
+worker with an unexpected local boundary/cleanup failure stops further admission,
+terminates peers and cleans all boundaries. A different, typed outcome applies
+when local teardown succeeds but GitHub inventory/deletion cannot prove remote
+runner absence (for example429/503): quarantine only that slot, suspend all new
+admission, and let already healthy jobs drain naturally. Exit with the quarantined
+slot reservation and exact registration intent retained. Never reuse the slot or
+clear either ledger until accessible remote inventory proves absence during
+startup recovery. A local teardown failure can never claim this remote-only
+quarantine outcome.
+Discovery takes one shared snapshot for all free slots. Polling starts at a
+15-second minimum, backs off to 120 seconds on empty snapshots and to 300
+seconds on API/rate-limit failures. Worker monitoring/reaping continues every
+second independently; discovery failures pause admission without cancelling
+healthy jobs. Before each fork, reserve current available memory/disk against
+the remaining growth of every live or still-preparing worker. An expected child
+resource recheck deferral releases only that admission after successful cleanup;
+unexpected boundary/cleanup failures remain fail-closed.
+
+After an unclean shutdown the scheduler cleans every slot before checking fresh
+validation receipts or admitting more work. An unresolved registration remains
+fail-closed; never delete its state to bypass reconciliation.
+
+The generic runner labels do not bind a JIT runner to the particular queued job
+observed by the poller. The observed job is an admission reservation, not an
+assertion about the job GitHub ultimately assigns. GitHub may assign another
+eligible job in that same allowlisted repository. Durable reservations avoid
+repeated admission of the same observation; configured slot ceilings remain the
+hard concurrency limit. A slot is not released until its runner service exits
+and cleanup succeeds.
+
+Each slot has its own UID, disjoint 65,536-ID subordinate range, rootfs copy,
+job image/home, user runtime/bus/socket, namespace/veth/subnet/firewall names,
+witness mounts and recovery state. Slot 0 retains legacy paths and identity;
+additional slots live under `/var/lib/web-app-ci/slots/N`. No writable dependency
+cache or Docker state is shared. Only trusted root-owned baseline files are
+copied during provisioning. Workflows may use GitHub's scoped cache service;
+untrusted job files never become a shared privileged baseline.
+
+Pooled managers live under root-owned `webappci.slice`, each in its own immutable
+`webappci-workerN.slice`. Both the parent and children enforce CPU, memory, swap
+and task ceilings; namespace-entry helpers join the same worker cgroup. The
+controller has its separate existing 512 MiB/25% ceiling. Application services
+and their existing slices are not moved or modified.
+
+Use [config.pool.example.json](ci-runner/config.pool.example.json) as a candidate,
+not a promise of throughput. Its six slots each have 2 CPU equivalents and 3 GiB
+maximum RAM; the aggregate ceiling is 12 CPU equivalents and 22 GiB, with an
+8 GiB host reserve. This fits the upgraded host's actual 31,326 MiB total memory;
+using nominal 32 GiB to allocate 24 GiB + 8 GiB would not. Provision/validate all six boundaries, then run the manual
+[worker acceptance workflow](../../.github/workflows/ci-worker-acceptance.yml)
+with its default four-job cohort before selecting its six-job cohort. Decide the accepted final slot
+count from measured complete-pipeline latency, application health, CPU
+throttling, reclaim/OOM counters and concurrent-PR contention.
+
+Configuration validates the complete aggregate arithmetic before privileged
+changes. `pool_capacity` also checks actual host memory/CPU, and each admission
+requires current memory/disk headroom. Do not increase slots without checking
+UID/range/route/unit conflicts and rerunning source/config/boot-bound validation.
+No API accepts arbitrary root commands or writable cache locations.
+
+### Versioned serial predecessor migration and rollback
+
+The only supported predecessor is controller SHA-256
+`bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f`,
+with user-side validation probe SHA-256
+`afce2ec9cde27440259a07fdf0fd97edd5bb11ef07fb741ab33b9e826dd4e44e`.
+A general upgrade remains unsupported. This operation changes pool capacity,
+resource settings and the PostgreSQL readiness probe; it must preserve projects, identity roots, host IP deny
+list, storage/task/timeout bounds, GitHub App files and existing deployments.
+
+The probe waits for PostgreSQL's final TCP listener. Its temporary initialization
+server can accept Unix-socket readiness checks and then stop before the existing
+SQL query runs. Migration backs up the exact predecessor probe, invalidates
+receipts, and atomically installs the reviewed probe before cloning workers.
+Every clone must match that source. Rollback verifies and restores the original
+probe alongside the original controller and configuration; unknown later probe
+revisions cannot be overwritten by rollback.
+
+After independent review and disposable-host proof of the exact candidate:
+
+1. Drain CI, stop **and disable** the controller. Keep application/deployment
+   services running. Require no slot managers, owned/subordinate processes,
+   job/witness mounts, namespace/image, registration proof or reservations.
+2. Refresh predecessor validation on the current boot if necessary. Record the
+   exact config/controller hashes and keep the reviewed candidate checkout
+   root-owned with protected ancestors. Copy the protected configuration to a
+   root-only candidate file and change capacity fields only. Provision and validate all six
+   slots; retain all existing project registrations. The first controlled
+   acceptance cohort queues four jobs, followed by six after canary success.
+3. Run from the protected candidate checkout:
+
+   ```sh
+   python3 -B infrastructure/ci/manage.py migrate-pool \
+     --config /root/reviewed-pool-config.json \
+     --expected-config-sha256 ACTUAL_CURRENT_CONFIG_SHA256 \
+     --expected-controller-sha256 bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f
+   ```
+
+   The operation checks the predecessor's full receipt, exact source and idle
+   state, all new identity/path conflicts and host capacity. Root-only fsynced
+   backups and a versioned phase ledger are published together atomically as
+   `migration-v1` before operational mutation. A crash before publication leaves
+   only an unreferenced private staging directory and preserves the predecessor
+   configuration/receipt; a crash after publication always has complete backups
+   and an explicit rollback ledger. The old receipt
+   is invalidated before mutation; the protected config commits only after
+   slot provisioning. It never activates CI. An interrupted migration is not a
+   fresh-install/retry opportunity: inspect its ledger and use explicit rollback.
+4. Run installed `controller.py validate`. Every slot must pass all existing
+   toolchain/rootless-Docker/Testcontainers/boundary/fresh-second-job probes.
+   Pool validation then prepares all slots simultaneously, verifies actual
+   parent/child limits, uses positive peer controls for hostile cross-slot
+   filesystem/process/network/Docker probes, and destroys one slot while peers
+   remain healthy. Inspect every slot receipt and `pool-validation.json`.
+5. Explicitly enable/start only after all evidence is accepted. Dispatch the
+   fixed-command worker acceptance workflow with `slots=4`, inspect its
+   artifacts and actual overlap, then repeat with `slots=6`. It accepts no
+   commands, repository names or credentials as inputs. Run genuine
+   selected and all-scope CI, cancellation/restart/cleanup and concurrent-PR
+   cases. Record cold/warm end-to-end times, complete shard coverage, actual
+   job overlap and application reserve. Do not replace required checks with
+   nightly-only verification to meet the latency target.
+
+Rollback also requires the stopped/disabled/fully idle lock and exact current
+config hash. It verifies the protected ledger/backups and rejects unknown later
+controller revisions, removes only derived extra slot identities/baselines/
+units, restores the exact predecessor config/source/units, and invalidates all
+receipts. It never touches host application data or credentials or reactivates CI:
+
+```sh
+python3 -B infrastructure/ci/manage.py rollback-pool \
+  --expected-config-sha256 ACTUAL_CURRENT_CONFIG_SHA256
+```
+
+Run the restored predecessor's full validation before activation. Preserve the
+migration ledger/backups for audit; reusing a completed migration ledger is
+intentionally rejected. Further capacity changes need a separately reviewed
+migration rather than editing a validated config while the controller runs.
+
+### Acceptance evidence to retain
+
+The operator's private receipt should bind candidate commit/source hashes,
+predecessor hashes, protected config hash and boot ID to: fresh install;
+predecessor migration; at least two simultaneous slots; every hostile denial
+with a positive control; one-slot cleanup with live peers; interrupted intent
+recovery; rollback and predecessor revalidation; genuine CI test inventory and
+cold/warm timing; application health and measured aggregate resource limits.
+Public evidence must contain no credentials, JIT payloads, job output or
+application data. Pending evidence must be labelled pending; earlier serial
+receipts cannot certify the pool.
+
 ## Fresh-host prerequisites
 
 Rebuilding a server or removing old repositories requires a separate, explicit
@@ -138,7 +302,9 @@ AppArmor, unprivileged user namespaces, and `/dev/net/tun`. Installation require
 at least 7,500 MiB total memory and 25 GiB free disk, plus the configured
 worker/host reserve. The default worker is bounded to 3 GiB memory, 1 GiB swap,
 four CPU equivalents, 1,024 tasks, 12 GiB job storage, and a one-hour job lifetime.
-Only one worker runs at a time; application capacity is additional.
+Omitting pool configuration preserves one-slot compatibility. Pool configurations
+require explicit aggregate CPU and memory ceilings plus a host reserve;
+application capacity is additional.
 
 Inspect and prepare the host's routing/firewall deliberately. IPv4 forwarding
 must already be `1`; the installer checks it and never enables it. Install the
@@ -332,7 +498,7 @@ Before declaring this pool ready:
 2. Register and execute genuine workflows from two distinct authorized private
    repositories. One must exercise this starter's Java 21 Gradle/PostgreSQL tests
    and Node/npm frontend checks.
-3. Verify serial execution and that each subsequent job has fresh storage,
+3. Verify configured concurrent execution and that each subsequent job has fresh storage,
    processes, namespaces, and Docker state.
 4. Verify task-owned registrations/resources are removed after success,
    failure/cancellation, and an interrupted job, with no surviving controller

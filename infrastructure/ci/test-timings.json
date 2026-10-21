@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "description": "Planning weights only, not measured milliseconds. Replace weights with durationsMs from successful source-bound shard reports to rebalance. New units default to weight 1; weights never remove tests.",
+  "frontend": {
+    "weights": {},
+    "affinities": {}
+  },
+  "backend": {
+    "weights": {
+      "com.vireocode.backend.AuthIntegrationTests": 30,
+      "com.vireocode.backend.BackendApplicationTests": 30
+    },
+    "affinities": {}
+  }
+}

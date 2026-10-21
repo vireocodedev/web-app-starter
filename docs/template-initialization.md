@@ -51,6 +51,22 @@ files, setup actions, safeguards and verification here, linking to the bundled
 runbook instead of copying it. Keep protected values in secret stores and
 private run evidence, not this document.
 
+## Shared CI setup
+
+The consumer inherits `.github/workflows/ci.yml`,
+`infrastructure/ci/{ci_scope.py,test_shards.py,test-timings.json}` and backend
+inventory/filter configuration. The backend Dockerfile copies `gradle.properties`
+to preserve the same bounded JVM/worker configuration inside image compilation.
+Its prerequisites are an authorized shared-pool
+repository registration, pinned Node/npm/Java toolchains and enough validated
+isolated slots; registration is not inherited by template creation. Per-job test
+workers remain bounded even when the pool runs jobs concurrently. Initial timing
+weights are planning seeds; measure the new consumer and rebalance without
+omitting tests. No deployment credentials or application data belong in shard
+reports. Follow [CI setup, inventory proofs and validation](github-ci.md) and the
+[canonical pool operator guide](../infrastructure/ci/README.md), including fresh-host
+validation before changing isolation or lifecycle settings.
+
 ## Documentation verification
 
 Follow the bundled

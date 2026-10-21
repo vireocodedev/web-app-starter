@@ -38,3 +38,41 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// Each CI lane compiles the complete source set, including cross-test fixtures.
+// Discovery uses JUnit through Gradle's supported dry-run mode: no test bodies,
+// Spring contexts or application databases are started by inventory collection.
+tasks.register('ciTestInventory', Test) {
+	dependsOn tasks.named('testClasses')
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform()
+	dryRun = true
+	maxParallelForks = 1
+	reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/ciTestInventory')
+}
+
+// Each cached context owns a server, pool and PostgreSQL container. Retain the
+// eviction contract while independent CI jobs use separate databases/daemons.
+tasks.withType(Test).configureEach {
+	maxParallelForks = 1
+	jvmArgs '-XX:ActiveProcessorCount=2'
+	systemProperty 'spring.test.context.cache.maxSize', '2'
+}
+
+tasks.named('test') {
+	if (providers.gradleProperty('ciTestClassesFile').isPresent()) {
+		def classesFile = file(providers.gradleProperty('ciTestClassesFile').get())
+		def classes = classesFile.readLines().findAll { !it.isBlank() }
+		if (classes.isEmpty() || classes.any { !(it ==~ /[a-zA-Z_$][a-zA-Z0-9_$.]*/) }) {
+			throw new GradleException('Invalid or empty CI class selection')
+		}
+		filter {
+			classes.each {
+				includeTestsMatching(it)
+				includeTestsMatching(it + '$*')
+			}
+			failOnNoMatchingTests = true
+		}
+	}
+}

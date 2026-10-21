@@ -21,7 +21,7 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, "tests/browser/**"],
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
     fileParallelism: true,
-    maxWorkers: 2,
+    maxWorkers: process.env.CI ? 1 : 2,
     mockReset: true,
     pool: "threads",
     restoreMocks: true,

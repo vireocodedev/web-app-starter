@@ -9,7 +9,9 @@ import subprocess
 def scope(paths, force=False):
     shared = force or any(path.startswith(('.github/', '.agents/skills/initialize-project/',
                                           '.vscode/', 'infrastructure/release/'))
-                          or path == 'infrastructure/ci/ci_scope.py' for path in paths)
+                          or path in ('infrastructure/ci/ci_scope.py', 'infrastructure/ci/test_shards.py',
+                                      'infrastructure/ci/test-timings.json',
+                                      'infrastructure/ci/tests/test_ci_shards.py') for path in paths)
     return {
         'backend': shared or any(path.startswith('backend/') for path in paths),
         'frontend': shared or any(path.startswith('frontend/') for path in paths),
@@ -17,17 +19,27 @@ def scope(paths, force=False):
     }
 
 
+LANES = {
+    'backend': ('backend', 'backend-tests'),
+    'frontend': ('frontend', 'frontend-tests', 'frontend-build'),
+    'foundation': ('foundation',),
+}
+
+
 def gate(needs):
     changes = needs.get('changes', {})
     if changes.get('result') != 'success':
         raise ValueError('CI change detection did not succeed.')
-    for job in ('backend', 'frontend', 'foundation'):
-        selected = changes.get('outputs', {}).get(job)
+    if needs.get('portable', {}).get('result') != 'success':
+        raise ValueError('Required portable initialization/documentation verification did not succeed.')
+    for owner, jobs in LANES.items():
+        selected = changes.get('outputs', {}).get(owner)
         if selected not in ('true', 'false'):
-            raise ValueError('Missing or invalid CI selection: ' + job)
+            raise ValueError('Missing or invalid CI selection: ' + owner)
         expected = 'success' if selected == 'true' else 'skipped'
-        if needs.get(job, {}).get('result') != expected:
-            raise ValueError('CI job did not reach its required result: ' + job)
+        for job in jobs:
+            if needs.get(job, {}).get('result') != expected:
+                raise ValueError('CI job did not reach its required result: ' + job)
 
 
 def main():

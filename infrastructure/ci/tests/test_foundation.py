@@ -535,6 +535,8 @@ class ControllerRecoveryTests(unittest.TestCase):
                         mock.patch.object(ctl, 'cleanup', side_effect=lambda *_: events.append('cleanup')), \
                         mock.patch.object(ctl, 'app_credentials', return_value='hidden'), \
                         mock.patch.object(ctl, 'config_digest', return_value='config'), \
+                        mock.patch.object(ctl, 'pool_capacity'), \
+                        mock.patch.object(ctl, 'pool_state', return_value={}), \
                         mock.patch.object(ctl, 'boundary_digest', side_effect=digest), \
                         mock.patch.object(Path, 'read_text', return_value='boot'), \
                         mock.patch.object(ctl, 'STOP', True), mock.patch.object(ctl, 'find_job') as find_job:
