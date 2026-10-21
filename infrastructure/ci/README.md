@@ -9,9 +9,11 @@ Registration and installation are operator tasks, not steps to repeat from
 every consumer's copy of this directory.
 
 **Pool change status:** source implementation has passed independent review;
-current-source disposable-host fresh-install/migration/rollback validation and
-production canary acceptance remain pending. Earlier receipts below certify only their exact
-recorded sources and configuration; they do not certify the new worker pool.
+the six-worker source at `3a94332` passed disposable-host installation, migration
+and exact rollback, full installed live validation and genuine four/six-worker
+cohorts on 2026-10-21. Cancellation cleanup also passed. The dispatch repair
+described below is a later candidate and requires its own review and validation
+before activation. Earlier receipts certify only their exact source/configuration/boot.
 
 **Previous serial-host status:** the selected template host was rebuilt and this source passed
 273 actual current-source isolation probes, including a second fresh job and
@@ -38,8 +40,9 @@ Historical acceptance does not certify this modified source.
 The public lifecycle interface is [manage.py](manage.py): `inspect`, `install`,
 `prepare-app-auth`, `register`, `recover-registration`, and an explicitly
 unsupported general `upgrade`, the narrow `repair-postgres-readiness-v1`,
-plus the versioned `migrate-pool` and
-`rollback-pool` operations described below. The narrow `repair-https-memory` operation below
+plus the versioned `migrate-pool`,
+`rollback-pool`, `repair-pool-dispatch-v1` and `rollback-pool-dispatch-v1` operations
+described below. The narrow `repair-https-memory` operation below
 updates only the reviewed HTTP client/controller modules; it is not a general
 upgrade or an activation command.
 The [ci-runner/](ci-runner/) implementation stays behind that interface. Jobs
@@ -149,8 +152,9 @@ clear either ledger until accessible remote inventory proves absence during
 startup recovery. A local teardown failure can never claim this remote-only
 quarantine outcome.
 Discovery takes one shared snapshot for all free slots. Polling starts at a
-15-second minimum, backs off to 120 seconds on empty snapshots and to 300
-seconds on API/rate-limit failures. Worker monitoring/reaping continues every
+15-second minimum. While workers are active, empty snapshots retain that base
+cadence so dependent jobs and the final gate are discovered promptly. A fully idle
+pool backs off to 120 seconds; API/rate-limit failures back off to 300 seconds. Worker monitoring/reaping continues every
 second independently; discovery failures pause admission without cancelling
 healthy jobs. Before each fork, reserve current available memory/disk against
 the remaining growth of every live or still-preparing worker. An expected child
@@ -164,10 +168,19 @@ fail-closed; never delete its state to bypass reconciliation.
 The generic runner labels do not bind a JIT runner to the particular queued job
 observed by the poller. The observed job is an admission reservation, not an
 assertion about the job GitHub ultimately assigns. GitHub may assign another
-eligible job in that same allowlisted repository. Durable reservations avoid
-repeated admission of the same observation; configured slot ceilings remain the
-hard concurrency limit. A slot is not released until its runner service exits
-and cleanup succeeds.
+eligible job in that same allowlisted repository. The scheduler compares the
+protected runner intent with GitHub-confirmed runner ID/name/repository from the
+same discovery snapshot. Once its actual assignment is confirmed, that child no
+longer suppresses its original observed job. This confirmation is latched until
+the child exits, so a later stale API snapshot cannot restore the stale reservation.
+Each still-preparing or awaiting runner budgets one queued job in its repository,
+using its observed job when still queued or another oldest job otherwise. Thus
+waiting runners are counted without starving work assigned elsewhere or creating
+extra waiting runners. Confirmed assignments override stale queued copies of the
+same job. Missing or inconsistent identity evidence retains the conservative
+budget; failed discovery pauses admissions. Durable resource reservations and
+the configured slot ceiling remain in force until the service exits and cleanup
+succeeds. Job-written files and runner logs cannot confirm assignment.
 
 Each slot has its own UID, disjoint 65,536-ID subordinate range, rootfs copy,
 job image/home, user runtime/bus/socket, namespace/veth/subnet/firewall names,
@@ -199,14 +212,63 @@ requires current memory/disk headroom. Do not increase slots without checking
 UID/range/route/unit conflicts and rerunning source/config/boot-bound validation.
 No API accepts arbitrary root commands or writable cache locations.
 
+### Versioned pool dispatch repair and rollback
+
+The original pool can reserve a queued job for a JIT runner that GitHub assigns
+elsewhere. A real Client Discovery run left one backend shard waiting 12m09s,
+including time with idle slots. The repair changes only the controller's demand
+accounting and active-pool discovery cadence. It preserves isolation, repository
+permissions, resource limits, App credentials and the original migration history.
+Its independent review, exact-source fresh-host proof and live activation must
+be recorded before declaring it accepted.
+
+The only supported installed predecessor is controller SHA-256
+`74f0c86bfd96997e004ef21efd733e2f9bc4618b4beb76937e0271de3e9e0866`.
+Use a reviewed, protected checkout, drain genuine jobs, then stop and disable CI.
+The operation requires every slot to be fully idle, exact unchanged config bytes,
+pinned unchanged installed/source components and genuine current-boot validation
+receipts from that predecessor. Unknown components, dirty migration history,
+active boundaries and pending registration recovery fail before mutation.
+
+```sh
+python3 -B infrastructure/ci/manage.py repair-pool-dispatch-v1 \
+  --expected-config-sha256 ACTUAL_CURRENT_CONFIG_SHA256
+python3 -B /usr/local/lib/web-app-ci/controller.py validate
+```
+
+A separate root-only `dispatch-repair-v1` ledger seals the exact predecessor
+backup, candidate hash, config, unchanged components and original migration tree.
+It is published durably before replacement. All slot/pool receipts are invalidated
+and fsynced before the controller is atomically replaced as root-owned mode `0755`.
+The operation changes no config or unit and never enables the controller. Full
+installed-source validation and explicit activation remain separate steps.
+
+If interrupted, inspect the ledger and hashes; do not replay the repair or remove
+its history. Explicit rollback accepts only the known old/new controller bytes
+and unchanged sealed prerequisites, restores the exact predecessor backup, and
+leaves receipts invalid and CI disabled:
+
+```sh
+python3 -B infrastructure/ci/manage.py rollback-pool-dispatch-v1 \
+  --expected-config-sha256 ACTUAL_CURRENT_CONFIG_SHA256
+python3 -B /usr/local/lib/web-app-ci/controller.py validate
+```
+
+An active or interrupted dispatch repair must be rolled back before an original
+pool rollback. The separate repair ledger never rewrites `migration-v1`, its
+backups or its candidate hashes. Repeated repair/rollback attempts are rejected;
+retain the audit records and establish readiness through real validation.
+
 ### Explicit serial PostgreSQL readiness repair
 
 The original probe may see the PostgreSQL container's temporary Unix-socket
 initialization server as ready, then run its SQL query while that server stops.
 The reviewed probe waits for the final TCP listener. This narrowly supported
 repair changes only that probe; it does not install pool modules or repair HTTPS.
-Its acceptance remains pending exact-source independent review and disposable-host
-repair/validation/rollback proof; earlier pool receipts do not certify this tool.
+PR #20 delivered this repair after independent review and exact-source
+disposable-host repair, migration, rollback and full restored-predecessor validation.
+The original probe variant and its known readiness failure remain separately
+recorded; passing receipts are never manufactured to bypass that failure.
 
 Use `repair-postgres-readiness-v1` only on the stopped, disabled, fully idle
 serial foundation. It pins the installed controller (`bef4b316…`), validation

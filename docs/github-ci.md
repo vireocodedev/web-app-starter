@@ -11,7 +11,7 @@ not settings inherited by **Use this template**.
 | Changed paths | Jobs selected |
 | --- | --- |
 | `backend/**` | Backend image/smoke lane and three backend test shards |
-| `frontend/**` | Frontend static, Storybook/image/smoke and four frontend test shards |
+| `frontend/**` | Frontend static, Storybook/image/smoke and three frontend test shards |
 | Both app folders | All application lanes |
 | Other `infrastructure/ci/**` | Foundation verification |
 | `infrastructure/release/**`, `.github/**`, `.vscode/**`, routing or shard helper/config/tests | All lanes |
@@ -34,7 +34,7 @@ the disposable job. Template-only assertions remain required in a real checkout.
 Selected frontend work has separate static, build and test lanes. Static checks
 retain formatting, lint, architecture and every TypeScript project. The build
 lane retains Storybook and the real pinned Dockerfile's production build and
-image smoke checks. Four deterministic test shards each use **one** Vitest
+image smoke checks. Three deterministic test shards each use **one** Vitest
 worker; local `npm run test` and `npm run verify` still execute the full suite.
 
 Selected backend work has a separate pinned Dockerfile/JAR/image smoke lane and

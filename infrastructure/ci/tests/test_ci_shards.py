@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 from pathlib import Path
+import re
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -104,8 +105,11 @@ class ShardTests(unittest.TestCase):
 
     def test_workflow_retains_all_required_lanes_and_bounded_shards(self):
         workflow = (ci.ROOT / '.github/workflows/ci.yml').read_text()
-        self.assertIn('shard: [1, 2, 3, 4]', workflow)
-        self.assertIn('shard: [1, 2, 3]', workflow)
+        self.assertEqual(ci.COUNTS, {'frontend': 3, 'backend': 3})
+        for kind in ci.COUNTS:
+            section = re.split(r'\n  [a-z][a-z-]*:', workflow.split('\n  ' + kind + '-tests:')[1], 1)[0]
+            self.assertIn('shard: [1, 2, 3]', section)
+            self.assertIn('matrix.shard }}/3)', section)
         self.assertIn('name: CI gate', workflow)
         self.assertIn('needs: [changes, portable, backend, backend-tests, frontend, frontend-tests, frontend-build, foundation]', workflow)
         self.assertIn("pattern: '*-shard-*-${{ github.run_attempt }}'", workflow)
