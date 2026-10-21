@@ -76,7 +76,9 @@ jobs:
           try:
               # Hold all cohort jobs long enough to prove actual overlap from
               # their artifact intervals and root-side live resource inspection.
-              time.sleep(30)
+              # Trusted runner copies are serialized before workers start.
+              # Keep early workers alive while the remaining cohort prepares.
+              time.sleep(120)
               assert docker('volume', 'ls', '--format', '{{.Name}}') == volume
               result = {'slot': int(os.environ['ACCEPTANCE_SLOT']), 'uid': uid,
                         'started_epoch': started, 'finished_epoch': time.time(),
