@@ -1521,12 +1521,26 @@ personalization, record application-specific values, prerequisites, affected
 files, setup actions, safeguards and verification here, linking to the bundled
 runbook instead of copying it. Keep protected values in secret stores and
 private run evidence, not this document.</p>
+<h4 id="source-docstemplate-initializationmd--shared-ci-setup">Shared CI setup</h4>
+<p>The consumer inherits <code>.github/workflows/ci.yml</code>,
+<code>infrastructure/ci/{ci_scope.py,test_shards.py,test-timings.json}</code> and backend
+inventory/filter configuration. The backend Dockerfile copies <code>gradle.properties</code>
+to preserve the same bounded JVM/worker configuration inside image compilation.
+Its prerequisites are an authorized shared-pool
+repository registration, pinned Node/npm/Java toolchains and enough validated
+isolated slots; registration is not inherited by template creation. Per-job test
+workers remain bounded even when the pool runs jobs concurrently. Initial timing
+weights are planning seeds; measure the new consumer and rebalance without
+omitting tests. No deployment credentials or application data belong in shard
+reports. Follow <a href="#source-docsgithub-cimd">CI setup, inventory proofs and validation</a> and the
+<a href="../infrastructure/ci/README.md">canonical pool operator guide</a>, including fresh-host
+validation before changing isolation or lifecycle settings.</p>
 <h4 id="source-docstemplate-initializationmd--documentation-verification">Documentation verification</h4>
 <p>Follow the bundled
 <a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--project-documentation-dashboard">dashboard procedure</a>.
 The skill owns its documentation dependencies and lockfile; the public
 <a href="project.html">project dashboard</a> combines project documents and bundled
-references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · 7570c853973f354405198f19f760c1558006d8bc2d58074f22fb0a90e79b462a</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
+references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · 2357b84075404b50a7f88bffe51b042bdaaf1cec3dd110b0b628942b53242653</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
 <div class="panel-heading"><div><div class="source-path">docs/github-ci.md</div><h2>Monorepo CI and main-branch protection</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsgithub-cimd--monorepo-ci-and-main-branch-protection">Monorepo CI and main-branch protection</h3>
 <p>GitHub runs <a href="../.github/workflows/ci.yml">.github/workflows/ci.yml</a> on pull
@@ -1535,37 +1549,78 @@ requests targeting <code>main</code>, pushes to <code>main</code>, and manual di
 The shared App installation and protected host registration are prerequisites,
 not settings inherited by <strong>Use this template</strong>.</p>
 <h4 id="source-docsgithub-cimd--verification-selection">Verification selection</h4>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Changed paths</th><th>Jobs selected</th></tr></thead><tbody><tr><td><code>backend/**</code></td><td>Backend verification</td></tr><tr><td><code>frontend/**</code></td><td>Frontend verification</td></tr><tr><td>Both app folders</td><td>Both app verifications</td></tr><tr><td><code>infrastructure/ci/**</code></td><td>Foundation verification</td></tr><tr><td><code>infrastructure/release/**</code></td><td>All verifications</td></tr><tr><td><code>.github/**</code>, <code>.vscode/**</code>, or the CI selection helper</td><td>All verifications</td></tr><tr><td><code>.agents/skills/initialize-project/**</code></td><td>All verifications</td></tr><tr><td>Documentation outside the app folders</td><td>Detection/package/docs verification and aggregate gate only</td></tr><tr><td>Manual dispatch or the first branch push</td><td>All verifications</td></tr></tbody></table></div>
-<p>The change job compares the checked-out prospective PR merge commit against
-the event&#x27;s base commit. Renames are treated as deletion/addition so a move
-between owners selects both. Main pushes compare the event&#x27;s prior commit.
-CI configuration changes force all relevant checks.</p>
-<p>The detection job always verifies the
-<a href="../.agents/skills/initialize-project/SKILL.md">portable initialization package</a>,
-including on documentation-only PRs. It selects Node/npm from the skill&#x27;s
-manifest, installs only that package&#x27;s lockfile, runs contract/model/server,
-documentation and Chromium desktop/mobile accessibility/flow tests, checks
-both generated pages for freshness and repeats verification in an isolated
-skill-only consumer. Browser binaries use the disposable job&#x27;s temporary
-directory; no frontend dependencies or application/provider startup is needed.
-Template-only application/CI/receipt/pointer assertions remain required in the
-real checkout and are explicitly inapplicable only in the skill-only fixture.</p>
-<p>Backend verification selects Java 21 in the disposable job tool cache and runs
-the Gradle wrapper&#x27;s tests/boot JAR build, including isolated PostgreSQL and auth
-integration tests. Frontend verification selects the repo&#x27;s Node version and
-installs its declared npm version into a disposable prefix before <code>npm ci</code>
-and <code>npm run verify</code>. Each selected app then builds its pinned Dockerfile and
-smoke-tests its non-root read-only image; backend uses fresh disposable
-PostgreSQL, never the application database. See the
-<a href="../infrastructure/release/README.md">image contract</a>.
-Neither job changes the host baseline or uses application
-databases/credentials. Foundation verification runs the source-local lifecycle,
-App, recovery, routing/gate, and image-smoke helper tests.</p>
-<p><code>CI gate</code> always reports, even for documentation-only PRs. It succeeds only when
-change detection succeeded, every selected job succeeded, and unselected jobs
-were skipped as expected. Failed/cancelled or unexpectedly skipped jobs cannot
-be hidden behind a successful aggregate. Keep the workflow itself unfiltered;
-workflow-level path filters can leave required checks pending forever.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Changed paths</th><th>Jobs selected</th></tr></thead><tbody><tr><td><code>backend/**</code></td><td>Backend image/smoke lane and three backend test shards</td></tr><tr><td><code>frontend/**</code></td><td>Frontend static, Storybook/image/smoke and four frontend test shards</td></tr><tr><td>Both app folders</td><td>All application lanes</td></tr><tr><td>Other <code>infrastructure/ci/**</code></td><td>Foundation verification</td></tr><tr><td><code>infrastructure/release/**</code>, <code>.github/**</code>, <code>.vscode/**</code>, routing or shard helper/config/tests</td><td>All lanes</td></tr><tr><td>Documentation outside the app folders</td><td>Portable initialization/docs and aggregate gate</td></tr><tr><td>Manual dispatch or the first branch push</td><td>All lanes</td></tr></tbody></table></div>
+<p>The template also treats <code>.agents/skills/initialize-project/**</code> as shared setup
+changes. The change job only detects owners; it does not install Node, browsers
+or application dependencies. It compares the prospective PR merge commit with
+the event&#x27;s base, or a main push with its preceding commit. Renames select both
+owners. Keep the workflow itself unfiltered so required checks always report.</p>
+<p>The independent <strong>Portable initialization and documentation</strong> lane always runs,
+including for documentation-only changes. It selects the skill&#x27;s pinned Node/npm,
+installs that package&#x27;s lockfile, verifies preparation/contract/documentation and
+Chromium desktop/mobile flows, checks generated pages and repeats verification
+in an isolated skill-only consumer. Browser binaries and dependencies remain in
+the disposable job. Template-only assertions remain required in a real checkout.</p>
+<p>Selected frontend work has separate static, build and test lanes. Static checks
+retain formatting, lint, architecture and every TypeScript project. The build
+lane retains Storybook and the real pinned Dockerfile&#x27;s production build and
+image smoke checks. Four deterministic test shards each use <strong>one</strong> Vitest
+worker; local <code>npm run test</code> and <code>npm run verify</code> still execute the full suite.</p>
+<p>Selected backend work has a separate pinned Dockerfile/JAR/image smoke lane and
+three test shards. Every shard compiles the <strong>complete</strong> test source set, including
+fixtures referenced across test classes. Gradle&#x27;s <code>ciTestInventory</code> task discovers
+the entire JUnit suite in dry-run mode into a separate XML directory, then the
+standard <code>test</code> task executes only assigned classes in a single fork. Test JVMs
+retain two visible processors and Spring&#x27;s context-cache limit of two, including
+the actual eviction/PostgreSQL lifecycle test. Shared inherited Spring fixtures
+can have explicit assignment affinity; test methods never run concurrently against
+a shared database. Each worker owns its own Docker/PostgreSQL resources.</p>
+<p>Foundation verification retains lifecycle, authentication, routing/gate, shard
+proof, release helper and shell checks. No lane uses application credentials,
+production databases, a host Docker daemon or a writable cache shared with
+another job. CI does not publish or deploy images; release authorization remains
+in its separate workflow.</p>
+<h4 id="source-docsgithub-cimd--complete-suite-proof-and-performance">Complete-suite proof and performance</h4>
+<p><a href="../infrastructure/ci/test_shards.py">infrastructure/ci/test_shards.py</a> assigns
+collected files/classes with stable longest-weight-first balancing. The source
+<a href="../infrastructure/ci/test-timings.json">timing configuration</a> explicitly labels
+its initial values as <strong>planning weights, not benchmark measurements</strong>. New tests
+are included automatically. Weights change placement only, never membership.
+Use successful reports&#x27; <code>durationsMs</code> to refresh weights after measuring; preserve
+context affinity and review slow indivisible files rather than increasing nested
+worker pools.</p>
+<p>Every successful shard uploads a JSON proof bound to the exact checkout SHA,
+workflow run and attempt. Frontend collection is compared with all configured
+source test files, and executed JSON assertion reports must contain every assigned
+file with all assertions passing. Backend XML testcase identities are compared
+as multisets with complete dry-run collection, retaining repeated display names.
+Unexpected skips, pending/todo tests, duplicate or missing assignments, empty
+selected shards, missing reports or mixed-source/run reports fail verification.
+There are currently no declared non-browser suite skips; adding one requires an
+explicit reviewed policy rather than silently weakening the gate.</p>
+<p><strong>CI gate</strong> keeps its existing required check name. It requires successful change
+detection, the always-run portable lane, every selected static/build/test/foundation
+lane, expected skips for unrelated owners, and complete source-bound execution
+proofs. Matrix fail-fast is disabled so one failure does not silently cancel other
+shards. Reports come only from the current attempt; <strong>rerun all jobs</strong> after a failed
+attempt, rather than reusing old artifacts from successful jobs in a previous
+attempt. Test reports are retained for seven days and contain synthetic test data,
+not application databases or deployment secrets.</p>
+<p>The real Dockerfiles still build from this exact checkout. Backend image
+compilation copies <code>gradle.properties</code>, retaining the same bounded build JVM and
+Gradle worker settings as host-side CI compilation. Host-side duplicate
+application builds were removed; Docker retains its own typecheck/build safeguards.
+No unverified cross-job build artifact replaces a trusted production build. The
+remaining frontend typecheck duplication is intentional until measured reuse can
+preserve that contract.</p>
+<p>Concurrency is bounded by the shared pool&#x27;s configured slots, not the number of
+matrix entries. Each test lane uses one worker/fork; aggregate CPU/memory/application
+reserves remain operator controls. An under-ten-minute total is an acceptance
+target, <strong>not a result established by these configuration changes</strong>. Record cold
+and warm commit-to-gate time, queue/startup time, peak memory, CPU pressure, full
+inventory counts and two simultaneous PRs before declaring the target met. The
+<a href="../infrastructure/ci/README.md">shared-pool operator guide</a> owns provisioning,
+isolation, fresh-host validation and activation.</p>
 <h4 id="source-docsgithub-cimd--configure-a-consumer">Configure a consumer</h4>
 <ol>
 <li>Keep <code>main</code> as the integration branch, or deliberately update the workflow&#x27;s
@@ -1617,7 +1672,7 @@ This documents the template repository, not inherited settings for a consumer.
 The historical documentation-only run also passed with all app/foundation jobs
 skipped and <code>CI gate</code> reported successfully; it predates the always-run package
 checks described above. Cross-repository shared-pool acceptance remains
-a separate pending gate.</p></div><div class="digest">Source SHA-256 · 249edc42378cce20c91e7efae63809080d897c56df1d7fead798fb668d3ee7b2</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencespreparationmd">
+a separate pending gate.</p></div><div class="digest">Source SHA-256 · 90923caa4b4e430ee5cf505c56bff0738f5a17ae8d9a977b921095496a460466</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencespreparationmd">
 <div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/preparation.md</div><h2>Prepare a consumer before initialization</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencespreparationmd--prepare-a-consumer-before-initialization">Prepare a consumer before initialization</h3>
 <p>Prepare and review initialization in <strong>Client Discovery</strong>, on the production
@@ -1961,7 +2016,7 @@ authority remain human tasks. Client Discovery collects preparation; only live
 verification can establish runtime, CI, deployment and initialized recovery
 acceptance. Unexpected post-intake assistance is a preparation defect to record,
 not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · e2c96b5e68a2815894eac7877def221c7c3413e2b7ef9d6025950f3d581d828e</div></section>
-<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · 9d7706e1ecf839f4618933410bbab8d70a5ea82e1d2124d18be57810f9836941</p></footer>
+<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · 04e56cdddea40efbf192ff6e1b15fc01a0e0b0b93958b7ab5b63360567a88235</p></footer>
 </main></div><script>
 const records = [...document.querySelectorAll(".record")];
 const search = document.querySelector("#search");
