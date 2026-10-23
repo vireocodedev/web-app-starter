@@ -87,9 +87,9 @@ a system Gradle installation is not required.
 From the workspace root:
 
 ```sh
-node backend/scripts/setup-local.mjs
+bash backend/scripts/with-local-node.sh backend/scripts/setup-local.mjs
+bash backend/scripts/with-local-node.sh backend/scripts/start-local.mjs
 cd backend
-docker compose --env-file .env up --detach --wait postgres
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
@@ -120,6 +120,9 @@ Open <http://127.0.0.1:5173>. Vite proxies `/api` to the backend at
 Use one hostname consistently; `localhost` and `127.0.0.1` have separate cookies.
 PostgreSQL is bound only to `127.0.0.1:55436` by default, with a persistent Docker
 volume. Set `POSTGRES_PORT` in `backend/.env` if that port is already occupied.
+Startup also verifies password authentication. A reused volume retains its
+original password; restore the matching `.env` credentials or select a separate
+`COMPOSE_PROJECT_NAME` and free `POSTGRES_PORT` to preserve existing data.
 Stop the local database with `cd backend && docker compose stop postgres`;
 normal stop/down commands preserve its volume.
 
@@ -132,11 +135,16 @@ Gradle project import to finish. Run and Debug has exactly two configurations:
   selects the real backend, even when an older `.env.local` still selects mocks.
   Run `npm ci` in `frontend` first.
 - **Backend: local dev** creates local credentials if missing, starts PostgreSQL
-  and waits for health, then launches Spring Boot with Java debugging and the
-  `local` profile. Breakpoints work in backend Java code.
+  and verifies password authentication, then launches Spring Boot with Java
+  debugging and the `local` profile. Breakpoints work in backend Java code.
 
 The two configurations run independently; start both for the complete app.
 Stopping Java does not delete or stop the PostgreSQL service.
+
+Backend tasks select the Node version declared in `frontend/.nvmrc`, using an
+existing nvm installation if VS Code's desktop PATH has an older Node. See the
+[local debugger setup](.agents/skills/initialize-project/references/runbook.md#local-backend-debugger)
+for prerequisites and troubleshooting.
 
 ## Backend and authentication
 

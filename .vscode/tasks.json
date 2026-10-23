@@ -4,22 +4,20 @@
     {
       "label": "Backend: prepare local credentials",
       "type": "process",
-      "command": "node",
-      "args": ["${workspaceFolder}/backend/scripts/setup-local.mjs"],
+      "command": "bash",
+      "args": [
+        "${workspaceFolder}/backend/scripts/with-local-node.sh",
+        "${workspaceFolder}/backend/scripts/setup-local.mjs"
+      ],
       "problemMatcher": []
     },
     {
       "label": "Backend: start local PostgreSQL",
       "type": "process",
-      "command": "docker",
+      "command": "bash",
       "args": [
-        "compose",
-        "--env-file",
-        ".env",
-        "up",
-        "--detach",
-        "--wait",
-        "postgres"
+        "${workspaceFolder}/backend/scripts/with-local-node.sh",
+        "${workspaceFolder}/backend/scripts/start-local.mjs"
       ],
       "options": {
         "cwd": "${workspaceFolder}/backend"
