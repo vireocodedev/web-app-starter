@@ -1,0 +1,126 @@
+import type { StringLeaves } from "../../types/TranslationShape.ts";
+import type { englishBackendHandbookTranslations } from "./backend.en.ts";
+
+export const croatianBackendHandbookTranslations = {
+  categories: {
+    backend: {
+      title: "Backend",
+      description: "Runtime, sigurnost, aplikacijski servisi i trajni podaci.",
+    },
+  },
+  topics: {
+    "backend-foundation": {
+      title: "Temelji",
+      description: "Konfiguracija, granice aplikacije, validacija i pogreške.",
+    },
+    "backend-security": {
+      title: "Sigurnost",
+      description: "Ovlasti sesije, CSRF i namjerno stvaranje identiteta.",
+    },
+    "backend-application-services": {
+      title: "Aplikacijski servisi",
+      description: "Posjedujte cjelovite naredbe, transakcijske granice, prijelaze i potvrđene ishode.",
+    },
+    "backend-data": {
+      title: "Podaci i shema",
+      description: "Trajne invarijante, povijest migracija i vlasništvo nad shemom.",
+    },
+    "backend-queries": {
+      title: "Upiti i modeli čitanja",
+      description:
+        "Projicirajte dopuštenu vidljivost, ograničite rezultate i trošak te opišite jamstva snimke i pokrivenosti.",
+    },
+  },
+  articles: {
+    "backend-foundation-runtime-and-configuration": {
+      title: "Vlasništvo nad runtimeom i konfiguracijom",
+      description:
+        "Odredite vlasnike Jave, Spring profila, konfiguracije baze, cookie transporta i pravila sheme bez dupliciranja operatorskog postavljanja.",
+    },
+    "backend-foundation-http-service-persistence-boundaries": {
+      title: "Granice HTTP-a, aplikacijskog servisa i persistencije",
+      description:
+        "Odvojite transportne DTO-e, žive ovlasti, cjelovite transakcijske radnje i persistenciju, uz jasno označen recept promjene s revizijom.",
+    },
+    "backend-foundation-validation-and-error-contracts": {
+      title: "Validacija i javni ugovori pogrešaka",
+      description:
+        "Razlikujte ugrađene autentikacijske odgovore od namjernog protokola domenskih pogrešaka, sigurnih detalja validacije i oporavka koji čuva nacrt.",
+    },
+    "backend-security-session-and-csrf-lifecycle": {
+      title: "Session autentikacija i CSRF imaju zajednički životni ciklus",
+      description:
+        "Sačuvajte dohvat CSRF-a, rotaciju sesije, eksplicitno spremanje konteksta, novi token nakon prijave i odjavu kao jedinstven sigurnosni ugovor.",
+    },
+    "backend-security-account-provisioning": {
+      title: "Lokalno stvaranje korisnika i jednokratni provisioning",
+      description:
+        "Odvojite lokalno stvaranje bez ažuriranja od operatorskog provisioninga s točnim podudaranjem, zaštitama profila i BCrypt granicom bajtova.",
+    },
+    "backend-data-flyway-and-schema-ownership": {
+      title: "Flyway upravlja aplikacijskom i session shemom",
+      description:
+        "Verzionirajte promjene s jednim DDL vlasnikom, čuvajte povijest migracija i provedite veze ograničene opsegom kroz bazu i autorizaciju.",
+    },
+    "backend-application-services-transactional-commands": {
+      title: "Jedna transakcija za jednu cjelovitu poslovnu naredbu",
+      description:
+        "Objedinite povezane promjene, zaštićene invarijante i obvezni audit te razlikujte proxy ulaz, flush, commit i vanjske učinke.",
+    },
+    "backend-data-revision-conflicts-and-shared-locks": {
+      title: "Konflikti revizija i zajednička zaključavanja invarijanti",
+      description:
+        "Očekivanom revizijom zaštitite namjeru uređivača, a zajedničkim uređenim lock protokolom kvote i životni ciklus agregata.",
+    },
+    "backend-data-lock-order-and-fresh-transaction-retries": {
+      title: "Stabilan redoslijed lockova i retry u novoj transakciji",
+      description:
+        "Uredite kanonske identitete, razriješite insert utrke ograničenjima i oporavite se tek nakon završetka neuspjele transakcije, uz ograničen retry i provjeru vlasništva.",
+    },
+    "backend-security-resource-scope-and-composite-keys": {
+      title: "Provedite opseg resursa kroz ovlasti, upite i ključeve",
+      description:
+        "Žive ovlasti, child upite i veze resursa zadržite u dopuštenom opsegu uz složene strane ključeve, bez izjednačavanja integriteta i autorizacije.",
+    },
+    "backend-foundation-patch-tristate-and-write-dtos": {
+      title: "Tri stanja PATCH-a i namjenski write DTO-i",
+      description:
+        "Sačuvajte izostanak, eksplicitni null i prisutnu vrijednost kroz dekodiranje, validaciju i mapiranje, uz server-owned identitet, audit i izvedena polja.",
+    },
+    "backend-data-audit-fields-events-and-versions": {
+      title: "Audit polja, događaji i nepromjenjive verzije odgovaraju na različita pitanja",
+      description:
+        "Namjerno odaberite last-modified podatke, transakcijsku povijest i zadržane verzije, uz aktera, privatnost, projekcije i pravila nepromjenjivog ispravljanja.",
+    },
+    "backend-queries-visibility-before-search-and-facets": {
+      title: "Primijenite vidljivost prije pretrage, faceta i brojeva",
+      description:
+        "Pretragu, filtre, opcije i totale gradite nad dopuštenom projekcijom kako privatni povezani identitet ne bi procurio kroz metapodatke ili podudaranje.",
+    },
+    "backend-queries-bounded-pagination-and-sort-contracts": {
+      title: "Ograničena paginacija i namjenski ugovor sortiranja",
+      description:
+        "Validirajte paging, allowlistajte strukturu sortiranja i definirajte stabilan tie-breaker uz cijenu counta, faceta i dubokog offseta.",
+    },
+    "backend-queries-snapshot-consistent-page-metadata": {
+      title: "Jedan snapshot za retke i metapodatke stranice",
+      description:
+        "Eksplicitnom kratkom transakcijskom granicom i izolacijom uskladite retke, total, opcije i checked-at dokaz jednog odgovora.",
+    },
+    "backend-queries-signed-cursors-and-scope": {
+      title: "Potpisani cursori vežu paging uz semantički opseg",
+      description:
+        "Vežite nastavak uz aktera, opseg, poredak, istek i vidljivu projekciju, uz jasne granice process-local ključa i in-memory paginga.",
+    },
+    "backend-queries-read-budgets-and-unknown-coverage": {
+      title: "Ograničite rad čitanja i pošteno prijavite nepoznatu pokrivenost",
+      description:
+        "Sastavite ograničene činjenice uz istinitu potpunu, djelomičnu, nedostupnu i nepoznatu pokrivenost, čuvajući cancellation i ovlasti.",
+    },
+    "backend-application-services-commit-aware-notifications": {
+      title: "Obavijestite klijente nakon commita i navedite granice isporuke",
+      description:
+        "Odvojite hint potvrđene promjene od trajne isporuke, uz fallback, ThreadLocal čišćenje, subscriber ovlasti i reconnect usklađivanje.",
+    },
+  },
+} satisfies StringLeaves<typeof englishBackendHandbookTranslations>;

@@ -143,7 +143,15 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 ## Maintain a pattern
 
-Add paired `en/<category>/<topic>/<slug>.md` and `hr/...` files, one article entry in `src/features/development-guide/handbook/catalog/handbookManifest.ts`, and matching labels in `src/app/localization/translations/development-guide-handbook.{en,hr}.ts`. The manifest generates indexes, routes, breadcrumbs, command-palette entries, sidebar links and related reading. Route policy stays in `src/app/router/handbookRoutes.tsx`; shared rendering stays in `src/app/shell/documentation`. The Frontend collection keeps portable `frontend/<topic>/<article>` source paths while the router mounts it under `/dev-guide/frontend/workflow-patterns`. Explicit related article IDs can link across topics; siblings are the default when no related list is declared.
+For an existing category:
+
+1. Add paired `en/<category>/<topic>/<slug>.md` and `hr/...` files.
+2. Add the article to its private [category catalog](../../src/features/development-guide/handbook/catalog), such as `handbookBackend.ts`. The category owns topic and article order.
+3. Add matching labels to its paired [category resources](../../src/app/localization/translations/handbook), such as `backend.{en,hr}.ts`, and link both articles in this index.
+
+Keep catalog and locale modules as literal data without getters or side effects; their unused aggregates must remain removable from production. Existing-category additions leave the central aggregators unchanged. A new category also needs one bundle in `orderedHandbookCatalog`, explicit resource spreads in `development-guide-handbook.{en,hr}.ts`, and router-owned placement.
+
+The manifest generates indexes, routes, breadcrumbs, command-palette entries, sidebar links and related reading. Route policy stays in `src/app/router/handbookRoutes.tsx`; shared rendering stays in `src/app/shell/documentation`. Frontend articles keep portable `frontend/<topic>/<article>` source paths while the router mounts them under `/dev-guide/frontend/workflow-patterns`. Explicit related IDs link across topics; siblings are the default when no list is declared.
 
 A useful article states its trigger, ownership and lifetime, actual contract, minimal example, failure/recovery decisions, acceptance evidence and exact `project@revision:relative/path` sources. Keep identifiers and examples neutral. Explain a source limitation beside the recipe that depends on it.
 

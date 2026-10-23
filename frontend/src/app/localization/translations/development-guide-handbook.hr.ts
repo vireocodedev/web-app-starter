@@ -1,376 +1,56 @@
-import type { StringLeaves } from "../types/TranslationShape";
-import type { englishHandbookTranslations } from "./development-guide-handbook.en";
+import type { StringLeaves } from "../types/TranslationShape.ts";
+import type { englishHandbookTranslations } from "./development-guide-handbook.en.ts";
 
-export const croatianHandbookTranslations = {
-  navigation: {
-    index: "Teme: {{category}}",
-    choosePage: "Odaberite članak, trenutačni članak: {{page}}",
-    closePages: "Zatvori članke",
-    pageNavigation: "Navigacija članaka",
-    contents: "Sadržaj članka",
-    related: "Povezano čitanje",
-  },
-  implementation: {
-    starter: "Ugrađeni obrazac",
-    reference: "Referentni recept",
-    mixed: "Ugrađeno + referentni recept",
-  },
-  size: {
-    small: "Mali obrazac",
-    medium: "Srednji obrazac",
-    large: "Veliki obrazac",
-  },
-  categories: {
-    backend: {
-      title: "Backend",
-      description: "Runtime, sigurnost, aplikacijski servisi i trajni podaci.",
-    },
-    ci: {
-      title: "Kontinuirana integracija",
-      description: "Provjere prema vlasniku, potpuni dokazi i izolirani izvršitelji.",
-    },
-    delivery: {
-      title: "Isporuka i operacije",
-      description: "Nepromjenjiva izdanja, promocija okruženja, migracije i oporavak.",
-    },
-    "developer-workflow": {
-      title: "Razvojni postupci",
-      description: "Lokalni runtimeovi, debugiranje, provjere i svakodnevna implementacija.",
-    },
-    "agent-workflow": {
-      title: "Rad AI agenata",
-      description: "Pronađite vlasnika, provedite ograničen zadatak i predajte dokaze.",
-    },
-    "frontend-workflows": {
-      title: "Obrasci radnih tokova",
-      description:
-        "Frontend radni tokovi s jasnim vlasništvom, životnim ciklusima i oporavkom od neuspjeha, utemeljeni na izvorima.",
-    },
-  },
-  topics: {
-    "backend-foundation": {
-      title: "Temelji",
-      description: "Konfiguracija, granice aplikacije, validacija i pogreške.",
-    },
-    "backend-security": {
-      title: "Sigurnost",
-      description: "Ovlasti sesije, CSRF i namjerno stvaranje identiteta.",
-    },
-    "backend-data": {
-      title: "Podaci i shema",
-      description: "Trajne invarijante, povijest migracija i vlasništvo nad shemom.",
-    },
-    "ci-pipelines": {
-      title: "Pipelineovi i završne provjere",
-      description: "Odaberite relevantne provjere uz očuvanje obveznog rezultata.",
-    },
-    "ci-verification": {
-      title: "Dokazi provjera",
-      description: "Dokažite potpuno izvršavanje za ispravan izvor i pokretanje.",
-    },
-    "ci-isolation": {
-      title: "Izolacija izvršitelja",
-      description: "Odvojite nepouzdano izvršavanje poslova od privilegiranog hosta.",
-    },
-    "delivery-releases": {
-      title: "Izdanja i promocija",
-      description: "Izgradite jedan nepromjenjivi par i promovirajte prihvaćene artefakte.",
-    },
-    "delivery-recovery": {
-      title: "Migracije i oporavak",
-      description: "Sačuvajte podatke i utvrdite točnu granicu neuspjeha.",
-    },
-    "developer-workflow-local-development": {
-      title: "Lokalni razvoj",
-      description: "Pokrenite namijenjene runtimeove i sačuvajte postojeće lokalno stanje.",
-    },
-    "agent-workflow-implementation": {
-      title: "Postupak implementacije",
-      description: "Odaberite vlasnika i javno sučelje prije promjene ponašanja.",
-    },
-    "frontend-editing": {
-      title: "Sesije uređivanja",
-      description: "Uskladite vrijednosti, revizije, vlasništvo i nacrte koji prelaze rute.",
-    },
-    "frontend-async-commands": {
-      title: "Asinkrone naredbe",
-      description: "Posjedujte zahtjeve, ponovno provjerite ovlasti nakon čekanja i odvojite zapis od promatrača.",
-    },
-    "frontend-task-interfaces": {
-      title: "Sučelja zadataka",
-      description: "Sastavite duge forme, točne preglede, dokaze preduvjeta i potvrđene ishode.",
-    },
-    "backend-application-services": {
-      title: "Aplikacijski servisi",
-      description: "Posjedujte cjelovite naredbe, transakcijske granice, prijelaze i potvrđene ishode.",
-    },
-    "delivery-artifacts": {
-      title: "Izvršivi artefakti",
-      description: "Izgradite imageove neovisne o okruženju i provjerite stvarne artefakte pod runtime ograničenjima.",
-    },
-    "frontend-access": {
-      title: "Pristup i ovlasti",
-      description:
-        "Koristite trenutačne ovlasti poslužitelja te poništite ograničene nacrte, radnje i privatne predmemorije.",
-    },
-    "frontend-routing": {
-      title: "Ugovori ruta",
-      description: "Zadržite čistu izgradnju URL-a te uskladite navigaciju i pomicanje s potvrđenom stranicom.",
-    },
-    "frontend-collections": {
-      title: "Kolekcije i vlasništvo upita",
-      description: "Odvojite prikaz tablice od vlasništva rezultata, opsega identiteta upita i invalidacije.",
-    },
-    "backend-queries": {
-      title: "Upiti i modeli čitanja",
-      description:
-        "Projicirajte dopuštenu vidljivost, ograničite rezultate i trošak te opišite jamstva snimke i pokrivenosti.",
-    },
-  },
-  articles: {
-    "backend-foundation-runtime-and-configuration": {
-      title: "Vlasništvo nad runtimeom i konfiguracijom",
-      description:
-        "Odredite vlasnike Jave, Spring profila, konfiguracije baze, cookie transporta i pravila sheme bez dupliciranja operatorskog postavljanja.",
-    },
-    "backend-foundation-http-service-persistence-boundaries": {
-      title: "Granice HTTP-a, aplikacijskog servisa i persistencije",
-      description:
-        "Odvojite transportne DTO-e, žive ovlasti, cjelovite transakcijske radnje i persistenciju, uz jasno označen recept promjene s revizijom.",
-    },
-    "backend-foundation-validation-and-error-contracts": {
-      title: "Validacija i javni ugovori pogrešaka",
-      description:
-        "Razlikujte ugrađene autentikacijske odgovore od namjernog protokola domenskih pogrešaka, sigurnih detalja validacije i oporavka koji čuva nacrt.",
-    },
-    "backend-security-session-and-csrf-lifecycle": {
-      title: "Session autentikacija i CSRF imaju zajednički životni ciklus",
-      description:
-        "Sačuvajte dohvat CSRF-a, rotaciju sesije, eksplicitno spremanje konteksta, novi token nakon prijave i odjavu kao jedinstven sigurnosni ugovor.",
-    },
-    "backend-security-account-provisioning": {
-      title: "Lokalno stvaranje korisnika i jednokratni provisioning",
-      description:
-        "Odvojite lokalno stvaranje bez ažuriranja od operatorskog provisioninga s točnim podudaranjem, zaštitama profila i BCrypt granicom bajtova.",
-    },
-    "backend-data-flyway-and-schema-ownership": {
-      title: "Flyway upravlja aplikacijskom i session shemom",
-      description:
-        "Verzionirajte promjene s jednim DDL vlasnikom, čuvajte povijest migracija i provedite veze ograničene opsegom kroz bazu i autorizaciju.",
-    },
-    "ci-pipelines-owner-scoped-checks": {
-      title: "Odabir provjera prema vlasniku uz obvezno izvješće završnog statusa",
-      description: "Odaberi CI provjere prema vlasniku uz obvezne prenosive provjere i pouzdan završni status.",
-    },
-    "ci-verification-complete-shard-evidence": {
-      title: "Dokaži potpuno izvršavanje testova kroz shardove",
-      description:
-        "Dokaži potpun obuhvat frontend datoteka i backend klasa kroz SHA/run/attempt izvješća; neovisno usporedi backend slučajeve i validiraj prijavljene frontend assertione/zbrojeve.",
-    },
-    "ci-isolation-disposable-worker-boundary": {
-      title: "Jednokratni CI izvršitelj je provjerena granica povjerenja",
-      description: "Odvoji izvršavanje PR koda od host ovlasti kroz svježe workere, limite i dokaz izolacije.",
-    },
-    "delivery-releases-immutable-image-pairs": {
-      title: "Isporuči jedan nepromjenjivi par frontend/backend slika",
-      description: "Pakiraj obje aplikacije iz istog izvora i očuvaj prihvaćeni par digesta između okruženja.",
-    },
-    "delivery-releases-staging-and-production-promotion": {
-      title: "Provjeri par na stagingu i promoviraj upravo prihvaćeni artefakt",
-      description:
-        "Odvoji build, objavu u svježem workeru i šifrirani host zahtjev; promoviraj točan prihvaćeni par bez rebuilda.",
-    },
-    "delivery-recovery-migration-failure-boundaries": {
-      title: "Oporavak ovisi o granici na kojoj je migracija stala",
-      description:
-        "Blokiraj produkcijski startup do trajno provjerenog backupa i uskladi neuspjeh bez automatskog vraćanja baze.",
-    },
-    "developer-workflow-local-development-workspace-runtimes": {
-      title: "Jedan workspace, dva runtimea",
-      description:
-        "Pokrenite Javu i Node deklariranim runtimeovima i uređenim VS Code helperima uz čuvanje identiteta baze, pristupnih podataka, volumea i same-origin sesije.",
-    },
-    "agent-workflow-implementation-owner-first-change": {
-      title: "Prije uređivanja pronađite vlasnika",
-      description:
-        "Pretvorite traženi ishod u ograničenu promjenu s jasnim vlasnikom, vrstom dokaza, javnim granicama, dopuštenom verifikacijom i zasebno autoriziranom isporukom.",
-    },
-    "frontend-editing-pinned-values-and-revisions": {
-      title: "Zadržane vrijednosti i revizije",
-      description:
-        "Sačuvajte jednu osnovu uređivanja dok pozadinski dohvati, zastarjelost i ponovno učitavanje mijenjaju okolne ovlasti.",
-    },
-    "frontend-async-commands-owned-reads-and-shared-subscriptions": {
-      title: "Vlastiti dohvati i zajedničke pretplate",
-      description:
-        "Otkažite zastarjele dohvate uređivača bez prekidanja zajedničkih query promatrača i skrivanja stvarnih pogrešaka.",
-    },
-    "frontend-async-commands-generation-guards-after-await": {
-      title: "Provjere generacije nakon awaita",
-      description:
-        "Poništite zastarjele potvrde i zakašnjele dovršetke kada se promijene zapis, sesija ili opažene ovlasti.",
-    },
-    "frontend-async-commands-stable-retry-identity": {
-      title: "Stabilan identitet ponovnog pokušaja",
-      description:
-        "Povežite nepromjenjivu klijentsku naredbu s autoriziranim transakcijskim potvrdama prije ponavljanja neizvjesnog zapisivanja.",
-    },
-    "frontend-async-commands-committed-writes-and-observer-failures": {
-      title: "Potvrđeno zapisivanje i pogreške promatrača",
-      description: "Razdvojite potvrđenu persistenciju od neuspjelih osvježavanja, callbackova i neizvjesnih odgovora.",
-    },
-    "frontend-editing-drafts-across-routes": {
-      title: "Nacrti kroz više ruta",
-      description:
-        "Zadržite nacrt određenog vlasnika kroz dopušten prijelaz, osvježite izbore pri povratku i sačuvajte izričit korisnikov odabir.",
-    },
-    "frontend-task-interfaces-topic-editors-and-error-focus": {
-      title: "Navigacija tema zadržava jednu formu i jednog vlasnika",
-      description:
-        "Sačuvajte stanje polja kroz teme, zadržite slanje kod vlasnika forme te otkrijte i fokusirajte ciljeve pogrešaka.",
-    },
-    "frontend-task-interfaces-readable-review-and-exact-decisions": {
-      title: "Prikažite čitljive dokaze prije točne odluke",
-      description:
-        "Prikažite cjelovite verzionirane dokaze i točno imenovanu odluku bez izmišljanja potvrda čitanja ili zamrzavanja ovlasti.",
-    },
-    "frontend-task-interfaces-prerequisites-and-confirmed-receipts": {
-      title: "Preduvjeti prikazuju dokaze, potvrde priznate ishode",
-      description:
-        "Objasnite blokade izvora, djelomičnu pokrivenost, precizna rješenja i razliku prihvaćenog rada od dovršenih učinaka.",
-    },
-    "backend-application-services-transactional-commands": {
-      title: "Jedna transakcija za jednu cjelovitu poslovnu naredbu",
-      description:
-        "Objedinite povezane promjene, zaštićene invarijante i obvezni audit te razlikujte proxy ulaz, flush, commit i vanjske učinke.",
-    },
-    "backend-data-revision-conflicts-and-shared-locks": {
-      title: "Konflikti revizija i zajednička zaključavanja invarijanti",
-      description:
-        "Očekivanom revizijom zaštitite namjeru uređivača, a zajedničkim uređenim lock protokolom kvote i životni ciklus agregata.",
-    },
-    "backend-data-lock-order-and-fresh-transaction-retries": {
-      title: "Stabilan redoslijed lockova i retry u novoj transakciji",
-      description:
-        "Uredite kanonske identitete, razriješite insert utrke ograničenjima i oporavite se tek nakon završetka neuspjele transakcije, uz ograničen retry i provjeru vlasništva.",
-    },
-    "backend-security-resource-scope-and-composite-keys": {
-      title: "Provedite opseg resursa kroz ovlasti, upite i ključeve",
-      description:
-        "Žive ovlasti, child upite i veze resursa zadržite u dopuštenom opsegu uz složene strane ključeve, bez izjednačavanja integriteta i autorizacije.",
-    },
-    "backend-foundation-patch-tristate-and-write-dtos": {
-      title: "Tri stanja PATCH-a i namjenski write DTO-i",
-      description:
-        "Sačuvajte izostanak, eksplicitni null i prisutnu vrijednost kroz dekodiranje, validaciju i mapiranje, uz server-owned identitet, audit i izvedena polja.",
-    },
-    "backend-data-audit-fields-events-and-versions": {
-      title: "Audit polja, događaji i nepromjenjive verzije odgovaraju na različita pitanja",
-      description:
-        "Namjerno odaberite last-modified podatke, transakcijsku povijest i zadržane verzije, uz aktera, privatnost, projekcije i pravila nepromjenjivog ispravljanja.",
-    },
-    "ci-pipelines-required-gates-and-main-protection": {
-      title: "Veži obvezni status uz politiku koja ga je proizvela",
-      description: "Veži CI gate uz pouzdani source App i zasebno potvrdi efektivnu zaštitu aktualne glavne grane.",
-    },
-    "ci-pipelines-pinned-toolchains-and-actions": {
-      title: "Odaberi deklarirani aplikacijski toolchain unutar posla",
-      description:
-        "Razlikuj aplikacijski target, točan package manager, dependency lock, Action commit i baseline jednokratnog workera.",
-    },
-    "ci-verification-resource-budgets": {
-      title: "Ograniči konkurentnost na svakoj razini izvršavanja",
-      description: "Uskladi slotove, limite posla, unutarnje workere, disk i rokove uz očuvan obuhvat provjera.",
-    },
-    "ci-verification-phase-deadlines-and-process-cleanup": {
-      title: "Sačuvaj početni rok faze i vlasništvo nad čišćenjem procesa",
-      description:
-        "Referentni recept za rokove sa setupom, zadržano PGID vlasništvo, cleanup i aggregate koji čuva neuspjehe.",
-    },
-    "delivery-artifacts-frontend-image-contract": {
-      title: "Izgradi frontend sliku prenosivu između okruženja",
-      description:
-        "Sačuvaj same-origin postavke, SPA/API/asset granice, immutable cache i ograničeni Nginx u istoj slici.",
-    },
-    "delivery-artifacts-backend-image-contract": {
-      title: "Odvoji backend kompilaciju od ograničenog runtimea",
-      description:
-        "Kompiliraj deklariranim JDK-om, pokreni non-root JRE jar i izvana dodaj zaštićenu konfiguraciju uz odvojene dokaze.",
-    },
-    "delivery-artifacts-runtime-smoke-evidence": {
-      title: "Provjeri proizvedenu sliku pod stvarnim runtime ograničenjima",
-      description:
-        "Provjeri stvarnu sliku, API i provisioning uz jednokratne resurse i točan cleanup te jasno ograniči tvrdnje o dokazu.",
-    },
-    "delivery-releases-build-publish-request-boundaries": {
-      title: "Build, objava i deployment zahtjev trebaju različite ovlasti",
-      description:
-        "Odvoji aplikacijski build, registry objavu u svježem workeru i šifrirani host zahtjev fiksnog ugovora.",
-    },
-    "frontend-access-capability-aware-pages": {
-      title: "Stranice prema ovlastima",
-      description:
-        "Koristite jedan izričit rječnik prikaza kroz izbornike, izravne poveznice i radnje zapisa uz živu backend autorizaciju.",
-    },
-    "frontend-access-revocation-and-private-cache": {
-      title: "Opoziv i privatna predmemorija",
-      description:
-        "Pri promjeni opaženih ovlasti zajedno poništite stare operacije, ograničene nacrte i zahvaćene privatne query projekcije.",
-    },
-    "frontend-editing-complete-navigation-guards": {
-      title: "Cjelovita zaštita navigacije",
-      description:
-        "Povežite promjenu rute i upita, izlazak iz preglednika, izričitu odjavu i provjere zauzetosti s jednim životnim ciklusom obrasca.",
-    },
-    "frontend-routing-typed-route-contracts": {
-      title: "Tipizirani ugovori ruta",
-      description:
-        "Gradite i parsirajte stabilne identitete prikaza i točnih zadataka čistim ugovorom s namjernom nevaljanošću i kompatibilnošću.",
-    },
-    "frontend-routing-data-aware-scroll-restoration": {
-      title: "Vraćanje položaja prema spremnosti podataka",
-      description:
-        "Prepustite potvrđenoj završnoj stranici spremnost ulaza dok router upravlja poviješću, fragmentom i jednokratnim pomicanjem.",
-    },
-    "frontend-collections-client-and-server-table-ownership": {
-      title: "Vlasništvo klijentskih i poslužiteljskih tablica",
-      description:
-        "Dijelite prikaz tablice dok feature upravlja udaljenim filtriranjem, sortiranjem, stranicama, opsegom odabira i oporavkom.",
-    },
-    "frontend-collections-query-key-scope-and-invalidation": {
-      title: "Opseg query ključeva i invalidacije",
-      description:
-        "Uključite sve ulaze koji određuju rezultat i ograničite osvježavanje mutacija na projekcije koje feature može promijeniti.",
-    },
-    "backend-queries-visibility-before-search-and-facets": {
-      title: "Primijenite vidljivost prije pretrage, faceta i brojeva",
-      description:
-        "Pretragu, filtre, opcije i totale gradite nad dopuštenom projekcijom kako privatni povezani identitet ne bi procurio kroz metapodatke ili podudaranje.",
-    },
-    "backend-queries-bounded-pagination-and-sort-contracts": {
-      title: "Ograničena paginacija i namjenski ugovor sortiranja",
-      description:
-        "Validirajte paging, allowlistajte strukturu sortiranja i definirajte stabilan tie-breaker uz cijenu counta, faceta i dubokog offseta.",
-    },
-    "backend-queries-snapshot-consistent-page-metadata": {
-      title: "Jedan snapshot za retke i metapodatke stranice",
-      description:
-        "Eksplicitnom kratkom transakcijskom granicom i izolacijom uskladite retke, total, opcije i checked-at dokaz jednog odgovora.",
-    },
-    "backend-queries-signed-cursors-and-scope": {
-      title: "Potpisani cursori vežu paging uz semantički opseg",
-      description:
-        "Vežite nastavak uz aktera, opseg, poredak, istek i vidljivu projekciju, uz jasne granice process-local ključa i in-memory paginga.",
-    },
-    "backend-queries-read-budgets-and-unknown-coverage": {
-      title: "Ograničite rad čitanja i pošteno prijavite nepoznatu pokrivenost",
-      description:
-        "Sastavite ograničene činjenice uz istinitu potpunu, djelomičnu, nedostupnu i nepoznatu pokrivenost, čuvajući cancellation i ovlasti.",
-    },
-    "backend-application-services-commit-aware-notifications": {
-      title: "Obavijestite klijente nakon commita i navedite granice isporuke",
-      description:
-        "Odvojite hint potvrđene promjene od trajne isporuke, uz fallback, ThreadLocal čišćenje, subscriber ovlasti i reconnect usklađivanje.",
-    },
-  },
-} satisfies StringLeaves<typeof englishHandbookTranslations>;
+import { croatianBackendHandbookTranslations } from "./handbook/backend.hr.ts";
+import { croatianCiHandbookTranslations } from "./handbook/ci.hr.ts";
+import { croatianDeliveryHandbookTranslations } from "./handbook/delivery.hr.ts";
+import { croatianDeveloperWorkflowHandbookTranslations } from "./handbook/developer-workflow.hr.ts";
+import { croatianAgentWorkflowHandbookTranslations } from "./handbook/agent-workflow.hr.ts";
+import { croatianFrontendHandbookTranslations } from "./handbook/frontend.hr.ts";
+
+// Imported branches are plain literal data without getters; aggregation only allocates an object.
+export const croatianHandbookTranslations = /* @__PURE__ */ (() =>
+  ({
+    navigation: {
+      index: "Teme: {{category}}",
+      choosePage: "Odaberite članak, trenutačni članak: {{page}}",
+      closePages: "Zatvori članke",
+      pageNavigation: "Navigacija članaka",
+      contents: "Sadržaj članka",
+      related: "Povezano čitanje",
+    },
+    implementation: {
+      starter: "Ugrađeni obrazac",
+      reference: "Referentni recept",
+      mixed: "Ugrađeno + referentni recept",
+    },
+    size: {
+      small: "Mali obrazac",
+      medium: "Srednji obrazac",
+      large: "Veliki obrazac",
+    },
+    categories: {
+      ...croatianBackendHandbookTranslations.categories,
+      ...croatianCiHandbookTranslations.categories,
+      ...croatianDeliveryHandbookTranslations.categories,
+      ...croatianDeveloperWorkflowHandbookTranslations.categories,
+      ...croatianAgentWorkflowHandbookTranslations.categories,
+      ...croatianFrontendHandbookTranslations.categories,
+    },
+    topics: {
+      ...croatianBackendHandbookTranslations.topics,
+      ...croatianCiHandbookTranslations.topics,
+      ...croatianDeliveryHandbookTranslations.topics,
+      ...croatianDeveloperWorkflowHandbookTranslations.topics,
+      ...croatianAgentWorkflowHandbookTranslations.topics,
+      ...croatianFrontendHandbookTranslations.topics,
+    },
+    articles: {
+      ...croatianBackendHandbookTranslations.articles,
+      ...croatianCiHandbookTranslations.articles,
+      ...croatianDeliveryHandbookTranslations.articles,
+      ...croatianDeveloperWorkflowHandbookTranslations.articles,
+      ...croatianAgentWorkflowHandbookTranslations.articles,
+      ...croatianFrontendHandbookTranslations.articles,
+    },
+  }) satisfies StringLeaves<typeof englishHandbookTranslations>)();

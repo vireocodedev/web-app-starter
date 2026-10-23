@@ -35,6 +35,13 @@ export type HandbookArticleDefinition = Readonly<{
   relatedArticleIds?: readonly string[];
 }>;
 
+/** Private authoring bundle; public catalog IDs are inferred from the category literals. */
+export type HandbookCategoryCatalog = Readonly<{
+  category: HandbookCategoryDefinition;
+  topics: readonly HandbookTopicDefinition[];
+  articles: readonly HandbookArticleDefinition[];
+}>;
+
 export type HandbookRelatedLink = Readonly<{
   labelKey: ParseKeys<"development-guide">;
   to: string;
