@@ -36,4 +36,8 @@ Privileged lifecycle or isolation changes require independent review and
 fresh-host validation before activation.
 
 For frontend changes, also follow [the frontend agent guide](frontend/AGENTS.md).
+Before implementing a web-app change, use [the development guide](frontend/docs/development-guide/README.md)
+to select focused frontend, backend, CI, delivery or agent-workflow patterns.
+It distinguishes installed template behavior from source-backed reference recipes;
+the current source owners and task authorization remain authoritative.
 For local development and verification, use [the workspace README](README.md).

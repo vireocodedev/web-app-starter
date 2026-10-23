@@ -1,15 +1,14 @@
 import type { DevelopmentGuideTranslationShape } from "../types/TranslationShape";
+import { croatianHandbookTranslations } from "./development-guide-handbook.hr";
 
 export const croatianDevelopmentGuideTranslations = {
+  handbook: croatianHandbookTranslations,
   categories: {
     title: "Kategorije",
     description: "Odaberite kategoriju vodiča za razvoj.",
     navigationLabel: "Kategorije vodiča za razvoj",
     frontendDescription: "Primjeri stranica, Obrasci i Arhitektura.",
     backendDescription: "Razvoj poslužiteljskog dijela aplikacije.",
-  },
-  backendGuide: {
-    greeting: "Pozdrav svijete!",
   },
   examplePages: {
     description: "Istražite primjere cjelovitih aplikacijskih stranica.",

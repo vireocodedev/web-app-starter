@@ -5,7 +5,7 @@ import ts from "typescript";
 const productionSourcePattern = /^src\/.+\.(?:ts|tsx)$/;
 const nonProductionSourcePattern = /(?:\.(?:test|spec)\.|\/(?:test|__tests__|stories)\/|Example\.)/;
 const automatedTestPathPattern = /(?:\.(?:test|spec)\.[cm]?[jt]sx?$|\/(?:test|__tests__)\/)/;
-const groupedDevelopmentFeaturePattern = "development-guide/(?:architecture|contacts|patterns/[^/]+)";
+const groupedDevelopmentFeaturePattern = "development-guide/(?:architecture|contacts|handbook|patterns/[^/]+)";
 const featureImportPattern = new RegExp(`^@/features/((?:${groupedDevelopmentFeaturePattern})|[^/]+)(/.*)?$`);
 const featureApplicationLeafPaths = new Set([
   "src/app/router/hooks/useAppQueryParams.ts",
@@ -19,6 +19,7 @@ const pageApplicationLeafPaths = new Set([
 ]);
 const documentationPresentationConsumers = new Set([
   "src/features/development-guide/architecture/components/ArchitectureArticle.tsx",
+  "src/features/development-guide/handbook/components/HandbookArticle.tsx",
   "src/features/development-guide/patterns/gallery/components/ExampleGallery.tsx",
   "src/features/development-guide/patterns/gallery/components/ExamplePageNavigation.tsx",
   "src/features/development-guide/patterns/gallery/components/ExamplesNavigation.tsx",
@@ -27,6 +28,7 @@ const documentationPresentationConsumers = new Set([
   "src/features/development-guide/patterns/gallery/utils/exampleNavigation.ts",
   "src/pages/development-guide/architecture/ArchitectureRouteLayout.tsx",
   "src/pages/development-guide/patterns/PatternCategoryLayout.tsx",
+  "src/pages/development-guide/handbook/HandbookTopicLayout.tsx",
 ]);
 const rawMuiColorSchemeOwners = new Set([
   "src/app/theme/components/AppThemeProvider.tsx",
@@ -825,6 +827,20 @@ function assertNoViolations(files) {
             "architectureGroups",
           ].includes(imported),
         );
+      const isHandbookCatalogComposition =
+        path === "src/app/router/handbookRoutes.tsx" &&
+        targetPath === "src/features/development-guide/handbook/index.ts" &&
+        record.namedImports.length > 0 &&
+        record.namedImports.every(({ imported }) =>
+          [
+            "handbookArticles",
+            "handbookCategories",
+            "handbookTopics",
+            "HandbookArticleId",
+            "HandbookCategoryId",
+            "HandbookTopicId",
+          ].includes(imported),
+        );
 
       if (
         !isTestModule &&
@@ -921,6 +937,7 @@ function assertNoViolations(files) {
               !isSignalComposition &&
               !isPageComposition &&
               !isArchitectureCatalogComposition &&
+              !isHandbookCatalogComposition &&
               !featureName))
         ) {
           violations.push(path + ": cross-boundary feature imports must use the target feature index.ts");
@@ -988,7 +1005,8 @@ function assertNoViolations(files) {
         path !== "src/app/bootstrap/runtime/appFeatures.ts" &&
         path !== "src/app/bootstrap/signals/signalModules.ts" &&
         specifier.startsWith("@/features/") &&
-        !isArchitectureCatalogComposition
+        !isArchitectureCatalogComposition &&
+        !isHandbookCatalogComposition
       ) {
         violations.push(
           path +
@@ -1029,6 +1047,7 @@ function assertNoViolations(files) {
               !isSignalComposition &&
               !isPageComposition &&
               !isArchitectureCatalogComposition &&
+              !isHandbookCatalogComposition &&
               !featureName)
           ) {
             violations.push(path + ": cross-boundary feature imports must use the target feature index.ts");
@@ -1081,7 +1100,8 @@ function assertNoViolations(files) {
           !isRuntimeComposition &&
           path !== "src/app/bootstrap/signals/signalModules.ts" &&
           targetFeatureName &&
-          !isArchitectureCatalogComposition
+          !isArchitectureCatalogComposition &&
+          !isHandbookCatalogComposition
         ) {
           violations.push(
             path +

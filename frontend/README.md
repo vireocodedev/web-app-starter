@@ -71,6 +71,12 @@ inputs bundled at build time, so changing one requires rebuilding the app.
 
 ## Architecture and contribution guide
 
+Start with the [fullstack development guide](docs/development-guide/README.md)
+for focused frontend, backend, CI, delivery and agent-workflow patterns. Paired
+English/Croatian Markdown remains readable by agents without a browser. The
+development-only UI exposes the same articles through category and topic indexes;
+source-backed recipes are labeled separately from installed template behavior.
+
 The canonical source-structure guide is available in the authenticated,
 development-only **Development guide → Frontend → Architecture**. Its same
 Markdown sources are readable in the repository:

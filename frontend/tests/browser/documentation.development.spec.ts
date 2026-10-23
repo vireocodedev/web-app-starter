@@ -148,7 +148,8 @@ test("opens Backend without tabs and returns through the category header breadcr
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL("/dev-guide/backend");
   await expect(page).toHaveTitle("Backend · RGO application");
-  await expect(page.locator("#main-content")).toHaveText("Hello world!");
+  await expect(page.locator("#main-content").getByRole("heading", { name: "Backend", exact: true })).toBeVisible();
+  await expect(page.locator("#main-content").getByRole("link", { name: "Security", exact: true })).toBeVisible();
   await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
   const header = page.locator("[data-rgo-header-context]");
   await expect(header).toHaveText(/Development guide.*Backend/);
@@ -170,7 +171,8 @@ test("keeps guide categories and breadcrumbs usable in Croatian on a narrow scre
   await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
   await expectNoAxeViolations(page);
   await page.getByRole("link", { name: "Backend", exact: true }).click();
-  await expect(page.locator("#main-content")).toHaveText("Pozdrav svijete!");
+  await expect(page.locator("#main-content").getByRole("heading", { name: "Backend", exact: true })).toBeVisible();
+  await expect(page.locator("#main-content").getByRole("link", { name: "Sigurnost", exact: true })).toBeVisible();
   await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Vodič za razvoj.*Backend/);
   await expectNoAxeViolations(page);
   await page.locator("[data-rgo-header-context]").getByRole("link", { name: "Vodič za razvoj", exact: true }).click();

@@ -37,6 +37,7 @@ import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import ManageSearchOutlinedIcon from "@mui/icons-material/ManageSearchOutlined";
 import SwapVertOutlinedIcon from "@mui/icons-material/SwapVertOutlined";
 import TableRowsOutlinedIcon from "@mui/icons-material/TableRowsOutlined";
+import WebOutlinedIcon from "@mui/icons-material/WebOutlined";
 import { Outlet } from "react-router";
 import { LegacyDevelopmentGuideRedirect } from "./components/LegacyDevelopmentGuideRedirect";
 import { DynamicProjectHeaderIdentity } from "./components/DynamicProjectHeaderIdentity";
@@ -73,6 +74,7 @@ import { ExamplePagesIndexPage } from "@/pages/development-guide/examplePages/Ex
 import { PatternsIndexPage } from "@/pages/development-guide/patterns/PatternsIndexPage";
 import { PatternCategoryLayoutRoute } from "./components/PatternCategoryLayoutRoute";
 import { patternCategoryDefinitions } from "./patternCategories";
+import { handbookCategoryEntries, handbookRouteRegistry } from "./handbookRoutes";
 import { ApplicationStateEffectsAndCleanupPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateEffectsAndCleanupPage";
 import { ApplicationStatePersistentStatePage } from "@/pages/development-guide/patterns/applicationState/ApplicationStatePersistentStatePage";
 import { ApplicationStateSharingBetweenRoutesPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateSharingBetweenRoutesPage";
@@ -80,7 +82,6 @@ import { ApplicationStateSourceAndComputedSignalsPage } from "@/pages/developmen
 import { ConfirmationDialogsPage } from "@/pages/development-guide/patterns/feedback/ConfirmationDialogsPage";
 import { ContactsPage } from "@/pages/development-guide/contacts/ContactsPage";
 import { DevelopmentGuidePage } from "@/pages/development-guide/DevelopmentGuidePage";
-import { BackendDevelopmentGuidePage } from "@/pages/development-guide/BackendDevelopmentGuidePage";
 import { DevelopmentGuideHomePage } from "@/pages/development-guide/DevelopmentGuideHomePage";
 import { HomePage } from "@/pages/HomePage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -238,7 +239,20 @@ const developmentRouteRegistry = {
     translationNamespace: "development-guide",
   },
   developmentGuideIndex: {
-    Component: DevelopmentGuidePage,
+    Component: () => (
+      <DevelopmentGuidePage
+        categories={[
+          {
+            id: "frontend",
+            Icon: WebOutlinedIcon,
+            titleKey: "navigation.frontend",
+            descriptionKey: "categories.frontendDescription",
+            to: "/dev-guide/frontend",
+          },
+          ...handbookCategoryEntries,
+        ]}
+      />
+    ),
     access: "authenticated",
     breadcrumbs: false,
     commandPalette: true,
@@ -258,17 +272,7 @@ const developmentRouteRegistry = {
     title: t => t("navigation.frontend"),
     translationNamespace: "development-guide",
   },
-  developmentGuideBackend: {
-    Component: BackendDevelopmentGuidePage,
-    access: "authenticated",
-    breadcrumbs: false,
-    commandPalette: true,
-    headerBreadcrumb: true,
-    parentId: "developmentGuide",
-    path: "dev-guide/backend",
-    title: t => t("navigation.backend"),
-    translationNamespace: "development-guide",
-  },
+  ...handbookRouteRegistry,
   legacyDevelopmentGuideHome: {
     Component: LegacyDevelopmentGuideRedirect,
     access: "authenticated",

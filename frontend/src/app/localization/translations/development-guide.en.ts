@@ -1,13 +1,13 @@
+import { englishHandbookTranslations } from "./development-guide-handbook.en";
+
 export const englishDevelopmentGuideTranslations = {
+  handbook: englishHandbookTranslations,
   categories: {
     title: "Categories",
     description: "Choose a category to explore the development guide.",
     navigationLabel: "Development guide categories",
     frontendDescription: "Example pages, Patterns, and Architecture.",
     backendDescription: "Server-side development.",
-  },
-  backendGuide: {
-    greeting: "Hello world!",
   },
   examplePages: {
     description: "Explore complete application page examples.",

@@ -42,14 +42,19 @@ docked panels.
 The removable development guidance is grouped without merging its owners:
 
 ```text
-src/features/development-guide/{architecture,contacts,patterns/<category>}
-src/pages/development-guide/{architecture,contacts,patterns}
+src/features/development-guide/{architecture,contacts,handbook,patterns/<category>}
+src/pages/development-guide/{architecture,contacts,handbook,patterns}
 tests/features/development-guide/{architecture,contacts,patterns/<category>}
 ```
 
-Architecture, Contacts, and every Patterns category still have separate public
+Architecture, Contacts, Handbook, and every Patterns category still have separate public
 interfaces and dependency boundaries. `development-guide` is a physical
 grouping for code omitted from production, not one broad feature boundary.
+
+The Handbook catalog owns bilingual fullstack articles under
+`docs/development-guide/`. The router composes its public manifest into category,
+topic, and article routes. Shared Markdown presentation and page navigation
+belong to `app/shell/documentation`; they do not import article catalogs.
 
 ## Package, test, and mock owners
 

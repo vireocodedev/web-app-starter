@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { markdownHeadings } from "@/app/shell/documentation/markdownHeadings";
 import { ArchitectureArticle, architectureArticle } from "@/features/development-guide/architecture";
-import { markdownHeadings } from "@/features/development-guide/architecture/utils/markdownHeadings";
 
 const locale = vi.hoisted(() => ({ current: "en" as "en" | "hr" }));
 
