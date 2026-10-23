@@ -8,7 +8,9 @@ navigation and routed content are presented**.
 `src/app/router/routeRegistry.tsx` is the route authority. A route definition
 connects a path, access level, page component or lazy module, title,
 breadcrumbs, navigation metadata, optional documentation group, content layout,
-and scroll behavior. `routes.tsx` converts enabled records into React Router
+and scroll behavior. The router-owned `handbookRoutes.tsx` factory derives
+concrete records from the public content manifest and merges them into this
+registry; it does not introduce a second route matcher. `routes.tsx` converts enabled records into React Router
 objects and adds access gates and layouts. The router-owned hierarchy builder
 validates every declared record before environment and access filtering, then
 recursively composes nested records without a depth limit.
@@ -26,11 +28,16 @@ their URLs resolve through normal Not Found handling. Do not hide only the
 navigation item while leaving a production route registered.
 
 `/dev-guide` is a category landing page without section tabs. Frontend opens
-Example pages, Patterns, and Architecture under `/dev-guide/frontend`.
+Example pages, Patterns, Workflow patterns, and Architecture under `/dev-guide/frontend`.
 Example pages lists Contacts dashboard and Contacts CRUD. Patterns lists i18n,
 Signals, Server data, Routing and URLs, Overlays, Tables and collections, Forms,
 and Feedback; each category opens its first example and supplies that category's
-page navigation. Backend at `/dev-guide/backend` starts with a placeholder.
+page navigation. Workflow patterns mounts the Handbook collection under
+`/dev-guide/frontend/workflow-patterns` while its source files retain portable
+`frontend/<topic>/<article>.md` paths. Backend, Continuous integration, Delivery
+and operations, Developer workflow and AI-agent workflow each open real topic
+indexes; topics open article indexes and shared sidebar navigation. Nested
+Frontend workflows keep the first-row identity Development guide > Frontend.
 Previous Home/Contacts URLs redirect to the corresponding Example page, while
 old Patterns/Architecture URLs redirect beneath Frontend. Redirects preserve
 query parameters and fragments. The whole guide remains development-only.
@@ -211,8 +218,9 @@ under Application state; other categories remain individual links.
 
 Nested documentation sections each provide their own group ordering. Their
 default child is derived from the first retained item in that same ordered
-navigation. Previous/Next navigation stays within the active Patterns category or Architecture section; Patterns
-ordering must not select an Architecture redirect, or vice versa.
+navigation. Previous/Next navigation stays within the active Patterns category,
+Architecture section or Handbook topic. Explicit related reading can cross topic
+boundaries; pagination must not select an unrelated category or redirect.
 
 Pages remain thin adapters. They import public feature interfaces, supply
 route-specific composition, and do not reproduce feature behavior. Route

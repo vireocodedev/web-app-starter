@@ -71,8 +71,8 @@ production `src/`.
 ## Optional examples and stable infrastructure
 
 Some shipped examples are optional. Contacts is the complete feature example;
-Settings is an application-preference presentation feature; Patterns and
-Architecture are development guidance. Removing an example can remove its
+Settings is an application-preference presentation feature; Patterns,
+Architecture, and Handbook are development guidance. Removing an example can remove its
 feature, pages, tests, routes, translations, and registrations. Stable owners
 such as `src/app/data`, `src/app/router`, and the shell remain unless the
 application no longer needs that capability.

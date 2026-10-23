@@ -72,7 +72,7 @@ granicu i determinističke auth pripreme. Ni jedno ne pripada u produkcijski
 ## Neobvezni primjeri i stabilna infrastruktura
 
 Neki isporučeni primjeri nisu obvezni. Contacts je cjelovit primjer značajke,
-Settings je prezentacija aplikacijskih postavki, a Patterns i Architecture su
+Settings je prezentacija aplikacijskih postavki, a Patterns, Architecture i Handbook su
 razvojne upute. Pri uklanjanju primjera uklonite njegovu značajku, stranice,
 testove, rute, prijevode i registracije. Stabilni vlasnici kao `src/app/data`,
 `src/app/router` i ljuska ostaju dok ih aplikacija treba.

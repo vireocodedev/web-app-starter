@@ -7,7 +7,9 @@ dobivena navigacija i sadržaj rute**.
 
 `src/app/router/routeRegistry.tsx` autoritet je ruta. Definicija povezuje
 putanju, pristup, komponentu stranice, naslov, mrvice, navigacijske metapodatke,
-grupu dokumentacije, raspored sadržaja i ponašanje pomicanja. `routes.tsx`
+grupu dokumentacije, raspored sadržaja i ponašanje pomicanja. Routerova tvornica
+`handbookRoutes.tsx` izvodi konkretne zapise iz javnog manifesta sadržaja i
+spaja ih u taj registar; ne uvodi drugi mehanizam podudaranja ruta. `routes.tsx`
 pretvara omogućene zapise u React Router objekte te dodaje zaštite i rasporede.
 Modul hijerarhije najprije provjerava sve deklarirane zapise, a zatim rekurzivno
 slaže omogućene ugniježđene rute bez ograničenja dubine.
@@ -24,12 +26,18 @@ produkciji nestaju iz navigacije, a njihovi URL-ovi završavaju kroz uobičajeni
 Not Found. Nije dovoljno sakriti stavku navigacije i ostaviti rutu.
 
 `/dev-guide` je početna stranica s kategorijama, bez kartica zaglavlja. Frontend
-pod `/dev-guide/frontend` sadrži Primjere stranica, Obrasce i Arhitekturu.
+pod `/dev-guide/frontend` sadrži Primjere stranica, Obrasce, Obrasce radnih tokova
+i Arhitekturu.
 Primjeri stranica nude Nadzornu ploču kontakata i Kontakte CRUD. Obrasci nude
 i18n, Signals, Poslužiteljske podatke, Usmjeravanje i URL-ove, Slojeve, Tablice
 i kolekcije, Obrasce unosa te Povratne informacije. Svaka kategorija otvara prvi
-primjer i prikazuje vlastitu navigaciju. Backend na `/dev-guide/backend` zasad
-sadrži pozdrav. Prethodni URL-ovi za Početnu i Kontakte preusmjeravaju na
+primjer i prikazuje vlastitu navigaciju. Obrasci radnih tokova koriste Handbook
+kolekciju pod `/dev-guide/frontend/workflow-patterns`, dok izvorne datoteke
+zadržavaju prenosive putanje `frontend/<tema>/<članak>.md`. Backend, Kontinuirana
+integracija, Isporuka i operacije, Razvojni tijek rada te Tijek rada AI agenata
+otvaraju stvarne indekse tema; teme nude indekse članaka i zajedničku bočnu
+navigaciju. Ugniježđeni frontend obrasci zadržavaju identitet prvog retka Vodič
+za razvoj > Frontend. Prethodni URL-ovi za Početnu i Kontakte preusmjeravaju na
 odgovarajući Primjer stranice, a stari Obrasci i Arhitektura pod Frontend.
 Parametri upita i fragmenti ostaju sačuvani. Cijeli vodič ostaje samo razvojni.
 
@@ -194,7 +202,9 @@ ostaje tekst umjesto obmanjujuće poveznice.
 
 Svaka ugniježđena dokumentacijska cjelina ima vlastiti redoslijed grupa. Zadano
 dijete izvodi se iz prve zadržane stavke iste uređene navigacije.
-Prethodno/Sljedeće ostaje unutar aktivne cjeline.
+Prethodno/Sljedeće ostaje unutar aktivne Patterns kategorije, Architecture
+odjeljka ili Handbook teme. Izričito povezano čitanje smije prelaziti teme;
+paginacija ne bira nepovezanu kategoriju ili preusmjerenje.
 
 Stranice su tanki adapteri: uvoze javna sučelja, slažu ih za rutu i ne
 ponavljaju ponašanje značajke.
