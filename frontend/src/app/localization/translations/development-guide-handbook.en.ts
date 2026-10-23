@@ -100,6 +100,10 @@ export const englishHandbookTranslations = {
       title: "Application services",
       description: "Own complete commands, transaction boundaries, transitions, and committed outcomes.",
     },
+    "delivery-artifacts": {
+      title: "Runnable artifacts",
+      description: "Build environment-neutral images and verify the actual artifacts under runtime restrictions.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -245,6 +249,46 @@ export const englishHandbookTranslations = {
       title: "Audit fields, events and immutable versions answer different questions",
       description:
         "Choose last-modified metadata, transactional action history and retained versions deliberately, with explicit actor, privacy, projection and immutable correction ownership.",
+    },
+    "ci-pipelines-required-gates-and-main-protection": {
+      title: "Bind the required gate to the policy that produced it",
+      description:
+        "Bind CI gate to its trusted source App and verify effective, current main protection separately from workflow source.",
+    },
+    "ci-pipelines-pinned-toolchains-and-actions": {
+      title: "Select declared application toolchains inside the job",
+      description:
+        "Separate application toolchain declarations, exact package-manager selection, dependency locks, Action commits and disposable worker baselines.",
+    },
+    "ci-verification-resource-budgets": {
+      title: "Budget concurrency at every execution layer",
+      description:
+        "Coordinate pool slots, parent job limits, nested tool workers, storage and deadlines while preserving verification coverage.",
+    },
+    "ci-verification-phase-deadlines-and-process-cleanup": {
+      title: "Keep original phase deadlines and own process cleanup",
+      description:
+        "Reference recipe for setup-inclusive phase budgets, retained PGID ownership, bounded cleanup and failure-preserving utility aggregation.",
+    },
+    "delivery-artifacts-frontend-image-contract": {
+      title: "Build a frontend image that can move between environments",
+      description:
+        "Keep same-origin public configuration, SPA/API/asset failure semantics, immutable asset caching and restricted Nginx runtime in one image.",
+    },
+    "delivery-artifacts-backend-image-contract": {
+      title: "Separate backend compilation from restricted runtime",
+      description:
+        "Compile with the declared JDK, run a non-root JRE jar and inject protected database configuration without conflating builds, tests or live acceptance.",
+    },
+    "delivery-artifacts-runtime-smoke-evidence": {
+      title: "Verify the produced image under its runtime restrictions",
+      description:
+        "Exercise actual image startup, API and provisioning boundaries with disposable resources and exact-name cleanup, while stating evidence limits.",
+    },
+    "delivery-releases-build-publish-request-boundaries": {
+      title: "Give build, publication and deployment request different authority",
+      description:
+        "Separate untrusted application builds, fresh-worker registry publication and encrypted fixed-contract host requests.",
     },
   },
 } as const;

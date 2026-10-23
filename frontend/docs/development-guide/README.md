@@ -67,10 +67,14 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Pipelines and gates
 
 - [Select verification by owner and always report the gate](en/ci/pipelines/owner-scoped-checks.md) · [Hrvatski](hr/ci/pipelines/owner-scoped-checks.md)
+- [Bind the required gate to the policy that produced it](en/ci/pipelines/required-gates-and-main-protection.md) · [Hrvatski](hr/ci/pipelines/required-gates-and-main-protection.md)
+- [Select declared application toolchains inside the job](en/ci/pipelines/pinned-toolchains-and-actions.md) · [Hrvatski](hr/ci/pipelines/pinned-toolchains-and-actions.md)
 
 #### Verification evidence
 
 - [Prove complete execution across test shards](en/ci/verification/complete-shard-evidence.md) · [Hrvatski](hr/ci/verification/complete-shard-evidence.md)
+- [Budget concurrency at every execution layer](en/ci/verification/resource-budgets.md) · [Hrvatski](hr/ci/verification/resource-budgets.md)
+- [Keep original phase deadlines and own process cleanup](en/ci/verification/phase-deadlines-and-process-cleanup.md) · [Hrvatski](hr/ci/verification/phase-deadlines-and-process-cleanup.md)
 
 #### Worker isolation
 
@@ -78,10 +82,17 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 ### Delivery and operations
 
+#### Runnable artifacts
+
+- [Build a frontend image that can move between environments](en/delivery/artifacts/frontend-image-contract.md) · [Hrvatski](hr/delivery/artifacts/frontend-image-contract.md)
+- [Separate backend compilation from restricted runtime](en/delivery/artifacts/backend-image-contract.md) · [Hrvatski](hr/delivery/artifacts/backend-image-contract.md)
+- [Verify the produced image under its runtime restrictions](en/delivery/artifacts/runtime-smoke-evidence.md) · [Hrvatski](hr/delivery/artifacts/runtime-smoke-evidence.md)
+
 #### Releases and promotion
 
 - [Release one immutable frontend/backend image pair](en/delivery/releases/immutable-image-pairs.md) · [Hrvatski](hr/delivery/releases/immutable-image-pairs.md)
 - [Stage a verified pair and promote exactly what was accepted](en/delivery/releases/staging-and-production-promotion.md) · [Hrvatski](hr/delivery/releases/staging-and-production-promotion.md)
+- [Give build, publication and deployment request different authority](en/delivery/releases/build-publish-request-boundaries.md) · [Hrvatski](hr/delivery/releases/build-publish-request-boundaries.md)
 
 #### Migration and recovery
 

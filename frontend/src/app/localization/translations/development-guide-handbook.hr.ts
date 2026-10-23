@@ -103,6 +103,10 @@ export const croatianHandbookTranslations = {
       title: "Aplikacijski servisi",
       description: "Posjedujte cjelovite naredbe, transakcijske granice, prijelaze i potvrđene ishode.",
     },
+    "delivery-artifacts": {
+      title: "Izvršivi artefakti",
+      description: "Izgradite imageove neovisne o okruženju i provjerite stvarne artefakte pod runtime ograničenjima.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -245,6 +249,44 @@ export const croatianHandbookTranslations = {
       title: "Audit polja, događaji i nepromjenjive verzije odgovaraju na različita pitanja",
       description:
         "Namjerno odaberite last-modified podatke, transakcijsku povijest i zadržane verzije, uz aktera, privatnost, projekcije i pravila nepromjenjivog ispravljanja.",
+    },
+    "ci-pipelines-required-gates-and-main-protection": {
+      title: "Veži obvezni status uz politiku koja ga je proizvela",
+      description: "Veži CI gate uz pouzdani source App i zasebno potvrdi efektivnu zaštitu aktualne glavne grane.",
+    },
+    "ci-pipelines-pinned-toolchains-and-actions": {
+      title: "Odaberi deklarirani aplikacijski toolchain unutar posla",
+      description:
+        "Razlikuj aplikacijski target, točan package manager, dependency lock, Action commit i baseline jednokratnog workera.",
+    },
+    "ci-verification-resource-budgets": {
+      title: "Ograniči konkurentnost na svakoj razini izvršavanja",
+      description: "Uskladi slotove, limite posla, unutarnje workere, disk i rokove uz očuvan obuhvat provjera.",
+    },
+    "ci-verification-phase-deadlines-and-process-cleanup": {
+      title: "Sačuvaj početni rok faze i vlasništvo nad čišćenjem procesa",
+      description:
+        "Referentni recept za rokove sa setupom, zadržano PGID vlasništvo, cleanup i aggregate koji čuva neuspjehe.",
+    },
+    "delivery-artifacts-frontend-image-contract": {
+      title: "Izgradi frontend sliku prenosivu između okruženja",
+      description:
+        "Sačuvaj same-origin postavke, SPA/API/asset granice, immutable cache i ograničeni Nginx u istoj slici.",
+    },
+    "delivery-artifacts-backend-image-contract": {
+      title: "Odvoji backend kompilaciju od ograničenog runtimea",
+      description:
+        "Kompiliraj deklariranim JDK-om, pokreni non-root JRE jar i izvana dodaj zaštićenu konfiguraciju uz odvojene dokaze.",
+    },
+    "delivery-artifacts-runtime-smoke-evidence": {
+      title: "Provjeri proizvedenu sliku pod stvarnim runtime ograničenjima",
+      description:
+        "Provjeri stvarnu sliku, API i provisioning uz jednokratne resurse i točan cleanup te jasno ograniči tvrdnje o dokazu.",
+    },
+    "delivery-releases-build-publish-request-boundaries": {
+      title: "Build, objava i deployment zahtjev trebaju različite ovlasti",
+      description:
+        "Odvoji aplikacijski build, registry objavu u svježem workeru i šifrirani host zahtjev fiksnog ugovora.",
     },
   },
 } satisfies StringLeaves<typeof englishHandbookTranslations>;
