@@ -18,6 +18,10 @@ const contentRoot = resolve(frontendRoot, "docs/development-guide");
 const parser = unified().use(remarkParse).use(remarkGfm);
 const problems = [];
 const sources = new Map();
+const indexLinks = new Set();
+walk(parser.parse(await readFile(resolve(contentRoot, "README.md"), "utf8")), node => {
+  if (node.type === "link" || node.type === "definition") indexLinks.add(node.url);
+});
 
 function requireCondition(condition, message) {
   if (!condition) problems.push(message);
@@ -127,6 +131,10 @@ for (const article of handbookArticles) {
     `Duplicated related article on ${article.id}`,
   );
   for (const locale of ["en", "hr"]) {
+    requireCondition(
+      indexLinks.has(`${locale}/${article.contentPath}.md`),
+      `${locale}/${article.contentPath}: missing from the filesystem guide index`,
+    );
     const path = resolve(contentRoot, locale, `${article.contentPath}.md`);
     try {
       const markdown = await readFile(path, "utf8");

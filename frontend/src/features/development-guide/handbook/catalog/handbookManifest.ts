@@ -60,6 +60,13 @@ export const handbookTopics = [
     descriptionKey: "handbook.topics.backend-security.description",
   },
   {
+    id: "backend-application-services",
+    categoryId: "backend",
+    slug: "application-services",
+    titleKey: "handbook.topics.backend-application-services.title",
+    descriptionKey: "handbook.topics.backend-application-services.description",
+  },
+  {
     id: "backend-data",
     categoryId: "backend",
     slug: "data",
@@ -1021,6 +1028,261 @@ export const handbookArticles = [
     relatedArticleIds: [
       "frontend-task-interfaces-readable-review-and-exact-decisions",
       "frontend-async-commands-committed-writes-and-observer-failures",
+    ],
+  },
+  {
+    id: "backend-application-services-transactional-commands",
+    topicId: "backend-application-services",
+    slug: "transactional-commands",
+    contentPath: "backend/application-services/transactional-commands",
+    titleKey: "handbook.articles.backend-application-services-transactional-commands.title",
+    descriptionKey: "handbook.articles.backend-application-services-transactional-commands.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DiscoveryService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/base/BaseService.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/vessel/VesselService.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-data-revision-conflicts-and-shared-locks",
+      "backend-data-audit-fields-events-and-versions",
+      "backend-foundation-http-service-persistence-boundaries",
+    ],
+  },
+  {
+    id: "backend-data-revision-conflicts-and-shared-locks",
+    topicId: "backend-data",
+    slug: "revision-conflicts-and-shared-locks",
+    contentPath: "backend/data/revision-conflicts-and-shared-locks",
+    titleKey: "handbook.articles.backend-data-revision-conflicts-and-shared-locks.title",
+    descriptionKey: "handbook.articles.backend-data-revision-conflicts-and-shared-locks.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DiscoveryService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectPreparationService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFinanceLock.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-editing-pinned-values-and-revisions",
+      "backend-data-lock-order-and-fresh-transaction-retries",
+      "backend-security-resource-scope-and-composite-keys",
+    ],
+  },
+  {
+    id: "backend-data-lock-order-and-fresh-transaction-retries",
+    topicId: "backend-data",
+    slug: "lock-order-and-fresh-transaction-retries",
+    contentPath: "backend/data/lock-order-and-fresh-transaction-retries",
+    titleKey: "handbook.articles.backend-data-lock-order-and-fresh-transaction-retries.title",
+    descriptionKey: "handbook.articles.backend-data-lock-order-and-fresh-transaction-retries.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "FRED/FRED-back",
+        path: "src/main/java/hr/rgo/fred/mqtt/registration/PilotRegistrationService.java",
+        revision: "0fc326394fbc785cf50d23155506b444feb92725",
+      },
+      {
+        project: "FRED/FRED-back",
+        path: "src/main/java/hr/rgo/fred/mqtt/session/LivestreamSessionService.java",
+        revision: "0fc326394fbc785cf50d23155506b444feb92725",
+      },
+      {
+        project: "FRED/FRED-back",
+        path: "src/main/java/hr/rgo/fred/mqtt/session/LivestreamSession.java",
+        revision: "0fc326394fbc785cf50d23155506b444feb92725",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFinanceLock.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/core/OptimisticLockRetry.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-application-services-transactional-commands",
+      "backend-data-revision-conflicts-and-shared-locks",
+    ],
+  },
+  {
+    id: "backend-security-resource-scope-and-composite-keys",
+    topicId: "backend-security",
+    slug: "resource-scope-and-composite-keys",
+    contentPath: "backend/security/resource-scope-and-composite-keys",
+    titleKey: "handbook.articles.backend-security-resource-scope-and-composite-keys.title",
+    descriptionKey: "handbook.articles.backend-security-resource-scope-and-composite-keys.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DiscoveryService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/resources/db/migration/V10__specification_development.sql",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "FRED/FRED-back",
+        path: "src/main/java/hr/rgo/fred/mqtt/pilot/PilotUserAccess.java",
+        revision: "0fc326394fbc785cf50d23155506b444feb92725",
+      },
+      {
+        project: "FRED/FRED-back",
+        path: "src/main/java/hr/rgo/fred/mqtt/session/LivestreamSessionService.java",
+        revision: "0fc326394fbc785cf50d23155506b444feb92725",
+      },
+    ],
+    relatedArticleIds: ["backend-security-session-and-csrf-lifecycle", "backend-data-flyway-and-schema-ownership"],
+  },
+  {
+    id: "backend-foundation-patch-tristate-and-write-dtos",
+    topicId: "backend-foundation",
+    slug: "patch-tristate-and-write-dtos",
+    contentPath: "backend/foundation/patch-tristate-and-write-dtos",
+    titleKey: "handbook.articles.backend-foundation-patch-tristate-and-write-dtos.title",
+    descriptionKey: "handbook.articles.backend-foundation-patch-tristate-and-write-dtos.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/vessel/VesselDTO.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/vessel/VesselController.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/base/JsonNullableMapper.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/base/BaseMapper.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/vessel/VesselMapper.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/core/JsonConfig.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-foundation-validation-and-error-contracts",
+      "backend-foundation-http-service-persistence-boundaries",
+    ],
+  },
+  {
+    id: "backend-data-audit-fields-events-and-versions",
+    topicId: "backend-data",
+    slug: "audit-fields-events-and-versions",
+    contentPath: "backend/data/audit-fields-events-and-versions",
+    titleKey: "handbook.articles.backend-data-audit-fields-events-and-versions.title",
+    descriptionKey: "handbook.articles.backend-data-audit-fields-events-and-versions.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/base/AuditableEntity.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/base/AuditorAwareImpl.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/LmsBackApplication.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/vessel/VesselService.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DiscoveryService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/resources/db/migration/V8__project_lifecycle.sql",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/resources/db/migration/V10__specification_development.sql",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-data-flyway-and-schema-ownership",
+      "backend-application-services-transactional-commands",
     ],
   },
 ] as const satisfies readonly HandbookArticleDefinition[];

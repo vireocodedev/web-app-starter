@@ -96,6 +96,10 @@ export const englishHandbookTranslations = {
       title: "Task interfaces",
       description: "Compose long forms, exact reviews, prerequisite evidence, and acknowledged outcomes.",
     },
+    "backend-application-services": {
+      title: "Application services",
+      description: "Own complete commands, transaction boundaries, transitions, and committed outcomes.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -211,6 +215,36 @@ export const englishHandbookTranslations = {
       title: "Prerequisites report evidence; receipts report acknowledged outcomes",
       description:
         "Explain source-owned blockers, partial coverage, precise remedies and the difference between accepted work and completed effects.",
+    },
+    "backend-application-services-transactional-commands": {
+      title: "One transaction for one complete business command",
+      description:
+        "Make related mutation, protected invariants and mandatory audit one transaction, while distinguishing proxy entry, flush, commit and external effects.",
+    },
+    "backend-data-revision-conflicts-and-shared-locks": {
+      title: "Revision conflicts and shared invariant locks",
+      description:
+        "Protect stale editor intent with expected revisions and serialize aggregate quotas and lifecycle changes through a shared, explicitly ordered lock protocol.",
+    },
+    "backend-data-lock-order-and-fresh-transaction-retries": {
+      title: "Stable lock order and retries in a fresh transaction",
+      description:
+        "Order canonical resource identities, let constraints settle insertion races and recover only after the failed transaction ends, with bounded ownership-aware retries.",
+    },
+    "backend-security-resource-scope-and-composite-keys": {
+      title: "Enforce resource scope in authority, queries and keys",
+      description:
+        "Keep live authority, child lookups and cross-resource relationships inside one permitted scope, backed by composite foreign keys without mistaking integrity for authorization.",
+    },
+    "backend-foundation-patch-tristate-and-write-dtos": {
+      title: "PATCH tri-state and deliberate write DTOs",
+      description:
+        "Preserve absent, explicit-null and present-value semantics through decoding, validation and mapping while keeping identity, audit and derived response fields server-owned.",
+    },
+    "backend-data-audit-fields-events-and-versions": {
+      title: "Audit fields, events and immutable versions answer different questions",
+      description:
+        "Choose last-modified metadata, transactional action history and retained versions deliberately, with explicit actor, privacy, projection and immutable correction ownership.",
     },
   },
 } as const;

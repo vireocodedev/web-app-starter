@@ -99,6 +99,10 @@ export const croatianHandbookTranslations = {
       title: "Sučelja zadataka",
       description: "Sastavite duge forme, točne preglede, dokaze preduvjeta i potvrđene ishode.",
     },
+    "backend-application-services": {
+      title: "Aplikacijski servisi",
+      description: "Posjedujte cjelovite naredbe, transakcijske granice, prijelaze i potvrđene ishode.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -211,6 +215,36 @@ export const croatianHandbookTranslations = {
       title: "Preduvjeti prikazuju dokaze, potvrde priznate ishode",
       description:
         "Objasnite blokade izvora, djelomičnu pokrivenost, precizna rješenja i razliku prihvaćenog rada od dovršenih učinaka.",
+    },
+    "backend-application-services-transactional-commands": {
+      title: "Jedna transakcija za jednu cjelovitu poslovnu naredbu",
+      description:
+        "Objedinite povezane promjene, zaštićene invarijante i obvezni audit te razlikujte proxy ulaz, flush, commit i vanjske učinke.",
+    },
+    "backend-data-revision-conflicts-and-shared-locks": {
+      title: "Konflikti revizija i zajednička zaključavanja invarijanti",
+      description:
+        "Očekivanom revizijom zaštitite namjeru uređivača, a zajedničkim uređenim lock protokolom kvote i životni ciklus agregata.",
+    },
+    "backend-data-lock-order-and-fresh-transaction-retries": {
+      title: "Stabilan redoslijed lockova i retry u novoj transakciji",
+      description:
+        "Uredite kanonske identitete, razriješite insert utrke ograničenjima i oporavite se tek nakon završetka neuspjele transakcije, uz ograničen retry i provjeru vlasništva.",
+    },
+    "backend-security-resource-scope-and-composite-keys": {
+      title: "Provedite opseg resursa kroz ovlasti, upite i ključeve",
+      description:
+        "Žive ovlasti, child upite i veze resursa zadržite u dopuštenom opsegu uz složene strane ključeve, bez izjednačavanja integriteta i autorizacije.",
+    },
+    "backend-foundation-patch-tristate-and-write-dtos": {
+      title: "Tri stanja PATCH-a i namjenski write DTO-i",
+      description:
+        "Sačuvajte izostanak, eksplicitni null i prisutnu vrijednost kroz dekodiranje, validaciju i mapiranje, uz server-owned identitet, audit i izvedena polja.",
+    },
+    "backend-data-audit-fields-events-and-versions": {
+      title: "Audit polja, događaji i nepromjenjive verzije odgovaraju na različita pitanja",
+      description:
+        "Namjerno odaberite last-modified podatke, transakcijsku povijest i zadržane verzije, uz aktera, privatnost, projekcije i pravila nepromjenjivog ispravljanja.",
     },
   },
 } satisfies StringLeaves<typeof englishHandbookTranslations>;

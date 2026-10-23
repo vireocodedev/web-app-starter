@@ -16,44 +16,86 @@ Each topic has a browser index, article sidebar, local breadcrumbs and an articl
 
 ### Frontend workflow patterns
 
-These source-backed recipes complement the installed interactive Patterns and Architecture tabs. Consumer-only helpers are identified explicitly; copy the protocol into the correct owner rather than assuming those helpers are installed.
+These source-backed recipes complement the installed interactive Patterns and Architecture tabs. Consumer-only helpers are identified explicitly; adapt the protocol in the correct owner rather than assuming those helpers are installed.
+
+#### Editing sessions
 
 - [Pinned values and revisions](en/frontend/editing/pinned-values-and-revisions.md) · [Hrvatski](hr/frontend/editing/pinned-values-and-revisions.md)
+- [Drafts across routes](en/frontend/editing/drafts-across-routes.md) · [Hrvatski](hr/frontend/editing/drafts-across-routes.md)
+
+#### Asynchronous commands
+
 - [Owned reads and shared subscriptions](en/frontend/async-commands/owned-reads-and-shared-subscriptions.md) · [Hrvatski](hr/frontend/async-commands/owned-reads-and-shared-subscriptions.md)
 - [Generation guards after await](en/frontend/async-commands/generation-guards-after-await.md) · [Hrvatski](hr/frontend/async-commands/generation-guards-after-await.md)
 - [Stable retry identity](en/frontend/async-commands/stable-retry-identity.md) · [Hrvatski](hr/frontend/async-commands/stable-retry-identity.md)
 - [Committed writes and observer failures](en/frontend/async-commands/committed-writes-and-observer-failures.md) · [Hrvatski](hr/frontend/async-commands/committed-writes-and-observer-failures.md)
-- [Drafts across routes](en/frontend/editing/drafts-across-routes.md) · [Hrvatski](hr/frontend/editing/drafts-across-routes.md)
+
+#### Task interfaces
+
 - [Topic navigation keeps one form and one owner](en/frontend/task-interfaces/topic-editors-and-error-focus.md) · [Hrvatski](hr/frontend/task-interfaces/topic-editors-and-error-focus.md)
 - [Show readable evidence before an exact decision](en/frontend/task-interfaces/readable-review-and-exact-decisions.md) · [Hrvatski](hr/frontend/task-interfaces/readable-review-and-exact-decisions.md)
 - [Prerequisites report evidence; receipts report acknowledged outcomes](en/frontend/task-interfaces/prerequisites-and-confirmed-receipts.md) · [Hrvatski](hr/frontend/task-interfaces/prerequisites-and-confirmed-receipts.md)
 
 ### Backend
 
+#### Foundation
+
 - [Runtime and configuration ownership](en/backend/foundation/runtime-and-configuration.md) · [Hrvatski](hr/backend/foundation/runtime-and-configuration.md)
 - [HTTP, application service and persistence boundaries](en/backend/foundation/http-service-persistence-boundaries.md) · [Hrvatski](hr/backend/foundation/http-service-persistence-boundaries.md)
 - [Validation and public error contracts](en/backend/foundation/validation-and-error-contracts.md) · [Hrvatski](hr/backend/foundation/validation-and-error-contracts.md)
+- [PATCH tri-state and deliberate write DTOs](en/backend/foundation/patch-tristate-and-write-dtos.md) · [Hrvatski](hr/backend/foundation/patch-tristate-and-write-dtos.md)
+
+#### Security
+
 - [Session authentication and CSRF are one lifecycle](en/backend/security/session-and-csrf-lifecycle.md) · [Hrvatski](hr/backend/security/session-and-csrf-lifecycle.md)
 - [Local seeding and one-time account provisioning](en/backend/security/account-provisioning.md) · [Hrvatski](hr/backend/security/account-provisioning.md)
+- [Enforce resource scope in authority, queries and keys](en/backend/security/resource-scope-and-composite-keys.md) · [Hrvatski](hr/backend/security/resource-scope-and-composite-keys.md)
+
+#### Application services
+
+- [One transaction for one complete business command](en/backend/application-services/transactional-commands.md) · [Hrvatski](hr/backend/application-services/transactional-commands.md)
+
+#### Data and schema
+
 - [Flyway owns application and session schema](en/backend/data/flyway-and-schema-ownership.md) · [Hrvatski](hr/backend/data/flyway-and-schema-ownership.md)
+- [Revision conflicts and shared invariant locks](en/backend/data/revision-conflicts-and-shared-locks.md) · [Hrvatski](hr/backend/data/revision-conflicts-and-shared-locks.md)
+- [Stable lock order and retries in a fresh transaction](en/backend/data/lock-order-and-fresh-transaction-retries.md) · [Hrvatski](hr/backend/data/lock-order-and-fresh-transaction-retries.md)
+- [Audit fields, events and immutable versions answer different questions](en/backend/data/audit-fields-events-and-versions.md) · [Hrvatski](hr/backend/data/audit-fields-events-and-versions.md)
 
 ### Continuous integration
 
+#### Pipelines and gates
+
 - [Select verification by owner and always report the gate](en/ci/pipelines/owner-scoped-checks.md) · [Hrvatski](hr/ci/pipelines/owner-scoped-checks.md)
+
+#### Verification evidence
+
 - [Prove complete execution across test shards](en/ci/verification/complete-shard-evidence.md) · [Hrvatski](hr/ci/verification/complete-shard-evidence.md)
+
+#### Worker isolation
+
 - [Treat the disposable worker as a verified trust boundary](en/ci/isolation/disposable-worker-boundary.md) · [Hrvatski](hr/ci/isolation/disposable-worker-boundary.md)
 
 ### Delivery and operations
 
+#### Releases and promotion
+
 - [Release one immutable frontend/backend image pair](en/delivery/releases/immutable-image-pairs.md) · [Hrvatski](hr/delivery/releases/immutable-image-pairs.md)
 - [Stage a verified pair and promote exactly what was accepted](en/delivery/releases/staging-and-production-promotion.md) · [Hrvatski](hr/delivery/releases/staging-and-production-promotion.md)
+
+#### Migration and recovery
+
 - [Recover at the correct migration failure boundary](en/delivery/recovery/migration-failure-boundaries.md) · [Hrvatski](hr/delivery/recovery/migration-failure-boundaries.md)
 
 ### Developer workflow
 
+#### Local development
+
 - [One workspace, two runtimes](en/developer-workflow/local-development/workspace-runtimes.md) · [Hrvatski](hr/developer-workflow/local-development/workspace-runtimes.md)
 
 ### AI-agent workflow
+
+#### Implementation workflow
 
 - [Find the owner before editing](en/agent-workflow/implementation/owner-first-change.md) · [Hrvatski](hr/agent-workflow/implementation/owner-first-change.md)
 
