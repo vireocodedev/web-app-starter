@@ -11,6 +11,11 @@ const featureApplicationLeafPaths = new Set([
   "src/app/router/hooks/useAppQueryParams.ts",
   "src/app/router/queryParams.ts",
   "src/app/overlays/components/AppBottomDrawerHandle.tsx",
+  "src/app/shell/components/AppPageNavigation.tsx",
+]);
+const pageApplicationLeafPaths = new Set([
+  "src/app/shell/components/AppCategoryList.tsx",
+  "src/app/shell/components/AppPageNavigation.tsx",
 ]);
 const documentationPresentationConsumers = new Set([
   "src/features/development-guide/architecture/components/ArchitectureArticle.tsx",
@@ -21,6 +26,7 @@ const documentationPresentationConsumers = new Set([
   "src/features/development-guide/patterns/gallery/types/ExampleNavigation.ts",
   "src/features/development-guide/patterns/gallery/utils/exampleNavigation.ts",
   "src/pages/development-guide/architecture/ArchitectureRouteLayout.tsx",
+  "src/pages/development-guide/patterns/PatternCategoryLayout.tsx",
 ]);
 const rawMuiColorSchemeOwners = new Set([
   "src/app/theme/components/AppThemeProvider.tsx",
@@ -971,6 +977,7 @@ function assertNoViolations(files) {
         specifier.startsWith("@/app/") &&
         !(path === "src/pages/LoginPage.tsx" && specifier.startsWith("@/app/auth/")) &&
         !isDocumentationPresentationImport &&
+        !candidatePaths.some(candidate => pageApplicationLeafPaths.has(candidate)) &&
         !/^@\/app\/(?:bootstrap\/signals|localization|theme)(?:\/|$)/.test(specifier)
       ) {
         violations.push(path + ": pages may depend only on feature interfaces and approved presentation leaf modules");
@@ -1061,6 +1068,7 @@ function assertNoViolations(files) {
           targetPath?.startsWith("src/app/") &&
           !(path === "src/pages/LoginPage.tsx" && targetPath.startsWith("src/app/auth/")) &&
           !isDocumentationPresentationImport &&
+          !pageApplicationLeafPaths.has(targetPath) &&
           !/^src\/app\/(?:bootstrap\/signals|localization|theme)(?:\/|$)/.test(targetPath)
         ) {
           violations.push(

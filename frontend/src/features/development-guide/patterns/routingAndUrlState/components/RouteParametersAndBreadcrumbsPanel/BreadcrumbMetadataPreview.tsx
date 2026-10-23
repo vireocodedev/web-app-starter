@@ -2,7 +2,7 @@ import { Breadcrumbs, Button, Link, Stack, Typography } from "@mui/material";
 import { generatePath, Link as RouterLink, useParams } from "react-router";
 import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 
-const routeBase = "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId";
+const routeBase = "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId";
 
 export function BreadcrumbMetadataPreview() {
   const { t } = useDevelopmentGuideTranslation();

@@ -72,7 +72,7 @@ inputs bundled at build time, so changing one requires rebuilding the app.
 ## Architecture and contribution guide
 
 The canonical source-structure guide is available in the authenticated,
-development-only **Development guide** menu under **Architecture**. Its same
+development-only **Development guide → Frontend → Architecture**. Its same
 Markdown sources are readable in the repository:
 
 - [English architecture guide](docs/architecture/en/source-map-and-ownership.md)
@@ -118,9 +118,17 @@ caching. Browser install prompts vary and may depend on user engagement.
 ## Shell and navigation
 
 The first header row contains the main menu button, RGO brand,
-top-level route context, quick actions, and account access. The development
-guide demonstrates an optional second row for its immediate sections and a
-separate page sidebar for deeper navigation. Deep pages retain local
+top-level route context, quick actions, and account access. `/dev-guide` lists
+Frontend and Backend categories without section tabs. Frontend opens **Example pages**, **Patterns**, and **Architecture** under
+`/dev-guide/frontend`. Example pages lists Contacts dashboard and Contacts CRUD;
+Patterns lists eight categories, each with the shared Settings-style page
+navigation for its examples. Backend opens a placeholder under `/dev-guide/backend`. Category pages show
+**Development guide → Frontend** or **Development guide → Backend** in the header,
+with a link back to the category list. Previous guide URLs redirect to Frontend
+and retain their query parameters and fragments. The entire guide stays out of
+production builds. Guide pages share an `xl` content container, including their
+local breadcrumbs. Frontend demonstrates an optional second row for its immediate
+sections and a separate page sidebar for deeper navigation. Deep pages retain local
 breadcrumbs. On narrow screens, the second row keeps the active section visible and offers a More sections sheet, while
 page navigation uses a separate “On this page” menu. Mobile theme and language controls
 are available in Settings instead of a More button. App-provided `headerActions`

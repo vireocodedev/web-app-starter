@@ -38,6 +38,7 @@ import ManageSearchOutlinedIcon from "@mui/icons-material/ManageSearchOutlined";
 import SwapVertOutlinedIcon from "@mui/icons-material/SwapVertOutlined";
 import TableRowsOutlinedIcon from "@mui/icons-material/TableRowsOutlined";
 import { Outlet } from "react-router";
+import { LegacyDevelopmentGuideRedirect } from "./components/LegacyDevelopmentGuideRedirect";
 import { DynamicProjectHeaderIdentity } from "./components/DynamicProjectHeaderIdentity";
 import { SettingsLayoutRoute } from "./components/SettingsLayoutRoute";
 import {
@@ -48,8 +49,8 @@ import {
 
 import type {
   AppArchitectureNavigationGroup,
-  AppExampleGroupId,
   AppExampleNavigationGroup,
+  AppPatternCategoryRouteId,
   AppNavigationItem,
   AppNavigationLink,
   AppRouteDefinition,
@@ -68,13 +69,18 @@ import {
 } from "@/features/development-guide/architecture";
 import { ArchitectureArticlePage } from "@/pages/development-guide/architecture/ArchitectureArticlePage";
 import { ArchitectureRouteLayout } from "@/pages/development-guide/architecture/ArchitectureRouteLayout";
-import { PatternsRouteLayout } from "@/pages/development-guide/patterns/PatternsRouteLayout";
+import { ExamplePagesIndexPage } from "@/pages/development-guide/examplePages/ExamplePagesIndexPage";
+import { PatternsIndexPage } from "@/pages/development-guide/patterns/PatternsIndexPage";
+import { PatternCategoryLayoutRoute } from "./components/PatternCategoryLayoutRoute";
+import { patternCategoryDefinitions } from "./patternCategories";
 import { ApplicationStateEffectsAndCleanupPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateEffectsAndCleanupPage";
 import { ApplicationStatePersistentStatePage } from "@/pages/development-guide/patterns/applicationState/ApplicationStatePersistentStatePage";
 import { ApplicationStateSharingBetweenRoutesPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateSharingBetweenRoutesPage";
 import { ApplicationStateSourceAndComputedSignalsPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateSourceAndComputedSignalsPage";
 import { ConfirmationDialogsPage } from "@/pages/development-guide/patterns/feedback/ConfirmationDialogsPage";
 import { ContactsPage } from "@/pages/development-guide/contacts/ContactsPage";
+import { DevelopmentGuidePage } from "@/pages/development-guide/DevelopmentGuidePage";
+import { BackendDevelopmentGuidePage } from "@/pages/development-guide/BackendDevelopmentGuidePage";
 import { DevelopmentGuideHomePage } from "@/pages/development-guide/DevelopmentGuideHomePage";
 import { HomePage } from "@/pages/HomePage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -128,7 +134,7 @@ const architectureArticleRoutes = import.meta.env.DEV
             labelKey: article.labelKey,
           },
           parentId: "architecture",
-          path: `dev-guide/architecture/${article.id}`,
+          path: `dev-guide/frontend/architecture/${article.id}`,
           scrollToTop: true,
           title: t => t(article.labelKey),
         };
@@ -201,13 +207,27 @@ const baseRouteRegistry = {
   },
 } as const satisfies Record<string, AppRouteDefinition>;
 
+const patternCategoryRoutes = Object.fromEntries(
+  patternCategoryDefinitions.map((category): [AppPatternCategoryRouteId, AppRouteDefinition] => [
+    category.routeId,
+    {
+      Component: PatternCategoryLayoutRoute,
+      access: "authenticated",
+      commandPalette: true,
+      parentId: "examples",
+      path: category.path,
+      title: t => t(category.labelKey),
+      translationNamespace: "development-guide",
+    } satisfies AppRouteDefinition,
+  ]),
+) as Record<AppPatternCategoryRouteId, AppRouteDefinition>;
+
 const developmentRouteRegistry = {
   developmentGuide: {
     Component: Outlet,
     access: "authenticated",
-    defaultChildId: "developmentGuideHome",
+    contentMaxWidth: "xl",
     developmentOnly: true,
-    headerNavigation: true,
     navigation: {
       activePath: "/dev-guide/*",
       Icon: MenuBookOutlinedIcon,
@@ -217,15 +237,119 @@ const developmentRouteRegistry = {
     title: t => t("navigation.developmentGuide"),
     translationNamespace: "development-guide",
   },
+  developmentGuideIndex: {
+    Component: DevelopmentGuidePage,
+    access: "authenticated",
+    breadcrumbs: false,
+    commandPalette: true,
+    index: true,
+    parentId: "developmentGuide",
+    title: t => t("navigation.developmentGuide"),
+    translationNamespace: "development-guide",
+  },
+  developmentGuideFrontend: {
+    Component: Outlet,
+    access: "authenticated",
+    defaultChildId: "developmentGuideExamplePages",
+    headerBreadcrumb: true,
+    headerNavigation: true,
+    parentId: "developmentGuide",
+    path: "dev-guide/frontend",
+    title: t => t("navigation.frontend"),
+    translationNamespace: "development-guide",
+  },
+  developmentGuideBackend: {
+    Component: BackendDevelopmentGuidePage,
+    access: "authenticated",
+    breadcrumbs: false,
+    commandPalette: true,
+    headerBreadcrumb: true,
+    parentId: "developmentGuide",
+    path: "dev-guide/backend",
+    title: t => t("navigation.backend"),
+    translationNamespace: "development-guide",
+  },
+  legacyDevelopmentGuideHome: {
+    Component: LegacyDevelopmentGuideRedirect,
+    access: "authenticated",
+    breadcrumbs: false,
+    parentId: "developmentGuide",
+    path: "dev-guide/home",
+    title: t => t("navigation.contactsDashboard"),
+    translationNamespace: "development-guide",
+  },
+  legacyDevelopmentGuideContacts: {
+    Component: LegacyDevelopmentGuideRedirect,
+    access: "authenticated",
+    breadcrumbs: false,
+    parentId: "developmentGuide",
+    path: "dev-guide/contacts",
+    title: t => t("navigation.contacts"),
+    translationNamespace: "development-guide",
+  },
+  legacyDevelopmentGuidePatterns: {
+    Component: LegacyDevelopmentGuideRedirect,
+    access: "authenticated",
+    breadcrumbs: false,
+    parentId: "developmentGuide",
+    path: "dev-guide/patterns/*",
+    title: t => t("navigation.examples"),
+    translationNamespace: "development-guide",
+  },
+  legacyDevelopmentGuideArchitecture: {
+    Component: LegacyDevelopmentGuideRedirect,
+    access: "authenticated",
+    breadcrumbs: false,
+    parentId: "developmentGuide",
+    path: "dev-guide/architecture/*",
+    title: t => t("navigation.architecture"),
+    translationNamespace: "development-guide",
+  },
+  legacyFrontendHome: {
+    Component: LegacyDevelopmentGuideRedirect,
+    access: "authenticated",
+    breadcrumbs: false,
+    parentId: "developmentGuideFrontend",
+    path: "dev-guide/frontend/home",
+    title: t => t("navigation.contactsDashboard"),
+    translationNamespace: "development-guide",
+  },
+  legacyFrontendContacts: {
+    Component: LegacyDevelopmentGuideRedirect,
+    access: "authenticated",
+    breadcrumbs: false,
+    parentId: "developmentGuideFrontend",
+    path: "dev-guide/frontend/contacts",
+    title: t => t("navigation.contactsCrud"),
+    translationNamespace: "development-guide",
+  },
+  developmentGuideExamplePages: {
+    Component: Outlet,
+    access: "authenticated",
+    navigation: { Icon: HomeOutlinedIcon, labelKey: "navigation.examplePages" },
+    parentId: "developmentGuideFrontend",
+    path: "dev-guide/frontend/example-pages",
+    title: t => t("navigation.examplePages"),
+    translationNamespace: "development-guide",
+  },
+  developmentGuideExamplePagesIndex: {
+    Component: ExamplePagesIndexPage,
+    access: "authenticated",
+    commandPalette: true,
+    index: true,
+    parentId: "developmentGuideExamplePages",
+    title: t => t("navigation.examplePages"),
+    translationNamespace: "development-guide",
+  },
   developmentGuideHome: {
     Component: DevelopmentGuideHomePage,
     access: "authenticated",
     commandPalette: true,
     translationNamespace: "development-guide",
     developmentOnly: true,
-    navigation: { Icon: HomeOutlinedIcon, labelKey: "navigation.home" },
-    parentId: "developmentGuide",
-    path: "dev-guide/home",
+    navigation: { Icon: HomeOutlinedIcon, labelKey: "navigation.contactsDashboard" },
+    parentId: "developmentGuideExamplePages",
+    path: "dev-guide/frontend/example-pages/contacts-dashboard",
     title: t => t("navigation.contactsDashboard"),
   },
   contacts: {
@@ -233,17 +357,16 @@ const developmentRouteRegistry = {
     access: "authenticated",
     commandPalette: true,
     translationNamespace: "development-guide",
-    contentMaxWidth: false,
     contentOverflow: "hidden",
     developmentOnly: true,
     mobileSurface: "flush",
-    navigation: { Icon: ContactsOutlinedIcon, labelKey: "navigation.contacts" },
-    parentId: "developmentGuide",
-    path: "dev-guide/contacts",
-    title: t => t("navigation.contacts"),
+    navigation: { Icon: ContactsOutlinedIcon, labelKey: "navigation.contactsCrud" },
+    parentId: "developmentGuideExamplePages",
+    path: "dev-guide/frontend/example-pages/contacts-crud",
+    title: t => t("navigation.contactsCrud"),
   },
   examples: {
-    Component: PatternsRouteLayout,
+    Component: Outlet,
     access: "authenticated",
     translationNamespace: "development-guide",
     developmentOnly: true,
@@ -251,10 +374,29 @@ const developmentRouteRegistry = {
       Icon: ViewQuiltOutlinedIcon,
       labelKey: "navigation.examples",
     },
-    parentId: "developmentGuide",
-    path: "dev-guide/patterns",
+    parentId: "developmentGuideFrontend",
+    path: "dev-guide/frontend/patterns",
     title: t => t("navigation.examples"),
   },
+  examplesIndex: {
+    Component: () => (
+      <PatternsIndexPage
+        categories={patternCategoryDefinitions.map(({ id, Icon, labelKey, path }) => ({
+          id,
+          Icon,
+          labelKey,
+          to: "/" + path,
+        }))}
+      />
+    ),
+    access: "authenticated",
+    commandPalette: true,
+    index: true,
+    parentId: "examples",
+    title: t => t("navigation.examples"),
+    translationNamespace: "development-guide",
+  },
+  ...patternCategoryRoutes,
   architecture: {
     Component: ArchitectureRouteLayout,
     access: "authenticated",
@@ -264,8 +406,8 @@ const developmentRouteRegistry = {
       Icon: AccountTreeOutlinedIcon,
       labelKey: "navigation.architecture",
     },
-    parentId: "developmentGuide",
-    path: "dev-guide/architecture",
+    parentId: "developmentGuideFrontend",
+    path: "dev-guide/frontend/architecture",
     title: t => t("navigation.architecture"),
   },
   ...(architectureArticleRoutes as Record<ArchitectureArticleId, AppRouteDefinition>),
@@ -279,8 +421,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.toastNotifications",
     },
     groupId: "feedback",
-    parentId: "examples",
-    path: "dev-guide/patterns/feedback/toast-notifications",
+    parentId: "patternFeedback",
+    path: "dev-guide/frontend/patterns/feedback/toast-notifications",
     scrollToTop: true,
     title: t => t("navigation.toastNotifications"),
   },
@@ -294,8 +436,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.confirmationDialogs",
     },
     groupId: "feedback",
-    parentId: "examples",
-    path: "dev-guide/patterns/feedback/confirmation-dialogs",
+    parentId: "patternFeedback",
+    path: "dev-guide/frontend/patterns/feedback/confirmation-dialogs",
     scrollToTop: true,
     title: t => t("navigation.confirmationDialogs"),
   },
@@ -309,8 +451,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.overlayPresentations",
     },
     groupId: "overlays",
-    parentId: "examples",
-    path: "dev-guide/patterns/overlays/presentations",
+    parentId: "patternOverlays",
+    path: "dev-guide/frontend/patterns/overlays/presentations",
     scrollToTop: true,
     title: t => t("navigation.overlayPresentations"),
   },
@@ -324,8 +466,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.overlayResultsAndComposition",
     },
     groupId: "overlays",
-    parentId: "examples",
-    path: "dev-guide/patterns/overlays/results-and-composition",
+    parentId: "patternOverlays",
+    path: "dev-guide/frontend/patterns/overlays/results-and-composition",
     scrollToTop: true,
     title: t => t("navigation.overlayResultsAndComposition"),
   },
@@ -339,8 +481,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.overlayGuardsAndLifecycle",
     },
     groupId: "overlays",
-    parentId: "examples",
-    path: "dev-guide/patterns/overlays/guards-and-lifecycle",
+    parentId: "patternOverlays",
+    path: "dev-guide/frontend/patterns/overlays/guards-and-lifecycle",
     scrollToTop: true,
     title: t => t("navigation.overlayGuardsAndLifecycle"),
   },
@@ -354,8 +496,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.localizationInterpolationAndPlurals",
     },
     groupId: "localization",
-    parentId: "examples",
-    path: "dev-guide/patterns/localization-and-formatting/interpolation-and-plurals",
+    parentId: "patternLocalization",
+    path: "dev-guide/frontend/patterns/localization-and-formatting/interpolation-and-plurals",
     scrollToTop: true,
     title: t => t("navigation.localizationInterpolationAndPlurals"),
   },
@@ -369,8 +511,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.localizationDatesAndTimes",
     },
     groupId: "localization",
-    parentId: "examples",
-    path: "dev-guide/patterns/localization-and-formatting/dates-and-times",
+    parentId: "patternLocalization",
+    path: "dev-guide/frontend/patterns/localization-and-formatting/dates-and-times",
     scrollToTop: true,
     title: t => t("navigation.localizationDatesAndTimes"),
   },
@@ -384,8 +526,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.localizationNumbersPercentagesAndCurrencies",
     },
     groupId: "localization",
-    parentId: "examples",
-    path: "dev-guide/patterns/localization-and-formatting/numbers-percentages-and-currencies",
+    parentId: "patternLocalization",
+    path: "dev-guide/frontend/patterns/localization-and-formatting/numbers-percentages-and-currencies",
     scrollToTop: true,
     title: t => t("navigation.localizationNumbersPercentagesAndCurrencies"),
   },
@@ -399,8 +541,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.localizedMuiControls",
     },
     groupId: "localization",
-    parentId: "examples",
-    path: "dev-guide/patterns/localization-and-formatting/localized-mui-controls",
+    parentId: "patternLocalization",
+    path: "dev-guide/frontend/patterns/localization-and-formatting/localized-mui-controls",
     scrollToTop: true,
     title: t => t("navigation.localizedMuiControls"),
   },
@@ -414,8 +556,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.applicationStateSourceAndComputedSignals",
     },
     groupId: "applicationState",
-    parentId: "examples",
-    path: "dev-guide/patterns/application-state/source-and-computed-signals",
+    parentId: "patternApplicationState",
+    path: "dev-guide/frontend/patterns/application-state/source-and-computed-signals",
     scrollToTop: true,
     title: t => t("navigation.applicationStateSourceAndComputedSignals"),
   },
@@ -429,8 +571,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.applicationStatePersistentState",
     },
     groupId: "applicationState",
-    parentId: "examples",
-    path: "dev-guide/patterns/application-state/persistent-state",
+    parentId: "patternApplicationState",
+    path: "dev-guide/frontend/patterns/application-state/persistent-state",
     scrollToTop: true,
     title: t => t("navigation.applicationStatePersistentState"),
   },
@@ -444,8 +586,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.applicationStateEffectsAndCleanup",
     },
     groupId: "applicationState",
-    parentId: "examples",
-    path: "dev-guide/patterns/application-state/effects-and-cleanup",
+    parentId: "patternApplicationState",
+    path: "dev-guide/frontend/patterns/application-state/effects-and-cleanup",
     scrollToTop: true,
     title: t => t("navigation.applicationStateEffectsAndCleanup"),
   },
@@ -459,8 +601,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.applicationStateSharingBetweenRoutes",
     },
     groupId: "applicationState",
-    parentId: "examples",
-    path: "dev-guide/patterns/application-state/sharing-state-between-routes",
+    parentId: "patternApplicationState",
+    path: "dev-guide/frontend/patterns/application-state/sharing-state-between-routes",
     scrollToTop: true,
     title: t => t("navigation.applicationStateSharingBetweenRoutes"),
   },
@@ -474,8 +616,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.serverDataQueryStates",
     },
     groupId: "serverData",
-    parentId: "examples",
-    path: "dev-guide/patterns/server-data/query-states",
+    parentId: "patternServerData",
+    path: "dev-guide/frontend/patterns/server-data/query-states",
     scrollToTop: true,
     title: t => t("navigation.serverDataQueryStates"),
   },
@@ -489,8 +631,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.serverDataMutationsAndRefresh",
     },
     groupId: "serverData",
-    parentId: "examples",
-    path: "dev-guide/patterns/server-data/mutations-and-refresh",
+    parentId: "patternServerData",
+    path: "dev-guide/frontend/patterns/server-data/mutations-and-refresh",
     scrollToTop: true,
     title: t => t("navigation.serverDataMutationsAndRefresh"),
   },
@@ -504,8 +646,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.serverDataOptimisticUpdatesAndRollback",
     },
     groupId: "serverData",
-    parentId: "examples",
-    path: "dev-guide/patterns/server-data/optimistic-updates-and-rollback",
+    parentId: "patternServerData",
+    path: "dev-guide/frontend/patterns/server-data/optimistic-updates-and-rollback",
     scrollToTop: true,
     title: t => t("navigation.serverDataOptimisticUpdatesAndRollback"),
   },
@@ -519,8 +661,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.serverDataPaginationAndFiltering",
     },
     groupId: "serverData",
-    parentId: "examples",
-    path: "dev-guide/patterns/server-data/pagination-and-filtering",
+    parentId: "patternServerData",
+    path: "dev-guide/frontend/patterns/server-data/pagination-and-filtering",
     scrollToTop: true,
     title: t => t("navigation.serverDataPaginationAndFiltering"),
   },
@@ -534,8 +676,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.serverDataRequestCancellation",
     },
     groupId: "serverData",
-    parentId: "examples",
-    path: "dev-guide/patterns/server-data/request-cancellation",
+    parentId: "patternServerData",
+    path: "dev-guide/frontend/patterns/server-data/request-cancellation",
     scrollToTop: true,
     title: t => t("navigation.serverDataRequestCancellation"),
   },
@@ -549,8 +691,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.routingSearchParameters",
     },
     groupId: "routingAndUrlState",
-    parentId: "examples",
-    path: "dev-guide/patterns/routing-and-url-state/search-parameters",
+    parentId: "patternRoutingAndUrlState",
+    path: "dev-guide/frontend/patterns/routing-and-url-state/search-parameters",
     scrollToTop: true,
     title: t => t("navigation.routingSearchParameters"),
   },
@@ -563,19 +705,19 @@ const developmentRouteRegistry = {
       {
         title: t => t("navigation.routingRouteParametersAndBreadcrumbs"),
         translationNamespace: "development-guide",
-        to: () => "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
+        to: () => "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
       },
     ],
     navigation: {
-      activePath: "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
+      activePath: "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
       Icon: BadgeOutlinedIcon,
       labelKey: "navigation.routingRouteParametersAndBreadcrumbs",
-      to: "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
+      to: "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
     },
     groupId: "routingAndUrlState",
-    parentId: "examples",
+    parentId: "patternRoutingAndUrlState",
     HeaderContext: DynamicProjectHeaderIdentity,
-    path: "dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
+    path: "dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
     scrollToTop: true,
     title: (t, { projectId }) => t("navigation.routingProject", { projectId: projectId ?? "" }),
   },
@@ -589,8 +731,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.routingNestedRoutes",
     },
     groupId: "routingAndUrlState",
-    parentId: "examples",
-    path: "dev-guide/patterns/routing-and-url-state/nested-routes/*",
+    parentId: "patternRoutingAndUrlState",
+    path: "dev-guide/frontend/patterns/routing-and-url-state/nested-routes/*",
     scrollToTop: true,
     title: t => t("navigation.routingNestedRoutes"),
   },
@@ -605,8 +747,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.routingRouteRecovery",
     },
     groupId: "routingAndUrlState",
-    parentId: "examples",
-    path: "dev-guide/patterns/routing-and-url-state/route-level-recovery/*",
+    parentId: "patternRoutingAndUrlState",
+    path: "dev-guide/frontend/patterns/routing-and-url-state/route-level-recovery/*",
     scrollToTop: true,
     title: t => t("navigation.routingRouteRecovery"),
   },
@@ -620,8 +762,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.formsValidationAndErrorPresentation",
     },
     groupId: "forms",
-    parentId: "examples",
-    path: "dev-guide/patterns/forms/validation-and-error-presentation",
+    parentId: "patternForms",
+    path: "dev-guide/frontend/patterns/forms/validation-and-error-presentation",
     scrollToTop: true,
     title: t => t("navigation.formsValidationAndErrorPresentation"),
   },
@@ -635,8 +777,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.formsAsyncSubmissionAndServerErrors",
     },
     groupId: "forms",
-    parentId: "examples",
-    path: "dev-guide/patterns/forms/async-submission-and-server-errors",
+    parentId: "patternForms",
+    path: "dev-guide/frontend/patterns/forms/async-submission-and-server-errors",
     scrollToTop: true,
     title: t => t("navigation.formsAsyncSubmissionAndServerErrors"),
   },
@@ -650,8 +792,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.formsDirtyStateAndNavigationGuard",
     },
     groupId: "forms",
-    parentId: "examples",
-    path: "dev-guide/patterns/forms/dirty-state-reset-or-navigation-guard",
+    parentId: "patternForms",
+    path: "dev-guide/frontend/patterns/forms/dirty-state-reset-or-navigation-guard",
     scrollToTop: true,
     title: t => t("navigation.formsDirtyStateAndNavigationGuard"),
   },
@@ -665,8 +807,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.formsDependentFields",
     },
     groupId: "forms",
-    parentId: "examples",
-    path: "dev-guide/patterns/forms/dependent-fields",
+    parentId: "patternForms",
+    path: "dev-guide/frontend/patterns/forms/dependent-fields",
     scrollToTop: true,
     title: t => t("navigation.formsDependentFields"),
   },
@@ -680,8 +822,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.formsAsyncLookups",
     },
     groupId: "forms",
-    parentId: "examples",
-    path: "dev-guide/patterns/forms/async-lookups",
+    parentId: "patternForms",
+    path: "dev-guide/frontend/patterns/forms/async-lookups",
     scrollToTop: true,
     title: t => t("navigation.formsAsyncLookups"),
   },
@@ -695,8 +837,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.formsRepeatedAndNestedFields",
     },
     groupId: "forms",
-    parentId: "examples",
-    path: "dev-guide/patterns/forms/repeated-and-nested-fields",
+    parentId: "patternForms",
+    path: "dev-guide/frontend/patterns/forms/repeated-and-nested-fields",
     scrollToTop: true,
     title: t => t("navigation.formsRepeatedAndNestedFields"),
   },
@@ -710,8 +852,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.tablesLoadingEmptyAndErrorPresentation",
     },
     groupId: "tablesAndCollections",
-    parentId: "examples",
-    path: "dev-guide/patterns/tables-and-collections/loading-empty-and-error-presentation",
+    parentId: "patternTablesAndCollections",
+    path: "dev-guide/frontend/patterns/tables-and-collections/loading-empty-and-error-presentation",
     scrollToTop: true,
     title: t => t("navigation.tablesLoadingEmptyAndErrorPresentation"),
   },
@@ -725,8 +867,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.tablesSortingAndPagination",
     },
     groupId: "tablesAndCollections",
-    parentId: "examples",
-    path: "dev-guide/patterns/tables-and-collections/sorting-and-pagination",
+    parentId: "patternTablesAndCollections",
+    path: "dev-guide/frontend/patterns/tables-and-collections/sorting-and-pagination",
     scrollToTop: true,
     title: t => t("navigation.tablesSortingAndPagination"),
   },
@@ -740,8 +882,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.tablesRowSelectionAndBulkActions",
     },
     groupId: "tablesAndCollections",
-    parentId: "examples",
-    path: "dev-guide/patterns/tables-and-collections/row-selection-and-bulk-actions",
+    parentId: "patternTablesAndCollections",
+    path: "dev-guide/frontend/patterns/tables-and-collections/row-selection-and-bulk-actions",
     scrollToTop: true,
     title: t => t("navigation.tablesRowSelectionAndBulkActions"),
   },
@@ -755,8 +897,8 @@ const developmentRouteRegistry = {
       labelKey: "navigation.tablesUrlBackedFilters",
     },
     groupId: "tablesAndCollections",
-    parentId: "examples",
-    path: "dev-guide/patterns/tables-and-collections/url-backed-filters",
+    parentId: "patternTablesAndCollections",
+    path: "dev-guide/frontend/patterns/tables-and-collections/url-backed-filters",
     scrollToTop: true,
     title: t => t("navigation.tablesUrlBackedFilters"),
   },
@@ -782,13 +924,10 @@ export function routeIsEnabled(definition: AppRouteDefinition, isDevelopment = i
 
 function directDocumentationChildIsEnabled(
   definition: AppRouteDefinition,
-  parentId: "architecture" | "examples",
+  parentId: "architecture" | AppPatternCategoryRouteId,
   isDevelopment = import.meta.env.DEV,
 ): boolean {
-  const parent = appRouteRegistry[parentId];
-  return (
-    definition.parentId === parentId && (isDevelopment || (!definition.developmentOnly && !parent.developmentOnly))
-  );
+  return definition.parentId === parentId && routeIsEnabled(definition, isDevelopment);
 }
 
 export function architectureRelatedPatternLinks(
@@ -843,7 +982,7 @@ export const appBottomNavigationItems = [
     ? [
         {
           ...navigationLink(appRouteRegistry.developmentGuideHome),
-          activePath: "/dev-guide/home",
+          activePath: "/dev-guide/frontend/example-pages/contacts-dashboard",
           Icon: ContactsOutlinedIcon,
           labelKey: "navigation.contactsDashboard" as const,
           labelNamespace: "development-guide" as const,
@@ -852,72 +991,15 @@ export const appBottomNavigationItems = [
     : []),
 ] satisfies readonly AppNavigationLink[];
 
-const exampleGroupDefinitions = [
-  {
+export const appExampleNavigationGroups: readonly AppExampleNavigationGroup[] = patternCategoryDefinitions.map(
+  ({ id, labelKey, routeId }) => ({
     defaultExpanded: true,
-    id: "localization",
-    labelKey: "navigation.localizationAndFormatting",
-  },
-  {
-    defaultExpanded: true,
-    id: "applicationState",
-    labelKey: "navigation.applicationState",
-    section: "applicationState",
-    sectionLabelKey: "navigation.stateCategory",
-  },
-  {
-    defaultExpanded: true,
-    id: "serverData",
-    labelKey: "navigation.serverData",
-    section: "applicationState",
-    sectionLabelKey: "navigation.stateCategory",
-  },
-  {
-    defaultExpanded: true,
-    id: "routingAndUrlState",
-    labelKey: "navigation.routingAndUrlState",
-    section: "applicationState",
-    sectionLabelKey: "navigation.stateCategory",
-  },
-  {
-    defaultExpanded: true,
-    id: "overlays",
-    labelKey: "navigation.overlays",
-  },
-  {
-    defaultExpanded: true,
-    id: "tablesAndCollections",
-    labelKey: "navigation.tablesAndCollections",
-  },
-  {
-    defaultExpanded: true,
-    id: "forms",
-    labelKey: "navigation.forms",
-  },
-  {
-    defaultExpanded: true,
-    id: "feedback",
-    labelKey: "navigation.feedback",
-  },
-] as const satisfies readonly Readonly<{
-  id: AppExampleGroupId;
-  defaultExpanded: boolean;
-  labelKey: AppExampleNavigationGroup["labelKey"];
-  section?: AppExampleNavigationGroup["section"];
-  sectionLabelKey?: AppExampleNavigationGroup["sectionLabelKey"];
-}>[];
-
-export const appExampleNavigationGroups: readonly AppExampleNavigationGroup[] = exampleGroupDefinitions.map(
-  ({ defaultExpanded, id, labelKey, ...metadata }) => ({
-    ...metadata,
-    defaultExpanded,
     id,
     items: (Object.values(appRouteRegistry) as readonly AppRouteDefinition[]).flatMap(definition =>
-      definition.parentId === "examples" &&
       definition.groupId === id &&
       definition.translationNamespace === "development-guide" &&
       definition.navigation &&
-      directDocumentationChildIsEnabled(definition, "examples")
+      directDocumentationChildIsEnabled(definition, routeId)
         ? [
             {
               ...(definition.navigation.activePath ? { activePath: definition.navigation.activePath } : {}),
@@ -949,7 +1031,7 @@ export const appArchitectureNavigationGroups: readonly AppArchitectureNavigation
   : [];
 
 function firstNavigationRouteId(
-  parentId: "architecture" | "examples",
+  parentId: "architecture" | AppPatternCategoryRouteId,
   groups: readonly AppArchitectureNavigationGroup[] | readonly AppExampleNavigationGroup[],
 ): string | undefined {
   const destination = groups.flatMap(({ items }) => items)[0]?.to;
@@ -957,14 +1039,22 @@ function firstNavigationRouteId(
   return directChildRouteIdForDestination(appRouteRegistry, parentId, destination);
 }
 
-const examplesDefaultChildId = firstNavigationRouteId("examples", appExampleNavigationGroups);
 const architectureDefaultChildId = firstNavigationRouteId("architecture", appArchitectureNavigationGroups);
 
 export const appRouteHierarchyMetadata = {
-  examples: {
-    ...(examplesDefaultChildId ? { defaultChildId: examplesDefaultChildId } : {}),
-    documentationGroups: appExampleNavigationGroups,
-  },
+  ...Object.fromEntries(
+    patternCategoryDefinitions.map(category => {
+      const documentationGroups = appExampleNavigationGroups.filter(group => group.id === category.id);
+      const defaultChildId = firstNavigationRouteId(category.routeId, documentationGroups);
+      return [
+        category.routeId,
+        {
+          ...(defaultChildId ? { defaultChildId } : {}),
+          documentationGroups,
+        },
+      ];
+    }),
+  ),
   architecture: {
     ...(architectureDefaultChildId ? { defaultChildId: architectureDefaultChildId } : {}),
     documentationGroups: appArchitectureNavigationGroups,

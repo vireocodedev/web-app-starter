@@ -10,3 +10,4 @@ export { DocumentationPageNavigation } from "./DocumentationPageNavigation";
 export { DocumentationRouteLayout } from "./DocumentationRouteLayout";
 export { documentationNavigationItemMatchesPath } from "./documentationPathMatching";
 export { useDocumentationRail } from "./documentationRail";
+export { DocumentationRailProvider } from "./DocumentationRailProvider";

@@ -2,7 +2,7 @@ import { Button, Stack, Typography } from "@mui/material";
 import { isRouteErrorResponse, Link as RouterLink, useRouteError } from "react-router";
 import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 
-const routeBase = "/dev-guide/patterns/routing-and-url-state/route-level-recovery";
+const routeBase = "/dev-guide/frontend/patterns/routing-and-url-state/route-level-recovery";
 
 export function RouteRecoveryBoundary() {
   const { t } = useDevelopmentGuideTranslation();

@@ -37,7 +37,7 @@ export function createAppRoutes(options: Readonly<{ initialDrawerMode?: AppDrawe
                     <AuthenticatedAppShell
                       bottomNavigationItems={appBottomNavigationItems}
                       developmentGuidePath={
-                        import.meta.env.DEV ? routeDestination(appRouteRegistry.developmentGuideHome) : undefined
+                        import.meta.env.DEV ? routeDestination(appRouteRegistry.developmentGuide) : undefined
                       }
                       initialDrawerMode={options.initialDrawerMode}
                       navigationItems={appNavigationItems}

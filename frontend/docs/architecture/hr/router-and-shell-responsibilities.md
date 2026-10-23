@@ -23,6 +23,20 @@ Razvojne cjeline Patterns i Architecture omogućene su samo u razvoju. U
 produkciji nestaju iz navigacije, a njihovi URL-ovi završavaju kroz uobičajeni
 Not Found. Nije dovoljno sakriti stavku navigacije i ostaviti rutu.
 
+`/dev-guide` je početna stranica s kategorijama, bez kartica zaglavlja. Frontend
+pod `/dev-guide/frontend` sadrži Primjere stranica, Obrasce i Arhitekturu.
+Primjeri stranica nude Nadzornu ploču kontakata i Kontakte CRUD. Obrasci nude
+i18n, Signals, Poslužiteljske podatke, Usmjeravanje i URL-ove, Slojeve, Tablice
+i kolekcije, Obrasce unosa te Povratne informacije. Svaka kategorija otvara prvi
+primjer i prikazuje vlastitu navigaciju. Backend na `/dev-guide/backend` zasad
+sadrži pozdrav. Prethodni URL-ovi za Početnu i Kontakte preusmjeravaju na
+odgovarajući Primjer stranice, a stari Obrasci i Arhitektura pod Frontend.
+Parametri upita i fragmenti ostaju sačuvani. Cijeli vodič ostaje samo razvojni.
+
+Rute vodiča nasljeđuju `contentMaxWidth: "xl"`. Ljuska smješta lokalne mrvice i
+sadržaj u isti spremnik. Odlučuje najdublja izričito zadana širina; potomci bez
+vlastite postavke zadržavaju širinu pretka.
+
 ## Ljuska prima navigaciju
 
 Usmjerivač izvodi glavna odredišta, kontekst rute i neobaveznu navigaciju po
@@ -42,6 +56,13 @@ rute i proširuje kontekst zaglavlja dinamičkim sadržajem. Postojeća ruta
 vodiča s parametrom projekta pokazuje taj obrazac. Kontekst u prvom retku
 služi kao semantički naslov jednostavnih stranica; duboke stranice vodiča
 zadržavaju lokalne mrvice i naslove članaka.
+
+Podudarna ruta s `headerBreadcrumb: true` dodaje svoj prevedeni naslov u prvi
+redak iza glavne rute. Kategorije tako prikazuju Vodič za razvoj → Frontend ili
+Vodič za razvoj → Backend. Preci povezuju na svoje podudarne putanje, pa naslov
+vodiča vraća na popis kategorija. Izričito uključivanje zadržava naslove
+pojedinih kartica i članaka izvan tog retka; najdublji `HeaderContext` i dalje
+ga proširuje dinamičkim sadržajem rute.
 
 Glavna ladica u predlošku prikazuje Početnu; aplikacije mogu dodati glavna odredišta. Na računalu je zadano privremena ladica koja prekriva sadržaj,
 a ispod 1024 px uvijek je privremena. Korisnik na računalu može odabrati
@@ -68,7 +89,7 @@ prije navigacije. Fiksna vrijednost uklanja odgovarajuću
 promjenjivu kontrolu iz zaglavlja i Postavki.
 
 Fiksna donja traka prikazuje Početnu i Postavke te nadzornu ploču kontakata
-samo u razvojnoj verziji. Ta poveznica otvara `/dev-guide/home`; cijeli
+samo u razvojnoj verziji. Ta poveznica otvara `/dev-guide/frontend/example-pages/contacts-dashboard`; cijeli
 Vodič za razvoj dostupan je u izborniku računa. Ruta može postaviti
 `mobileBottomNavigation: false` kako bi sakrila traku. Izostavljena
 vrijednost ili `true` prikazuju je; odlučuje najdublja podudarna ruta.
@@ -215,3 +236,22 @@ funkcionalnosti.
 Pri dodavanju rute provjerite duboke poveznice, naslov dokumenta, sve mrvice
 predaka, navigaciju, jednak pristup, razvojno isključenje i namjerno indeksno
 ponašanje roditelja.
+
+## Zajednička navigacija stranica
+
+Postavke i kategorije Obrazaca koriste `AppPageNavigation` s dobivenim
+poveznicama i prevedenim nazivima. Komponenta upravlja odabirom, mobilnom
+ladicom, vraćanjem fokusa i odgođenom promjenom rute. `SettingsPageNavigation`
+prilagođava nazive Postavki, a `PatternCategoryLayout` daje primjere jedne
+kategorije. Iznad širine spremnika od 900 px prikazuju bočnu navigaciju širine
+240 px, a ispod nje birač stranice. Popisi kategorija vodiča koriste
+`AppCategoryList`. Sadržaj Obrasca nalazi se ispod poveznica u bočnoj navigaciji
+ili mobilnom izborniku; navigacija na odjeljak čeka zatvaranje izbornika. Raspored
+zadaje `DocumentationRailProvider`, a galerije šalju svoj sadržaj u njegov aktivni
+cilj umjesto prikaza iznad primjera.
+
+`AppCategoryList` prihvaća uređeni niz običnih poveznica i imenovanih grupa
+(`id`, `label`, neobavezni `description` i `items` s poveznicama), u bilo kojoj
+kombinaciji. Obrasci grupiraju Signale, Poslužiteljske podatke te Usmjeravanje i
+URL-ove pod Aplikacijsko stanje. Prethodni/sljedeći primjer ostaje unutar aktivne kategorije.
+Indeks s istim naslovom kao neposredni roditelj prikazuje taj naslov samo jednom.

@@ -1,6 +1,6 @@
 import CodeOutlinedIcon from "@mui/icons-material/CodeOutlined";
 import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
-import { Alert, Box, Card, Container, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Card, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 
@@ -268,11 +268,7 @@ export function ExampleGallery({ resources }: ExampleGalleryProps) {
   );
 
   return (
-    <Container
-      disableGutters={examplesRail !== null}
-      maxWidth={examplesRail ? "md" : "sm"}
-      sx={{ py: examplesRail ? 0 : { sm: 6, xs: 4 } }}
-    >
+    <Box sx={{ minWidth: 0, width: "100%" }}>
       {examplesRail ? (
         <>
           {contentsNavigation}
@@ -284,6 +280,6 @@ export function ExampleGallery({ resources }: ExampleGalleryProps) {
           {gallery}
         </Stack>
       )}
-    </Container>
+    </Box>
   );
 }

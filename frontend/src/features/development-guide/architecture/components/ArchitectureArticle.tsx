@@ -33,7 +33,7 @@ function documentationHref(href: string | undefined) {
   const fileName = path?.split("/").at(-1);
   const articleId = fileName?.replace(/\.md$/, "");
   const article = architectureArticleCatalog.find(candidate => candidate.id === articleId);
-  return article ? `/dev-guide/architecture/${article.id}${hash ? `#${hash}` : ""}` : href;
+  return article ? `/dev-guide/frontend/architecture/${article.id}${hash ? `#${hash}` : ""}` : href;
 }
 
 const markdownComponents: Components = {

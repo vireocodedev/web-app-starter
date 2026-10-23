@@ -89,7 +89,7 @@ async function signIn(page: Page) {
 
 async function openPrimaryDestination(page: Page, name: string) {
   if (name === "Contacts") {
-    await page.goto("/dev-guide/contacts");
+    await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
     return;
   }
   if (name === "Settings") {
@@ -735,16 +735,27 @@ test("does not expose development-only documentation in production", async ({ pa
   await expect(page.getByText("Patterns", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Architecture", { exact: true })).toHaveCount(0);
 
-  await page.goto("/dev-guide/patterns/feedback/toast-notifications");
+  await page.goto("/dev-guide/frontend/patterns/feedback/toast-notifications");
   await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
   await expect(page.locator("[data-examples-rail]")).toHaveCount(0);
 
-  await page.goto("/dev-guide/architecture/source-map-and-ownership");
+  await page.goto("/dev-guide/frontend/architecture/source-map-and-ownership");
   await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
   await expect(page.locator("[data-documentation-rail]")).toHaveCount(0);
 
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
+  for (const path of [
+    "/dev-guide",
+    "/dev-guide/frontend",
+    "/dev-guide/backend",
+    "/dev-guide/contacts",
+    "/dev-guide/patterns/feedback/toast-notifications",
+  ]) {
+    await page.goto(path);
+    await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
+    await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  }
 });
 
 test("keeps the Contacts dock and sticky table edges aligned", async ({ page }) => {

@@ -1,4 +1,26 @@
 export const englishDevelopmentGuideTranslations = {
+  categories: {
+    title: "Categories",
+    description: "Choose a category to explore the development guide.",
+    navigationLabel: "Development guide categories",
+    frontendDescription: "Example pages, Patterns, and Architecture.",
+    backendDescription: "Server-side development.",
+  },
+  backendGuide: {
+    greeting: "Hello world!",
+  },
+  examplePages: {
+    description: "Explore complete application page examples.",
+    navigationLabel: "Example pages",
+    dashboardDescription: "Contact summaries and statistics.",
+    contactsDescription: "Search, create, edit, and delete contacts.",
+  },
+  patternCategories: {
+    description: "Choose a category to explore frontend patterns.",
+    navigationLabel: "Pattern categories",
+    choosePage: "Choose an example, current example: {{page}}",
+    closePages: "Close examples",
+  },
   application: {
     description: "An application-owned localization recipe.",
     title: "Application localization",
@@ -644,6 +666,11 @@ export const englishDevelopmentGuideTranslations = {
   navigation: {
     architecture: "Architecture",
     developmentGuide: "Development guide",
+    frontend: "Frontend",
+    backend: "Backend",
+    examplePages: "Example pages",
+    contactsCrud: "Contacts CRUD",
+    i18n: "i18n",
     contactsDashboard: "Contacts dashboard",
     formsAsyncLookups: "Async lookups",
     formsRepeatedAndNestedFields: "Repeated and nested fields",

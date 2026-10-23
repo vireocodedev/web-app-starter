@@ -1,6 +1,28 @@
 import type { DevelopmentGuideTranslationShape } from "../types/TranslationShape";
 
 export const croatianDevelopmentGuideTranslations = {
+  categories: {
+    title: "Kategorije",
+    description: "Odaberite kategoriju vodiča za razvoj.",
+    navigationLabel: "Kategorije vodiča za razvoj",
+    frontendDescription: "Primjeri stranica, Obrasci i Arhitektura.",
+    backendDescription: "Razvoj poslužiteljskog dijela aplikacije.",
+  },
+  backendGuide: {
+    greeting: "Pozdrav svijete!",
+  },
+  examplePages: {
+    description: "Istražite primjere cjelovitih aplikacijskih stranica.",
+    navigationLabel: "Primjeri stranica",
+    dashboardDescription: "Sažeci i statistika kontakata.",
+    contactsDescription: "Pretražujte, stvarajte, uređujte i brišite kontakte.",
+  },
+  patternCategories: {
+    description: "Odaberite kategoriju obrazaca za razvoj sučelja.",
+    navigationLabel: "Kategorije obrazaca",
+    choosePage: "Odaberite primjer, trenutačni primjer: {{page}}",
+    closePages: "Zatvori primjere",
+  },
   application: {
     description: "Recept za lokalizaciju u vlasništvu aplikacije.",
     title: "Lokalizacija aplikacije",
@@ -654,6 +676,11 @@ export const croatianDevelopmentGuideTranslations = {
   navigation: {
     architecture: "Arhitektura",
     developmentGuide: "Vodič za razvoj",
+    frontend: "Frontend",
+    backend: "Backend",
+    examplePages: "Primjeri stranica",
+    contactsCrud: "Kontakti CRUD",
+    i18n: "i18n",
     contactsDashboard: "Nadzorna ploča kontakata",
     formsAsyncLookups: "Asinkrono dohvaćanje opcija",
     formsRepeatedAndNestedFields: "Ponavljajuća i ugniježđena polja",

@@ -35,5 +35,5 @@ export function DocumentationContents({
     </Box>
   );
 
-  return rail?.contentsTarget ? createPortal(contents, rail.contentsTarget) : contents;
+  return rail ? (rail.contentsTarget ? createPortal(contents, rail.contentsTarget) : null) : contents;
 }

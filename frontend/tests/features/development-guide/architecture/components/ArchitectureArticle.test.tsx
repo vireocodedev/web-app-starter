@@ -49,7 +49,7 @@ describe("ArchitectureArticle", () => {
           relatedPatternLinks={[
             {
               labelKey: "architectureGuide.articles.sourceMapAndOwnership",
-              to: "/dev-guide/patterns/application-state/source-and-computed-signals",
+              to: "/dev-guide/frontend/patterns/application-state/source-and-computed-signals",
             },
           ]}
         />

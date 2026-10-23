@@ -25,6 +25,20 @@ for development builds. Their navigation entries disappear in production and
 their URLs resolve through normal Not Found handling. Do not hide only the
 navigation item while leaving a production route registered.
 
+`/dev-guide` is a category landing page without section tabs. Frontend opens
+Example pages, Patterns, and Architecture under `/dev-guide/frontend`.
+Example pages lists Contacts dashboard and Contacts CRUD. Patterns lists i18n,
+Signals, Server data, Routing and URLs, Overlays, Tables and collections, Forms,
+and Feedback; each category opens its first example and supplies that category's
+page navigation. Backend at `/dev-guide/backend` starts with a placeholder.
+Previous Home/Contacts URLs redirect to the corresponding Example page, while
+old Patterns/Architecture URLs redirect beneath Frontend. Redirects preserve
+query parameters and fragments. The whole guide remains development-only.
+
+Guide routes inherit `contentMaxWidth: "xl"`. The shell places local breadcrumbs
+and routed content inside the same container. The deepest explicitly supplied
+width wins; descendants without an override retain their ancestor's width.
+
 ## Shell presentation receives navigation
 
 Router composition derives top-level destinations, route context, and optional
@@ -44,6 +58,13 @@ receives route params and extends the first-row identity with dynamic content.
 The existing project-parameter guide route demonstrates this. The first-row
 identity is the semantic heading for simple pages; deep guide pages retain
 local breadcrumbs and article titles.
+
+A matched route with `headerBreadcrumb: true` adds its localized title to the
+first-row trail after the top-level route. Category routes use this to show
+Development guide → Frontend or Development guide → Backend. Ancestors link to
+their matched paths, so the guide title returns to the category list. This
+explicit opt-in keeps individual tab and article titles out of that header trail;
+the deepest `HeaderContext` still extends it with dynamic route content.
 
 The starter main drawer lists Home; applications may add top-level destinations. It is a temporary overlay by default on
 desktop and always temporary below 1024px. Desktop users may choose a
@@ -70,7 +91,7 @@ ordinary route selection releases the menu before navigating. A fixed value remo
 the corresponding editable control from the header and Settings.
 
 A fixed bottom bar shows Home and Settings, plus Contacts dashboard in
-development builds. That shortcut opens `/dev-guide/home`; the complete
+development builds. That shortcut opens `/dev-guide/frontend/example-pages/contacts-dashboard`; the complete
 Development Guide is available from the account menu. A route may set
 `mobileBottomNavigation: false` to hide the bar. Omitted or `true` shows it;
 the deepest matched route decides. The shell reserves bottom space, including
@@ -165,16 +186,32 @@ Do not combine an index child with `defaultChildId`. A parent with neither
 configuration renders its own layout at its URL without redirecting. Nested
 route handles use the deepest match for title, layout, and scroll behavior;
 breadcrumbs contain every ancestor, explicit breadcrumb, and current title.
-Ancestor destinations resolve named parameters from the current match, encode
+An index with the same title as its immediate parent shows that label once;
+distinct parent and index titles remain separate. Ancestor destinations resolve named parameters from the current match, encode
 their values, omit absent optional segments, and preserve encoded splat path
 segments. An ancestor with a missing required parameter remains text instead of
 becoming a misleading link.
 
 ## Nested documentation and page adapters
 
+Settings and Patterns categories share `AppPageNavigation`, supplied with links
+and translated labels. It owns the selected sidebar item, the mobile page sheet,
+focus restoration, and deferred route changes. `SettingsPageNavigation` adapts
+Settings labels; `PatternCategoryLayout` supplies a single category's examples.
+Both use a 240px sidebar above a 900px content-container width and a page selector
+below it. Pattern contents appear beneath the page links in the sidebar or mobile
+sheet; fragment navigation waits until the sheet closes. The layout supplies a
+`DocumentationRailProvider`, and galleries send their contents to its active
+target rather than repeating them above the examples.
+
+The guide's category lists use `AppCategoryList`. Its ordered `items` accept plain
+links and named groups (`id`, `label`, optional `description`, and `items` of links)
+in any combination. Patterns groups Signals, Server data, and Routing and URLs
+under Application state; other categories remain individual links.
+
 Nested documentation sections each provide their own group ordering. Their
 default child is derived from the first retained item in that same ordered
-navigation. Previous/Next navigation stays within the active section; Patterns
+navigation. Previous/Next navigation stays within the active Patterns category or Architecture section; Patterns
 ordering must not select an Architecture redirect, or vice versa.
 
 Pages remain thin adapters. They import public feature interfaces, supply
