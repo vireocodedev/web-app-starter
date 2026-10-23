@@ -40,7 +40,7 @@ export const englishHandbookTranslations = {
     },
     "frontend-workflows": {
       title: "Workflow patterns",
-      description: "Editor sessions, asynchronous authority, reliable commands, and multi-route drafts.",
+      description: "Source-backed frontend workflows with explicit ownership, lifetimes, and failure recovery.",
     },
   },
   topics: {
@@ -103,6 +103,18 @@ export const englishHandbookTranslations = {
     "delivery-artifacts": {
       title: "Runnable artifacts",
       description: "Build environment-neutral images and verify the actual artifacts under runtime restrictions.",
+    },
+    "frontend-access": {
+      title: "Access and authority",
+      description: "Use current server capabilities and invalidate restricted drafts, actions, and private caches.",
+    },
+    "frontend-routing": {
+      title: "Route contracts",
+      description: "Keep URL construction pure and coordinate navigation and scrolling with the committed page.",
+    },
+    "frontend-collections": {
+      title: "Collections and query ownership",
+      description: "Separate table presentation from result ownership, scoped query identity, and invalidation.",
     },
   },
   articles: {
@@ -289,6 +301,41 @@ export const englishHandbookTranslations = {
       title: "Give build, publication and deployment request different authority",
       description:
         "Separate untrusted application builds, fresh-worker registry publication and encrypted fixed-contract host requests.",
+    },
+    "frontend-access-capability-aware-pages": {
+      title: "Capability-aware pages",
+      description:
+        "Use one explicit presentation vocabulary across menus, deep links and record actions while the backend enforces live authorization.",
+    },
+    "frontend-access-revocation-and-private-cache": {
+      title: "Revocation and private cache",
+      description:
+        "Invalidate obsolete operations, restricted drafts and affected private query projections together when observed authority changes.",
+    },
+    "frontend-editing-complete-navigation-guards": {
+      title: "Complete navigation guards",
+      description:
+        "Compose route/search changes, browser unload, explicit logout and busy-state rechecks around one form lifecycle.",
+    },
+    "frontend-routing-typed-route-contracts": {
+      title: "Typed route contracts",
+      description:
+        "Build and parse stable view and exact-task identities through a pure contract with deliberate invalid and compatibility behavior.",
+    },
+    "frontend-routing-data-aware-scroll-restoration": {
+      title: "Data-aware scroll restoration",
+      description:
+        "Let the committed leaf coordinate entry readiness while the router retains history, fragment and one-time scroll ownership.",
+    },
+    "frontend-collections-client-and-server-table-ownership": {
+      title: "Client and server table ownership",
+      description:
+        "Share table presentation while the feature owns remote filtering, sorting, paging, selection scope and result recovery.",
+    },
+    "frontend-collections-query-key-scope-and-invalidation": {
+      title: "Query-key scope and invalidation",
+      description:
+        "Include every result-defining input and keep mutation refreshes scoped to the read models the feature can change.",
     },
   },
 } as const;

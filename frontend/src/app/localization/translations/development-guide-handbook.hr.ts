@@ -43,7 +43,8 @@ export const croatianHandbookTranslations = {
     },
     "frontend-workflows": {
       title: "Obrasci radnih tokova",
-      description: "Sesije uređivanja, asinkrone ovlasti, pouzdane naredbe i nacrti kroz više ruta.",
+      description:
+        "Frontend radni tokovi s jasnim vlasništvom, životnim ciklusima i oporavkom od neuspjeha, utemeljeni na izvorima.",
     },
   },
   topics: {
@@ -106,6 +107,19 @@ export const croatianHandbookTranslations = {
     "delivery-artifacts": {
       title: "Izvršivi artefakti",
       description: "Izgradite imageove neovisne o okruženju i provjerite stvarne artefakte pod runtime ograničenjima.",
+    },
+    "frontend-access": {
+      title: "Pristup i ovlasti",
+      description:
+        "Koristite trenutačne ovlasti poslužitelja te poništite ograničene nacrte, radnje i privatne predmemorije.",
+    },
+    "frontend-routing": {
+      title: "Ugovori ruta",
+      description: "Zadržite čistu izgradnju URL-a te uskladite navigaciju i pomicanje s potvrđenom stranicom.",
+    },
+    "frontend-collections": {
+      title: "Kolekcije i vlasništvo upita",
+      description: "Odvojite prikaz tablice od vlasništva rezultata, opsega identiteta upita i invalidacije.",
     },
   },
   articles: {
@@ -287,6 +301,41 @@ export const croatianHandbookTranslations = {
       title: "Build, objava i deployment zahtjev trebaju različite ovlasti",
       description:
         "Odvoji aplikacijski build, registry objavu u svježem workeru i šifrirani host zahtjev fiksnog ugovora.",
+    },
+    "frontend-access-capability-aware-pages": {
+      title: "Stranice prema ovlastima",
+      description:
+        "Koristite jedan izričit rječnik prikaza kroz izbornike, izravne poveznice i radnje zapisa uz živu backend autorizaciju.",
+    },
+    "frontend-access-revocation-and-private-cache": {
+      title: "Opoziv i privatna predmemorija",
+      description:
+        "Pri promjeni opaženih ovlasti zajedno poništite stare operacije, ograničene nacrte i zahvaćene privatne query projekcije.",
+    },
+    "frontend-editing-complete-navigation-guards": {
+      title: "Cjelovita zaštita navigacije",
+      description:
+        "Povežite promjenu rute i upita, izlazak iz preglednika, izričitu odjavu i provjere zauzetosti s jednim životnim ciklusom obrasca.",
+    },
+    "frontend-routing-typed-route-contracts": {
+      title: "Tipizirani ugovori ruta",
+      description:
+        "Gradite i parsirajte stabilne identitete prikaza i točnih zadataka čistim ugovorom s namjernom nevaljanošću i kompatibilnošću.",
+    },
+    "frontend-routing-data-aware-scroll-restoration": {
+      title: "Vraćanje položaja prema spremnosti podataka",
+      description:
+        "Prepustite potvrđenoj završnoj stranici spremnost ulaza dok router upravlja poviješću, fragmentom i jednokratnim pomicanjem.",
+    },
+    "frontend-collections-client-and-server-table-ownership": {
+      title: "Vlasništvo klijentskih i poslužiteljskih tablica",
+      description:
+        "Dijelite prikaz tablice dok feature upravlja udaljenim filtriranjem, sortiranjem, stranicama, opsegom odabira i oporavkom.",
+    },
+    "frontend-collections-query-key-scope-and-invalidation": {
+      title: "Opseg query ključeva i invalidacije",
+      description:
+        "Uključite sve ulaze koji određuju rezultat i ograničite osvježavanje mutacija na projekcije koje feature može promijeniti.",
     },
   },
 } satisfies StringLeaves<typeof englishHandbookTranslations>;

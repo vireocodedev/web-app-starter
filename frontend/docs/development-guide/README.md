@@ -18,10 +18,21 @@ Each topic has a browser index, article sidebar, local breadcrumbs and an articl
 
 These source-backed recipes complement the installed interactive Patterns and Architecture tabs. Consumer-only helpers are identified explicitly; adapt the protocol in the correct owner rather than assuming those helpers are installed.
 
+#### Access and authority
+
+- [Capability-aware pages](en/frontend/access/capability-aware-pages.md) · [Hrvatski](hr/frontend/access/capability-aware-pages.md)
+- [Revocation and private cache](en/frontend/access/revocation-and-private-cache.md) · [Hrvatski](hr/frontend/access/revocation-and-private-cache.md)
+
+#### Route contracts
+
+- [Typed route contracts](en/frontend/routing/typed-route-contracts.md) · [Hrvatski](hr/frontend/routing/typed-route-contracts.md)
+- [Data-aware scroll restoration](en/frontend/routing/data-aware-scroll-restoration.md) · [Hrvatski](hr/frontend/routing/data-aware-scroll-restoration.md)
+
 #### Editing sessions
 
 - [Pinned values and revisions](en/frontend/editing/pinned-values-and-revisions.md) · [Hrvatski](hr/frontend/editing/pinned-values-and-revisions.md)
 - [Drafts across routes](en/frontend/editing/drafts-across-routes.md) · [Hrvatski](hr/frontend/editing/drafts-across-routes.md)
+- [Complete navigation guards](en/frontend/editing/complete-navigation-guards.md) · [Hrvatski](hr/frontend/editing/complete-navigation-guards.md)
 
 #### Asynchronous commands
 
@@ -29,6 +40,11 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Generation guards after await](en/frontend/async-commands/generation-guards-after-await.md) · [Hrvatski](hr/frontend/async-commands/generation-guards-after-await.md)
 - [Stable retry identity](en/frontend/async-commands/stable-retry-identity.md) · [Hrvatski](hr/frontend/async-commands/stable-retry-identity.md)
 - [Committed writes and observer failures](en/frontend/async-commands/committed-writes-and-observer-failures.md) · [Hrvatski](hr/frontend/async-commands/committed-writes-and-observer-failures.md)
+
+#### Collections and query ownership
+
+- [Client and server table ownership](en/frontend/collections/client-and-server-table-ownership.md) · [Hrvatski](hr/frontend/collections/client-and-server-table-ownership.md)
+- [Query-key scope and invalidation](en/frontend/collections/query-key-scope-and-invalidation.md) · [Hrvatski](hr/frontend/collections/query-key-scope-and-invalidation.md)
 
 #### Task interfaces
 
