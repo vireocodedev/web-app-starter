@@ -116,6 +116,11 @@ export const englishHandbookTranslations = {
       title: "Collections and query ownership",
       description: "Separate table presentation from result ownership, scoped query identity, and invalidation.",
     },
+    "backend-queries": {
+      title: "Queries and read models",
+      description:
+        "Project authorized visibility, bound results and cost, and describe snapshot and coverage guarantees.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -336,6 +341,36 @@ export const englishHandbookTranslations = {
       title: "Query-key scope and invalidation",
       description:
         "Include every result-defining input and keep mutation refreshes scoped to the read models the feature can change.",
+    },
+    "backend-queries-visibility-before-search-and-facets": {
+      title: "Apply visibility before search, facets and counts",
+      description:
+        "Build search, filters, options and totals from a permission-aware projected collection, so private related identity cannot leak through metadata or matching.",
+    },
+    "backend-queries-bounded-pagination-and-sort-contracts": {
+      title: "Bounded pagination and deliberate sort contracts",
+      description:
+        "Validate paging values, allowlist structural sort choices and define a stable tie-breaker while accounting for count, facet and deep-offset query cost.",
+    },
+    "backend-queries-snapshot-consistent-page-metadata": {
+      title: "One snapshot for page rows and metadata",
+      description:
+        "Use an explicit short transaction/isolation boundary when one response promises coherent rows, totals, options and checked-at evidence.",
+    },
+    "backend-queries-signed-cursors-and-scope": {
+      title: "Signed cursors bind paging to semantic scope",
+      description:
+        "Authenticate continuation against actor, scope, ordering, expiry and visible projection while exposing process-local key and in-memory paging limitations.",
+    },
+    "backend-queries-read-budgets-and-unknown-coverage": {
+      title: "Bound read work and report unknown coverage honestly",
+      description:
+        "Compose bounded source facts with truthful complete, partial, unavailable and unknown coverage while preserving cancellation and authority failures.",
+    },
+    "backend-application-services-commit-aware-notifications": {
+      title: "Notify clients after commit, and state delivery limits",
+      description:
+        "Separate committed-change hints from durable delivery, with explicit fallback behavior, ThreadLocal cleanup, subscriber authority and reconnect reconciliation.",
     },
   },
 } as const;

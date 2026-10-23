@@ -121,6 +121,11 @@ export const croatianHandbookTranslations = {
       title: "Kolekcije i vlasništvo upita",
       description: "Odvojite prikaz tablice od vlasništva rezultata, opsega identiteta upita i invalidacije.",
     },
+    "backend-queries": {
+      title: "Upiti i modeli čitanja",
+      description:
+        "Projicirajte dopuštenu vidljivost, ograničite rezultate i trošak te opišite jamstva snimke i pokrivenosti.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -336,6 +341,36 @@ export const croatianHandbookTranslations = {
       title: "Opseg query ključeva i invalidacije",
       description:
         "Uključite sve ulaze koji određuju rezultat i ograničite osvježavanje mutacija na projekcije koje feature može promijeniti.",
+    },
+    "backend-queries-visibility-before-search-and-facets": {
+      title: "Primijenite vidljivost prije pretrage, faceta i brojeva",
+      description:
+        "Pretragu, filtre, opcije i totale gradite nad dopuštenom projekcijom kako privatni povezani identitet ne bi procurio kroz metapodatke ili podudaranje.",
+    },
+    "backend-queries-bounded-pagination-and-sort-contracts": {
+      title: "Ograničena paginacija i namjenski ugovor sortiranja",
+      description:
+        "Validirajte paging, allowlistajte strukturu sortiranja i definirajte stabilan tie-breaker uz cijenu counta, faceta i dubokog offseta.",
+    },
+    "backend-queries-snapshot-consistent-page-metadata": {
+      title: "Jedan snapshot za retke i metapodatke stranice",
+      description:
+        "Eksplicitnom kratkom transakcijskom granicom i izolacijom uskladite retke, total, opcije i checked-at dokaz jednog odgovora.",
+    },
+    "backend-queries-signed-cursors-and-scope": {
+      title: "Potpisani cursori vežu paging uz semantički opseg",
+      description:
+        "Vežite nastavak uz aktera, opseg, poredak, istek i vidljivu projekciju, uz jasne granice process-local ključa i in-memory paginga.",
+    },
+    "backend-queries-read-budgets-and-unknown-coverage": {
+      title: "Ograničite rad čitanja i pošteno prijavite nepoznatu pokrivenost",
+      description:
+        "Sastavite ograničene činjenice uz istinitu potpunu, djelomičnu, nedostupnu i nepoznatu pokrivenost, čuvajući cancellation i ovlasti.",
+    },
+    "backend-application-services-commit-aware-notifications": {
+      title: "Obavijestite klijente nakon commita i navedite granice isporuke",
+      description:
+        "Odvojite hint potvrđene promjene od trajne isporuke, uz fallback, ThreadLocal čišćenje, subscriber ovlasti i reconnect usklađivanje.",
     },
   },
 } satisfies StringLeaves<typeof englishHandbookTranslations>;

@@ -130,6 +130,13 @@ export const handbookTopics = [
     descriptionKey: "handbook.topics.agent-workflow-implementation.description",
   },
   {
+    id: "backend-queries",
+    categoryId: "backend",
+    slug: "queries",
+    titleKey: "handbook.topics.backend-queries.title",
+    descriptionKey: "handbook.topics.backend-queries.description",
+  },
+  {
     id: "frontend-access",
     categoryId: "frontend-workflows",
     slug: "access",
@@ -1911,6 +1918,203 @@ export const handbookArticles = [
     relatedArticleIds: [
       "frontend-collections-client-and-server-table-ownership",
       "frontend-access-revocation-and-private-cache",
+    ],
+  },
+  {
+    id: "backend-queries-visibility-before-search-and-facets",
+    topicId: "backend-queries",
+    slug: "visibility-before-search-and-facets",
+    contentPath: "backend/queries/visibility-before-search-and-facets",
+    titleKey: "handbook.articles.backend-queries-visibility-before-search-and-facets.title",
+    descriptionKey: "handbook.articles.backend-queries-visibility-before-search-and-facets.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectBrowseService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectBrowseController.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-security-resource-scope-and-composite-keys",
+      "backend-queries-bounded-pagination-and-sort-contracts",
+      "backend-queries-snapshot-consistent-page-metadata",
+    ],
+  },
+  {
+    id: "backend-queries-bounded-pagination-and-sort-contracts",
+    topicId: "backend-queries",
+    slug: "bounded-pagination-and-sort-contracts",
+    contentPath: "backend/queries/bounded-pagination-and-sort-contracts",
+    titleKey: "handbook.articles.backend-queries-bounded-pagination-and-sort-contracts.title",
+    descriptionKey: "handbook.articles.backend-queries-bounded-pagination-and-sort-contracts.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectBrowseService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectBrowseController.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "FRED/FRED-back",
+        path: "src/main/java/hr/rgo/fred/mqtt/session/LivestreamSessionRepository.java",
+        revision: "0fc326394fbc785cf50d23155506b444feb92725",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/core/utils/RestUtils.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-queries-signed-cursors-and-scope",
+      "frontend-collections-client-and-server-table-ownership",
+    ],
+  },
+  {
+    id: "backend-queries-snapshot-consistent-page-metadata",
+    topicId: "backend-queries",
+    slug: "snapshot-consistent-page-metadata",
+    contentPath: "backend/queries/snapshot-consistent-page-metadata",
+    titleKey: "handbook.articles.backend-queries-snapshot-consistent-page-metadata.title",
+    descriptionKey: "handbook.articles.backend-queries-snapshot-consistent-page-metadata.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectBrowseService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/AttentionService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-queries-visibility-before-search-and-facets",
+      "backend-queries-signed-cursors-and-scope",
+    ],
+  },
+  {
+    id: "backend-queries-signed-cursors-and-scope",
+    topicId: "backend-queries",
+    slug: "signed-cursors-and-scope",
+    contentPath: "backend/queries/signed-cursors-and-scope",
+    titleKey: "handbook.articles.backend-queries-signed-cursors-and-scope.title",
+    descriptionKey: "handbook.articles.backend-queries-signed-cursors-and-scope.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DeliveryPaging.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-queries-bounded-pagination-and-sort-contracts",
+      "backend-security-resource-scope-and-composite-keys",
+    ],
+  },
+  {
+    id: "backend-queries-read-budgets-and-unknown-coverage",
+    topicId: "backend-queries",
+    slug: "read-budgets-and-unknown-coverage",
+    contentPath: "backend/queries/read-budgets-and-unknown-coverage",
+    titleKey: "handbook.articles.backend-queries-read-budgets-and-unknown-coverage.title",
+    descriptionKey: "handbook.articles.backend-queries-read-budgets-and-unknown-coverage.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/AttentionService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/AttentionModel.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/AttentionContributor.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceAttentionReadBudget.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-queries-snapshot-consistent-page-metadata",
+      "frontend-task-interfaces-prerequisites-and-confirmed-receipts",
+    ],
+  },
+  {
+    id: "backend-application-services-commit-aware-notifications",
+    topicId: "backend-application-services",
+    slug: "commit-aware-notifications",
+    contentPath: "backend/application-services/commit-aware-notifications",
+    titleKey: "handbook.articles.backend-application-services-commit-aware-notifications.title",
+    descriptionKey: "handbook.articles.backend-application-services-commit-aware-notifications.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/sse/SseBatchPublisher.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/sse/SseBatchContextHolder.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/sse/SseBatchContext.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/sse/SseBatchCleanupInterceptor.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/core/WebConfig.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/sse/ScheduledSseCleanupAspect.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+      {
+        project: "LMS/lms-back",
+        path: "src/main/java/hr/rgo/lms/app/sse/SseService.java",
+        revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+      },
+    ],
+    relatedArticleIds: [
+      "backend-application-services-transactional-commands",
+      "frontend-async-commands-committed-writes-and-observer-failures",
     ],
   },
 ] as const satisfies readonly HandbookArticleDefinition[];

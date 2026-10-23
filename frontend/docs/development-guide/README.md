@@ -70,6 +70,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Application services
 
 - [One transaction for one complete business command](en/backend/application-services/transactional-commands.md) · [Hrvatski](hr/backend/application-services/transactional-commands.md)
+- [Notify clients after commit, and state delivery limits](en/backend/application-services/commit-aware-notifications.md) · [Hrvatski](hr/backend/application-services/commit-aware-notifications.md)
 
 #### Data and schema
 
@@ -77,6 +78,14 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Revision conflicts and shared invariant locks](en/backend/data/revision-conflicts-and-shared-locks.md) · [Hrvatski](hr/backend/data/revision-conflicts-and-shared-locks.md)
 - [Stable lock order and retries in a fresh transaction](en/backend/data/lock-order-and-fresh-transaction-retries.md) · [Hrvatski](hr/backend/data/lock-order-and-fresh-transaction-retries.md)
 - [Audit fields, events and immutable versions answer different questions](en/backend/data/audit-fields-events-and-versions.md) · [Hrvatski](hr/backend/data/audit-fields-events-and-versions.md)
+
+#### Queries and read models
+
+- [Apply visibility before search, facets and counts](en/backend/queries/visibility-before-search-and-facets.md) · [Hrvatski](hr/backend/queries/visibility-before-search-and-facets.md)
+- [Bounded pagination and deliberate sort contracts](en/backend/queries/bounded-pagination-and-sort-contracts.md) · [Hrvatski](hr/backend/queries/bounded-pagination-and-sort-contracts.md)
+- [One snapshot for page rows and metadata](en/backend/queries/snapshot-consistent-page-metadata.md) · [Hrvatski](hr/backend/queries/snapshot-consistent-page-metadata.md)
+- [Signed cursors bind paging to semantic scope](en/backend/queries/signed-cursors-and-scope.md) · [Hrvatski](hr/backend/queries/signed-cursors-and-scope.md)
+- [Bound read work and report unknown coverage honestly](en/backend/queries/read-budgets-and-unknown-coverage.md) · [Hrvatski](hr/backend/queries/read-budgets-and-unknown-coverage.md)
 
 ### Continuous integration
 
