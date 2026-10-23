@@ -130,7 +130,12 @@ test("opens the guide from the account menu and switches its Frontend sections",
   await expect(page).toHaveURL("/dev-guide/frontend/example-pages");
   await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Development guide.*Frontend/);
   const sections = page.locator("[data-rgo-section-navigation]");
-  await expect(sections.getByRole("link")).toHaveText(["Example pages", "Patterns", "Architecture"]);
+  await expect(sections.getByRole("link")).toHaveText([
+    "Example pages",
+    "Patterns",
+    "Workflow patterns",
+    "Architecture",
+  ]);
   await expect(sections.getByRole("link", { name: "Example pages" })).toHaveAttribute("aria-current", "page");
   await page.locator("#main-content").getByRole("link", { name: "Contacts CRUD", exact: true }).click();
   await expect(page).toHaveURL("/dev-guide/frontend/example-pages/contacts-crud");

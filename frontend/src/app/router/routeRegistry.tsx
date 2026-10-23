@@ -272,7 +272,6 @@ const developmentRouteRegistry = {
     title: t => t("navigation.frontend"),
     translationNamespace: "development-guide",
   },
-  ...handbookRouteRegistry,
   legacyDevelopmentGuideHome: {
     Component: LegacyDevelopmentGuideRedirect,
     access: "authenticated",
@@ -401,6 +400,7 @@ const developmentRouteRegistry = {
     translationNamespace: "development-guide",
   },
   ...patternCategoryRoutes,
+  ...handbookRouteRegistry,
   architecture: {
     Component: ArchitectureRouteLayout,
     access: "authenticated",

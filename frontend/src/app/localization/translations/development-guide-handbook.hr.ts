@@ -41,6 +41,10 @@ export const croatianHandbookTranslations = {
       title: "Rad AI agenata",
       description: "Pronađite vlasnika, provedite ograničen zadatak i predajte dokaze.",
     },
+    "frontend-workflows": {
+      title: "Obrasci radnih tokova",
+      description: "Sesije uređivanja, asinkrone ovlasti, pouzdane naredbe i nacrti kroz više ruta.",
+    },
   },
   topics: {
     "backend-foundation": {
@@ -82,6 +86,18 @@ export const croatianHandbookTranslations = {
     "agent-workflow-implementation": {
       title: "Postupak implementacije",
       description: "Odaberite vlasnika i javno sučelje prije promjene ponašanja.",
+    },
+    "frontend-editing": {
+      title: "Sesije uređivanja",
+      description: "Uskladite vrijednosti, revizije, vlasništvo i nacrte koji prelaze rute.",
+    },
+    "frontend-async-commands": {
+      title: "Asinkrone naredbe",
+      description: "Posjedujte zahtjeve, ponovno provjerite ovlasti nakon čekanja i odvojite zapis od promatrača.",
+    },
+    "frontend-task-interfaces": {
+      title: "Sučelja zadataka",
+      description: "Sastavite duge forme, točne preglede, dokaze preduvjeta i potvrđene ishode.",
     },
   },
   articles: {
@@ -151,6 +167,50 @@ export const croatianHandbookTranslations = {
       title: "Prije uređivanja pronađite vlasnika",
       description:
         "Pretvorite traženi ishod u ograničenu promjenu s jasnim vlasnikom, vrstom dokaza, javnim granicama, dopuštenom verifikacijom i zasebno autoriziranom isporukom.",
+    },
+    "frontend-editing-pinned-values-and-revisions": {
+      title: "Zadržane vrijednosti i revizije",
+      description:
+        "Sačuvajte jednu osnovu uređivanja dok pozadinski dohvati, zastarjelost i ponovno učitavanje mijenjaju okolne ovlasti.",
+    },
+    "frontend-async-commands-owned-reads-and-shared-subscriptions": {
+      title: "Vlastiti dohvati i zajedničke pretplate",
+      description:
+        "Otkažite zastarjele dohvate uređivača bez prekidanja zajedničkih query promatrača i skrivanja stvarnih pogrešaka.",
+    },
+    "frontend-async-commands-generation-guards-after-await": {
+      title: "Provjere generacije nakon awaita",
+      description:
+        "Poništite zastarjele potvrde i zakašnjele dovršetke kada se promijene zapis, sesija ili opažene ovlasti.",
+    },
+    "frontend-async-commands-stable-retry-identity": {
+      title: "Stabilan identitet ponovnog pokušaja",
+      description:
+        "Povežite nepromjenjivu klijentsku naredbu s autoriziranim transakcijskim potvrdama prije ponavljanja neizvjesnog zapisivanja.",
+    },
+    "frontend-async-commands-committed-writes-and-observer-failures": {
+      title: "Potvrđeno zapisivanje i pogreške promatrača",
+      description: "Razdvojite potvrđenu persistenciju od neuspjelih osvježavanja, callbackova i neizvjesnih odgovora.",
+    },
+    "frontend-editing-drafts-across-routes": {
+      title: "Nacrti kroz više ruta",
+      description:
+        "Zadržite nacrt određenog vlasnika kroz dopušten prijelaz, osvježite izbore pri povratku i sačuvajte izričit korisnikov odabir.",
+    },
+    "frontend-task-interfaces-topic-editors-and-error-focus": {
+      title: "Navigacija tema zadržava jednu formu i jednog vlasnika",
+      description:
+        "Sačuvajte stanje polja kroz teme, zadržite slanje kod vlasnika forme te otkrijte i fokusirajte ciljeve pogrešaka.",
+    },
+    "frontend-task-interfaces-readable-review-and-exact-decisions": {
+      title: "Prikažite čitljive dokaze prije točne odluke",
+      description:
+        "Prikažite cjelovite verzionirane dokaze i točno imenovanu odluku bez izmišljanja potvrda čitanja ili zamrzavanja ovlasti.",
+    },
+    "frontend-task-interfaces-prerequisites-and-confirmed-receipts": {
+      title: "Preduvjeti prikazuju dokaze, potvrde priznate ishode",
+      description:
+        "Objasnite blokade izvora, djelomičnu pokrivenost, precizna rješenja i razliku prihvaćenog rada od dovršenih učinaka.",
     },
   },
 } satisfies StringLeaves<typeof englishHandbookTranslations>;

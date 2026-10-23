@@ -38,6 +38,10 @@ export const englishHandbookTranslations = {
       title: "AI-agent workflow",
       description: "Find the owner, implement a bounded task, and deliver evidence.",
     },
+    "frontend-workflows": {
+      title: "Workflow patterns",
+      description: "Editor sessions, asynchronous authority, reliable commands, and multi-route drafts.",
+    },
   },
   topics: {
     "backend-foundation": {
@@ -79,6 +83,18 @@ export const englishHandbookTranslations = {
     "agent-workflow-implementation": {
       title: "Implementation workflow",
       description: "Choose the owner and public seam before changing behavior.",
+    },
+    "frontend-editing": {
+      title: "Editing sessions",
+      description: "Keep values, revisions, ownership, and route-spanning drafts consistent.",
+    },
+    "frontend-async-commands": {
+      title: "Asynchronous commands",
+      description: "Own requests, re-check authority after awaits, and separate commits from observers.",
+    },
+    "frontend-task-interfaces": {
+      title: "Task interfaces",
+      description: "Compose long forms, exact reviews, prerequisite evidence, and acknowledged outcomes.",
     },
   },
   articles: {
@@ -151,6 +167,50 @@ export const englishHandbookTranslations = {
       title: "Find the owner before editing",
       description:
         "Turn a requested outcome into an owner-aware bounded change with explicit evidence labels, public seams, authorized verification and separately authorized delivery.",
+    },
+    "frontend-editing-pinned-values-and-revisions": {
+      title: "Pinned values and revisions",
+      description:
+        "Preserve one editing basis while background reads, stale data and explicit reload change the surrounding authority.",
+    },
+    "frontend-async-commands-owned-reads-and-shared-subscriptions": {
+      title: "Owned reads and shared subscriptions",
+      description: "Cancel obsolete editor reads without interrupting shared query observers or hiding real failures.",
+    },
+    "frontend-async-commands-generation-guards-after-await": {
+      title: "Generation guards after await",
+      description:
+        "Invalidate stale confirmations and late completions when the record, session or observed authority changes.",
+    },
+    "frontend-async-commands-stable-retry-identity": {
+      title: "Stable retry identity",
+      description:
+        "Pair an immutable client command with authorized transactional server receipts before retrying an uncertain write.",
+    },
+    "frontend-async-commands-committed-writes-and-observer-failures": {
+      title: "Committed writes and observer failures",
+      description:
+        "Keep acknowledged persistence distinct from failed cache refreshes, callbacks and uncertain responses.",
+    },
+    "frontend-editing-drafts-across-routes": {
+      title: "Drafts across routes",
+      description:
+        "Retain an owner-scoped draft through a permitted detour, refresh choices on return and preserve explicit user selection.",
+    },
+    "frontend-task-interfaces-topic-editors-and-error-focus": {
+      title: "Topic navigation keeps one form and one owner",
+      description:
+        "Preserve field state across topics, keep submission with the form owner, and make error links reveal and focus their targets.",
+    },
+    "frontend-task-interfaces-readable-review-and-exact-decisions": {
+      title: "Show readable evidence before an exact decision",
+      description:
+        "Present complete versioned evidence and an explicitly named decision without inventing reading gates or freezing authority.",
+    },
+    "frontend-task-interfaces-prerequisites-and-confirmed-receipts": {
+      title: "Prerequisites report evidence; receipts report acknowledged outcomes",
+      description:
+        "Explain source-owned blockers, partial coverage, precise remedies and the difference between accepted work and completed effects.",
     },
   },
 } as const;

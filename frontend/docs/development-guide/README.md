@@ -14,6 +14,20 @@ Each topic has a browser index, article sidebar, local breadcrumbs and an articl
 
 ## Pattern index
 
+### Frontend workflow patterns
+
+These source-backed recipes complement the installed interactive Patterns and Architecture tabs. Consumer-only helpers are identified explicitly; copy the protocol into the correct owner rather than assuming those helpers are installed.
+
+- [Pinned values and revisions](en/frontend/editing/pinned-values-and-revisions.md) · [Hrvatski](hr/frontend/editing/pinned-values-and-revisions.md)
+- [Owned reads and shared subscriptions](en/frontend/async-commands/owned-reads-and-shared-subscriptions.md) · [Hrvatski](hr/frontend/async-commands/owned-reads-and-shared-subscriptions.md)
+- [Generation guards after await](en/frontend/async-commands/generation-guards-after-await.md) · [Hrvatski](hr/frontend/async-commands/generation-guards-after-await.md)
+- [Stable retry identity](en/frontend/async-commands/stable-retry-identity.md) · [Hrvatski](hr/frontend/async-commands/stable-retry-identity.md)
+- [Committed writes and observer failures](en/frontend/async-commands/committed-writes-and-observer-failures.md) · [Hrvatski](hr/frontend/async-commands/committed-writes-and-observer-failures.md)
+- [Drafts across routes](en/frontend/editing/drafts-across-routes.md) · [Hrvatski](hr/frontend/editing/drafts-across-routes.md)
+- [Topic navigation keeps one form and one owner](en/frontend/task-interfaces/topic-editors-and-error-focus.md) · [Hrvatski](hr/frontend/task-interfaces/topic-editors-and-error-focus.md)
+- [Show readable evidence before an exact decision](en/frontend/task-interfaces/readable-review-and-exact-decisions.md) · [Hrvatski](hr/frontend/task-interfaces/readable-review-and-exact-decisions.md)
+- [Prerequisites report evidence; receipts report acknowledged outcomes](en/frontend/task-interfaces/prerequisites-and-confirmed-receipts.md) · [Hrvatski](hr/frontend/task-interfaces/prerequisites-and-confirmed-receipts.md)
+
 ### Backend
 
 - [Runtime and configuration ownership](en/backend/foundation/runtime-and-configuration.md) · [Hrvatski](hr/backend/foundation/runtime-and-configuration.md)
@@ -51,7 +65,7 @@ Each topic has a browser index, article sidebar, local breadcrumbs and an articl
 
 ## Maintain a pattern
 
-Add paired `en/<category>/<topic>/<slug>.md` and `hr/...` files, one article entry in `src/features/development-guide/handbook/catalog/handbookManifest.ts`, and matching labels in `src/app/localization/translations/development-guide-handbook.{en,hr}.ts`. The manifest generates indexes, routes, breadcrumbs, command-palette entries, sidebar links and related reading. Route policy stays in `src/app/router/handbookRoutes.tsx`; shared rendering stays in `src/app/shell/documentation`.
+Add paired `en/<category>/<topic>/<slug>.md` and `hr/...` files, one article entry in `src/features/development-guide/handbook/catalog/handbookManifest.ts`, and matching labels in `src/app/localization/translations/development-guide-handbook.{en,hr}.ts`. The manifest generates indexes, routes, breadcrumbs, command-palette entries, sidebar links and related reading. Route policy stays in `src/app/router/handbookRoutes.tsx`; shared rendering stays in `src/app/shell/documentation`. The Frontend collection keeps portable `frontend/<topic>/<article>` source paths while the router mounts it under `/dev-guide/frontend/workflow-patterns`. Explicit related article IDs can link across topics; siblings are the default when no related list is declared.
 
 A useful article states its trigger, ownership and lifetime, actual contract, minimal example, failure/recovery decisions, acceptance evidence and exact `project@revision:relative/path` sources. Keep identifiers and examples neutral. Explain a source limitation beside the recipe that depends on it.
 

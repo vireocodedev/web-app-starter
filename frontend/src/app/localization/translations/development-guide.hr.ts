@@ -7,7 +7,7 @@ export const croatianDevelopmentGuideTranslations = {
     title: "Kategorije",
     description: "Odaberite kategoriju vodiča za razvoj.",
     navigationLabel: "Kategorije vodiča za razvoj",
-    frontendDescription: "Primjeri stranica, Obrasci i Arhitektura.",
+    frontendDescription: "Primjeri stranica, interaktivni obrasci, recepti radnih tokova i arhitektura.",
     backendDescription: "Razvoj poslužiteljskog dijela aplikacije.",
   },
   examplePages: {

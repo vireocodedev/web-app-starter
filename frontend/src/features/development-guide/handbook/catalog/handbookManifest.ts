@@ -36,6 +36,12 @@ export const handbookCategories = [
     titleKey: "handbook.categories.agent-workflow.title",
     descriptionKey: "handbook.categories.agent-workflow.description",
   },
+  {
+    id: "frontend-workflows",
+    slug: "frontend",
+    titleKey: "handbook.categories.frontend-workflows.title",
+    descriptionKey: "handbook.categories.frontend-workflows.description",
+  },
 ] as const satisfies readonly HandbookCategoryDefinition[];
 
 export const handbookTopics = [
@@ -108,6 +114,27 @@ export const handbookTopics = [
     slug: "implementation",
     titleKey: "handbook.topics.agent-workflow-implementation.title",
     descriptionKey: "handbook.topics.agent-workflow-implementation.description",
+  },
+  {
+    id: "frontend-editing",
+    categoryId: "frontend-workflows",
+    slug: "editing",
+    titleKey: "handbook.topics.frontend-editing.title",
+    descriptionKey: "handbook.topics.frontend-editing.description",
+  },
+  {
+    id: "frontend-async-commands",
+    categoryId: "frontend-workflows",
+    slug: "async-commands",
+    titleKey: "handbook.topics.frontend-async-commands.title",
+    descriptionKey: "handbook.topics.frontend-async-commands.description",
+  },
+  {
+    id: "frontend-task-interfaces",
+    categoryId: "frontend-workflows",
+    slug: "task-interfaces",
+    titleKey: "handbook.topics.frontend-task-interfaces.title",
+    descriptionKey: "handbook.topics.frontend-task-interfaces.description",
   },
 ] as const satisfies readonly HandbookTopicDefinition[];
 
@@ -723,6 +750,277 @@ export const handbookArticles = [
         revision: "7c2264746bd6d6c3fc00e373778831943666592b",
         path: "frontend/package.json",
       },
+    ],
+  },
+  {
+    id: "frontend-editing-pinned-values-and-revisions",
+    topicId: "frontend-editing",
+    slug: "pinned-values-and-revisions",
+    contentPath: "frontend/editing/pinned-values-and-revisions",
+    titleKey: "handbook.articles.frontend-editing-pinned-values-and-revisions.title",
+    descriptionKey: "handbook.articles.frontend-editing-pinned-values-and-revisions.description",
+    implementation: "reference",
+    size: "medium",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/hooks/usePinnedRecord.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationEditor.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "vireocode-web-app-starter",
+        path: "frontend/src/app/forms/types/AppEntityForm.ts",
+        revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-editing-drafts-across-routes",
+      "frontend-async-commands-generation-guards-after-await",
+    ],
+  },
+  {
+    id: "frontend-async-commands-owned-reads-and-shared-subscriptions",
+    topicId: "frontend-async-commands",
+    slug: "owned-reads-and-shared-subscriptions",
+    contentPath: "frontend/async-commands/owned-reads-and-shared-subscriptions",
+    titleKey: "handbook.articles.frontend-async-commands-owned-reads-and-shared-subscriptions.title",
+    descriptionKey: "handbook.articles.frontend-async-commands-owned-reads-and-shared-subscriptions.description",
+    implementation: "reference",
+    size: "small",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/hooks/useOwnedRead.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationEditor.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-async-commands-generation-guards-after-await",
+      "frontend-async-commands-committed-writes-and-observer-failures",
+    ],
+  },
+  {
+    id: "frontend-async-commands-generation-guards-after-await",
+    topicId: "frontend-async-commands",
+    slug: "generation-guards-after-await",
+    contentPath: "frontend/async-commands/generation-guards-after-await",
+    titleKey: "handbook.articles.frontend-async-commands-generation-guards-after-await.title",
+    descriptionKey: "handbook.articles.frontend-async-commands-generation-guards-after-await.description",
+    implementation: "reference",
+    size: "medium",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationEditor.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/sales/hooks/useSalesLifetime.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/hooks/useFormFeedback.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-editing-pinned-values-and-revisions",
+      "frontend-async-commands-stable-retry-identity",
+    ],
+  },
+  {
+    id: "frontend-async-commands-stable-retry-identity",
+    topicId: "frontend-async-commands",
+    slug: "stable-retry-identity",
+    contentPath: "frontend/async-commands/stable-retry-identity",
+    titleKey: "handbook.articles.frontend-async-commands-stable-retry-identity.title",
+    descriptionKey: "handbook.articles.frontend-async-commands-stable-retry-identity.description",
+    implementation: "reference",
+    size: "medium",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationEditor.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationRegistrationSession.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/SpecificationService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/SalesService.java",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-async-commands-committed-writes-and-observer-failures",
+      "backend-foundation-http-service-persistence-boundaries",
+    ],
+  },
+  {
+    id: "frontend-async-commands-committed-writes-and-observer-failures",
+    topicId: "frontend-async-commands",
+    slug: "committed-writes-and-observer-failures",
+    contentPath: "frontend/async-commands/committed-writes-and-observer-failures",
+    titleKey: "handbook.articles.frontend-async-commands-committed-writes-and-observer-failures.title",
+    descriptionKey: "handbook.articles.frontend-async-commands-committed-writes-and-observer-failures.description",
+    implementation: "mixed",
+    size: "small",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/utils/notifyMutationCommitted.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationEditor.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "vireocode-web-app-starter",
+        path: "frontend/src/features/development-guide/contacts/api/contact.mutation.ts",
+        revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+      },
+    ],
+    relatedArticleIds: ["frontend-async-commands-stable-retry-identity"],
+  },
+  {
+    id: "frontend-editing-drafts-across-routes",
+    topicId: "frontend-editing",
+    slug: "drafts-across-routes",
+    contentPath: "frontend/editing/drafts-across-routes",
+    titleKey: "handbook.articles.frontend-editing-drafts-across-routes.title",
+    descriptionKey: "handbook.articles.frontend-editing-drafts-across-routes.description",
+    implementation: "reference",
+    size: "large",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationRegistrationSession.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/components/ProjectSpecifications.tsx",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/discovery/components/DiscoveryWorkspace.tsx",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-editing-pinned-values-and-revisions",
+      "frontend-async-commands-stable-retry-identity",
+    ],
+  },
+  {
+    id: "frontend-task-interfaces-topic-editors-and-error-focus",
+    topicId: "frontend-task-interfaces",
+    slug: "topic-editors-and-error-focus",
+    contentPath: "frontend/task-interfaces/topic-editors-and-error-focus",
+    titleKey: "handbook.articles.frontend-task-interfaces-topic-editors-and-error-focus.title",
+    descriptionKey: "handbook.articles.frontend-task-interfaces-topic-editors-and-error-focus.description",
+    implementation: "reference",
+    size: "medium",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/components/AppTopicEditor.tsx",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/types/AppTaskPresentation.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-editing-drafts-across-routes",
+      "frontend-task-interfaces-readable-review-and-exact-decisions",
+    ],
+  },
+  {
+    id: "frontend-task-interfaces-readable-review-and-exact-decisions",
+    topicId: "frontend-task-interfaces",
+    slug: "readable-review-and-exact-decisions",
+    contentPath: "frontend/task-interfaces/readable-review-and-exact-decisions",
+    titleKey: "handbook.articles.frontend-task-interfaces-readable-review-and-exact-decisions.title",
+    descriptionKey: "handbook.articles.frontend-task-interfaces-readable-review-and-exact-decisions.description",
+    implementation: "reference",
+    size: "medium",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/components/AppReadableReview.tsx",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/types/AppTaskPresentation.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/features/specifications/hooks/useSpecificationEditor.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-editing-pinned-values-and-revisions",
+      "frontend-async-commands-generation-guards-after-await",
+    ],
+  },
+  {
+    id: "frontend-task-interfaces-prerequisites-and-confirmed-receipts",
+    topicId: "frontend-task-interfaces",
+    slug: "prerequisites-and-confirmed-receipts",
+    contentPath: "frontend/task-interfaces/prerequisites-and-confirmed-receipts",
+    titleKey: "handbook.articles.frontend-task-interfaces-prerequisites-and-confirmed-receipts.title",
+    descriptionKey: "handbook.articles.frontend-task-interfaces-prerequisites-and-confirmed-receipts.description",
+    implementation: "reference",
+    size: "medium",
+    sources: [
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/components/AppPrerequisiteList.tsx",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/components/AppTaskReceipt.tsx",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+      {
+        project: "client-discovery-app",
+        path: "frontend/src/app/forms/types/AppTaskPresentation.ts",
+        revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+      },
+    ],
+    relatedArticleIds: [
+      "frontend-task-interfaces-readable-review-and-exact-decisions",
+      "frontend-async-commands-committed-writes-and-observer-failures",
     ],
   },
 ] as const satisfies readonly HandbookArticleDefinition[];

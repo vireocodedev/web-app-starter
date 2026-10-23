@@ -120,7 +120,12 @@ for (const article of handbookArticles) {
   }
   for (const relatedId of article.relatedArticleIds ?? []) {
     requireCondition(articleIds.has(relatedId), `Unknown related article ${relatedId} on ${article.id}`);
+    requireCondition(relatedId !== article.id, `Self-related article: ${article.id}`);
   }
+  requireCondition(
+    new Set(article.relatedArticleIds ?? []).size === (article.relatedArticleIds?.length ?? 0),
+    `Duplicated related article on ${article.id}`,
+  );
   for (const locale of ["en", "hr"]) {
     const path = resolve(contentRoot, locale, `${article.contentPath}.md`);
     try {

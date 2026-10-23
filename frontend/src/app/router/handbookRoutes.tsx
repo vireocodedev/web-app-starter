@@ -1,4 +1,5 @@
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
@@ -31,6 +32,7 @@ export type HandbookRouteId =
   | `handbook-article:${HandbookArticleId}`;
 
 const categoryIcons: Readonly<Record<HandbookCategoryId, SvgIconComponent>> = {
+  "frontend-workflows": AccountTreeOutlinedIcon,
   backend: StorageOutlinedIcon,
   ci: HubOutlinedIcon,
   delivery: CloudUploadOutlinedIcon,
@@ -38,14 +40,27 @@ const categoryIcons: Readonly<Record<HandbookCategoryId, SvgIconComponent>> = {
   "agent-workflow": SmartToyOutlinedIcon,
 };
 
+type HandbookNestedMount = Readonly<{
+  parentId: "developmentGuideFrontend";
+  path: string;
+}>;
+
+// Browser placement belongs to the router; source articles retain portable paths.
+const nestedMounts: Partial<Record<HandbookCategoryId, HandbookNestedMount>> = {
+  "frontend-workflows": {
+    parentId: "developmentGuideFrontend",
+    path: "dev-guide/frontend/workflow-patterns",
+  },
+};
+
 function categoryRouteId(id: HandbookCategoryId): CategoryRouteId {
   return id === "backend" ? "developmentGuideBackend" : `handbook-category:${id}`;
 }
 
-function categoryPath(id: string): string {
+function categoryPath(id: HandbookCategoryId): string {
   const category = handbookCategories.find(candidate => candidate.id === id);
   if (!category) throw new Error(`Unknown handbook category: ${id}`);
-  return `dev-guide/${category.slug}`;
+  return nestedMounts[id]?.path ?? `dev-guide/${category.slug}`;
 }
 
 function topicPath(id: string): string {
@@ -62,13 +77,15 @@ function articlePath(id: string): string {
 
 /** The route owner supplies all category destinations to the presentation-only index. */
 export const handbookCategoryEntries = import.meta.env.DEV
-  ? handbookCategories.map(category => ({
-      id: category.id,
-      Icon: categoryIcons[category.id],
-      titleKey: category.titleKey,
-      descriptionKey: category.descriptionKey,
-      to: `/${categoryPath(category.id)}`,
-    }))
+  ? handbookCategories
+      .filter(category => !nestedMounts[category.id])
+      .map(category => ({
+        id: category.id,
+        Icon: categoryIcons[category.id],
+        titleKey: category.titleKey,
+        descriptionKey: category.descriptionKey,
+        to: `/${categoryPath(category.id)}`,
+      }))
   : [];
 
 const markdownRoutes = new Map<string, string>();
@@ -100,10 +117,24 @@ function articleHref(contentPath: string, href: string | undefined): string | un
   return href;
 }
 
+function relatedArticleLinks(
+  article: Readonly<{ id: string; topicId: string; relatedArticleIds?: readonly string[] }>,
+) {
+  const related = article.relatedArticleIds?.length
+    ? article.relatedArticleIds.map(id => {
+        const match = handbookArticles.find(candidate => candidate.id === id);
+        if (!match) throw new Error(`Unknown related handbook article: ${article.id} -> ${id}`);
+        return match;
+      })
+    : handbookArticles.filter(candidate => candidate.topicId === article.topicId && candidate.id !== article.id);
+  return related.map(candidate => ({ labelKey: candidate.titleKey, to: `/${articlePath(candidate.id)}` }));
+}
+
 function createHandbookRoutes(): Record<HandbookRouteId, AppRouteDefinition> {
   const entries: [HandbookRouteId, AppRouteDefinition][] = [];
   for (const category of handbookCategories) {
     const categoryId = categoryRouteId(category.id);
+    const mount = nestedMounts[category.id];
     entries.push([
       categoryId,
       {
@@ -111,8 +142,10 @@ function createHandbookRoutes(): Record<HandbookRouteId, AppRouteDefinition> {
         access: "authenticated",
         commandPalette: true,
         developmentOnly: true,
-        headerBreadcrumb: true,
-        parentId: "developmentGuide",
+        ...(mount
+          ? { navigation: { Icon: categoryIcons[category.id], labelKey: category.titleKey } }
+          : { headerBreadcrumb: true }),
+        parentId: mount?.parentId ?? "developmentGuide",
         path: categoryPath(category.id),
         title: t => t(category.titleKey),
         translationNamespace: "development-guide",
@@ -192,9 +225,7 @@ function createHandbookRoutes(): Record<HandbookRouteId, AppRouteDefinition> {
             <HandbookArticlePage
               articleId={article.id}
               resolveHref={href => articleHref(article.contentPath, href)}
-              relatedLinks={articles
-                .filter(candidate => candidate.id !== article.id)
-                .map(candidate => ({ labelKey: candidate.titleKey, to: `/${articlePath(candidate.id)}` }))}
+              relatedLinks={relatedArticleLinks(article)}
             />
           ),
           access: "authenticated",

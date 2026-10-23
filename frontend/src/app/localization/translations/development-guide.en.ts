@@ -6,7 +6,7 @@ export const englishDevelopmentGuideTranslations = {
     title: "Categories",
     description: "Choose a category to explore the development guide.",
     navigationLabel: "Development guide categories",
-    frontendDescription: "Example pages, Patterns, and Architecture.",
+    frontendDescription: "Example pages, interactive patterns, workflow recipes, and architecture.",
     backendDescription: "Server-side development.",
   },
   examplePages: {
