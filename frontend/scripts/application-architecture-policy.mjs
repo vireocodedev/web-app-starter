@@ -9,6 +9,7 @@ const groupedDevelopmentFeaturePattern = "development-guide/(?:architecture|cont
 const featureImportPattern = new RegExp(`^@/features/((?:${groupedDevelopmentFeaturePattern})|[^/]+)(/.*)?$`);
 const featureApplicationLeafPaths = new Set([
   "src/app/router/hooks/useAppQueryParams.ts",
+  "src/app/router/hooks/useRouteScrollReady.ts",
   "src/app/router/queryParams.ts",
   "src/app/overlays/components/AppBottomDrawerHandle.tsx",
   "src/app/shell/components/AppPageNavigation.tsx",

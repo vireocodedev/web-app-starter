@@ -243,6 +243,8 @@ updates preserve the viewport; a new pathname starts at the top; and an initial
 or newly selected fragment scrolls to its decoded element ID after route
 content is ready. A recorded history position takes priority over a fragment.
 
+A delayed route leaf can call `useRouteScrollReady(ready)` to hold its complete entry’s existing scroll action until content or a local error commits. Claims belong to one entry and owner; cleanup cannot release another claim. The branch default remains sufficient when no leaf claims exist. The scheduled frame rechecks current branch and leaf readiness before consuming the action, including native hash traversal. Settled actions do not replay for later retries or locale changes.
+
 Public routes signal readiness as soon as their branch commits. Authenticated
 routes signal only below `AppAuthGate`, after protected content is available;
 lazy route modules are already resolved when their branch commits. Missing or

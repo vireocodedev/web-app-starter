@@ -20,6 +20,17 @@ export const croatianHandbookTranslations = /* @__PURE__ */ (() =>
       contents: "Sadržaj članka",
       related: "Povezano čitanje",
     },
+    loading: {
+      message: "Učitavanje ovog članka…",
+      progress: "Učitavanje članka",
+      errorTitle: "Članak nije moguće učitati",
+      errorMessage:
+        "Zahtjev za odabrani jezik ili članak nije uspio. Možete pokušati ponovno uz zadržavanje trenutačne lokacije u vodiču.",
+      refreshHint:
+        "Ponovni pokušaj može i dalje koristiti neuspjeli zahtjev preglednika za modulom. Ako i dalje ne uspijeva, osvježite stranicu kada veza ili razvojni poslužitelj postanu dostupni.",
+      retry: "Pokušaj ponovno",
+      refresh: "Osvježi stranicu",
+    },
     finder: {
       action: "Pronađi članke",
       actionCount: "Članci priručnika: {{count}}",

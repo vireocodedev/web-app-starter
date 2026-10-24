@@ -17,6 +17,17 @@ export const englishHandbookTranslations = /* @__PURE__ */ (() =>
       contents: "Article contents",
       related: "Related reading",
     },
+    loading: {
+      message: "Loading this article…",
+      progress: "Article loading",
+      errorTitle: "This article could not be loaded",
+      errorMessage:
+        "The selected language or article request failed. You can retry while keeping the current guide location.",
+      refreshHint:
+        "Retry may still use a failed browser module request. If it keeps failing, refresh the page after the connection or development server is available.",
+      retry: "Retry article",
+      refresh: "Refresh page",
+    },
     finder: {
       action: "Find articles",
       actionCount: "Handbook articles: {{count}}",

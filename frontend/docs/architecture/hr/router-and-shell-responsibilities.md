@@ -214,6 +214,8 @@ Za ponašanje prikaza tijekom tih prijelaza slijedite
 
 ## Pravila pomicanja prozora
 
+List rute s odgođenim sadržajem može pozvati `useRouteScrollReady(ready)` i zadržati postojeću radnju pomicanja svojeg cjelovitog ulaza dok se ne prikažu sadržaj ili lokalna pogreška. Svaka prijava pripada jednom ulazu i vlasniku; čišćenje ne može ukloniti tuđu prijavu. Bez prijava listova dovoljna je postojeća spremnost grane. Zakazani frame ponovno provjerava trenutačnu granu i sve listove prije potrošnje radnje, uključujući nativni prelazak fragmenata. Već izvršene radnje ne ponavljaju se pri novom pokušaju ili promjeni jezika.
+
 Usmjerivač upravlja pomicanjem prozora kroz `RouteScrollRestoration`. Svaki
 zapis povijesti usmjerivača određen je javnim ključem lokacije i cijelim URL-om
 rute te, kada je dostupan, javnim ključem zapisa preglednikova Navigation

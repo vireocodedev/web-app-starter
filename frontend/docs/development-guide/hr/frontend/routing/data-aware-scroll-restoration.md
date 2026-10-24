@@ -2,7 +2,7 @@
 
 Router može znati da je navigacija završila prije nego što stranica ovisna o podacima ima dovoljnu visinu ili ciljni naslov postoji. Prerano vraćanje položaja ograniči viewport na kratki prikaz učitavanja; ponovno pomicanje pri svakom osvježavanju zatim odvlači korisnika od čitanja. Ulazno pomicanje uskladite sa spremnošću rasporeda potvrđene završne stranice.
 
-Ovo je **referentno proširenje uz usporedbu startera**. Starter već ima `RouteScrollRestoration` i `RouteScrollContentReady` za potvrđeni sadržaj grane ruta. CDA dodaje namjerni `useRouteScrollReady` ugovor završne stranice koji odgađa vraćanje dok podaci i raspored nisu upotrebljivi. Taj hook i privatni koordinacijski kontekst nisu ugrađeni starter API-ji.
+Ovo je **mješoviti obrazac**. Starter uz `RouteScrollRestoration` i `RouteScrollContentReady` izlaže `useRouteScrollReady(ready)`; članci vodiča tim boolean ugovorom završne stranice čekaju odabrani Markdown sadržaj ili lokalnu pogrešku. Referenca CDA na navedenom commitu dodaje callbackove nakon smještanja i provjerene povratne položaje. Te dodatne opcije i privatni kontekst pripadaju referentnom API-ju potrošača, a nisu opcije ugrađenog starter hooka.
 
 ## Okidač i vlasništvo
 
@@ -14,7 +14,9 @@ CDA hook stvara stabilan simbol vlasnika i preuzima trenutačnu lokaciju u layou
 
 ## Odvojite ulaznu politiku od kasnijih ažuriranja
 
-Ovaj **pseudokod** opisuje referentni ugovor; nije starter import:
+Za ugrađeni ugovor startera pozovite `useRouteScrollReady(initialReadSucceeded || initialReadFailed)` iz `@/app/router/hooks/useRouteScrollReady`. Hook samo objavljuje spremnost rasporeda; ne dohvaća podatke, ne izlaže callbackove nakon smještanja, ne prima povratne položaje niti premješta fokus.
+
+Sljedeći **pseudokod** opisuje bogatiji referentni ugovor potrošača; nije starter import:
 
 ```ts
 const ready = initialReadSucceeded || initialReadFailed;
@@ -47,7 +49,7 @@ CDA neobvezno prihvaća izričit konačan nenegativan povratni položaj za provj
 | Pozadinsko osvježavanje             | Sačuvajte mjesto čitanja                | Ažurirajte bez ponavljanja ulaza                           |
 | Unmount tijekom čekanja             | Oslobodite zahtjev vlasnika             | Zanemarite zakašnjele učinke rezultata i rasporeda         |
 
-Starterova postojeća politika već razlikuje putanju, fragment, promjenu samo upita i history položaje. Proširite tog vlasnika ako feature treba finiju spremnost; nemojte u svaku stranicu dodati drugi neovisan upravitelj pomicanja. Konkurentski effecti stvaraju vremenski ovisne skokove i kada svaki zasebno izgleda razumno.
+Starterova postojeća politika već razlikuje putanju, fragment, promjenu samo upita i history položaje. Za odgođeni sadržaj koristite ugrađeni hook završne stranice. Bogatiji protokol smještanja ili fokusa pripada tom vlasniku; nemojte u svaku stranicu dodati drugi neovisan upravitelj pomicanja. Konkurentski effecti stvaraju vremenski ovisne skokove i kada svaki zasebno izgleda razumno.
 
 ## Pogreške i oporavak
 

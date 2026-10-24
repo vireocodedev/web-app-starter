@@ -5,23 +5,35 @@ import { handbookArticles } from "./handbookManifest";
 const markdownRoot = "../../../../../docs/development-guide";
 const markdown = import.meta.env.DEV
   ? import.meta.glob<string>("../../../../../docs/development-guide/{en,hr}/**/*.md", {
-      eager: true,
       import: "default",
       query: "?raw",
     })
   : {};
 
-/** Content is paired by its full relative path, so repeated article names are safe. */
-export function handbookMarkdown(contentPath: string, locale: AppLocale): string {
-  const key = `${markdownRoot}/${locale}/${contentPath}.md`;
-  const content = markdown[key];
-  if (content === undefined) throw new Error(`Development guide content is missing: ${locale}/${contentPath}.md`);
-  return content;
+function markdownKey(contentPath: string, locale: AppLocale): string {
+  return `${markdownRoot}/${locale}/${contentPath}.md`;
+}
+
+/** Only the selected article/language is requested; successful module reuse belongs to native ESM. */
+export async function loadHandbookMarkdown(contentPath: string, locale: AppLocale): Promise<string> {
+  const loader = markdown[markdownKey(contentPath, locale)];
+  if (!loader) throw new Error(`Development guide content is missing: ${locale}/${contentPath}.md`);
+  return loader();
 }
 
 if (import.meta.env.DEV) {
+  // Validate structure at startup without invoking any body loader.
   for (const article of handbookArticles) {
-    handbookMarkdown(article.contentPath, "en");
-    handbookMarkdown(article.contentPath, "hr");
+    for (const locale of ["en", "hr"] as const) {
+      if (!(markdownKey(article.contentPath, locale) in markdown)) {
+        throw new Error(`Development guide content is missing: ${locale}/${article.contentPath}.md`);
+      }
+    }
   }
+}
+
+if (import.meta.env.DEV && import.meta.hot) {
+  // Raw-body updates bubble here. A self-accepting boundary reloads cached native modules
+  // instead of letting Fast Refresh preserve the article hook's previous Markdown state.
+  import.meta.hot.accept(() => window.location.reload());
 }

@@ -2,7 +2,7 @@
 
 A router can know that navigation finished before a data-dependent page has enough height or the target heading exists. Restoring a saved position too early clamps the viewport to a short loading screen; scrolling again on every query refresh then pulls the person away from what they are reading. Coordinate entry scrolling with the committed leaf's layout readiness.
 
-This is a **reference extension with an installed starter comparison**. The starter already has `RouteScrollRestoration` and `RouteScrollContentReady` for committed route-branch content. CDA adds a deliberate `useRouteScrollReady` leaf contract that can defer restoration until its data/layout is usable. That consumer hook and private coordination context are not installed starter APIs.
+This is a **mixed pattern**. The starter exposes `useRouteScrollReady(ready)` alongside `RouteScrollRestoration` and `RouteScrollContentReady`; handbook articles use this boolean leaf contract to wait for their selected Markdown body or local error. The pinned CDA reference adds richer settlement callbacks and validated return positions. Those extra options and its private context are consumer reference APIs, not options on the installed starter hook.
 
 ## Trigger and ownership
 
@@ -14,7 +14,9 @@ The CDA hook creates a stable owner symbol and claims the current location in a 
 
 ## Separate entry policy from later updates
 
-This **pseudocode** describes the consumer contract; it is not a starter import:
+For the installed starter contract, call `useRouteScrollReady(initialReadSucceeded || initialReadFailed)` from `@/app/router/hooks/useRouteScrollReady`. The hook only declares layout readiness; it does not fetch data, expose settlement callbacks, accept return positions or move focus.
+
+The following **pseudocode** describes the richer consumer contract; it is not a starter import:
 
 ```ts
 const ready = initialReadSucceeded || initialReadFailed;
@@ -47,7 +49,7 @@ CDA optionally accepts an explicit finite nonnegative return position for a vali
 | Background refresh                 | Preserve reading position         | Update content without entry replay                    |
 | Leaf unmounts while pending        | Release its claim                 | Ignore late layout/result effects                      |
 
-The starter's existing policy already distinguishes pathname, fragments, query-only changes, and history positions. Extend that owner when a feature needs finer readiness; do not add a second independent scroll manager inside every page. Multiple competing effects produce timing-dependent jumps even when each looks reasonable in isolation.
+The starter's existing policy already distinguishes pathname, fragments, query-only changes, and history positions. Use its installed leaf hook for delayed content. Any richer settlement or focus protocol belongs in that owner; do not add a second independent scroll manager inside every page. Multiple competing effects produce timing-dependent jumps even when each looks reasonable in isolation.
 
 ## Failure and recovery
 
