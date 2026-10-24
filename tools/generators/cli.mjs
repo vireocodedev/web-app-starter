@@ -8,13 +8,18 @@ import { createIndexPlan, createPlan } from "./core.mjs";
 import { applyPlan, digest } from "./filesystem.mjs";
 import { assessCompatibility, compatibilityWeights } from "./policy.mjs";
 import { findGenerator, generators } from "./registry.mjs";
+import { selectGenerator } from "./terminal-menu.mjs";
 
 const workspaceRoot = fileURLToPath(new URL("../../", import.meta.url));
 const help = `Usage: npm run generate -- <frontend|backend> <kind> <Name> [options]
        npm run generate -- --list [--json]
        npm run generate -- assess <frontend/kind|backend/kind> --assessment file.json [--json]
        npm run generate -- index [--dry-run]    Rebuild the mechanical locale index
-       npm run generate                         Interactive (TTY only)
+       npm run generate                         Keyboard menu (TTY only)
+
+Interactive menu: choose Frontend/Backend, then a generator.
+↑/↓ move, Space/Enter select, PgUp/PgDn page, Home/End jump.
+Esc/← returns to groups; Esc at groups or Ctrl+C cancels.
 
 Options:
   --feature Name        New capability owner (defaults to Name)
@@ -60,14 +65,20 @@ export function parseArguments(argv) {
 }
 
 async function interactive() {
-  const prompt = createInterface({ input: process.stdin, output: process.stderr });
+  const generator = await selectGenerator(generators);
+  const prompt = createInterface({
+    input: process.stdin,
+    output: process.stderr,
+  });
   try {
-    process.stderr.write(generators.map(item => `${item.id}: ${item.purpose}`).join("\n") + "\n");
-    const selected = (await prompt.question("Generator (frontend/form, backend/feature, …): ")).trim().split("/");
     const name = (await prompt.question("Name: ")).trim();
     const fields = (await prompt.question("Fields (default name; e.g. title,description?): ")).trim() || "name";
-    const options = { target: selected[0], kind: selected[1], name, fields };
-    const generator = findGenerator(options.target, options.kind);
+    const options = {
+      target: generator.target,
+      kind: generator.kind,
+      name,
+      fields,
+    };
     if (generator.inputs.required.includes("migration"))
       options.migration = (await prompt.question("New Flyway integer version: ")).trim();
     return options;
@@ -100,7 +111,11 @@ export async function main(argv = process.argv.slice(2)) {
       schemaVersion: 1,
       operation: "index",
       dryRun: Boolean(options["dry-run"]),
-      files: files.map(file => ({ path: file.path, action: "update-index", sha256: digest(file.content) })),
+      files: files.map(file => ({
+        path: file.path,
+        action: "update-index",
+        sha256: digest(file.content),
+      })),
     });
     return;
   }
@@ -112,7 +127,10 @@ export async function main(argv = process.argv.slice(2)) {
     const generator = findGenerator(target, kind);
     const policy = JSON.parse(await readFile(path.join(root, "generator-policy.json"), "utf8"));
     const assessment = JSON.parse(await readFile(path.resolve(options.assessment), "utf8"));
-    json({ generator: generator.id, ...assessCompatibility(assessment, policy.compatibilityThreshold) });
+    json({
+      generator: generator.id,
+      ...assessCompatibility(assessment, policy.compatibilityThreshold),
+    });
     return;
   }
   let invocation;
@@ -122,7 +140,12 @@ export async function main(argv = process.argv.slice(2)) {
     invocation = { ...options, ...(await interactive()) };
   } else {
     if (positional.length !== 3) throw new Error("Expected <frontend|backend> <kind> <Name>. Run --help.");
-    invocation = { ...options, target: positional[0], kind: positional[1], name: positional[2] };
+    invocation = {
+      ...options,
+      target: positional[0],
+      kind: positional[1],
+      name: positional[2],
+    };
   }
   if (options.assessment) throw new Error("--assessment is supported only by assess.");
   const plan = await createPlan(root, invocation);
@@ -152,7 +175,8 @@ export async function main(argv = process.argv.slice(2)) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch(error => {
     if (process.argv.includes("--json")) process.stderr.write(JSON.stringify({ error: error.message }) + "\n");
-    else process.stderr.write(`Generation refused: ${error.message}\n`);
-    process.exitCode = 1;
+    else
+      process.stderr.write(`${error.code === "GENERATOR_CANCELLED" ? "" : "Generation refused: "}${error.message}\n`);
+    process.exitCode = error.code === "GENERATOR_CANCELLED" ? 130 : 1;
   });
 }

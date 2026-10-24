@@ -14,7 +14,11 @@ npm run generate -- frontend form UserProfile --fields name,email --dry-run
 npm run generate -- frontend form UserProfile --fields name,email
 ```
 
-`npm --prefix frontend run generate -- ...` is equivalent. With an older desktop Node selected, use `bash backend/scripts/with-local-node.sh tools/generators/cli.mjs ...`. `npm run generate` offers a short interactive prompt in a terminal; automation supplies the complete command and can request `--json`. Errors return a nonzero status and never wait for interactive input when stdin is not a terminal.
+`npm --prefix frontend run generate -- ...` is equivalent. With an older desktop Node selected, use `bash backend/scripts/with-local-node.sh tools/generators/cli.mjs ...`.
+
+`npm run generate` opens a colored, grouped menu: choose **Frontend** or **Backend**, then a generator such as **Component** or **Form**. Use ↑/↓ to move, Space or Enter to choose, Page Up/Down to move through the visible list, and Home/End to jump. Esc/← returns to the groups; Esc at the group menu or Ctrl+C cancels. The highlighted choice, description and scroll position adapt to terminal width and height; small terminals use a compact view. Set `NO_COLOR=1` to disable colors. Try `npm run generate -- --dry-run` to explore without writing files.
+
+The [Inquirer terminal engine](https://github.com/SBoudrias/Inquirer.js/tree/main/packages/core) and Unicode width helper are installed with the existing frontend tooling dependencies; run `npm ci` in `frontend/` after pulling this update. After selection, enter the name, fields and any required migration version. Cancellation restores the terminal and exits without generating files. Automation supplies the complete command and can request `--json`. Errors return a nonzero status and never wait for interactive input when stdin is not a terminal.
 
 Names accept PascalCase, lowerCamelCase, acronym words, and separated words. Output consistently uses PascalCase types/components, lowerCamelCase members, kebab-case feature directories and lowercase Java package segments. Paths, reserved identifiers and case aliases are rejected. `--feature Inventory` chooses the capability owner; its default is the supplied name. Fields use `--fields title,notes:string?,quantity:integer,active:boolean`; `?` means optional. Defaults: one required `name` field, maximum text length 120. Visual generators support bounded text fields. Backend and API generators also support signed int32 and boolean values. Identity is server-owned and is never a caller field.
 
@@ -91,7 +95,10 @@ Score each criterion 0–100 and calculate the weighted total. Hard disqualifier
 
 ```json
 {
-  "architecture": { "score": 100, "evidence": "New feature owner and public interface match the requested form." },
+  "architecture": {
+    "score": 100,
+    "evidence": "New feature owner and public interface match the requested form."
+  },
   "conventions": {
     "score": 100,
     "evidence": "Installed RGO/TanStack form, localized Zod and AppEntityForm lifecycle."
@@ -100,7 +107,10 @@ Score each criterion 0–100 and calculate the weighted total. Hard disqualifier
     "score": 85,
     "evidence": "All text fields generated; business-specific cross-field validation remains."
   },
-  "workflow": { "score": 100, "evidence": "Parent callback and automatic DEV preview fit the intended editor." },
+  "workflow": {
+    "score": 100,
+    "evidence": "Parent callback and automatic DEV preview fit the intended editor."
+  },
   "disqualifiers": []
 }
 ```

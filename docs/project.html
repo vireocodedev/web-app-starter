@@ -1371,7 +1371,9 @@ npm run generate -- --list --json
 npm run generate -- frontend form UserProfile --fields name,email --dry-run
 npm run generate -- frontend form UserProfile --fields name,email
 </code></pre>
-<p><code>npm --prefix frontend run generate -- ...</code> is equivalent. With an older desktop Node selected, use <code>bash backend/scripts/with-local-node.sh tools/generators/cli.mjs ...</code>. <code>npm run generate</code> offers a short interactive prompt in a terminal; automation supplies the complete command and can request <code>--json</code>. Errors return a nonzero status and never wait for interactive input when stdin is not a terminal.</p>
+<p><code>npm --prefix frontend run generate -- ...</code> is equivalent. With an older desktop Node selected, use <code>bash backend/scripts/with-local-node.sh tools/generators/cli.mjs ...</code>.</p>
+<p><code>npm run generate</code> opens a colored, grouped menu: choose <strong>Frontend</strong> or <strong>Backend</strong>, then a generator such as <strong>Component</strong> or <strong>Form</strong>. Use ↑/↓ to move, Space or Enter to choose, Page Up/Down to move through the visible list, and Home/End to jump. Esc/← returns to the groups; Esc at the group menu or Ctrl+C cancels. The highlighted choice, description and scroll position adapt to terminal width and height; small terminals use a compact view. Set <code>NO_COLOR=1</code> to disable colors. Try <code>npm run generate -- --dry-run</code> to explore without writing files.</p>
+<p>The <a href="https://github.com/SBoudrias/Inquirer.js/tree/main/packages/core">Inquirer terminal engine</a> and Unicode width helper are installed with the existing frontend tooling dependencies; run <code>npm ci</code> in <code>frontend/</code> after pulling this update. After selection, enter the name, fields and any required migration version. Cancellation restores the terminal and exits without generating files. Automation supplies the complete command and can request <code>--json</code>. Errors return a nonzero status and never wait for interactive input when stdin is not a terminal.</p>
 <p>Names accept PascalCase, lowerCamelCase, acronym words, and separated words. Output consistently uses PascalCase types/components, lowerCamelCase members, kebab-case feature directories and lowercase Java package segments. Paths, reserved identifiers and case aliases are rejected. <code>--feature Inventory</code> chooses the capability owner; its default is the supplied name. Fields use <code>--fields title,notes:string?,quantity:integer,active:boolean</code>; <code>?</code> means optional. Defaults: one required <code>name</code> field, maximum text length 120. Visual generators support bounded text fields. Backend and API generators also support signed int32 and boolean values. Identity is server-owned and is never a caller field.</p>
 <h4 id="source-docsgeneratorsmd--catalog">Catalog</h4>
 <p>Every visual command creates a new <code>src/features/&lt;feature&gt;/index.ts</code> public interface, paired typed English/Croatian resources and a working preview page. Existing owners require deliberate adaptation; the CLI refuses to replace their interface. <code>--help</code> after a target and kind and <code>--list --json</code> expose metadata. All paths below are relative to <code>frontend/</code> or <code>backend/</code>.</p>
@@ -1405,7 +1407,10 @@ npm run generate -- index
 <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Criterion</th><th style="text-align:right">Weight</th><th>Evidence</th></tr></thead><tbody><tr><td>Architecture and file structure</td><td style="text-align:right">30%</td><td>Correct owner, dependencies, lifetime and public interface</td></tr><tr><td>Libraries and conventions</td><td style="text-align:right">25%</td><td>Installed APIs, form/data/style/test conventions</td></tr><tr><td>Relevant output coverage</td><td style="text-align:right">25%</td><td>Useful generated portion of the generator&#x27;s own responsibility</td></tr><tr><td>Workflow integration</td><td style="text-align:right">20%</td><td>Runtime/caller seam, routing/localization/tests and preview fit</td></tr></tbody></table></div>
 <p>Score each criterion 0–100 and calculate the weighted total. Hard disqualifiers are approved-architecture violations, behavior that cannot safely adapt, unsafe/destructive output and unacceptable loss of existing functionality. A filename match is insufficient evidence. No score overrides a disqualifier. The CLI can calculate a transparent assessment:</p>
 <pre tabindex="0"><code class="language-json">{
-  &quot;architecture&quot;: { &quot;score&quot;: 100, &quot;evidence&quot;: &quot;New feature owner and public interface match the requested form.&quot; },
+  &quot;architecture&quot;: {
+    &quot;score&quot;: 100,
+    &quot;evidence&quot;: &quot;New feature owner and public interface match the requested form.&quot;
+  },
   &quot;conventions&quot;: {
     &quot;score&quot;: 100,
     &quot;evidence&quot;: &quot;Installed RGO/TanStack form, localized Zod and AppEntityForm lifecycle.&quot;
@@ -1414,7 +1419,10 @@ npm run generate -- index
     &quot;score&quot;: 85,
     &quot;evidence&quot;: &quot;All text fields generated; business-specific cross-field validation remains.&quot;
   },
-  &quot;workflow&quot;: { &quot;score&quot;: 100, &quot;evidence&quot;: &quot;Parent callback and automatic DEV preview fit the intended editor.&quot; },
+  &quot;workflow&quot;: {
+    &quot;score&quot;: 100,
+    &quot;evidence&quot;: &quot;Parent callback and automatic DEV preview fit the intended editor.&quot;
+  },
   &quot;disqualifiers&quot;: []
 }
 </code></pre>
@@ -1424,7 +1432,7 @@ npm run generate -- index
 <p>Report only meaningful coverage, for example <code>Order form | frontend/form | 96.25% with cited criteria | generated + customized</code>. For a specialized chart or tenant mutation, report the missing contract instead of inventing a compatible score.</p>
 <h4 id="source-docsgeneratorsmd--extend-and-verify">Extend and verify</h4>
 <p><code>tools/generators/registry.mjs</code> owns metadata, <code>templates/</code> pure output, <code>core.mjs</code> complete planning and formatting, and <code>filesystem.mjs</code> safe application. Add a template and catalog entry, exact guide/starter/Client Discovery traceability, supported inputs/limitations and failure coverage. Compose pure renderers instead of spawning nested CLI runs. Keep generated business code separate from mechanical indexes; preserve applied Flyway bytes.</p>
-<p>Run <code>npm run test:generators</code> for naming, catalog-wide output, options, determinism, dry-run, collision, cross-platform path, partial failure and policy tests. Use the isolated output rehearsal described in <a href="#source-docsgenerators-verificationmd">verification evidence</a> for real frontend/backend compilation, emitted tests, browser interactions and production graph inspection. Follow the repository&#x27;s existing full checks and serial resource budget; do not equate snapshots or source inspection with runtime success.</p></div><div class="digest">Source SHA-256 · d8cfca3bc25689a33a39b1956a4ca24faadb2606c4b1d86d751206a8f559638c</div></section><section class="panel record" data-kind="procedure" id="source-docsgenerators-analysismd">
+<p>Run <code>npm run test:generators</code> for naming, catalog-wide output, options, determinism, dry-run, collision, cross-platform path, partial failure and policy tests. Use the isolated output rehearsal described in <a href="#source-docsgenerators-verificationmd">verification evidence</a> for real frontend/backend compilation, emitted tests, browser interactions and production graph inspection. Follow the repository&#x27;s existing full checks and serial resource budget; do not equate snapshots or source inspection with runtime success.</p></div><div class="digest">Source SHA-256 · 0eb71951f4e07b5296c74fdcc303fc9776a45fe24e21ce368df00310ea26258f</div></section><section class="panel record" data-kind="procedure" id="source-docsgenerators-analysismd">
 <div class="panel-heading"><div><div class="source-path">docs/generators-analysis.md</div><h2>Generator analysis and pattern traceability</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsgenerators-analysismd--generator-analysis-and-pattern-traceability">Generator analysis and pattern traceability</h3>
 <p>This report records why the generator catalog uses its selected patterns. Read the
@@ -2959,7 +2967,7 @@ authority remain human tasks. Client Discovery collects preparation; only live
 verification can establish runtime, CI, deployment and initialized recovery
 acceptance. Unexpected post-intake assistance is a preparation defect to record,
 not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · e2c96b5e68a2815894eac7877def221c7c3413e2b7ef9d6025950f3d581d828e</div></section>
-<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · baa572b9e69b1a7ef53cb6448eb8bfd5800f137f582903568091a12e1487d52c</p></footer>
+<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · dd256336e630bd5fbb62fb478a879a717fc13b849859d62e3d66556901345de5</p></footer>
 </main></div><script>
 const records = [...document.querySelectorAll(".record")];
 const search = document.querySelector("#search");
