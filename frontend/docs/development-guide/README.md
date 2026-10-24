@@ -72,6 +72,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Persisted state
 
 - [Versioned persisted preferences](en/frontend/state/versioned-persisted-preferences.md) · [Hrvatski](hr/frontend/state/versioned-persisted-preferences.md)
+- [Signal hydration and disposable effects](en/frontend/state/signal-hydration-and-disposable-effects.md) · [Hrvatski](hr/frontend/state/signal-hydration-and-disposable-effects.md)
 
 #### Forms and commands
 
@@ -84,6 +85,31 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 - [Imperative SDK lifetimes](en/frontend/specialized/imperative-sdk-lifetimes.md) · [Hrvatski](hr/frontend/specialized/imperative-sdk-lifetimes.md)
 - [Draft and visualization synchronization](en/frontend/specialized/draft-and-visualization-synchronization.md) · [Hrvatski](hr/frontend/specialized/draft-and-visualization-synchronization.md)
+
+#### Application startup
+
+- [Validated public configuration](en/frontend/platform/validated-public-configuration.md) · [Hrvatski](hr/frontend/platform/validated-public-configuration.md)
+- [Mock boundary before runtime](en/frontend/platform/mock-boundary-before-runtime.md) · [Hrvatski](hr/frontend/platform/mock-boundary-before-runtime.md)
+- [Root runtime and provider order](en/frontend/platform/root-runtime-and-provider-order.md) · [Hrvatski](hr/frontend/platform/root-runtime-and-provider-order.md)
+- [Startup and render recovery](en/frontend/platform/startup-and-render-recovery.md) · [Hrvatski](hr/frontend/platform/startup-and-render-recovery.md)
+
+#### Preferences and storage
+
+- [Fixed settings and user precedence](en/frontend/preferences/fixed-settings-and-user-precedence.md) · [Hrvatski](hr/frontend/preferences/fixed-settings-and-user-precedence.md)
+- [Storage failure and cross-tab updates](en/frontend/preferences/storage-failure-and-cross-tab-updates.md) · [Hrvatski](hr/frontend/preferences/storage-failure-and-cross-tab-updates.md)
+
+#### Localization resources
+
+- [Typed resource shapes and locale switching](en/frontend/localization/typed-resource-shapes-and-locale-switching.md) · [Hrvatski](hr/frontend/localization/typed-resource-shapes-and-locale-switching.md)
+
+#### Focus and presentation
+
+- [Focus ownership across portals and routes](en/frontend/accessibility/focus-ownership-across-portals-and-routes.md) · [Hrvatski](hr/frontend/accessibility/focus-ownership-across-portals-and-routes.md)
+- [Motion, contrast and control size](en/frontend/accessibility/motion-contrast-and-control-size.md) · [Hrvatski](hr/frontend/accessibility/motion-contrast-and-control-size.md)
+
+#### Overlay protocols
+
+- [Guarded command results and session identity](en/frontend/overlays/guarded-command-results-and-session-identity.md) · [Hrvatski](hr/frontend/overlays/guarded-command-results-and-session-identity.md)
 
 ### Backend
 

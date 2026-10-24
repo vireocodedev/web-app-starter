@@ -51,6 +51,29 @@ export const englishFrontendHandbookTranslations = {
       title: "Specialized interfaces",
       description: "Contain imperative SDK lifetimes and synchronize drafts with external visual representations.",
     },
+    "frontend-platform": {
+      title: "Application startup",
+      description:
+        "Validate public configuration, await transport readiness, own runtime/provider order, and recover from startup/render failures.",
+    },
+    "frontend-preferences": {
+      title: "Preferences and storage",
+      description:
+        "Apply fixed settings, user precedence, resilient storage and deliberately scoped cross-tab subscriptions.",
+    },
+    "frontend-localization": {
+      title: "Localization resources",
+      description: "Keep typed resource keys and locale-dependent formatting aligned with stable domain state.",
+    },
+    "frontend-accessibility": {
+      title: "Focus and presentation",
+      description:
+        "Own route/portal focus, reduced motion, contrast and control size through the actual application contracts.",
+    },
+    "frontend-overlays": {
+      title: "Overlay protocols",
+      description: "Await guarded closure and keep command outcomes tied to the exact mounted presentation session.",
+    },
   },
   articles: {
     "frontend-editing-pinned-values-and-revisions": {
@@ -211,6 +234,61 @@ export const englishFrontendHandbookTranslations = {
       title: "File import command results",
       description:
         "Separate file transport, accepted processing, applied records and recovery while preserving safe retry and download ownership.",
+    },
+    "frontend-platform-validated-public-configuration": {
+      title: "Validated public configuration",
+      description:
+        "Reject unknown public keys and invalid values before runtime while separating browser inputs from secrets and build-mode policy.",
+    },
+    "frontend-platform-mock-boundary-before-runtime": {
+      title: "Mock boundary before runtime",
+      description:
+        "Await development transport readiness before creating request owners and keep fixture scope distinct from backend evidence.",
+    },
+    "frontend-platform-root-runtime-and-provider-order": {
+      title: "Root runtime and provider order",
+      description:
+        "Create stable services once and order React providers by dependency without splitting cache or promoting page lifetimes globally.",
+    },
+    "frontend-platform-startup-and-render-recovery": {
+      title: "Startup and render recovery",
+      description:
+        "Separate bootstrap, render and command failures with provider-independent recovery and honest reporting/cleanup limits.",
+    },
+    "frontend-state-signal-hydration-and-disposable-effects": {
+      title: "Signal hydration and disposable effects",
+      description:
+        "Hydrate every group before synchronous effects and preserve rollback, reverse cleanup and generation-scoped HMR lifetimes.",
+    },
+    "frontend-preferences-fixed-settings-and-user-precedence": {
+      title: "Fixed settings and user precedence",
+      description:
+        "Apply deployment-fixed choices through values, controls and guarded setters without overwriting saved user preferences.",
+    },
+    "frontend-preferences-storage-failure-and-cross-tab-updates": {
+      title: "Storage failure and cross-tab updates",
+      description:
+        "Separate validated resilient reads, fallible writes, live provider state and the exact preferences with external-tab subscriptions.",
+    },
+    "frontend-localization-typed-resource-shapes-and-locale-switching": {
+      title: "Typed resource shapes and locale switching",
+      description:
+        "Align structural keys, plural/interpolation review and active-locale recomputation over stable business state.",
+    },
+    "frontend-accessibility-focus-ownership-across-portals-and-routes": {
+      title: "Focus ownership across portals and routes",
+      description:
+        "Release modal traps before navigation or fragment scrolling and distinguish opener restoration from new-route focus.",
+    },
+    "frontend-accessibility-motion-contrast-and-control-size": {
+      title: "Motion, contrast and control size",
+      description:
+        "Consume semantic theme preferences while preserving progress feedback and verifying real custom-control and animation limits.",
+    },
+    "frontend-overlays-guarded-command-results-and-session-identity": {
+      title: "Guarded command results and session identity",
+      description:
+        "Keep UI outcome, acknowledged command, guarded exit and captured presentation tied to their exact mount/view session.",
     },
   },
 } as const;

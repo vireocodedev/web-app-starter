@@ -58,6 +58,29 @@ export const croatianFrontendHandbookTranslations = {
       title: "Specijalizirana sučelja",
       description: "Ograničite životni vijek imperativnih SDK-ova i uskladite nacrte s vanjskim vizualnim prikazima.",
     },
+    "frontend-platform": {
+      title: "Pokretanje aplikacije",
+      description:
+        "Provjerite javnu konfiguraciju, pričekajte transport, odredite runtime i providere te oporavak od pogrešaka pokretanja i renderiranja.",
+    },
+    "frontend-preferences": {
+      title: "Postavke i pohrana",
+      description:
+        "Provedite fiksne postavke, korisničku prednost, otpornu pohranu i namjerno ograničene pretplate među karticama.",
+    },
+    "frontend-localization": {
+      title: "Resursi lokalizacije",
+      description: "Uskladite tipizirane ključeve i oblikovanje ovisno o jeziku sa stabilnim stanjem domene.",
+    },
+    "frontend-accessibility": {
+      title: "Fokus i prikaz",
+      description:
+        "Upravljajte fokusom ruta i portala, smanjenim kretanjem, kontrastom i veličinom kontrola kroz stvarne ugovore aplikacije.",
+    },
+    "frontend-overlays": {
+      title: "Overlay protokoli",
+      description: "Pričekajte zatvaranje s guardom i vežite ishode naredbi uz točnu montiranu sesiju prikaza.",
+    },
   },
   articles: {
     "frontend-editing-pinned-values-and-revisions": {
@@ -213,6 +236,55 @@ export const croatianFrontendHandbookTranslations = {
       title: "Ishodi naredbe uvoza datoteke",
       description:
         "Odvojite prijenos, prihvaćenu obradu, primijenjene zapise i oporavak uz sigurno ponavljanje i preuzimanje.",
+    },
+    "frontend-platform-validated-public-configuration": {
+      title: "Provjerena javna konfiguracija",
+      description:
+        "Odbijte nepoznate javne ključeve i nevaljane vrijednosti prije runtimea uz jasnu build i secret granicu.",
+    },
+    "frontend-platform-mock-boundary-before-runtime": {
+      title: "Mock granica prije runtimea",
+      description: "Čekajte razvojni transport prije stvaranja zahtjeva i odvojite fixture opseg od backend dokaza.",
+    },
+    "frontend-platform-root-runtime-and-provider-order": {
+      title: "Root runtime i poredak providera",
+      description:
+        "Jednom stvorite servise i providere redajte prema ovisnosti bez drugog cachea i globalizacije page vijeka.",
+    },
+    "frontend-platform-startup-and-render-recovery": {
+      title: "Startup i render oporavak",
+      description: "Odvojite bootstrap, render i naredbu uz neovisan oporavak te točne granice prijave i čišćenja.",
+    },
+    "frontend-state-signal-hydration-and-disposable-effects": {
+      title: "Hidracija signala i effecti s cleanupom",
+      description:
+        "Hidratirajte sve grupe prije sinkronih effecta uz rollback, obrnuto čišćenje i generacijski HMR vijek.",
+    },
+    "frontend-preferences-fixed-settings-and-user-precedence": {
+      title: "Fiksne postavke i korisnička prednost",
+      description:
+        "Provedite fiksni deploy izbor kroz vrijednosti, kontrole i settere bez prepisivanja korisničkih postavki.",
+    },
+    "frontend-preferences-storage-failure-and-cross-tab-updates": {
+      title: "Pogreške pohrane i promjene među karticama",
+      description: "Odvojite otporno čitanje, write pogreške, živo stanje i točan opseg cross-tab pretplata.",
+    },
+    "frontend-localization-typed-resource-shapes-and-locale-switching": {
+      title: "Tipizirani resursi i promjena jezika",
+      description:
+        "Uskladite strukturu ključeva, množinu i interpolaciju te recomputation jezika nad stabilnom domenom.",
+    },
+    "frontend-accessibility-focus-ownership-across-portals-and-routes": {
+      title: "Vlasništvo fokusa kroz portale i rute",
+      description: "Oslobodite modal prije navigacije ili fragmenta i odvojite opener restore od fokusa nove rute.",
+    },
+    "frontend-accessibility-motion-contrast-and-control-size": {
+      title: "Motion, kontrast i veličina kontrola",
+      description: "Koristite semantičku temu uz progress i stvarne granice custom kontrola i animacije.",
+    },
+    "frontend-overlays-guarded-command-results-and-session-identity": {
+      title: "Zaštićeni ishodi i identitet overlay sesije",
+      description: "Vežite UI ishod, potvrdu naredbe, guard i zabilježeni prikaz uz točnu mount i view sesiju.",
     },
   },
 } satisfies StringLeaves<typeof englishFrontendHandbookTranslations>;
