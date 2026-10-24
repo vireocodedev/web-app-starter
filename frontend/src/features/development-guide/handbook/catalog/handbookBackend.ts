@@ -1726,5 +1726,152 @@ export const backendHandbookCatalog = {
         "backend-integrations-bounded-scheduled-work",
       ],
     },
+    {
+      id: "backend-data-namespaced-deterministic-identities",
+      topicId: "backend-data",
+      slug: "namespaced-deterministic-identities",
+      contentPath: "backend/data/namespaced-deterministic-identities",
+      titleKey: "handbook.articles.backend-data-namespaced-deterministic-identities.title",
+      descriptionKey: "handbook.articles.backend-data-namespaced-deterministic-identities.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DeliveryTimeLineage.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-data-digests-and-reviewed-artifact-versions",
+        "backend-integrations-durable-ingestion-deduplication",
+      ],
+    },
+    {
+      id: "backend-data-replacement-lineage-and-cycle-rejection",
+      topicId: "backend-data",
+      slug: "replacement-lineage-and-cycle-rejection",
+      contentPath: "backend/data/replacement-lineage-and-cycle-rejection",
+      titleKey: "handbook.articles.backend-data-replacement-lineage-and-cycle-rejection.title",
+      descriptionKey: "handbook.articles.backend-data-replacement-lineage-and-cycle-rejection.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DeliveryTimeLineage.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-data-namespaced-deterministic-identities",
+        "backend-data-audit-fields-events-and-versions",
+        "backend-queries-read-budgets-and-unknown-coverage",
+      ],
+    },
+    {
+      id: "backend-time-effective-version-period-generation",
+      topicId: "backend-time",
+      slug: "effective-version-period-generation",
+      contentPath: "backend/time/effective-version-period-generation",
+      titleKey: "handbook.articles.backend-time-effective-version-period-generation.title",
+      descriptionKey: "handbook.articles.backend-time-effective-version-period-generation.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceAgreementService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServicePeriodService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-time-canonical-calendar-values-and-instants",
+        "backend-integrations-bounded-scheduled-work",
+        "backend-data-audit-fields-events-and-versions",
+      ],
+    },
+    {
+      id: "backend-application-services-cross-owner-acknowledgments",
+      topicId: "backend-application-services",
+      slug: "cross-owner-acknowledgments",
+      contentPath: "backend/application-services/cross-owner-acknowledgments",
+      titleKey: "handbook.articles.backend-application-services-cross-owner-acknowledgments.title",
+      descriptionKey: "handbook.articles.backend-application-services-cross-owner-acknowledgments.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceOperatorService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ApplicationServiceBillingOwner.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServicePeriodService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-transactional-commands",
+        "backend-integrations-claim-call-reconcile",
+        "backend-integrations-uncertain-provider-outcomes",
+      ],
+    },
+    {
+      id: "backend-application-services-resumable-batches-and-item-receipts",
+      topicId: "backend-application-services",
+      slug: "resumable-batches-and-item-receipts",
+      contentPath: "backend/application-services/resumable-batches-and-item-receipts",
+      titleKey: "handbook.articles.backend-application-services-resumable-batches-and-item-receipts.title",
+      descriptionKey: "handbook.articles.backend-application-services-resumable-batches-and-item-receipts.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceOperatorService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-cross-owner-acknowledgments",
+        "frontend-async-commands-stable-retry-identity",
+        "backend-integrations-durable-ingestion-deduplication",
+      ],
+    },
+    {
+      id: "backend-application-services-receive-requests-before-qualified-decisions",
+      topicId: "backend-application-services",
+      slug: "receive-requests-before-qualified-decisions",
+      contentPath: "backend/application-services/receive-requests-before-qualified-decisions",
+      titleKey: "handbook.articles.backend-application-services-receive-requests-before-qualified-decisions.title",
+      descriptionKey:
+        "handbook.articles.backend-application-services-receive-requests-before-qualified-decisions.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceCancellationService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-transition-specific-command-handlers",
+        "backend-application-services-transactional-commands",
+        "backend-integrations-intent-and-observed-state",
+      ],
+    },
   ],
 } as const satisfies HandbookCategoryCatalog;

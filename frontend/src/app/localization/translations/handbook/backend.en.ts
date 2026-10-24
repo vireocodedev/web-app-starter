@@ -280,5 +280,35 @@ export const englishBackendHandbookTranslations = {
       description:
         "Walk predecessor-dependent work from the changed point, preserve protected choices or reject the edit, and distinguish derived maintenance from durable distributed planning.",
     },
+    "backend-data-namespaced-deterministic-identities": {
+      title: "Namespaced deterministic identities",
+      description:
+        "Define stable source identities through a versioned namespace and exact byte framing without confusing naming with authority.",
+    },
+    "backend-data-replacement-lineage-and-cycle-rejection": {
+      title: "Replacement lineage and cycle rejection",
+      description:
+        "Resolve exact replacement mappings, preserve root evidence and bound traversal while separating ancestry from historical-use permission.",
+    },
+    "backend-time-effective-version-period-generation": {
+      title: "Effective versions and resumable period generation",
+      description:
+        "Select applicable accepted terms per index and materialize immutable period evidence through bounded, resumable generation.",
+    },
+    "backend-application-services-cross-owner-acknowledgments": {
+      title: "Cross-owner acknowledgments",
+      description:
+        "Bridge independently committed owners through exact source digests and retained receiver acknowledgments rather than method-return assumptions.",
+    },
+    "backend-application-services-resumable-batches-and-item-receipts": {
+      title: "Resumable batches and item receipts",
+      description:
+        "Freeze actor-bound batch intent, retain ordered item outcomes and distinguish durable completion from successful effects.",
+    },
+    "backend-application-services-receive-requests-before-qualified-decisions": {
+      title: "Receive requests before qualified decisions",
+      description:
+        "Keep authorized intake, verified source evidence, qualified decisions and effective application as separately retained lifecycle facts.",
+    },
   },
 } as const;

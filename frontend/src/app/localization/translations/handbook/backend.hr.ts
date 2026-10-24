@@ -285,5 +285,35 @@ export const croatianBackendHandbookTranslations = {
       description:
         "Popravite ovisni nastavak od promjene, čuvajte protected ili odbijte edit te razlikujte maintenance i trajni distribuirani planning.",
     },
+    "backend-data-namespaced-deterministic-identities": {
+      title: "Deterministički identiteti s namespaceom",
+      description:
+        "Definirajte stabilne identitete izvora verzioniranim namespaceom i točnim kodiranjem bajtova, odvojeno od ovlasti.",
+    },
+    "backend-data-replacement-lineage-and-cycle-rejection": {
+      title: "Podrijetlo zamjena i odbijanje ciklusa",
+      description:
+        "Razriješite točna mapiranja zamjena, očuvajte dokaz korijena i ograničite obilazak uz zasebnu dozvolu povijesne uporabe.",
+    },
+    "backend-time-effective-version-period-generation": {
+      title: "Važeće verzije i nastavak stvaranja perioda",
+      description:
+        "Birajte primjenjive prihvaćene uvjete po indeksu i zadržite nepromjenjive dokaze perioda ograničenim nastavljivim generiranjem.",
+    },
+    "backend-application-services-cross-owner-acknowledgments": {
+      title: "Potvrde prihvata između vlasnika",
+      description:
+        "Povežite neovisne commitove vlasnika točnim digestom izvora i zadržanom potvrdom primatelja umjesto pretpostavkom iz povratka metode.",
+    },
+    "backend-application-services-resumable-batches-and-item-receipts": {
+      title: "Nastavljive skupine rada i potvrde stavki",
+      description:
+        "Zamrznite namjeru skupine vezanu uz aktera, zadržite uređene ishode stavki i razlikujte trajni završetak od uspješnih učinaka.",
+    },
+    "backend-application-services-receive-requests-before-qualified-decisions": {
+      title: "Zaprimite zahtjeve prije kvalificiranih odluka",
+      description:
+        "Odvojeno zadržite autorizirano zaprimanje, verificirani izvor, kvalificiranu odluku i primjenu učinka.",
+    },
   },
 } satisfies StringLeaves<typeof englishBackendHandbookTranslations>;

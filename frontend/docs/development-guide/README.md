@@ -137,6 +137,9 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Reconcile an owned child collection by stable identity](en/backend/application-services/reconcile-owned-child-collections.md) · [Hrvatski](hr/backend/application-services/reconcile-owned-child-collections.md)
 - [Move children between aggregates as one authorized graph change](en/backend/application-services/move-children-between-aggregates.md) · [Hrvatski](hr/backend/application-services/move-children-between-aggregates.md)
 - [Repair the affected suffix of a dependent sequence](en/backend/application-services/repair-dependent-sequences.md) · [Hrvatski](hr/backend/application-services/repair-dependent-sequences.md)
+- [Cross-owner acknowledgments](en/backend/application-services/cross-owner-acknowledgments.md) · [Hrvatski](hr/backend/application-services/cross-owner-acknowledgments.md)
+- [Resumable batches and item receipts](en/backend/application-services/resumable-batches-and-item-receipts.md) · [Hrvatski](hr/backend/application-services/resumable-batches-and-item-receipts.md)
+- [Receive requests before qualified decisions](en/backend/application-services/receive-requests-before-qualified-decisions.md) · [Hrvatski](hr/backend/application-services/receive-requests-before-qualified-decisions.md)
 
 #### Data and schema
 
@@ -146,6 +149,8 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Audit fields, events and immutable versions answer different questions](en/backend/data/audit-fields-events-and-versions.md) · [Hrvatski](hr/backend/data/audit-fields-events-and-versions.md)
 - [Keep exact decimals separate from rounding and display policy](en/backend/data/exact-decimals-and-rounding-policy.md) · [Hrvatski](hr/backend/data/exact-decimals-and-rounding-policy.md)
 - [Bind review and export to exact retained artifact versions](en/backend/data/digests-and-reviewed-artifact-versions.md) · [Hrvatski](hr/backend/data/digests-and-reviewed-artifact-versions.md)
+- [Namespaced deterministic identities](en/backend/data/namespaced-deterministic-identities.md) · [Hrvatski](hr/backend/data/namespaced-deterministic-identities.md)
+- [Replacement lineage and cycle rejection](en/backend/data/replacement-lineage-and-cycle-rejection.md) · [Hrvatski](hr/backend/data/replacement-lineage-and-cycle-rejection.md)
 
 #### Queries and read models
 
@@ -185,6 +190,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Temporal values
 
 - [Keep calendar values distinct from event instants](en/backend/time/canonical-calendar-values-and-instants.md) · [Hrvatski](hr/backend/time/canonical-calendar-values-and-instants.md)
+- [Effective versions and resumable period generation](en/backend/time/effective-version-period-generation.md) · [Hrvatski](hr/backend/time/effective-version-period-generation.md)
 
 #### Cross-stack contracts
 
