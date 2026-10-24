@@ -21,6 +21,11 @@ export const croatianDeliveryHandbookTranslations = {
       title: "Migracije i oporavak",
       description: "Sačuvajte podatke i utvrdite točnu granicu neuspjeha.",
     },
+    "delivery-operations": {
+      title: "Operacije na hostu",
+      description:
+        "Povežite pouzdanu predaju hostu, izolaciju okruženja, dijagnostiku i izričito provisioniranje s dokazima vezanim uz izvor.",
+    },
   },
   articles: {
     "delivery-releases-immutable-image-pairs": {
@@ -56,6 +61,40 @@ export const croatianDeliveryHandbookTranslations = {
       title: "Build, objava i deployment zahtjev trebaju različite ovlasti",
       description:
         "Odvoji aplikacijski build, registry objavu u svježem workeru i šifrirani host zahtjev fiksnog ugovora.",
+    },
+    "delivery-operations-encrypted-host-handoff": {
+      title: "Pošalji šifrirani ticket fiksnom pouzdanom host kodu",
+      description: "Neovisno autoriziraj šifrirani zahtjev fiksnog ugovora pa izvrši zaštićeni instalirani host kod.",
+    },
+    "delivery-operations-environment-and-database-isolation": {
+      title: "Odvoji identitet okruženja od zamjene aplikacije",
+      description:
+        "Odvoji konfiguraciju i trajnu bazu svakog okruženja dok release mijenja samo immutable aplikacijski par.",
+    },
+    "delivery-recovery-durable-backup-artifacts": {
+      title: "Backup je dovršen tek nakon trajne provjere artefakta",
+      description:
+        "Provjeri arhivu, checksum i trajnost konačnog naziva te jasno ograniči retenciju i server-loss zaštitu.",
+    },
+    "delivery-recovery-isolated-restore-rehearsal": {
+      title: "Oporavak probaj iz preuzete kopije u izoliranoj bazi",
+      description:
+        "Obnovi točnu preuzetu provjerenu kopiju u izolirani task PostgreSQL i potvrdi inicijalizaciju bez dodira live podataka.",
+    },
+    "delivery-recovery-reconcile-uncertain-releases": {
+      title: "Prije retrya razriješi neizvjestan release",
+      description:
+        "Poveži request i transaction dokaze sa slikama, shemom i javnim stanjem prije retrya ili data-loss odluke.",
+    },
+    "delivery-operations-health-and-diagnostic-evidence": {
+      title: "Odvojeno dijagnosticiraj dostupnost, identitet i ponašanje",
+      description:
+        "Koristi slojevite health/identity provjere i ciljanu netajnu dijagnostiku uz odvojeni poslovni prihvat.",
+    },
+    "delivery-operations-provisioning-after-deployment": {
+      title: "Početni identitet provisioniraj zasebnom naredbom nakon deploymenta",
+      description:
+        "Koristi prihvaćeni digest i odvojene tajne za izričito stvaranje računa koje čuva isti repeat i odbija konflikt.",
     },
   },
 } satisfies StringLeaves<typeof englishDeliveryHandbookTranslations>;

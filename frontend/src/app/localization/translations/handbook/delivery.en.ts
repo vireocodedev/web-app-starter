@@ -18,6 +18,11 @@ export const englishDeliveryHandbookTranslations = {
       title: "Migration and recovery",
       description: "Preserve data and reconcile the exact failure boundary.",
     },
+    "delivery-operations": {
+      title: "Host operations",
+      description:
+        "Keep trusted host handoff, environment isolation, diagnostics, and explicit provisioning tied to source-bound evidence.",
+    },
   },
   articles: {
     "delivery-releases-immutable-image-pairs": {
@@ -54,6 +59,41 @@ export const englishDeliveryHandbookTranslations = {
       title: "Give build, publication and deployment request different authority",
       description:
         "Separate untrusted application builds, fresh-worker registry publication and encrypted fixed-contract host requests.",
+    },
+    "delivery-operations-encrypted-host-handoff": {
+      title: "Send an encrypted ticket to fixed trusted host code",
+      description:
+        "Authenticate a ciphertext-only fixed-contract request independently of encryption, then execute protected installed host code.",
+    },
+    "delivery-operations-environment-and-database-isolation": {
+      title: "Separate environment identity from application replacement",
+      description:
+        "Give each environment distinct protected configuration and persistent database resources while app releases replace only their immutable pair.",
+    },
+    "delivery-recovery-durable-backup-artifacts": {
+      title: "A backup is complete only after durable verification",
+      description:
+        "Publish a protected dump and metadata only through archive, checksum and directory-durability checks; state retention and server-loss limits.",
+    },
+    "delivery-recovery-isolated-restore-rehearsal": {
+      title: "Rehearse recovery from the retrieved copy in isolation",
+      description:
+        "Restore the exact retrieved verified backup into task-owned isolated PostgreSQL and inspect initialized evidence without touching live data.",
+    },
+    "delivery-recovery-reconcile-uncertain-releases": {
+      title: "Reconcile an uncertain release before retrying mutation",
+      description:
+        "Relate exact request and transaction evidence to actual images, schema and public state before any retry or data-loss decision.",
+    },
+    "delivery-operations-health-and-diagnostic-evidence": {
+      title: "Diagnose availability, identity and behavior as separate evidence",
+      description:
+        "Use layered health and identity probes with targeted credential-free diagnostics without conflating infrastructure health and business acceptance.",
+    },
+    "delivery-operations-provisioning-after-deployment": {
+      title: "Provision the initial identity as a separate post-deployment command",
+      description:
+        "Use the accepted backend digest and separate protected inputs for explicit account creation that preserves matching repeats and rejects conflicts.",
     },
   },
 } as const;

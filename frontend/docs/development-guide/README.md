@@ -119,9 +119,19 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Stage a verified pair and promote exactly what was accepted](en/delivery/releases/staging-and-production-promotion.md) · [Hrvatski](hr/delivery/releases/staging-and-production-promotion.md)
 - [Give build, publication and deployment request different authority](en/delivery/releases/build-publish-request-boundaries.md) · [Hrvatski](hr/delivery/releases/build-publish-request-boundaries.md)
 
+#### Host operations
+
+- [Send an encrypted ticket to fixed trusted host code](en/delivery/operations/encrypted-host-handoff.md) · [Hrvatski](hr/delivery/operations/encrypted-host-handoff.md)
+- [Separate environment identity from application replacement](en/delivery/operations/environment-and-database-isolation.md) · [Hrvatski](hr/delivery/operations/environment-and-database-isolation.md)
+- [Diagnose availability, identity and behavior as separate evidence](en/delivery/operations/health-and-diagnostic-evidence.md) · [Hrvatski](hr/delivery/operations/health-and-diagnostic-evidence.md)
+- [Provision the initial identity as a separate post-deployment command](en/delivery/operations/provisioning-after-deployment.md) · [Hrvatski](hr/delivery/operations/provisioning-after-deployment.md)
+
 #### Migration and recovery
 
 - [Recover at the correct migration failure boundary](en/delivery/recovery/migration-failure-boundaries.md) · [Hrvatski](hr/delivery/recovery/migration-failure-boundaries.md)
+- [A backup is complete only after durable verification](en/delivery/recovery/durable-backup-artifacts.md) · [Hrvatski](hr/delivery/recovery/durable-backup-artifacts.md)
+- [Rehearse recovery from the retrieved copy in isolation](en/delivery/recovery/isolated-restore-rehearsal.md) · [Hrvatski](hr/delivery/recovery/isolated-restore-rehearsal.md)
+- [Reconcile an uncertain release before retrying mutation](en/delivery/recovery/reconcile-uncertain-releases.md) · [Hrvatski](hr/delivery/recovery/reconcile-uncertain-releases.md)
 
 ### Developer workflow
 
