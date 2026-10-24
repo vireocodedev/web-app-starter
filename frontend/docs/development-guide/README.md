@@ -52,6 +52,22 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Show readable evidence before an exact decision](en/frontend/task-interfaces/readable-review-and-exact-decisions.md) · [Hrvatski](hr/frontend/task-interfaces/readable-review-and-exact-decisions.md)
 - [Prerequisites report evidence; receipts report acknowledged outcomes](en/frontend/task-interfaces/prerequisites-and-confirmed-receipts.md) · [Hrvatski](hr/frontend/task-interfaces/prerequisites-and-confirmed-receipts.md)
 
+#### Realtime events
+
+- [Authenticated event lifetimes](en/frontend/real-time/authenticated-event-lifetimes.md) · [Hrvatski](hr/frontend/real-time/authenticated-event-lifetimes.md)
+- [Event-to-cache reconciliation](en/frontend/real-time/event-to-cache-reconciliation.md) · [Hrvatski](hr/frontend/real-time/event-to-cache-reconciliation.md)
+
+#### Offline workflows
+
+- [Capability-scoped offline adapters](en/frontend/offline/capability-scoped-offline-adapters.md) · [Hrvatski](hr/frontend/offline/capability-scoped-offline-adapters.md)
+- [Durable command queues](en/frontend/offline/durable-command-queues.md) · [Hrvatski](hr/frontend/offline/durable-command-queues.md)
+- [Synchronization state machines](en/frontend/offline/synchronization-state-machines.md) · [Hrvatski](hr/frontend/offline/synchronization-state-machines.md)
+- [Worker snapshots and last-good data](en/frontend/offline/worker-snapshots-and-last-good-data.md) · [Hrvatski](hr/frontend/offline/worker-snapshots-and-last-good-data.md)
+
+#### Persisted state
+
+- [Versioned persisted preferences](en/frontend/state/versioned-persisted-preferences.md) · [Hrvatski](hr/frontend/state/versioned-persisted-preferences.md)
+
 ### Backend
 
 #### Foundation

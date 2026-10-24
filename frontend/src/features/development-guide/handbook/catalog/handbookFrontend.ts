@@ -50,6 +50,27 @@ export const frontendHandbookCatalog = {
       titleKey: "handbook.topics.frontend-task-interfaces.title",
       descriptionKey: "handbook.topics.frontend-task-interfaces.description",
     },
+    {
+      id: "frontend-real-time",
+      categoryId: "frontend-workflows",
+      slug: "real-time",
+      titleKey: "handbook.topics.frontend-real-time.title",
+      descriptionKey: "handbook.topics.frontend-real-time.description",
+    },
+    {
+      id: "frontend-offline",
+      categoryId: "frontend-workflows",
+      slug: "offline",
+      titleKey: "handbook.topics.frontend-offline.title",
+      descriptionKey: "handbook.topics.frontend-offline.description",
+    },
+    {
+      id: "frontend-state",
+      categoryId: "frontend-workflows",
+      slug: "state",
+      titleKey: "handbook.topics.frontend-state.title",
+      descriptionKey: "handbook.topics.frontend-state.description",
+    },
   ],
   articles: [
     {
@@ -544,6 +565,240 @@ export const frontendHandbookCatalog = {
       relatedArticleIds: [
         "frontend-collections-client-and-server-table-ownership",
         "frontend-access-revocation-and-private-cache",
+      ],
+    },
+    {
+      id: "frontend-real-time-authenticated-event-lifetimes",
+      topicId: "frontend-real-time",
+      slug: "authenticated-event-lifetimes",
+      contentPath: "frontend/real-time/authenticated-event-lifetimes",
+      titleKey: "handbook.articles.frontend-real-time-authenticated-event-lifetimes.title",
+      descriptionKey: "handbook.articles.frontend-real-time-authenticated-event-lifetimes.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "FRED/FRED-front",
+          path: "src/shared/providers/SseProvider/SseProvider.tsx",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sse/providers/LmsSseProvider.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-async-commands-owned-reads-and-shared-subscriptions",
+        "frontend-access-revocation-and-private-cache",
+      ],
+    },
+    {
+      id: "frontend-real-time-event-to-cache-reconciliation",
+      topicId: "frontend-real-time",
+      slug: "event-to-cache-reconciliation",
+      contentPath: "frontend/real-time/event-to-cache-reconciliation",
+      titleKey: "handbook.articles.frontend-real-time-event-to-cache-reconciliation.title",
+      descriptionKey: "handbook.articles.frontend-real-time-event-to-cache-reconciliation.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sse/events/update/handler.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sse/events/update/type.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sse/events/heartbeat/handler.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "FRED/FRED-front",
+          path: "src/infrastructure/sse/SseVehicleEventData.ts",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-collections-query-key-scope-and-invalidation",
+        "backend-application-services-commit-aware-notifications",
+      ],
+    },
+    {
+      id: "frontend-offline-capability-scoped-offline-adapters",
+      topicId: "frontend-offline",
+      slug: "capability-scoped-offline-adapters",
+      contentPath: "frontend/offline/capability-scoped-offline-adapters",
+      titleKey: "handbook.articles.frontend-offline-capability-scoped-offline-adapters.title",
+      descriptionKey: "handbook.articles.frontend-offline-capability-scoped-offline-adapters.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/infrastructure/api/api.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/infrastructure/api/apiAccessLookup.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sse/events/heartbeat/signals/sigHeartbeat.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: ["frontend-access-capability-aware-pages", "frontend-offline-durable-command-queues"],
+    },
+    {
+      id: "frontend-offline-durable-command-queues",
+      topicId: "frontend-offline",
+      slug: "durable-command-queues",
+      contentPath: "frontend/offline/durable-command-queues",
+      titleKey: "handbook.articles.frontend-offline-durable-command-queues.title",
+      descriptionKey: "handbook.articles.frontend-offline-durable-command-queues.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sync/services/LmsSyncQueueService.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sync/utils/enqueueSyncCommand.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sync/models/LmsSyncCommand.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sync/services/LmsSyncIdService.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sync/services/LmsSyncSequenceService.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/shiftComment/api/shiftComment.offline.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-async-commands-stable-retry-identity",
+        "frontend-offline-synchronization-state-machines",
+      ],
+    },
+    {
+      id: "frontend-offline-synchronization-state-machines",
+      topicId: "frontend-offline",
+      slug: "synchronization-state-machines",
+      contentPath: "frontend/offline/synchronization-state-machines",
+      titleKey: "handbook.articles.frontend-offline-synchronization-state-machines.title",
+      descriptionKey: "handbook.articles.frontend-offline-synchronization-state-machines.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sync/services/LmsSyncOrchestrator.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sync/api/sync.online.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/sse/events/heartbeat/signals/sigHeartbeat.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-offline-durable-command-queues",
+        "frontend-task-interfaces-prerequisites-and-confirmed-receipts",
+      ],
+    },
+    {
+      id: "frontend-offline-worker-snapshots-and-last-good-data",
+      topicId: "frontend-offline",
+      slug: "worker-snapshots-and-last-good-data",
+      contentPath: "frontend/offline/worker-snapshots-and-last-good-data",
+      titleKey: "handbook.articles.frontend-offline-worker-snapshots-and-last-good-data.title",
+      descriptionKey: "handbook.articles.frontend-offline-worker-snapshots-and-last-good-data.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/infrastructure/browser/webWorker/webWorker.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/infrastructure/browser/webWorker/webWorkerService.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/infrastructure/browser/webWorker/WebWorkerSchema.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/infrastructure/browser/indexedDb/IDBService.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-async-commands-generation-guards-after-await",
+        "frontend-offline-synchronization-state-machines",
+      ],
+    },
+    {
+      id: "frontend-state-versioned-persisted-preferences",
+      topicId: "frontend-state",
+      slug: "versioned-persisted-preferences",
+      contentPath: "frontend/state/versioned-persisted-preferences",
+      titleKey: "handbook.articles.frontend-state-versioned-persisted-preferences.title",
+      descriptionKey: "handbook.articles.frontend-state-versioned-persisted-preferences.description",
+      implementation: "mixed",
+      size: "small",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/src/app/data/storage/appLocalStorage.ts",
+          revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+        },
+        {
+          project: "FRED/FRED-front",
+          path: "src/infrastructure/services/LocalStorageService.ts",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+        {
+          project: "FRED/FRED-front",
+          path: "src/infrastructure/services/localStorageSchemas.ts",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-collections-query-key-scope-and-invalidation",
+        "frontend-editing-drafts-across-routes",
       ],
     },
   ],

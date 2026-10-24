@@ -35,6 +35,20 @@ export const croatianFrontendHandbookTranslations = {
       title: "Sučelja zadataka",
       description: "Sastavite duge forme, točne preglede, dokaze preduvjeta i potvrđene ishode.",
     },
+    "frontend-real-time": {
+      title: "Događaji u stvarnom vremenu",
+      description:
+        "Upravljajte životnim vijekom autoriziranih tokova i uskladite čitanja potaknuta događajima s autoritativnim stanjem poslužitelja.",
+    },
+    "frontend-offline": {
+      title: "Offline tokovi rada",
+      description:
+        "Odvojite mogućnost rada, trajnu lokalnu namjeru, potvrde sinkronizacije i posljednje valjane snimke.",
+    },
+    "frontend-state": {
+      title: "Trajno lokalno stanje",
+      description: "Verzionirajte sheme lokalnih postavki i odvojite vlasništvo pohrane od autoriteta poslužitelja.",
+    },
   },
   articles: {
     "frontend-editing-pinned-values-and-revisions": {
@@ -115,6 +129,40 @@ export const croatianFrontendHandbookTranslations = {
       title: "Opseg query ključeva i invalidacije",
       description:
         "Uključite sve ulaze koji određuju rezultat i ograničite osvježavanje mutacija na projekcije koje feature može promijeniti.",
+    },
+    "frontend-real-time-authenticated-event-lifetimes": {
+      title: "Autentificirani životni vijek događaja",
+      description: "Vezu, listenere i oporavak vežite uz korisnika i sesiju bez poistovjećivanja veze s ovlastima.",
+    },
+    "frontend-real-time-event-to-cache-reconciliation": {
+      title: "Usklađivanje događaja i predmemorije",
+      description:
+        "Prije primjene provjerite omotnice i entitete te izričito definirajte poredak, ponavljanje i oporavak rupa.",
+    },
+    "frontend-offline-capability-scoped-offline-adapters": {
+      title: "Offline adapteri prema ovlastima",
+      description:
+        "Definirajte dopuštene offline operacije, podatke vlasnika i transportni fallback bez zaobilaženja zabrane ili sukoba.",
+    },
+    "frontend-offline-durable-command-queues": {
+      title: "Trajni redovi naredbi",
+      description:
+        "Trajno spremite namjeru vlasnika uz atomsku lokalnu pohranu, ovisnosti, mapiranje identiteta i izričit oporavak ponavljanja.",
+    },
+    "frontend-offline-synchronization-state-machines": {
+      title: "Strojevi stanja sinkronizacije",
+      description:
+        "Odvojite lokalni red, slanje, prihvaćanje, obradu i konačan ishod trajnim potvrdama i ograničenim oporavkom.",
+    },
+    "frontend-offline-worker-snapshots-and-last-good-data": {
+      title: "Worker snimci i posljednji valjani podaci",
+      description:
+        "Sačuvajte dosljednu predmemoriju pri djelomičnoj pogrešci i razlikujte potpunost preuzimanja, validaciju i atomsku promociju.",
+    },
+    "frontend-state-versioned-persisted-preferences": {
+      title: "Verzionirane trajne postavke",
+      description:
+        "Provjerite spremljene vrijednosti, sačuvajte žive postavke pri pogrešci pohrane i migrirajte značenje bez brisanja drugih podataka.",
     },
   },
 } satisfies StringLeaves<typeof englishFrontendHandbookTranslations>;

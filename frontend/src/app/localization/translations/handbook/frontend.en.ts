@@ -30,6 +30,19 @@ export const englishFrontendHandbookTranslations = {
       title: "Task interfaces",
       description: "Compose long forms, exact reviews, prerequisite evidence, and acknowledged outcomes.",
     },
+    "frontend-real-time": {
+      title: "Realtime events",
+      description:
+        "Own authenticated stream lifetimes and reconcile event-driven reads with authoritative server state.",
+    },
+    "frontend-offline": {
+      title: "Offline workflows",
+      description: "Separate capability, durable local intent, synchronization receipts, and last-good snapshots.",
+    },
+    "frontend-state": {
+      title: "Persisted state",
+      description: "Version local preference schemas and keep storage ownership separate from server authority.",
+    },
   },
   articles: {
     "frontend-editing-pinned-values-and-revisions": {
@@ -110,6 +123,41 @@ export const englishFrontendHandbookTranslations = {
       title: "Query-key scope and invalidation",
       description:
         "Include every result-defining input and keep mutation refreshes scoped to the read models the feature can change.",
+    },
+    "frontend-real-time-authenticated-event-lifetimes": {
+      title: "Authenticated event lifetimes",
+      description:
+        "Own event connections, listeners and recovery by viewer/session scope without confusing connectivity with authority.",
+    },
+    "frontend-real-time-event-to-cache-reconciliation": {
+      title: "Event-to-cache reconciliation",
+      description:
+        "Validate envelopes and entities before scoped application, and require explicit ordering, replay and gap-recovery contracts.",
+    },
+    "frontend-offline-capability-scoped-offline-adapters": {
+      title: "Capability-scoped offline adapters",
+      description:
+        "Define allowed offline operations, owner-scoped data and recognized transport fallback without queuing around denial or conflict.",
+    },
+    "frontend-offline-durable-command-queues": {
+      title: "Durable command queues",
+      description:
+        "Persist stable owned intent with atomic local durability, dependency order, identity mapping and explicit replay recovery.",
+    },
+    "frontend-offline-synchronization-state-machines": {
+      title: "Synchronization state machines",
+      description:
+        "Separate local queue, sending, server acceptance, processing and final outcomes with durable receipts and bounded recovery.",
+    },
+    "frontend-offline-worker-snapshots-and-last-good-data": {
+      title: "Worker snapshots and last-good data",
+      description:
+        "Keep a coherent prior cache through partial refresh failure and distinguish download completeness from validation and atomic promotion.",
+    },
+    "frontend-state-versioned-persisted-preferences": {
+      title: "Versioned persisted preferences",
+      description:
+        "Validate stored values, preserve live preferences on storage failure and migrate semantic meaning without erasing unrelated data.",
     },
   },
 } as const;
