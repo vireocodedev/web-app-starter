@@ -306,6 +306,10 @@ describe("application routes", () => {
       expect(frontendRoute?.handle?.sectionNavigation).toMatchObject([
         { labelKey: "navigation.examplePages", to: "/dev-guide/frontend/example-pages" },
         { labelKey: "navigation.examples", to: "/dev-guide/frontend/patterns" },
+        {
+          labelKey: "handbook.categories.frontend-workflows.title",
+          to: "/dev-guide/frontend/workflow-patterns",
+        },
         { labelKey: "navigation.architecture", to: "/dev-guide/frontend/architecture" },
       ]);
     });

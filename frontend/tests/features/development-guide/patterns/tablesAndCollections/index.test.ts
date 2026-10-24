@@ -10,7 +10,7 @@ describe("Tables and collections pattern routes", () => {
     expect(tablesGroup?.items).toHaveLength(4);
     expect(appRouteRegistry.tablesUrlBackedFilters).toMatchObject({
       groupId: "tablesAndCollections",
-      parentId: "examples",
+      parentId: "patternTablesAndCollections",
       scrollToTop: true,
     });
   });

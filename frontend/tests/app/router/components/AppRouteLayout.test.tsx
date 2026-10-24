@@ -1,10 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, Outlet, RouterProvider, useNavigate } from "react-router";
 import { StrictMode, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AppRouteLayout } from "@/app/router/components/AppRouteLayout";
 import { RouteScrollContentReady } from "@/app/router/components/RouteScrollRestoration";
+import { useRouteScrollReady } from "@/app/router/hooks/useRouteScrollReady";
 
 vi.mock("@/app/localization/hooks/useDevelopmentGuideTranslation", () => ({
   useDevelopmentGuideTranslation: () => ({ t: (key: string) => key }),
@@ -32,6 +33,12 @@ function readyRoutes(children: Parameters<typeof createMemoryRouter>[0]) {
       children: [{ Component: RouteScrollContentReady, children }],
     },
   ];
+}
+
+async function advanceAnimationFrame() {
+  await act(async () => {
+    await new Promise<void>(resolve => window.requestAnimationFrame(() => resolve()));
+  });
 }
 
 describe("AppRouteLayout", () => {
@@ -208,6 +215,7 @@ describe("AppRouteLayout", () => {
     fireEvent.scroll(window);
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     await screen.findByText("Second page");
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ behavior: "auto", left: 0, top: 0 }));
     scrollTop = 760;
     fireEvent.scroll(window);
     scrollTo.mockClear();
@@ -331,6 +339,140 @@ describe("AppRouteLayout", () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("heading", { name: "Target" }));
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for a delayed leaf and does not replay its fragment after a retry", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    function DeferredLeaf() {
+      const [ready, setReady] = useState(false);
+      useRouteScrollReady(ready);
+      return (
+        <>
+          <button onClick={() => setReady(value => !value)}>{ready ? "Reload article" : "Reveal article"}</button>
+          {ready ? <h2 id="target">Article target</h2> : <p>Loading article</p>}
+        </>
+      );
+    }
+
+    const router = createMemoryRouter(readyRoutes([{ Component: DeferredLeaf, path: "/article" }]), {
+      initialEntries: ["/article#target"],
+    });
+    render(<RouterProvider router={router} />);
+
+    await advanceAnimationFrame();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reveal article" }));
+    await screen.findByRole("heading", { name: "Article target" });
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" }));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reload article" }));
+    await advanceAnimationFrame();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Reveal article" }));
+    await screen.findByRole("heading", { name: "Article target" });
+    await advanceAnimationFrame();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves a saved position through a pending leaf clamp and another visit", async () => {
+    let scrollTop = 0;
+    let initiallyReady = true;
+    vi.spyOn(window, "scrollX", "get").mockReturnValue(0);
+    vi.spyOn(window, "scrollY", "get").mockImplementation(() => scrollTop);
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation((optionsOrX?: number | ScrollToOptions) => {
+      if (typeof optionsOrX === "object") scrollTop = optionsOrX.top ?? scrollTop;
+    });
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    function ReadingPage() {
+      const [ready, setReady] = useState(initiallyReady);
+      useRouteScrollReady(ready);
+      return ready ? (
+        <h2 id="target">Reading target</h2>
+      ) : (
+        <button onClick={() => setReady(true)}>Reveal reading</button>
+      );
+    }
+
+    const router = createMemoryRouter(
+      readyRoutes([
+        { Component: ReadingPage, path: "/reading" },
+        { Component: SecondPage, path: "/other" },
+      ]),
+      { initialEntries: ["/reading#target"] },
+    );
+    window.history.replaceState(null, "", "/reading#target");
+    render(<RouterProvider router={router} />);
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+    scrollTop = 420;
+    fireEvent.scroll(window);
+    initiallyReady = false;
+
+    await act(async () => router.navigate("/other"));
+    await screen.findByText("Second page");
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ behavior: "auto", left: 0, top: 0 }));
+    scrollTo.mockClear();
+    scrollIntoView.mockClear();
+
+    await act(async () => router.navigate(-1));
+    await screen.findByRole("button", { name: "Reveal reading" });
+    await advanceAnimationFrame();
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    // A shorter loading placeholder must not replace the original entry's reading position.
+    scrollTop = 0;
+    fireEvent.scroll(window);
+    await act(async () => router.navigate("/other"));
+    await screen.findByText("Second page");
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ behavior: "auto", left: 0, top: 0 }));
+    scrollTo.mockClear();
+
+    await act(async () => router.navigate(-1));
+    await screen.findByRole("button", { name: "Reveal reading" });
+    await advanceAnimationFrame();
+    expect(scrollTo).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Reveal reading" }));
+    await screen.findByRole("heading", { name: "Reading target" });
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ behavior: "auto", left: 0, top: 420 }));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("cancels a pending leaf fragment before another page renders the same target", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+
+    function DeferredLeaf() {
+      useRouteScrollReady(false);
+      return <p>Waiting for article</p>;
+    }
+
+    function LaterPage() {
+      return <h2 id="target">Other article target</h2>;
+    }
+
+    const router = createMemoryRouter(
+      readyRoutes([
+        { Component: DeferredLeaf, path: "/deferred" },
+        { Component: LaterPage, path: "/later" },
+      ]),
+      { initialEntries: ["/deferred#target"] },
+    );
+    render(<RouterProvider router={router} />);
+    await screen.findByText("Waiting for article");
+    await advanceAnimationFrame();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    await act(async () => router.navigate("/later"));
+    await screen.findByRole("heading", { name: "Other article target" });
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ behavior: "auto", left: 0, top: 0 }));
+    await advanceAnimationFrame();
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("applies an initial fragment once across a Strict Mode remount", async () => {
