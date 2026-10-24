@@ -1,3 +1,6 @@
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import { Button, Stack, Typography } from "@mui/material";
+import { Link } from "react-router";
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { ParseKeys } from "i18next";
 
@@ -7,7 +10,9 @@ import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDeve
 /** Category entry point for the development-only guide. */
 export function DevelopmentGuidePage({
   categories,
+  finder,
 }: Readonly<{
+  finder?: Readonly<{ to: string; articleCount: number }> | undefined;
   categories: readonly Readonly<{
     id: string;
     Icon: SvgIconComponent;
@@ -23,6 +28,24 @@ export function DevelopmentGuidePage({
       title={t("categories.title")}
       description={t("categories.description")}
       navigationLabel={t("categories.navigationLabel")}
+      headerAction={
+        finder ? (
+          <Stack spacing={0.75} sx={{ alignItems: "flex-start" }}>
+            <Button
+              component={Link}
+              startIcon={<SearchOutlinedIcon />}
+              to={finder.to}
+              variant="outlined"
+              sx={{ whiteSpace: "normal" }}
+            >
+              {t("handbook.finder.action")}
+            </Button>
+            <Typography color="text.secondary" variant="caption">
+              {t("handbook.finder.actionCount", { count: finder.articleCount })}
+            </Typography>
+          </Stack>
+        ) : undefined
+      }
       items={categories.map(category => ({
         id: category.id,
         Icon: category.Icon,

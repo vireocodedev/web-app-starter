@@ -74,7 +74,7 @@ import { ExamplePagesIndexPage } from "@/pages/development-guide/examplePages/Ex
 import { PatternsIndexPage } from "@/pages/development-guide/patterns/PatternsIndexPage";
 import { PatternCategoryLayoutRoute } from "./components/PatternCategoryLayoutRoute";
 import { patternCategoryDefinitions } from "./patternCategories";
-import { handbookCategoryEntries, handbookRouteRegistry } from "./handbookRoutes";
+import { handbookCategoryEntries, handbookFinderEntry, handbookRouteRegistry } from "./handbookRoutes";
 import { ApplicationStateEffectsAndCleanupPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateEffectsAndCleanupPage";
 import { ApplicationStatePersistentStatePage } from "@/pages/development-guide/patterns/applicationState/ApplicationStatePersistentStatePage";
 import { ApplicationStateSharingBetweenRoutesPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateSharingBetweenRoutesPage";
@@ -241,6 +241,7 @@ const developmentRouteRegistry = {
   developmentGuideIndex: {
     Component: () => (
       <DevelopmentGuidePage
+        finder={handbookFinderEntry}
         categories={[
           {
             id: "frontend",

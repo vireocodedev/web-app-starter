@@ -1,3 +1,5 @@
+export { HandbookFinder } from "./components/HandbookFinder";
+export type { HandbookFinderEntry, HandbookFinderFilters, HandbookFinderProps } from "./types/HandbookFinder";
 export { HandbookArticle } from "./components/HandbookArticle";
 export {
   handbookCategories,

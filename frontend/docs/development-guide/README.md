@@ -12,6 +12,8 @@ Use this index before implementing a web-app change. It links focused patterns f
 
 Each topic has a browser index, article sidebar, local breadcrumbs and an article contents menu. English and Croatian content use the same stable paths. Code samples are inert documentation; reading a command does not run it.
 
+Use **Find articles** on `/dev-guide` or open `/dev-guide/find` to search handbook titles, summaries, categories, topics and portable source references. Category, pattern type and size filters are URL-backed; share a view such as `/dev-guide/find?q=session&category=backend`. Results are grouped by category and capped at 30 until criteria are refined. This searches metadata, not Markdown bodies or live demos. Ctrl/Cmd+K remains the existing title-and-context page navigation, including interactive Patterns and Architecture.
+
 ## Pattern index
 
 ### Frontend workflow patterns

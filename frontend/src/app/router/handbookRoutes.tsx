@@ -7,24 +7,32 @@ import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import StorageOutlinedIcon from "@mui/icons-material/StorageOutlined";
 import type { SvgIconComponent } from "@mui/icons-material";
-import { Outlet } from "react-router";
+import { useLayoutEffect, useRef } from "react";
+import { Outlet, useLocation, useNavigationType } from "react-router";
+import { z } from "zod";
 
 import {
   handbookArticles,
   handbookCategories,
   handbookTopics,
   type HandbookArticleId,
+  type HandbookFinderEntry,
+  type HandbookFinderFilters,
   type HandbookCategoryId,
   type HandbookTopicId,
 } from "@/features/development-guide/handbook";
+import { HandbookFinderPage } from "@/pages/development-guide/handbook/HandbookFinderPage";
 import { HandbookArticlePage } from "@/pages/development-guide/handbook/HandbookArticlePage";
 import { HandbookIndexPage } from "@/pages/development-guide/handbook/HandbookIndexPage";
 import { HandbookTopicLayout } from "@/pages/development-guide/handbook/HandbookTopicLayout";
 
+import { useAppQueryParams } from "./hooks/useAppQueryParams";
+import { updateQueryParams } from "./queryParams";
 import type { AppRouteDefinition } from "./types/AppRoute";
 
 type CategoryRouteId = "developmentGuideBackend" | `handbook-category:${Exclude<HandbookCategoryId, "backend">}`;
 export type HandbookRouteId =
+  | "handbook-finder"
   | CategoryRouteId
   | `handbook-category-index:${HandbookCategoryId}`
   | `handbook-topic:${HandbookTopicId}`
@@ -74,6 +82,13 @@ function articlePath(id: string): string {
   if (!article) throw new Error(`Unknown handbook article: ${id}`);
   return `${topicPath(article.topicId)}/${article.slug}`;
 }
+
+const finderPath = "dev-guide/find";
+
+/** Utility links and inventory counts belong to development route composition. */
+export const handbookFinderEntry = import.meta.env.DEV
+  ? { to: `/${finderPath}`, articleCount: handbookArticles.length }
+  : undefined;
 
 /** The route owner supplies all category destinations to the presentation-only index. */
 export const handbookCategoryEntries = import.meta.env.DEV
@@ -132,6 +147,63 @@ function relatedArticleLinks(
 
 function createHandbookRoutes(): Record<HandbookRouteId, AppRouteDefinition> {
   const entries: [HandbookRouteId, AppRouteDefinition][] = [];
+  // Build query policy only within the DEV-only factory, outside the native pure catalog graph.
+  const finderSchema = z.object({
+    q: z.string().max(200).default(""),
+    category: z.enum(["all", ...handbookCategories.map(category => category.id)]).default("all"),
+    implementation: z.enum(["all", "starter", "reference", "mixed"]).default("all"),
+    size: z.enum(["all", "small", "medium", "large"]).default("all"),
+  });
+  const finderEntries: readonly HandbookFinderEntry[] = handbookArticles.map(article => {
+    const topic = handbookTopics.find(candidate => candidate.id === article.topicId);
+    const category = handbookCategories.find(candidate => candidate.id === topic?.categoryId);
+    if (!topic || !category) throw new Error(`Finder article ${article.id} has no topic/category`);
+    return {
+      id: article.id,
+      to: `/${articlePath(article.id)}`,
+      titleKey: article.titleKey,
+      descriptionKey: article.descriptionKey,
+      category: {
+        id: category.id,
+        titleKey: category.id === "frontend-workflows" ? "navigation.frontend" : category.titleKey,
+      },
+      topic: { id: topic.id, titleKey: topic.titleKey },
+      implementation: article.implementation,
+      size: article.size,
+      sources: article.sources,
+    };
+  });
+  function HandbookFinderRoute() {
+    const location = useLocation();
+    const navigationType = useNavigationType();
+    const { values, setValues } = useAppQueryParams(finderSchema);
+    const pending = useRef({
+      locationKey: location.key,
+      search: location.search,
+      filters: values,
+      expectedSearches: [] as string[],
+    });
+    useLayoutEffect(() => {
+      const current = pending.current;
+      if (current.locationKey === location.key && current.search === location.search) return;
+      const acknowledged = navigationType === "REPLACE" ? current.expectedSearches.lastIndexOf(location.search) : -1;
+      // An earlier local replace may commit while a later full snapshot is still pending.
+      // Back/Forward and unrelated URL changes always replace the pending state with URL authority.
+      current.expectedSearches = acknowledged < 0 ? [] : current.expectedSearches.slice(acknowledged + 1);
+      if (!current.expectedSearches.length) current.filters = values;
+      current.locationKey = location.key;
+      current.search = location.search;
+    }, [location.key, location.search, navigationType, values]);
+    const updateFilters = (update: Partial<HandbookFinderFilters>) => {
+      const next = { ...pending.current.filters, ...update };
+      const search = updateQueryParams(finderSchema, location.search, next).toString();
+      pending.current.filters = next;
+      pending.current.expectedSearches.push(search ? `?${search}` : "");
+      // Pass a full owned-field snapshot so rapid controls cannot overwrite each other's patches.
+      setValues(next, { replace: true, preventScrollReset: true });
+    };
+    return <HandbookFinderPage entries={finderEntries} filters={values} onFiltersChange={updateFilters} />;
+  }
   for (const category of handbookCategories) {
     const categoryId = categoryRouteId(category.id);
     const mount = nestedMounts[category.id];
@@ -239,7 +311,27 @@ function createHandbookRoutes(): Record<HandbookRouteId, AppRouteDefinition> {
       ]);
     }
   }
-  const expected = handbookCategories.length * 2 + handbookTopics.length * 2 + handbookArticles.length;
+  for (const article of finderEntries) {
+    const registered = entries.find(([id]) => id === `handbook-article:${article.id}`)?.[1];
+    if (!registered || !("path" in registered) || `/${registered.path}` !== article.to) {
+      throw new Error(`Finder destination is not registered: ${article.id}`);
+    }
+  }
+  entries.push([
+    "handbook-finder",
+    {
+      Component: HandbookFinderRoute,
+      access: "authenticated",
+      commandPalette: true,
+      developmentOnly: true,
+      parentId: "developmentGuide",
+      path: finderPath,
+      scrollToTop: true,
+      title: t => t("handbook.finder.title"),
+      translationNamespace: "development-guide",
+    },
+  ]);
+  const expected = handbookCategories.length * 2 + handbookTopics.length * 2 + handbookArticles.length + 1;
   if (entries.length !== expected || new Set(entries.map(([id]) => id)).size !== expected) {
     throw new Error("Development guide route IDs are incomplete or duplicated");
   }

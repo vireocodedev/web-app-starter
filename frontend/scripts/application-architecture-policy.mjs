@@ -12,9 +12,11 @@ const featureApplicationLeafPaths = new Set([
   "src/app/router/queryParams.ts",
   "src/app/overlays/components/AppBottomDrawerHandle.tsx",
   "src/app/shell/components/AppPageNavigation.tsx",
+  "src/app/shell/components/AppCategoryList.tsx",
 ]);
 const pageApplicationLeafPaths = new Set([
   "src/app/shell/components/AppCategoryList.tsx",
+  "src/app/shell/components/AppBreadcrumbs.tsx",
   "src/app/shell/components/AppPageNavigation.tsx",
 ]);
 const documentationPresentationConsumers = new Set([
@@ -837,6 +839,8 @@ function assertNoViolations(files) {
             "handbookCategories",
             "handbookTopics",
             "HandbookArticleId",
+            "HandbookFinderEntry",
+            "HandbookFinderFilters",
             "HandbookCategoryId",
             "HandbookTopicId",
           ].includes(imported),

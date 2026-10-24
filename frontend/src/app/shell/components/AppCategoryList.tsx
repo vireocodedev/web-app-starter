@@ -1,7 +1,7 @@
 import type { SvgIconComponent } from "@mui/icons-material";
 import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
 import { Box, ButtonBase, Divider, Paper, Stack, Typography } from "@mui/material";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { Link } from "react-router";
 
 export type AppCategoryListItem = Readonly<{
@@ -27,11 +27,13 @@ export function AppCategoryList({
   description,
   navigationLabel,
   items,
+  headerAction,
 }: Readonly<{
   title: string;
   description?: string;
   navigationLabel: string;
   items: readonly AppCategoryListEntry[];
+  headerAction?: ReactNode;
 }>) {
   const id = useId();
   const renderItem = (item: AppCategoryListItem, groupId?: string) => {
@@ -78,15 +80,20 @@ export function AppCategoryList({
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography color="text.primary" component="h2" sx={{ fontWeight: 750 }} variant="h4">
-          {title}
-        </Typography>
-        {description ? (
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            {description}
+      <Box
+        sx={{ display: "flex", alignItems: "flex-start", flexWrap: "wrap", gap: 2, justifyContent: "space-between" }}
+      >
+        <Box sx={{ flex: "1 1 20rem", minWidth: 0 }}>
+          <Typography color="text.primary" component="h2" sx={{ fontWeight: 750 }} variant="h4">
+            {title}
           </Typography>
-        ) : null}
+          {description ? (
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              {description}
+            </Typography>
+          ) : null}
+        </Box>
+        {headerAction ? <Box sx={{ minWidth: 0 }}>{headerAction}</Box> : null}
       </Box>
       <Paper sx={{ minWidth: 0, overflow: "hidden" }} variant="outlined">
         <Stack aria-label={navigationLabel} component="nav" divider={<Divider />}>

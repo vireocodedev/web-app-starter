@@ -125,10 +125,14 @@ caching. Browser install prompts vary and may depend on user engagement.
 
 The first header row contains the main menu button, RGO brand,
 top-level route context, quick actions, and account access. `/dev-guide` lists
-Frontend and Backend categories without section tabs. Frontend opens **Example pages**, **Patterns**, and **Architecture** under
-`/dev-guide/frontend`. Example pages lists Contacts dashboard and Contacts CRUD;
-Patterns lists eight categories, each with the shared Settings-style page
-navigation for its examples. Backend opens a placeholder under `/dev-guide/backend`. Category pages show
+the fullstack guide categories without section tabs. Frontend keeps Example pages,
+interactive Patterns, Workflow patterns and Architecture under `/dev-guide/frontend`.
+Example pages lists Contacts dashboard and Contacts CRUD; Patterns uses the shared
+Settings-style navigation for its examples. Backend, CI, delivery and workflow
+categories expose source-backed handbook articles. **Find articles** at `/dev-guide/find`
+searches handbook metadata and source references with shareable category/type/size
+filters; Ctrl/Cmd+K remains title-and-context page navigation. See the
+[guide index](docs/development-guide/README.md) for scope and source ownership. Category pages show
 **Development guide → Frontend** or **Development guide → Backend** in the header,
 with a link back to the category list. Previous guide URLs redirect to Frontend
 and retain their query parameters and fragments. The entire guide stays out of
