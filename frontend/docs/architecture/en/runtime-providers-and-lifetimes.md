@@ -17,7 +17,7 @@ Choose a lifetime before choosing Context, a Signal, or local state.
 object. It creates one Query client, one configured Axios instance, the auth
 runtime, and the feature registry. Contacts needs this construction seam because
 its Query and mutation options depend on an injected API adapter and Query
-client. Settings, Patterns, and Architecture are presentation features and do
+client. Settings, Patterns, Architecture, and Handbook are presentation features and do
 not receive factories or runtime hooks merely for uniformity.
 
 ## Provider order

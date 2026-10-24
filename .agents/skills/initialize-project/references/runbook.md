@@ -128,7 +128,8 @@ Paths in this table are relative to the workspace root.
 | [backend/build.gradle](../../../../backend/build.gradle)                                                                                                                     | `group = 'com.vireocode'`; description `VireoCode Web App Starter backend`    | Set group to the approved Java base package and description to `<display name> backend`. Preserve versions, plugins, and dependencies.                                                                                                         |
 | [backend/src/main/resources/application.yaml](../../../../backend/src/main/resources/application.yaml)                                                                       | `spring.application.name: vireocode-backend`                                  | Set `<slug>-backend`. Preserve `/api`, profiles, datasource placeholders, session/security settings, and Hibernate validation.                                                                                                                 |
 | [backend/compose.yaml](../../../../backend/compose.yaml)                                                                                                                     | `name: vireocode-web-app-starter-local`                                       | Set `<slug>-local`. Keep the `postgres` service and `postgres-data` volume key; Compose scopes their resources by project.                                                                                                                     |
-| [backend/.env.example](../../../../backend/.env.example)                                                                                                                     | `POSTGRES_DB=vireocode`; `POSTGRES_USER=vireocode`                            | Set both to the underscore-form slug. Keep passwords empty and retain the initial-user defaults unless the user requests different local account details.                                                                                      |
+| [backend/.env.example](../../../../backend/.env.example) | `COMPOSE_PROJECT_NAME=vireocode-web-app-starter-local`; `POSTGRES_DB=vireocode`; `POSTGRES_USER=vireocode` | Set the Compose project to `<slug>-local` and database/user to the underscore-form slug. Keep passwords empty and retain initial-user defaults unless requested otherwise. |
+| [backend/scripts/start-local.mjs](../../../../backend/scripts/start-local.mjs) | Fallback `COMPOSE_PROJECT_NAME`: `vireocode-web-app-starter-local` | Set the fallback to the same `<slug>-local` as `compose.yaml` and `.env.example`, including when preserving an existing `.env` without that key. |
 | [backend/src/main/java/](../../../../backend/src/main/java/) and [backend/src/test/java/](../../../../backend/src/test/java/), each with the template suffix `com/vireocode/backend/` | Package prefix `com.vireocode.backend`                                        | Move all owned Java files into the approved package's directory under each source root; update package declarations, imports, and qualified references. Retain relative `auth` and `user` subpackages and the `BackendApplication` class name. |
 | [`.vscode/launch.json`](../../../../.vscode/launch.json) | `mainClass: com.vireocode.backend.BackendApplication` | Set the qualified main class. Omit the optional `projectName` for this single backend: the IDE import name can differ from Gradle's root name. Preserve both configurations, tasks, working directories and `local` profile. |
 
@@ -245,6 +246,36 @@ retain the local database volume.
 **Done when:** builds/tests pass, the replacement audit has no unexplained
 leftovers, and local runtime/IDE results are recorded. Missing prerequisites or
 failed checks are explicit blockers, not successful verification.
+
+### Local backend debugger
+
+The backend tasks in [`.vscode/tasks.json`](../../../../.vscode/tasks.json) use
+[`with-local-node.sh`](../../../../backend/scripts/with-local-node.sh) before
+credential preparation and database startup. Keep Bash and the Node major from
+`frontend/.nvmrc` installed. The launcher uses a matching Node on PATH or loads
+an existing `${NVM_DIR:-$HOME/.nvm}/nvm.sh` to select that installed version. It
+installs nothing and leaves the nvm default unchanged. A desktop-launched VS Code
+may inherit an old system Node even when an interactive terminal uses nvm;
+`Unexpected reserved word` at `setup-local.mjs`'s top-level `await` indicates that
+runtime mismatch. Retry **Backend: local dev** after installing the required Node.
+
+The tasks preserve `backend/.env`, start only its configured Compose project,
+and verify PostgreSQL password authentication before Java launches. Container
+health alone can pass for a reused volume with different credentials. Restore
+matching credentials or use a separate `COMPOSE_PROJECT_NAME` and free
+`POSTGRES_PORT`; preserve the existing volume. Keep the Compose identity aligned
+across the files in the replacement map above, and use the same `.env` for
+manual stop/start commands.
+
+Verify runtime selection with
+`python3 -B -m unittest discover -s infrastructure/ci/tests -p test_local_node.py -v`
+and shell syntax with `bash -n backend/scripts/with-local-node.sh`. With Docker
+available, run
+`bash backend/scripts/with-local-node.sh --test --test-concurrency=1 backend/scripts/start-local.test.mjs`.
+The persistent-volume regression creates a unique test project, rejects a
+changed password despite healthy PostgreSQL, restores the original credentials
+and checks that stored data survives. Cleanup removes only that test's resources.
+Actual VS Code debugger acceptance still requires the imported Java project.
 
 ## 5. Configure shared CI access
 

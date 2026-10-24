@@ -29,7 +29,7 @@ const groups = [
         Icon: HomeOutlinedIcon,
         kind: "link",
         labelKey: "navigation.home",
-        to: "/dev-guide/patterns/feedback/toast-notifications",
+        to: "/dev-guide/frontend/patterns/feedback/toast-notifications",
       },
     ],
     labelKey: "navigation.examples",
@@ -42,7 +42,7 @@ const groups = [
         Icon: HomeOutlinedIcon,
         kind: "link",
         labelKey: "navigation.settings",
-        to: "/dev-guide/patterns/overlays/presentations",
+        to: "/dev-guide/frontend/patterns/overlays/presentations",
       },
     ],
     labelKey: "navigation.settings",
@@ -56,7 +56,7 @@ const sectionMembers = [
     id: "applicationState",
     labelKey: "navigation.home",
     section: "applicationState",
-    items: [{ ...groups[0].items[0], to: "/dev-guide/patterns/state/signals" }],
+    items: [{ ...groups[0].items[0], to: "/dev-guide/frontend/patterns/state/signals" }],
   },
   {
     ...groups[0],
@@ -64,7 +64,7 @@ const sectionMembers = [
     id: "serverData",
     labelKey: "navigation.settings",
     section: "applicationState",
-    items: [{ ...groups[0].items[0], to: "/dev-guide/patterns/state/server" }],
+    items: [{ ...groups[0].items[0], to: "/dev-guide/frontend/patterns/state/server" }],
   },
   {
     ...groups[0],
@@ -72,7 +72,7 @@ const sectionMembers = [
     id: "routingAndUrlState",
     labelKey: "navigation.examples",
     section: "applicationState",
-    items: [{ ...groups[0].items[0], to: "/dev-guide/patterns/state/routing" }],
+    items: [{ ...groups[0].items[0], to: "/dev-guide/frontend/patterns/state/routing" }],
   },
 ] as const satisfies readonly AppExampleNavigationGroup[];
 
@@ -123,13 +123,13 @@ describe("ExamplesNavigation", () => {
 
   it("keeps section category toggles independent and opens the active member", async () => {
     render(
-      <MemoryRouter initialEntries={["/dev-guide/patterns/state/server"]}>
+      <MemoryRouter initialEntries={["/dev-guide/frontend/patterns/state/server"]}>
         <ExamplesNavigation groups={sectionMembers} />
       </MemoryRouter>,
     );
     const section = within(screen.getByRole("group", { name: "navigation.stateCategory" }));
     const active = section.getByRole("link", { name: "navigation.home" });
-    expect(active).toHaveAttribute("href", "/dev-guide/patterns/state/server");
+    expect(active).toHaveAttribute("href", "/dev-guide/frontend/patterns/state/server");
     expect(active).toHaveClass("Mui-selected");
     fireEvent.click(section.getByRole("button", { name: "Expand navigation.home" }));
     expect(section.getAllByRole("link")).toHaveLength(2);
@@ -218,7 +218,7 @@ describe("ExamplesNavigation", () => {
 
   it("opens the current route category even when its default is collapsed", () => {
     render(
-      <MemoryRouter initialEntries={["/dev-guide/patterns/overlays/presentations"]}>
+      <MemoryRouter initialEntries={["/dev-guide/frontend/patterns/overlays/presentations"]}>
         <ExamplesNavigation
           groups={groups.map(group => ({
             ...group,
@@ -242,11 +242,11 @@ describe("ExamplesNavigation", () => {
         id: "feedback",
         items: [
           {
-            activePath: "/dev-guide/patterns/projects/:projectId",
+            activePath: "/dev-guide/frontend/patterns/projects/:projectId",
             Icon: HomeOutlinedIcon,
             kind: "link",
             labelKey: "navigation.home",
-            to: "/dev-guide/patterns/projects/atlas",
+            to: "/dev-guide/frontend/patterns/projects/atlas",
           },
         ],
         labelKey: "navigation.examples",
@@ -254,7 +254,7 @@ describe("ExamplesNavigation", () => {
     ] as const satisfies readonly AppExampleNavigationGroup[];
 
     render(
-      <MemoryRouter initialEntries={["/dev-guide/patterns/projects/harbor"]}>
+      <MemoryRouter initialEntries={["/dev-guide/frontend/patterns/projects/harbor"]}>
         <ExamplesNavigation groups={dynamicGroups} />
       </MemoryRouter>,
     );
@@ -288,7 +288,7 @@ describe("ExamplesNavigation", () => {
 
   it("inherits a truncated label color and weight from the active theme", () => {
     render(
-      <MemoryRouter initialEntries={["/dev-guide/patterns/feedback/toast-notifications"]}>
+      <MemoryRouter initialEntries={["/dev-guide/frontend/patterns/feedback/toast-notifications"]}>
         <ExamplesNavigation groups={groups} />
       </MemoryRouter>,
     );

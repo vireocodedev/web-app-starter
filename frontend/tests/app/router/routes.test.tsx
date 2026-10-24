@@ -1,3 +1,8 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { patternCategoryDefinitions } from "@/app/router/patternCategories";
+import { createAppRouteObjects } from "@/app/router/routeHierarchy";
+import { LegacyDevelopmentGuideRedirect } from "@/app/router/components/LegacyDevelopmentGuideRedirect";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import type { TFunction } from "i18next";
 import { describe, expect, it } from "vitest";
@@ -8,6 +13,7 @@ import {
   appExampleNavigationGroups,
   appNavigationItems,
   appRouteRegistry,
+  appRouteHierarchyMetadata,
   architectureRelatedPatternLinks,
   routeDestination,
   routeIsEnabled,
@@ -70,17 +76,21 @@ describe("application routes", () => {
     expect(appBottomNavigationItems.map(item => [item.labelKey, item.to])).toEqual([
       ["navigation.home", "/"],
       ["navigation.settings", "/settings/appearance"],
-      ...(import.meta.env.DEV ? [["navigation.contactsDashboard", "/dev-guide/home"]] : []),
+      ...(import.meta.env.DEV
+        ? [["navigation.contactsDashboard", "/dev-guide/frontend/example-pages/contacts-dashboard"]]
+        : []),
     ]);
     if (import.meta.env.DEV) {
-      expect(appBottomNavigationItems[2]?.activePath).toBe("/dev-guide/home");
+      expect(appBottomNavigationItems[2]?.activePath).toBe("/dev-guide/frontend/example-pages/contacts-dashboard");
       expect(appBottomNavigationItems[2]?.Icon).toBe(ContactsOutlinedIcon);
     }
   });
 
-  it("shows route titles in Home and Development Guide Home breadcrumbs", () => {
+  it("keeps Home titles and includes the dashboard in its Example pages breadcrumbs", () => {
     const home = authenticatedRoutes().find(route => route.index);
-    const guideHome = authenticatedRoutes().find(route => route.path === "dev-guide/home");
+    const guideHome = authenticatedRoutes().find(
+      route => route.path === "dev-guide/frontend/example-pages/contacts-dashboard",
+    );
     expect(
       home?.handle?.resolveBreadcrumbs(
         {
@@ -101,6 +111,8 @@ describe("application routes", () => {
         ),
       ).toEqual([
         { label: "navigation.developmentGuide", to: "/dev-guide" },
+        { label: "navigation.frontend", to: "/dev-guide/frontend" },
+        { label: "navigation.examplePages", to: "/dev-guide/frontend/example-pages" },
         { label: "navigation.contactsDashboard" },
       ]);
       expect(
@@ -148,13 +160,30 @@ describe("application routes", () => {
     ).toBe("settings.accessibility");
   });
 
-  it("lets the Contacts feature use the full routed content width", () => {
-    const contacts = authenticatedRoutes().find(route => route.path === "dev-guide/contacts");
+  it("lets Contacts inherit the guide width while retaining its workspace policy", () => {
+    const contacts = authenticatedRoutes().find(
+      route => route.path === "dev-guide/frontend/example-pages/contacts-crud",
+    );
 
-    expect(appRouteRegistry.contacts.contentMaxWidth).toBe(false);
+    expect(appRouteRegistry.contacts).not.toHaveProperty("contentMaxWidth");
+    expect(appRouteRegistry.developmentGuide.contentMaxWidth).toBe("xl");
     expect(appRouteRegistry.contacts.contentOverflow).toBe("hidden");
     expect(appRouteRegistry.contacts.mobileSurface).toBe("flush");
-    expect(contacts?.handle?.contentMaxWidth).toBe(false);
+    expect(contacts?.handle?.contentMaxWidth).toBeUndefined();
+    expect(
+      contacts?.handle?.resolveBreadcrumbs(
+        {
+          app: translate as unknown as TFunction<"translation">,
+          developmentGuide: translate as unknown as TFunction<"development-guide">,
+        },
+        {},
+      ),
+    ).toEqual([
+      { label: "navigation.developmentGuide", to: "/dev-guide" },
+      { label: "navigation.frontend", to: "/dev-guide/frontend" },
+      { label: "navigation.examplePages", to: "/dev-guide/frontend/example-pages" },
+      { label: "navigation.contactsCrud" },
+    ]);
     expect(contacts?.handle?.contentOverflow).toBe("hidden");
     expect(contacts?.handle?.mobileSurface).toBe("flush");
   });
@@ -163,7 +192,7 @@ describe("application routes", () => {
     const developmentGuideNavigation = appNavigationItems.filter(
       ({ labelKey }) => labelKey === "navigation.developmentGuide",
     );
-    const examplesRoute = authenticatedRoutes().find(route => route.path === "dev-guide/patterns");
+    const examplesRoute = authenticatedRoutes().find(route => route.path === "dev-guide/frontend/patterns");
 
     expect(appRouteRegistry.examples.developmentOnly).toBe(true);
     expect(routeIsEnabled(appRouteRegistry.examples, false)).toBe(false);
@@ -183,23 +212,110 @@ describe("application routes", () => {
     expect(paths).toContain("dev-guide");
   });
 
+  describe.runIf(import.meta.env.DEV)("development guide categories", () => {
+    it("renders the category index at the guide root and redirects only the Frontend index", () => {
+      const guide = authenticatedRoutes().find(route => route.path === "dev-guide");
+      const frontend = authenticatedRoutes().find(route => route.path === "dev-guide/frontend");
+      const index = guide?.children?.find(route => route.index);
+      expect(index?.Component).toBe(appRouteRegistry.developmentGuideIndex.Component);
+      expect(index?.element).toBeUndefined();
+      expect(routeDestination(appRouteRegistry.developmentGuideIndex)).toBe("/dev-guide");
+      expect(frontend?.children?.find(route => route.index)?.element).toMatchObject({
+        props: { replace: true, to: "/dev-guide/frontend/example-pages" },
+      });
+    });
+
+    it("excludes both categories and compatibility redirects from the production route tree", () => {
+      const production = createAppRouteObjects(appRouteRegistry, "authenticated", {
+        isDevelopment: false,
+        metadata: appRouteHierarchyMetadata,
+      });
+      const paths = production.flatMap(route => (route.path ? [route.path] : []));
+      expect(paths.some(path => path.startsWith("dev-guide"))).toBe(false);
+      for (const definition of [
+        appRouteRegistry.developmentGuideFrontend,
+        appRouteRegistry.developmentGuideBackend,
+        appRouteRegistry.legacyDevelopmentGuideHome,
+        appRouteRegistry.legacyDevelopmentGuideContacts,
+        appRouteRegistry.legacyDevelopmentGuidePatterns,
+        appRouteRegistry.legacyDevelopmentGuideArchitecture,
+        appRouteRegistry.legacyFrontendHome,
+        appRouteRegistry.legacyFrontendContacts,
+        ...patternCategoryDefinitions.map(category => appRouteRegistry[category.routeId]),
+      ])
+        expect(routeIsEnabled(definition, false)).toBe(false);
+    });
+
+    it.each([
+      ["/dev-guide/home", "/dev-guide/frontend/example-pages/contacts-dashboard"],
+      ["/dev-guide/contacts", "/dev-guide/frontend/example-pages/contacts-crud"],
+      ["/DEV-GUIDE/contacts", "/dev-guide/frontend/example-pages/contacts-crud"],
+      ["/dev-guide/frontend/home", "/dev-guide/frontend/example-pages/contacts-dashboard"],
+      ["/dev-guide/frontend/contacts", "/dev-guide/frontend/example-pages/contacts-crud"],
+      [
+        "/dev-guide/patterns/routing-and-url-state/nested-routes/details",
+        "/dev-guide/frontend/patterns/routing-and-url-state/nested-routes/details",
+      ],
+      ["/dev-guide/architecture/source-map-and-ownership", "/dev-guide/frontend/architecture/source-map-and-ownership"],
+    ])("redirects the compatible URL %s while preserving search, hash and state", async (pathname, target) => {
+      const compatibility = Object.values(appRouteRegistry).filter(
+        definition => definition.Component === LegacyDevelopmentGuideRedirect,
+      ) as AppRouteDefinition[];
+      expect(compatibility.map(definition => definition.path)).toEqual([
+        "dev-guide/home",
+        "dev-guide/contacts",
+        "dev-guide/patterns/*",
+        "dev-guide/architecture/*",
+        "dev-guide/frontend/home",
+        "dev-guide/frontend/contacts",
+      ]);
+      const router = createMemoryRouter(
+        [
+          ...compatibility.map(definition => ({ Component: LegacyDevelopmentGuideRedirect, path: definition.path })),
+          { element: <p>Canonical destination</p>, path: "/dev-guide/frontend/*" },
+        ],
+        { initialEntries: [{ pathname, search: "?filter=recent", hash: "#details", state: { from: "bookmark" } }] },
+      );
+      render(<RouterProvider router={router} />);
+      expect(await screen.findByText("Canonical destination")).toBeVisible();
+      await waitFor(() =>
+        expect(router.state.location).toMatchObject({
+          pathname: target,
+          search: "?filter=recent",
+          hash: "#details",
+          state: { from: "bookmark" },
+        }),
+      );
+      expect(router.state.historyAction).toBe("REPLACE");
+    });
+  });
+
   describe.runIf(import.meta.env.DEV)("development Patterns routes", () => {
-    it("derives ordered section tabs from the opted-in guide parent", () => {
+    it("derives ordered section tabs only from the Frontend category", () => {
       expect(appRouteRegistry.developmentGuide.navigation).toMatchObject({
         activePath: "/dev-guide/*",
         labelKey: "navigation.developmentGuide",
       });
       const guideRoute = authenticatedRoutes().find(route => route.path === "dev-guide");
-      expect(guideRoute?.handle?.sectionNavigation).toMatchObject([
-        { labelKey: "navigation.home", to: "/dev-guide/home" },
-        { labelKey: "navigation.contacts", to: "/dev-guide/contacts" },
-        { labelKey: "navigation.examples", to: "/dev-guide/patterns" },
-        { labelKey: "navigation.architecture", to: "/dev-guide/architecture" },
+      const frontendRoute = authenticatedRoutes().find(route => route.path === "dev-guide/frontend");
+      const backendRoute = authenticatedRoutes().find(route => route.path === "dev-guide/backend");
+      expect(guideRoute?.handle?.sectionNavigation).toBeUndefined();
+      expect(backendRoute?.handle?.sectionNavigation).toBeUndefined();
+      expect(frontendRoute?.handle?.headerBreadcrumb).toBe(true);
+      expect(backendRoute?.handle?.headerBreadcrumb).toBe(true);
+      expect(frontendRoute?.handle?.sectionNavigation).toMatchObject([
+        { labelKey: "navigation.examplePages", to: "/dev-guide/frontend/example-pages" },
+        { labelKey: "navigation.examples", to: "/dev-guide/frontend/patterns" },
+        {
+          labelKey: "handbook.categories.frontend-workflows.title",
+          to: "/dev-guide/frontend/workflow-patterns",
+        },
+        { labelKey: "navigation.architecture", to: "/dev-guide/frontend/architecture" },
       ]);
     });
 
-    it("orders retained categories and marks only the application-state section", () => {
-      const order = [
+    it("orders retained categories from the independent catalog", () => {
+      expect(appExampleNavigationGroups.map(({ id }) => id)).toEqual([
         "localization",
         "applicationState",
         "serverData",
@@ -208,81 +324,83 @@ describe("application routes", () => {
         "tablesAndCollections",
         "forms",
         "feedback",
-      ];
-      const retained = appExampleNavigationGroups.map(({ id }) => id);
-      expect(retained).toEqual(order.filter(id => retained.some(value => value === id)));
-      for (const group of appExampleNavigationGroups) {
-        expect(group.section).toBe(
-          ["applicationState", "serverData", "routingAndUrlState"].includes(group.id) ? "applicationState" : undefined,
-        );
-      }
+      ]);
+      expect(appExampleNavigationGroups.map(({ id, labelKey }) => ({ id, labelKey }))).toEqual(
+        patternCategoryDefinitions.map(({ id, labelKey }) => ({ id, labelKey })),
+      );
+      expect(appExampleNavigationGroups.every(group => group.section === undefined)).toBe(true);
     });
 
-    it("groups every example child while preserving its direct URL", () => {
+    it("groups every category's article children while preserving their direct URLs", () => {
+      const categoryRouteIds = new Set<string>(patternCategoryDefinitions.map(category => category.routeId));
       const routeDefinitions = Object.values(appRouteRegistry) as readonly AppRouteDefinition[];
-      const exampleRoutes = routeDefinitions.filter(definition => definition.parentId === "examples");
+      const exampleRoutes = routeDefinitions.filter(
+        definition => definition.groupId !== undefined && categoryRouteIds.has(definition.parentId),
+      );
       const groupedItems = appExampleNavigationGroups.flatMap(group => group.items);
-
       expect(appExampleNavigationGroups.every(({ items }) => items.length > 0)).toBe(true);
-      expect(new Set(appExampleNavigationGroups.map(({ id }) => id)).size).toBe(appExampleNavigationGroups.length);
       expect(new Set(groupedItems.map(({ to }) => to))).toEqual(new Set(exampleRoutes.map(routeDestination)));
       expect(appExampleNavigationGroups.every(({ defaultExpanded }) => defaultExpanded)).toBe(true);
     });
 
-    it("nests examples and derives the index redirect and breadcrumbs", () => {
-      const examples = authenticatedRoutes().find(route => route.path === "dev-guide/patterns");
-      if (!examples?.children || !examples.handle) {
-        throw new Error("Expected the Examples parent route");
-      }
-
-      expect(examples.handle.documentationGroups).toBe(appExampleNavigationGroups);
-      expect(examples.children[0]).toMatchObject({ index: true });
-      const firstExample = appExampleNavigationGroups[0]?.items[0];
-      if (!firstExample) throw new Error("Expected at least one example route");
-
-      expect(examples.children[0].element).toMatchObject({
-        props: {
-          replace: true,
-          to: firstExample.to,
-        },
-      });
-
-      const firstChild = examples.children.find(
-        route => route.path === firstExample.to.replace(/^\/dev-guide\/patterns\//, ""),
-      );
-      if (!firstChild?.handle) {
-        throw new Error("Expected the first example route");
-      }
-
-      expect(firstChild.handle.scrollToTop).toBe(true);
-      expect(
-        firstChild.handle.resolveBreadcrumbs(
-          {
-            app: translate as unknown as TFunction<"translation">,
-            developmentGuide: translate as unknown as TFunction<"development-guide">,
-          },
-          {},
-        ),
-      ).toEqual([
+    it("renders the Patterns index and scopes each category's default article and breadcrumbs", () => {
+      const examples = authenticatedRoutes().find(route => route.path === "dev-guide/frontend/patterns");
+      const index = examples?.children?.find(route => route.index);
+      expect(index?.Component).toBe(appRouteRegistry.examplesIndex.Component);
+      expect(index?.element).toBeUndefined();
+      expect(examples?.handle?.documentationGroups).toBeUndefined();
+      const translations = {
+        app: translate as unknown as TFunction<"translation">,
+        developmentGuide: translate as unknown as TFunction<"development-guide">,
+      };
+      expect(index?.handle?.resolveBreadcrumbs(translations, {})).toEqual([
         { label: "navigation.developmentGuide", to: "/dev-guide" },
-        { label: "navigation.examples", to: "/dev-guide/patterns" },
-        { label: firstExample.labelKey },
+        { label: "navigation.frontend", to: "/dev-guide/frontend" },
+        { label: "navigation.examples" },
       ]);
+      const examplePages = authenticatedRoutes().find(route => route.path === "dev-guide/frontend/example-pages");
+      expect(examplePages?.children?.find(route => route.index)?.handle?.resolveBreadcrumbs(translations, {})).toEqual([
+        { label: "navigation.developmentGuide", to: "/dev-guide" },
+        { label: "navigation.frontend", to: "/dev-guide/frontend" },
+        { label: "navigation.examplePages" },
+      ]);
+      for (const category of patternCategoryDefinitions) {
+        const categoryRoute = authenticatedRoutes().find(route => route.path === category.path);
+        const group = appExampleNavigationGroups.find(candidate => candidate.id === category.id);
+        const firstExample = group?.items[0];
+        if (!firstExample) throw new Error("Expected a category article");
+        expect(categoryRoute?.handle?.documentationGroups).toEqual([group]);
+        expect(categoryRoute?.children?.[0]?.element).toMatchObject({
+          props: { replace: true, to: firstExample.to },
+        });
+        const firstChild = categoryRoute?.children?.find(
+          route => route.path === firstExample.to.slice(category.path.length + 2),
+        );
+        expect(firstChild?.handle?.scrollToTop).toBe(true);
+        expect(firstChild?.handle?.resolveBreadcrumbs(translations, {})).toEqual([
+          { label: "navigation.developmentGuide", to: "/dev-guide" },
+          { label: "navigation.frontend", to: "/dev-guide/frontend" },
+          { label: "navigation.examples", to: "/dev-guide/frontend/patterns" },
+          { label: category.labelKey, to: "/" + category.path },
+          { label: firstExample.labelKey },
+        ]);
+      }
     });
 
     it("keeps a concrete destination and parameter-derived breadcrumbs for a dynamic route", () => {
       const definition = appRouteRegistry.routingRouteParametersAndBreadcrumbs;
-      const examples = authenticatedRoutes().find(route => route.path === "dev-guide/patterns");
-      const route = examples?.children?.find(
-        candidate => candidate.path === "routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
+      const route = authenticatedRoutes().find(
+        candidate =>
+          candidate.path ===
+          "dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
       );
       if (!route?.handle) throw new Error("Expected the dynamic routing example");
 
       expect(routeDestination(definition)).toBe(
-        "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
+        "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
       );
       expect(definition.navigation.activePath).toBe(
-        "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
+        "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/:projectId",
       );
       expect(
         route.handle.resolveBreadcrumbs(
@@ -294,10 +412,12 @@ describe("application routes", () => {
         ),
       ).toEqual([
         { label: "navigation.developmentGuide", to: "/dev-guide" },
-        { label: "navigation.examples", to: "/dev-guide/patterns" },
+        { label: "navigation.frontend", to: "/dev-guide/frontend" },
+        { label: "navigation.examples", to: "/dev-guide/frontend/patterns" },
+        { label: "navigation.routingAndUrlState", to: "/dev-guide/frontend/patterns/routing-and-url-state" },
         {
           label: "navigation.routingRouteParametersAndBreadcrumbs",
-          to: "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
+          to: "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas",
         },
         { label: "navigation.routingProject" },
       ]);
@@ -309,7 +429,7 @@ describe("application routes", () => {
       expect(architectureRelatedPatternLinks(["examples", "removedPatternRoute"])).toEqual([
         {
           labelKey: "navigation.examples",
-          to: "/dev-guide/patterns",
+          to: "/dev-guide/frontend/patterns",
         },
       ]);
     });
@@ -317,13 +437,17 @@ describe("application routes", () => {
     it("keeps development-only guide routes outside the main drawer", () => {
       expect(appRouteRegistry.architecture.developmentOnly).toBe(true);
       expect(routeIsEnabled(appRouteRegistry.architecture, false)).toBe(false);
-      expect(routeDestination(appRouteRegistry.developmentGuideHome)).toBe("/dev-guide/home");
+      expect(routeDestination(appRouteRegistry.developmentGuideHome)).toBe(
+        "/dev-guide/frontend/example-pages/contacts-dashboard",
+      );
       expect(appNavigationItems.some(({ labelKey }) => labelKey === "navigation.developmentGuide")).toBe(false);
     });
 
     it("derives the 15 direct routes and grouped order from the catalog", () => {
       const items = appArchitectureNavigationGroups.flatMap(group => group.items);
-      expect(items.map(({ to }) => to.replace("/dev-guide/architecture/", ""))).toEqual(architectureArticleIds);
+      expect(items.map(({ to }) => to.replace("/dev-guide/frontend/architecture/", ""))).toEqual(
+        architectureArticleIds,
+      );
       expect(new Set(items.map(({ to }) => to)).size).toBe(items.length);
       expect(appArchitectureNavigationGroups.map(({ id }) => id)).toEqual([
         "startHere",
@@ -336,7 +460,7 @@ describe("application routes", () => {
     });
 
     it("owns an independent index redirect and child breadcrumbs", () => {
-      const architecture = authenticatedRoutes().find(route => route.path === "dev-guide/architecture");
+      const architecture = authenticatedRoutes().find(route => route.path === "dev-guide/frontend/architecture");
       if (!architecture?.children || !architecture.handle) {
         throw new Error("Expected the Architecture parent route");
       }
@@ -346,7 +470,7 @@ describe("application routes", () => {
         element: {
           props: {
             replace: true,
-            to: "/dev-guide/architecture/source-map-and-ownership",
+            to: "/dev-guide/frontend/architecture/source-map-and-ownership",
           },
         },
         index: true,
@@ -362,7 +486,8 @@ describe("application routes", () => {
         ),
       ).toEqual([
         { label: "navigation.developmentGuide", to: "/dev-guide" },
-        { label: "navigation.architecture", to: "/dev-guide/architecture" },
+        { label: "navigation.frontend", to: "/dev-guide/frontend" },
+        { label: "navigation.architecture", to: "/dev-guide/frontend/architecture" },
         { label: "architectureGuide.articles.sourceMapAndOwnership" },
       ]);
     });

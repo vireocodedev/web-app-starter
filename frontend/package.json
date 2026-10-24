@@ -25,6 +25,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "verify:architecture": "node scripts/verify-application-architecture.mjs",
+    "verify:dev-guide": "node scripts/verify-development-guide.mjs",
     "test": "vitest run",
     "test:browser": "playwright test",
     "test:browser:fixed-settings": "RGO_FIXED_SETTINGS_BROWSER=true VITE_SETTINGS_NOCFG_LOCALE=en VITE_SETTINGS_NOCFG_DRAWER_MODE=permanent VITE_SETTINGS_NOCFG_HEADER_STICKINESS=both-rows VITE_SETTINGS_NOCFG_FONT_SIZE=big VITE_SETTINGS_NOCFG_DESKTOP_TABLE_SIZE=medium VITE_SETTINGS_NOCFG_THEME=soft-dark VITE_SETTINGS_NOCFG_INCREASED_CONTRAST=true VITE_SETTINGS_NOCFG_MOTION=reduce VITE_SETTINGS_NOCFG_LINK_UNDERLINES=always VITE_SETTINGS_NOCFG_EDITOR_PRESENTATION=overlay VITE_SETTINGS_NOCFG_SURFACE_BORDER_RADIUS=18 playwright test --grep @fixed-settings",
@@ -32,7 +33,7 @@
     "typecheck": "tsc -b",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "verify": "npm run format:check && npm run lint && npm run verify:architecture && npm run typecheck && npm run test && npm run build && npm run build-storybook"
+    "verify": "npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck && npm run test && npm run build && npm run build-storybook"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -55,6 +56,8 @@
     "react-markdown": "^10.1.0",
     "react-router": "^8.3.1",
     "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -72,6 +75,7 @@
     "@testing-library/user-event": "^14.6.7",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.13.3",
+    "@types/mdast": "^4.0.4",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",

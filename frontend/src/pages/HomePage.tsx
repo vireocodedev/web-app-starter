@@ -103,7 +103,7 @@ export function HomePage() {
               endIcon={<ArrowForwardRoundedIcon />}
               startIcon={<AutoStoriesOutlinedIcon />}
               sx={{ justifyContent: "space-between", minWidth: { sm: 220 }, py: 1.25 }}
-              to="/dev-guide/home"
+              to="/dev-guide"
               variant="outlined"
             >
               {t("navigation.developmentGuide")}

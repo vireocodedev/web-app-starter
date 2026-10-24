@@ -31,7 +31,7 @@ function resetEstimate() {
 
 const routeTransitionCode = `<Button
   component={RouterLink}
-  to="/dev-guide/patterns/application-state/persistent-state"
+  to="/dev-guide/frontend/patterns/application-state/persistent-state"
 >
   Review persistence
 </Button>`;

@@ -41,6 +41,7 @@ export type AppRouteHandle = {
   contentOverflow?: "auto" | "hidden";
   documentationGroups?: readonly DocumentationNavigationGroup[];
   HeaderContext?: ComponentType<{ params: Readonly<Params<string>> }>;
+  headerBreadcrumb?: boolean;
   sectionNavigation?: readonly AppNavigationLink[];
   mobileBottomNavigation?: boolean;
   mobileSurface?: AppMobileSurface;
@@ -81,6 +82,16 @@ export type AppExampleGroupId =
   | "routingAndUrlState"
   | "serverData"
   | "tablesAndCollections";
+
+export type AppPatternCategoryRouteId =
+  | "patternLocalization"
+  | "patternApplicationState"
+  | "patternServerData"
+  | "patternRoutingAndUrlState"
+  | "patternOverlays"
+  | "patternTablesAndCollections"
+  | "patternForms"
+  | "patternFeedback";
 
 export type AppArchitectureGroupId = "application" | "contributing" | "features" | "pages" | "startHere" | "startup";
 
@@ -139,6 +150,7 @@ export type AppRouteDefinition = Readonly<{
   contentOverflow?: "auto" | "hidden";
   defaultChildId?: string;
   HeaderContext?: ComponentType<{ params: Readonly<Params<string>> }>;
+  headerBreadcrumb?: boolean;
   headerNavigation?: boolean;
   developmentOnly?: boolean;
   ErrorBoundary?: ComponentType;
@@ -149,7 +161,7 @@ export type AppRouteDefinition = Readonly<{
   AppRouteLocalization &
   (
     | Readonly<{ groupId?: never; parentId?: string }>
-    | Readonly<{ groupId: AppExampleGroupId; parentId: "examples" }>
+    | Readonly<{ groupId: AppExampleGroupId; parentId: AppPatternCategoryRouteId }>
     | Readonly<{
         groupId: AppArchitectureGroupId;
         parentId: "architecture";

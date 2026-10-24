@@ -29,14 +29,14 @@ const groups = [
         kind: "link",
         labelKey: "navigation.home",
         labelNamespace: "development-guide",
-        to: "/dev-guide/patterns/first",
+        to: "/dev-guide/frontend/patterns/first",
       },
       {
         Icon: HomeOutlinedIcon,
         kind: "link",
         labelKey: "navigation.settings",
         labelNamespace: "development-guide",
-        to: "/dev-guide/patterns/second",
+        to: "/dev-guide/frontend/patterns/second",
       },
     ],
     labelKey: "navigation.examples",
@@ -50,7 +50,7 @@ const groups = [
         kind: "link",
         labelKey: "navigation.notFound",
         labelNamespace: "development-guide",
-        to: "/dev-guide/patterns/third",
+        to: "/dev-guide/frontend/patterns/third",
       },
     ],
     labelKey: "navigation.settings",
@@ -67,27 +67,27 @@ function renderNavigation(pathname: string) {
 
 describe("ExamplePageNavigation", () => {
   it("links both neighbors and crosses category boundaries in tree order", () => {
-    renderNavigation("/dev-guide/patterns/second");
+    renderNavigation("/dev-guide/frontend/patterns/second");
 
     expect(screen.getByRole("navigation", { name: "Pattern page navigation" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Previous navigation.home" })).toHaveAttribute(
       "href",
-      "/dev-guide/patterns/first",
+      "/dev-guide/frontend/patterns/first",
     );
     expect(screen.getByRole("link", { name: "Next navigation.notFound" })).toHaveAttribute(
       "href",
-      "/dev-guide/patterns/third",
+      "/dev-guide/frontend/patterns/third",
     );
   });
 
   it("renders only the available direction at the ends", () => {
-    const first = renderNavigation("/dev-guide/patterns/first");
+    const first = renderNavigation("/dev-guide/frontend/patterns/first");
 
     expect(screen.queryByText("Previous")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Next navigation.settings" })).toBeVisible();
 
     first.unmount();
-    renderNavigation("/dev-guide/patterns/third");
+    renderNavigation("/dev-guide/frontend/patterns/third");
 
     expect(screen.getByRole("link", { name: "Previous navigation.settings" })).toBeVisible();
     expect(screen.queryByText("Next")).not.toBeInTheDocument();
@@ -100,19 +100,19 @@ describe("ExamplePageNavigation", () => {
         id: "feedback",
         items: [
           {
-            activePath: "/dev-guide/patterns/projects/:projectId",
+            activePath: "/dev-guide/frontend/patterns/projects/:projectId",
             Icon: HomeOutlinedIcon,
             kind: "link",
             labelKey: "navigation.home",
             labelNamespace: "development-guide",
-            to: "/dev-guide/patterns/projects/atlas",
+            to: "/dev-guide/frontend/patterns/projects/atlas",
           },
           {
             Icon: HomeOutlinedIcon,
             kind: "link",
             labelKey: "navigation.settings",
             labelNamespace: "development-guide",
-            to: "/dev-guide/patterns/settings",
+            to: "/dev-guide/frontend/patterns/settings",
           },
         ],
         labelKey: "navigation.examples",
@@ -120,7 +120,7 @@ describe("ExamplePageNavigation", () => {
     ] as const satisfies readonly AppExampleNavigationGroup[];
 
     const dynamic = render(
-      <MemoryRouter initialEntries={["/dev-guide/patterns/projects/harbor"]}>
+      <MemoryRouter initialEntries={["/dev-guide/frontend/patterns/projects/harbor"]}>
         <ExamplePageNavigation groups={dynamicGroups} />
       </MemoryRouter>,
     );
@@ -128,7 +128,7 @@ describe("ExamplePageNavigation", () => {
     expect(screen.getByRole("link", { name: "Next navigation.settings" })).toBeVisible();
 
     dynamic.unmount();
-    renderNavigation("/dev-guide/patterns/not-registered");
+    renderNavigation("/dev-guide/frontend/patterns/not-registered");
 
     expect(screen.queryByRole("navigation", { name: "Pattern page navigation" })).not.toBeInTheDocument();
   });

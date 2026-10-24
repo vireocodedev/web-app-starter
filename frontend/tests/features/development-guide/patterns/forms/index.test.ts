@@ -15,7 +15,7 @@ describe("Forms pattern routes", () => {
     ]);
     expect(appRouteRegistry.formsValidationAndErrorPresentation).toMatchObject({
       groupId: "forms",
-      parentId: "examples",
+      parentId: "patternForms",
       scrollToTop: true,
     });
   });

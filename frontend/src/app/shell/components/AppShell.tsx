@@ -1,3 +1,4 @@
+import ChevronRightOutlinedIcon from "@mui/icons-material/ChevronRightOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
 import KeyboardDoubleArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardDoubleArrowLeftOutlined";
 import {
@@ -16,7 +17,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation, useMatches, useNavigation } from "react-router";
 
 import { useAppLocalization } from "@/app/localization/hooks/useAppLocalization";
@@ -63,18 +64,21 @@ function HeaderContext() {
   const { t } = useAppTranslation();
   const { t: guideT } = useDevelopmentGuideTranslation();
   const matches = useMatches();
+  const location = useLocation();
   const topMatch = matches.find(match => {
     const handle = match.handle as AppRouteHandle | undefined;
     return typeof handle?.resolveTitle === "function";
   });
-  const topHandle = topMatch?.handle as AppRouteHandle | undefined;
+  const identityMatches = matches.filter(match => {
+    const handle = match.handle as AppRouteHandle | undefined;
+    return match === topMatch || handle?.headerBreadcrumb;
+  });
   const contextMatch = [...matches].reverse().find(match => {
     const handle = match.handle as AppRouteHandle | undefined;
     return Boolean(handle?.HeaderContext);
   });
   const Context = (contextMatch?.handle as AppRouteHandle | undefined)?.HeaderContext;
-  const title = topHandle?.resolveTitle({ app: t, developmentGuide: guideT }, topMatch?.params ?? {});
-  if (!title) return null;
+  if (!topMatch) return null;
 
   return (
     <Stack
@@ -86,15 +90,50 @@ function HeaderContext() {
       <Typography
         component="h1"
         sx={{
+          alignItems: "center",
           color: "text.primary",
+          display: "flex",
           fontSize: { xs: "0.875rem", sm: "0.9375rem" },
           fontWeight: 600,
+          minWidth: 0,
           overflow: "hidden",
-          textOverflow: "ellipsis",
           whiteSpace: "nowrap",
         }}
       >
-        {title}
+        {identityMatches.map((match, index) => {
+          const handle = match.handle as AppRouteHandle;
+          const title = handle.resolveTitle({ app: t, developmentGuide: guideT }, match.params);
+          const isCurrent =
+            identityMatches.length === 1 || match.pathname.replace(/\/$/, "") === location.pathname.replace(/\/$/, "");
+          const labelStyle = {
+            color: "inherit",
+            flexShrink: identityMatches.length > 1 && index === identityMatches.length - 1 ? 0 : 1,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          } as const;
+          return (
+            <Fragment key={match.id}>
+              {index > 0 ? (
+                <ChevronRightOutlinedIcon aria-hidden="true" sx={{ flexShrink: 0, fontSize: 18, mx: 0.5 }} />
+              ) : null}
+              {isCurrent ? (
+                <Box component="span" sx={labelStyle}>
+                  {title}
+                </Box>
+              ) : (
+                <Box
+                  component={Link}
+                  sx={{ ...labelStyle, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+                  to={match.pathname}
+                >
+                  {title}
+                </Box>
+              )}
+            </Fragment>
+          );
+        })}
       </Typography>
       {Context ? (
         <>
@@ -156,7 +195,10 @@ function AppShellContent({
 
   const matchedRoute = [...matches].reverse().find(match => match.handle);
   const routeHandle = matchedRoute?.handle as AppRouteHandle | undefined;
-  const contentMaxWidth = routeHandle?.contentMaxWidth;
+  const contentMaxWidth = [...matches]
+    .reverse()
+    .map(match => match.handle as AppRouteHandle | undefined)
+    .find(handle => handle?.contentMaxWidth !== undefined)?.contentMaxWidth;
   const fixedContentWorkspace = routeHandle?.contentOverflow === "hidden";
   const deepestRouteHandle = matches.at(-1)?.handle as AppRouteHandle | undefined;
   const mobileBottomNavigation = deepestRouteHandle?.mobileBottomNavigation;
@@ -225,13 +267,17 @@ function AppShellContent({
 
   const routeContent =
     contentMaxWidth === undefined ? (
-      <Outlet />
+      <>
+        <AppBreadcrumbs local />
+        <Outlet />
+      </>
     ) : (
       <Container
         disableGutters
         maxWidth={contentMaxWidth}
         sx={{ display: "flex", flex: "1 1 auto", flexDirection: "column", minHeight: 0 }}
       >
+        <AppBreadcrumbs local />
         <Outlet />
       </Container>
     );
@@ -540,7 +586,6 @@ function AppShellContent({
               "&:focus, &:focus-visible": { outline: "none" },
             }}
           >
-            <AppBreadcrumbs local />
             {routeContent}
           </Box>
         </Box>

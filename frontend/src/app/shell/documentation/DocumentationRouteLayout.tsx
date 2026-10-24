@@ -1,5 +1,5 @@
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
-import { Box, Button, Container, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
 import { Outlet, useLocation, useMatches } from "react-router";
 
@@ -46,7 +46,7 @@ export function DocumentationRouteLayout({
   const contextValue = useMemo(() => ({ contentsTarget }), [contentsTarget]);
 
   return (
-    <Container maxWidth="lg" sx={{ containerType: "inline-size", py: { sm: 3, xs: 2 } }}>
+    <Box sx={{ containerType: "inline-size", py: { sm: 3, xs: 2 }, width: "100%" }}>
       <Box data-rgo-page-sidebar-trigger sx={{ mb: 2, "@container (min-width: 860px)": { display: "none" } }}>
         <Button
           aria-expanded={pageMenuOpen}
@@ -66,7 +66,7 @@ export function DocumentationRouteLayout({
           rowGap: 3,
           "@container (min-width: 860px)": {
             columnGap: 4,
-            gridTemplateColumns: "248px minmax(0, 680px)",
+            gridTemplateColumns: "248px minmax(0, 1fr)",
             rowGap: 0,
           },
         }}
@@ -131,6 +131,6 @@ export function DocumentationRouteLayout({
         <DocumentationNavigationTree groups={groups} navigationLabel={t(navigationLabelKey)} />
         <Box ref={setMobileContentsTarget} sx={{ mt: 2, pl: "20px" }} />
       </Drawer>
-    </Container>
+    </Box>
   );
 }

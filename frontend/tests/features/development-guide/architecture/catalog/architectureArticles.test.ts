@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { markdownHeadings } from "@/app/shell/documentation/markdownHeadings";
 import {
   architectureArticleCatalog,
   architectureArticleIds,
   architectureGroups,
 } from "@/features/development-guide/architecture";
-import { markdownHeadings } from "@/features/development-guide/architecture/utils/markdownHeadings";
 
 describe("architecture article catalog", () => {
   it("keeps the approved IDs unique and in route order", () => {

@@ -5,7 +5,7 @@ import { Link, type Params } from "react-router";
 
 const exampleProjects = ["atlas", "orion"] as const;
 const projectRoute = (projectId: string) =>
-  `/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/${encodeURIComponent(projectId)}`;
+  `/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/${encodeURIComponent(projectId)}`;
 
 /** Route-owned example of dynamic context beside the stable guide identity. */
 export function DynamicProjectHeaderIdentity({ params }: Readonly<{ params: Readonly<Params<string>> }>) {
