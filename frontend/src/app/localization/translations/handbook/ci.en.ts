@@ -18,6 +18,10 @@ export const englishCiHandbookTranslations = {
       title: "Worker isolation",
       description: "Separate untrusted job execution from privileged host ownership.",
     },
+    "ci-package-verification": {
+      title: "Package verification",
+      description: "Verify published artifact boundaries and actual consumer type/runtime resolution.",
+    },
   },
   articles: {
     "ci-pipelines-owner-scoped-checks": {
@@ -54,6 +58,16 @@ export const englishCiHandbookTranslations = {
       title: "Keep original phase deadlines and own process cleanup",
       description:
         "Reference recipe for setup-inclusive phase budgets, retained PGID ownership, bounded cleanup and failure-preserving utility aggregation.",
+    },
+    "ci-package-verification-anonymous-consumer-artifact-checks": {
+      title: "Prove public consumption without maintainer credentials or workspace links",
+      description:
+        "Separate packed local-peer checks from exact anonymous public installs and isolate privileged attestation verification from consumer execution.",
+    },
+    "ci-package-verification-type-resolution-and-runtime-entrypoints": {
+      title: "Verify emitted types and runtime entrypoints from the consumer side",
+      description:
+        "Validate packed exports, declaration resolution and runtime behavior while distinguishing RGO skipLibCheck limits from the Vireo strict-dist reference.",
     },
   },
 } as const;

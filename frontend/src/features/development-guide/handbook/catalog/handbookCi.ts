@@ -29,6 +29,13 @@ export const ciHandbookCatalog = {
       titleKey: "handbook.topics.ci-isolation.title",
       descriptionKey: "handbook.topics.ci-isolation.description",
     },
+    {
+      id: "ci-package-verification",
+      categoryId: "ci",
+      slug: "package-verification",
+      titleKey: "handbook.topics.ci-package-verification.title",
+      descriptionKey: "handbook.topics.ci-package-verification.description",
+    },
   ],
   articles: [
     {
@@ -309,6 +316,108 @@ export const ciHandbookCatalog = {
         },
       ],
       relatedArticleIds: ["ci-verification-resource-budgets", "ci-pipelines-owner-scoped-checks"],
+    },
+    {
+      id: "ci-package-verification-anonymous-consumer-artifact-checks",
+      topicId: "ci-package-verification",
+      slug: "anonymous-consumer-artifact-checks",
+      contentPath: "ci/package-verification/anonymous-consumer-artifact-checks",
+      titleKey: "handbook.articles.ci-package-verification-anonymous-consumer-artifact-checks.title",
+      descriptionKey: "handbook.articles.ci-package-verification-anonymous-consumer-artifact-checks.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "rgo-frontend",
+          path: "scripts/package/verify-package.mjs",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "rgo-frontend",
+          path: "scripts/application-template/verify-published-application-template.mjs",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "rgo-frontend",
+          path: "README.md",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "vireo-starter",
+          path: "docs/ANONYMOUS_CONSUMER_GAUNTLET.md",
+          revision: "ab58e6a045894f1d3a855b41834e4b34c066d8c1",
+        },
+        {
+          project: "vireo-starter",
+          path: "scripts/anonymous-consumer-gauntlet.mjs",
+          revision: "ab58e6a045894f1d3a855b41834e4b34c066d8c1",
+        },
+        {
+          project: "vireo-starter",
+          path: "scripts/lib/anonymous-consumer-environment.mjs",
+          revision: "ab58e6a045894f1d3a855b41834e4b34c066d8c1",
+        },
+        {
+          project: "vireo-starter",
+          path: "scripts/verify-anonymous-consumer-signed-sboms.mjs",
+          revision: "ab58e6a045894f1d3a855b41834e4b34c066d8c1",
+        },
+      ],
+      relatedArticleIds: [
+        "ci-package-verification-type-resolution-and-runtime-entrypoints",
+        "delivery-artifacts-runtime-smoke-evidence",
+      ],
+    },
+    {
+      id: "ci-package-verification-type-resolution-and-runtime-entrypoints",
+      topicId: "ci-package-verification",
+      slug: "type-resolution-and-runtime-entrypoints",
+      contentPath: "ci/package-verification/type-resolution-and-runtime-entrypoints",
+      titleKey: "handbook.articles.ci-package-verification-type-resolution-and-runtime-entrypoints.title",
+      descriptionKey: "handbook.articles.ci-package-verification-type-resolution-and-runtime-entrypoints.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "rgo-frontend",
+          path: "package.json",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "rgo-frontend",
+          path: "docs/platform/PUBLIC_MODULE_CONTRACT.md",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "rgo-frontend",
+          path: "scripts/package/verify-package.mjs",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "rgo-frontend",
+          path: "scripts/package/verify-typecheck-resolution.mjs",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "rgo-frontend",
+          path: "scripts/package/declaration-graph.mjs",
+          revision: "88c3f4cb18462cad8a2845b773406f4a1008db69",
+        },
+        {
+          project: "vireo-starter",
+          path: "scripts/strict-consumer-types.mjs",
+          revision: "ab58e6a045894f1d3a855b41834e4b34c066d8c1",
+        },
+        {
+          project: "vireo-starter",
+          path: "scripts/strict-consumer-types-worker.mjs",
+          revision: "ab58e6a045894f1d3a855b41834e4b34c066d8c1",
+        },
+      ],
+      relatedArticleIds: [
+        "developer-workflow-template-evolution-published-artifacts-and-local-overrides",
+        "ci-pipelines-pinned-toolchains-and-actions",
+      ],
     },
   ],
 } as const satisfies HandbookCategoryCatalog;

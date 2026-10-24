@@ -203,6 +203,11 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 - [Treat the disposable worker as a verified trust boundary](en/ci/isolation/disposable-worker-boundary.md) · [Hrvatski](hr/ci/isolation/disposable-worker-boundary.md)
 
+#### Package verification
+
+- [Prove public consumption without maintainer credentials or workspace links](en/ci/package-verification/anonymous-consumer-artifact-checks.md) · [Hrvatski](hr/ci/package-verification/anonymous-consumer-artifact-checks.md)
+- [Verify emitted types and runtime entrypoints from the consumer side](en/ci/package-verification/type-resolution-and-runtime-entrypoints.md) · [Hrvatski](hr/ci/package-verification/type-resolution-and-runtime-entrypoints.md)
+
 ### Delivery and operations
 
 #### Runnable artifacts
@@ -243,6 +248,15 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Verification workflow
 
 - [Select verification by changed contract and report its limits](en/developer-workflow/verification/verification-selection-and-evidence.md) · [Hrvatski](hr/developer-workflow/verification/verification-selection-and-evidence.md)
+
+#### Template and package evolution
+
+- [Identify the installed stack before applying a platform recipe](en/developer-workflow/template-evolution/identify-the-installed-stack-profile.md) · [Hrvatski](hr/developer-workflow/template-evolution/identify-the-installed-stack-profile.md)
+- [Keep application policy outside reusable library mechanics](en/developer-workflow/template-evolution/application-and-library-responsibility.md) · [Hrvatski](hr/developer-workflow/template-evolution/application-and-library-responsibility.md)
+- [Distinguish published dependencies from local candidate overrides](en/developer-workflow/template-evolution/published-artifacts-and-local-overrides.md) · [Hrvatski](hr/developer-workflow/template-evolution/published-artifacts-and-local-overrides.md)
+- [Give generated application code a different lifetime from indexes](en/developer-workflow/template-evolution/generated-once-and-regenerated-ownership.md) · [Hrvatski](hr/developer-workflow/template-evolution/generated-once-and-regenerated-ownership.md)
+- [Classify every template path before projecting an application](en/developer-workflow/template-evolution/projection-boundaries-and-classified-paths.md) · [Hrvatski](hr/developer-workflow/template-evolution/projection-boundaries-and-classified-paths.md)
+- [Compare immutable baseline, local changes and upstream target](en/developer-workflow/template-evolution/three-way-template-adoption.md) · [Hrvatski](hr/developer-workflow/template-evolution/three-way-template-adoption.md)
 
 ### AI-agent workflow
 

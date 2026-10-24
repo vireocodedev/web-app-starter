@@ -21,6 +21,10 @@ export const croatianCiHandbookTranslations = {
       title: "Izolacija izvršitelja",
       description: "Odvojite nepouzdano izvršavanje poslova od privilegiranog hosta.",
     },
+    "ci-package-verification": {
+      title: "Provjera paketa",
+      description: "Provjerite granice objavljenih artefakata i stvarno razrješenje tipova i runtimea u potrošaču.",
+    },
   },
   articles: {
     "ci-pipelines-owner-scoped-checks": {
@@ -53,6 +57,14 @@ export const croatianCiHandbookTranslations = {
       title: "Sačuvaj početni rok faze i vlasništvo nad čišćenjem procesa",
       description:
         "Referentni recept za rokove sa setupom, zadržano PGID vlasništvo, cleanup i aggregate koji čuva neuspjehe.",
+    },
+    "ci-package-verification-anonymous-consumer-artifact-checks": {
+      title: "Dokaži public potrošnju bez maintainer tajni ili workspace linka",
+      description: "Odvoji local-peer pack od anonymous public instalacije i attestation ovlast od consumera.",
+    },
+    "ci-package-verification-type-resolution-and-runtime-entrypoints": {
+      title: "Tipove i runtime entrypoint provjeri iz consumera",
+      description: "Provjeri pack exporte, declaration resolution i runtime uz jasne granice RGO/Vireo tip provjera.",
     },
   },
 } satisfies StringLeaves<typeof englishCiHandbookTranslations>;
