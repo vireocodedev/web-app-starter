@@ -18,6 +18,12 @@ export const croatianDevelopmentGuideTranslations = {
     populated: "Popunjeno",
     disabled: "Onemogućeno",
     simulateFailure: "Simuliraj pogrešku",
+    previewState: "Stanje rezultata u primjeru",
+    ready: "Spremno",
+    failNext: "Sljedeće spremanje ili izvoz ne uspijeva",
+    sampleRecord: "Primjer zapisa",
+    reportSampleHint:
+      "Primjeri podataka obuhvaćaju 1.–14. siječnja 2026. Odaberite razdoblje i primijenite filtre za pregled izvještaja.",
     saved: "Spremljeno",
     pending: "Slanje",
     complete: "Dovrši slanje",

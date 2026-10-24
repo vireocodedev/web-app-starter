@@ -17,6 +17,12 @@ export const englishDevelopmentGuideTranslations = {
     populated: "Populated",
     disabled: "Disabled",
     simulateFailure: "Simulate failure",
+    previewState: "Preview result state",
+    ready: "Ready",
+    failNext: "Fail the next save or export",
+    sampleRecord: "Sample record",
+    reportSampleHint:
+      "Sample data covers 1–14 January 2026. Choose a period and apply the filters to explore the report.",
     saved: "Saved",
     pending: "Submitting",
     complete: "Complete submission",

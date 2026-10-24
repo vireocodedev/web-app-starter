@@ -2,6 +2,25 @@
 
 The implementation targets the current working tree based on `a7defb9e45dc418036d4d62af742fadf42ffde05`, preserving pre-existing changes. The [catalog and policy](generators.md) and [source analysis](generators-analysis.md) describe its contract and provenance.
 
+## Workflow recipe iteration
+
+The follow-up based on `61051c79f212fa6f5197bb70a91debc67ee1f645` adds four approved variants: `feature/workspace`, `form/wizard`, `form/collection` and `page/report`. The catalog now contains 15 frontend recipes, including the nonvisual API bundle, and 14 visual Dev Guide destinations. Receipt-protected refresh replaced the previous sample set with 110 sample files; the receipt and application sample output remain uncommitted for inspection.
+
+The implementations reuse current RGO/TanStack forms, application entity-form lifecycle, controlled server-table presentation and the installed overlay session controller. Peer applications supplied interaction patterns through the source-backed guide. No backend templates or production route/access policies changed.
+
+| Check                                       | Actual result                                                                                                                                                                           | Evidence                                          |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Focused generator/menu/sample checks        | 50 passed before the final source rehearsal; full frontend verification repeats them for the final working tree                                                                         | `/tmp/repo-verification-1000-hbrgtuvi/output.log` |
+| Final isolated emitted frontend             | Formatting, lint, architecture, TypeScript, 65 emitted tests in 15 files, production build and preview-isolation assertions passed                                                      | `/tmp/repo-verification-1000-u_zm426i/output.log` |
+| Generated browser interactions              | All 13 passed together, including all four new workflows and 375px viewport checks                                                                                                      | Same final rehearsal log                          |
+| Full source frontend with refreshed samples | 50 generator tests, five guide-index tests, 159 paired articles/43 topics, 679 frontend tests in 105 files, all static gates, production and Storybook builds passed in 214.504 seconds | `/tmp/repo-verification-1000-2io9onbo/output.log` |
+
+The retained fixture is `/tmp/starter-generator-rehearsal-3q8OHG`; `rehearsal.json` records the generated inventory and sequential stage results. Report browser checks inspect the downloaded CSV: five current-page rows versus fourteen all-match rows. Editor checks cover section value retention, linked error focus, pending acknowledgement, local child Apply/Cancel, Enter isolation, record detail/edit and dirty-close veto. Emitted regressions cover retained report sort/page size, correction focus by child identity, captured export scope and stable overlay state reporting.
+
+Earlier candidates failed lint/type checks, wizard test selectors and browser interactions. The final candidate corrects preview namespace isolation, responsive StepButton sizing and an editor callback publication loop. The passing final aggregate above supersedes those failed attempts; source inspection is not substituted for browser evidence. Independent review confirmed the material fixes. Backend suites were not repeated because their templates were unchanged; native Windows and a manual accessibility audit remain outside this iteration's evidence.
+
+Documentation package verification passed in 11.789 seconds: 35 preparation tests and one optional skip, seven documentation tests, 15 Python contracts, one offline browser test and dashboard freshness. Log: `/tmp/repo-verification-1000-94pfcdkq/output.log`. Portable installation also passed in 12.647 seconds using its own lockfile/dependencies and browser; its template-specific skips are expected. Log: `/tmp/repo-verification-1000-nokgqfjw/output.log`. This final evidence-only update is followed by dashboard regeneration and freshness validation; application checks are not repeated for unchanged source.
+
 ## Rich frontend recipe iteration
 
 The follow-up based on `a8d8632086a26c33d6a2d8f15f9aa8446daef95a` adds workspace-shell, dashboard-page and detail-page variants plus a navigation generator. The frontend catalog now has eight kinds and eleven recipes; ten produce interactive Dev Guide destinations. The sample refresh command emits 73 application-owned sample files and keeps its cleanup receipt uncommitted.

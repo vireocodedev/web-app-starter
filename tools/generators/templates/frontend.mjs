@@ -3,6 +3,8 @@
  * by the CLI; this module renders files without reading or writing the workspace.
  */
 import { renderAdvancedFrontend } from "./frontend-advanced.mjs";
+import { renderWorkflowWorkspaces } from "./frontend-workspaces.mjs";
+import { renderWorkflowEditors } from "./frontend-editors.mjs";
 
 const quote = value => JSON.stringify(value);
 const role = (name, suffix) => (name.endsWith(suffix) ? name : `${name}${suffix}`);
@@ -536,6 +538,8 @@ export function Component() {
 
 /** Render a complete plan; callers own collision checks, formatting and writes. */
 export function renderFrontend(kind, context) {
+  const workflow = renderWorkflowWorkspaces(kind, context) ?? renderWorkflowEditors(kind, context);
+  if (workflow) return workflow;
   const advanced = renderAdvancedFrontend(kind, context);
   if (advanced) return advanced;
   const { owner } = paths(context);

@@ -40,6 +40,21 @@ library publishes its package-root API, not its maintainer-only scripts.
 
 ## Installed frontend patterns and Client Discovery adaptations
 
+### Approved workflow recipe iteration
+
+The follow-up based on starter `61051c79f212fa6f5197bb70a91debc67ee1f645` selects four additional frontend workflows after read-only inspection of Client Discovery, LMS and FRED and Bruno's approval of the recommended batch. They extend existing kinds as variants, retaining default output and automatic preview discovery. The base generators already supply useful bounded forms/tables but do not cover these complete workflows; the new pure renderers reuse their installed controls and ownership conventions.
+
+| Variant             | Source pattern                                                                                                             | Current implementation boundary                                                                                                                     |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `feature/workspace` | Client Discovery `frontend/src/features/sales/components/LeadList.tsx`; LMS `src/pages/vessels/LmsPageVessels.tsx`         | Controlled server collection and caller-owned writes; current Contacts overlay controller supplies guarded, session-aware detail/edit presentation. |
+| `form/wizard`       | Client Discovery `frontend/src/app/forms/components/AppTopicEditor.tsx`                                                    | One current RGO/TanStack form, retained section values, review, error focus and final acknowledged submission. Navigation is not a partial command. |
+| `form/collection`   | FRED `src/features/navigation/features/flight-log/components/FlightLogForm/FlightLogForm.tsx`; LMS aggregate-editor recipe | Stable local/persisted child identities, isolated staged child draft and one complete parent save. No historical form/table wrapper is copied.      |
+| `page/report`       | LMS `src/features/statistics/components/StatisticsReportTableCard/StatisticsReportTableCard.tsx`                           | Explicit applied request/result scope, state presentation and delegated asynchronous export. The preview owns a bounded in-memory download example. |
+
+Client Discovery provenance remains `9fcbf2f17a09329333c3d53c7a3750c48fc1db52`. Peer references use LMS `09a8ea2fc438652a90e4400c088c282b81845443` and FRED `7a78e4f624e4b51ce1cdb9334036f2fb6119f62a`, as identified by the source-backed guide. Their older UI dependencies are interaction references, not dependencies for generated applications. Persistence, production route policy, authorization, revision/conflict semantics and export delivery protocols remain with the adopting feature.
+
+The historical candidate matrix below describes the initial catalog. Its deferred server collection/overlay boundary is now covered by the explicitly selected workspace variant; it is not a new generic persistence or authorization contract. Execution evidence for this iteration belongs in [generator verification](generators-verification.md).
+
 The governing owners are the architecture articles for
 [source placement](../frontend/docs/architecture/en/source-map-and-ownership.md),
 [feature interfaces](../frontend/docs/architecture/en/feature-anatomy-filenames-and-public-interfaces.md),

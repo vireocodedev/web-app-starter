@@ -155,7 +155,7 @@ if (!args.has("--prepare-only")) {
     await run(npm, ["run", "build", "--", "--manifest"], cwd);
     const manifest = await readFile(path.join(cwd, "dist/.vite/manifest.json"), "utf8");
     if (
-      /\.example\.tsx|generatedExamples|generator-profile|generator-orders|generator-workspace|GeneratorProfile|GeneratorWorkspace|generator-navigation|GeneratorNavigation|generator-page-dashboard|generator-page-detail/.test(
+      /\.example\.tsx|generatedExamples|generator-profile|generator-orders|generator-workspace|GeneratorProfile|GeneratorWorkspace|generator-navigation|GeneratorNavigation|generator-page-dashboard|generator-page-detail|generator-form-wizard|generator-form-collection|generator-feature-workspace|generator-page-report/.test(
         manifest,
       )
     )
@@ -163,7 +163,11 @@ if (!args.has("--prepare-only")) {
     const chunks = await readdir(path.join(cwd, "dist/assets"));
     for (const chunk of chunks.filter(name => name.endsWith(".js"))) {
       const body = await readFile(path.join(cwd, "dist/assets", chunk), "utf8");
-      if (/Simulated submission failure|sample-12|generator-profile--generator-profile|Complete submission/.test(body))
+      if (
+        /Simulated submission failure|sample-12|generator-profile--generator-profile|Complete submission|Fail the next save or export|Sample data covers 1–14 January 2026/.test(
+          body,
+        )
+      )
         throw new Error(`Generated preview fixture/copy leaked into production: ${chunk}`);
     }
     if (args.has("--browser"))

@@ -155,6 +155,14 @@ export async function createPlan(root, options) {
   const recipe = generator.variants?.find(item => item.value === variant) ?? generator;
   if (recipe.acceptsFields === false && options.fields !== undefined)
     throw new Error(`${generator.id}${options.variant ? ` (${variant})` : ""} uses composition props, not --fields.`);
+  if (
+    generator.id === "frontend/form" &&
+    variant === "collection" &&
+    fields.some(field => ["localId", "serverId"].includes(field.name))
+  )
+    throw new Error(
+      "The collection recipe reserves localId and serverId for child identity. Choose other field names.",
+    );
   const context = {
     name,
     feature,

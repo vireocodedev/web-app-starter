@@ -25,7 +25,8 @@ Options:
   --feature Name        New capability owner (defaults to Name)
   --fields a,b:string?  1–20 lowerCamelCase fields, ? means optional
                         Backend: string, integer, boolean. Frontend: string.
-  --variant Name        Shell: simple|workspace; Page: simple|dashboard|detail
+  --variant Name        Shell: simple|workspace; Page: simple|dashboard|detail|report
+                        Form: simple|wizard|collection; Feature: simple|workspace
                         Backend DTO: request|response (default request)
   --migration N         Explicit new Flyway version (backend domain/feature)
   --dry-run             Validate and print the complete plan without writing

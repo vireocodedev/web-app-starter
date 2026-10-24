@@ -198,7 +198,7 @@ test("backend scalars and request/response variations preserve validation/nullab
 
 test("layout recipes preserve defaults and validate variants before mutation", async t => {
   const { directory } = await fixture(t);
-  for (const kind of ["shell", "page"]) {
+  for (const kind of ["shell", "page", "form", "feature"]) {
     const base = { target: "frontend", kind, name: "WorkspaceLayout" };
     assert.deepEqual(
       (await createPlan(directory, base)).files,
@@ -227,6 +227,46 @@ test("layout recipes preserve defaults and validate variants before mutation", a
       createPlan(directory, { target: "frontend", kind, variant, name: "WorkspaceLayout" }),
       /Unsupported --variant/,
     );
+});
+
+test("workflow recipes support custom and single-field inputs with deterministic, collision-safe plans", async t => {
+  const { directory } = await fixture(t);
+  for (const [kind, variant] of [
+    ["feature", "workspace"],
+    ["page", "report"],
+    ["form", "wizard"],
+    ["form", "collection"],
+  ]) {
+    for (const fields of ["subject", "subject?", "subject,description?,owner"]) {
+      const options = {
+        target: "frontend",
+        kind,
+        variant,
+        fields,
+        name: `Case${variant}${fields.includes(",") ? "Many" : fields.endsWith("?") ? "Optional" : "One"}`,
+      };
+      const plan = await createPlan(directory, options);
+      assert.deepEqual(plan, await createPlan(directory, options));
+      assert.equal(new Set(plan.files.map(file => file.path)).size, plan.files.length);
+      const preview = plan.files.find(file => file.path.endsWith(".example.tsx"));
+      assert.ok(preview);
+      assert.match(preview.path, new RegExp(`/generated/${kind}/`));
+      assert.ok(plan.files.some(file => file.path.endsWith(".hr.ts")));
+      assert.ok(plan.files.some(file => file.path.includes("/tests/features/")));
+      await applyPlan(directory, plan.files);
+      await assert.rejects(createPlan(directory, options), /Existing frontend feature owner/);
+    }
+  }
+});
+
+test("child-item identity fields cannot be replaced by caller fields", async t => {
+  const { directory } = await fixture(t);
+  for (const fields of ["localId", "serverId", "subject,localId?"])
+    await assert.rejects(
+      createPlan(directory, { target: "frontend", kind: "form", variant: "collection", name: "Order", fields }),
+      /reserves localId and serverId/,
+    );
+  assert.equal((await readdir(path.join(directory, translationDirectory))).length, 1);
 });
 
 test("CLI dry-run creates no files; help, discovery, failure and assessments work without a TTY", async t => {

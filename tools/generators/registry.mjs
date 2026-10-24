@@ -49,7 +49,11 @@ export const generators = [
     output,
     inputs: {
       required: ["name"],
-      optional: ["feature", "fields (text only)", ...(["shell", "page"].includes(kind) ? ["variant"] : [])],
+      optional: [
+        "feature",
+        "fields (text only)",
+        ...(["shell", "page", "form", "feature"].includes(kind) ? ["variant"] : []),
+      ],
     },
     ...(kind === "shell"
       ? {
@@ -79,9 +83,60 @@ export const generators = [
                 purpose: "Record summary, metadata, status, actions and complementary content with recovery states",
                 acceptsFields: false,
               },
+              {
+                value: "report",
+                label: "Reports workspace",
+                purpose: "Applied report filters, result states, summaries and explicitly scoped asynchronous exports",
+                acceptsFields: true,
+                guide: "frontend/docs/development-guide/en/frontend/collections/reporting-and-export-scope.md",
+                reference:
+                  "LMS/lms-front@09a8ea2fc438652a90e4400c088c282b81845443:src/features/statistics/components/StatisticsReportTableCard/StatisticsReportTableCard.tsx",
+              },
             ],
           }
-        : {}),
+        : kind === "form"
+          ? {
+              variants: [
+                { value: "simple", label: "Form", purpose, acceptsFields: true },
+                {
+                  value: "wizard",
+                  label: "Multi-section editor",
+                  purpose:
+                    "One retained form across sections, review, linked validation errors and acknowledged submission",
+                  acceptsFields: true,
+                  guide: "frontend/docs/development-guide/en/frontend/task-interfaces/topic-editors-and-error-focus.md",
+                  reference:
+                    "client-discovery-app@9fcbf2f17a09329333c3d53c7a3750c48fc1db52:frontend/src/app/forms/components/AppTopicEditor.tsx",
+                },
+                {
+                  value: "collection",
+                  label: "Child-item editor",
+                  purpose: "Aggregate form with stable child identities, staged Apply/Cancel and one final save",
+                  acceptsFields: true,
+                  guide:
+                    "frontend/docs/development-guide/en/frontend/collections/hierarchical-rows-and-nested-editors.md",
+                  reference:
+                    "FRED/FRED-front@7a78e4f624e4b51ce1cdb9334036f2fb6119f62a:src/features/navigation/features/flight-log/components/FlightLogForm/FlightLogForm.tsx",
+                },
+              ],
+            }
+          : kind === "feature"
+            ? {
+                variants: [
+                  { value: "simple", label: "Feature", purpose, acceptsFields: true },
+                  {
+                    value: "workspace",
+                    label: "Record workspace",
+                    purpose: "Controlled server collection with search, sorting, pagination and guarded record editors",
+                    acceptsFields: true,
+                    guide:
+                      "frontend/docs/development-guide/en/frontend/overlays/guarded-command-results-and-session-identity.md",
+                    reference:
+                      "client-discovery-app@9fcbf2f17a09329333c3d53c7a3750c48fc1db52:frontend/src/features/sales/components/LeadList.tsx",
+                  },
+                ],
+              }
+            : {}),
     guide: frontendGuide,
     reference:
       "client-discovery-app@9fcbf2f17a09329333c3d53c7a3750c48fc1db52:frontend/src/features/sales/components/LeadForm.tsx",

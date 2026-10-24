@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 test.skip(!process.env.GENERATOR_REHEARSAL, "Requires the isolated generated-output rehearsal workspace.");
 
@@ -13,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 test("discovers every generated visual example through normal guide navigation", async ({ page }) => {
   await page.goto("/dev-guide/frontend/generated");
   const navigation = page.getByRole("navigation", { name: "Generated examples" });
-  await expect(navigation.getByRole("link")).toHaveCount(10);
+  await expect(navigation.getByRole("link")).toHaveCount(14);
   for (const label of [
     "Generator Card",
     "Generator Profile",
@@ -25,6 +26,10 @@ test("discovers every generated visual example through normal guide navigation",
     "Generator Page Dashboard",
     "Generator Page Detail",
     "Generator Navigation",
+    "Generator Form Wizard",
+    "Generator Form Collection",
+    "Generator Feature Workspace",
+    "Generator Page Report",
   ])
     await expect(navigation.getByRole("link", { name: label })).toBeVisible();
   await navigation.getByRole("link", { name: "Generator Card" }).click();
@@ -167,4 +172,118 @@ test("generated translations follow live locale changes without losing a draft",
   await page.getByRole("menuitem", { name: "HR", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Naslov", exact: true })).toHaveValue("Preserved draft");
   await expect(page.getByRole("button", { name: "Stvori", exact: true })).toBeVisible();
+});
+
+test("sectioned editor retains input, reveals invalid fields and awaits the final save", async ({ page }) => {
+  await page.goto("/dev-guide/frontend/generated/form/generator-form-wizard--generator-form-wizard");
+  await page.getByRole("textbox", { name: "Title", exact: true }).fill("Retained section draft");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("textbox", { name: "Notes", exact: true }).fill("Additional context");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByText("Retained section draft", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Previous", exact: true }).click();
+  await page.getByRole("button", { name: "Previous", exact: true }).click();
+  const title = page.getByRole("textbox", { name: "Title", exact: true });
+  await expect(title).toHaveValue("Retained section draft");
+  await title.clear();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await page.getByRole("button", { name: "Title: This field is required.", exact: true }).click();
+  await expect(title).toBeFocused();
+  await title.fill("Ready to submit");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "Notes", exact: true })).toHaveValue("Additional context");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Previous", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Complete submission", exact: true }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 800 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("child editor stages Apply and Cancel and Enter cannot save the parent", async ({ page }) => {
+  await page.goto("/dev-guide/frontend/generated/form/generator-form-collection--generator-form-collection");
+  await page.getByRole("textbox", { name: "Collection title", exact: true }).fill("Sample order");
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  const item = page.getByRole("region", { name: "New item", exact: true });
+  await item.getByRole("textbox", { name: "Title", exact: true }).fill("Staged line");
+  await item.getByRole("textbox", { name: "Title", exact: true }).press("Enter");
+  await expect(item).toHaveCount(0);
+  await expect(page.getByText("Title: Staged line", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Complete submission", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Edit item 1", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Edit item", exact: true })
+    .getByRole("textbox", { name: "Title", exact: true })
+    .fill("Discard this edit");
+  await page.getByRole("button", { name: "Cancel item edit", exact: true }).click();
+  await expect(page.getByText("Title: Staged line", { exact: true })).toBeVisible();
+  await expect(page.getByText("Discard this edit", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "Collection title", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Complete submission", exact: true }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Remove item 1", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Edit item 1", exact: true })).toHaveCount(0);
+  await page.setViewportSize({ width: 375, height: 800 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("record workspace filters across pages and guards unsaved panel edits", async ({ page }) => {
+  await page.goto("/dev-guide/frontend/generated/feature/generator-feature-workspace--generator-feature-workspace");
+  await expect(page.getByText("1–5 / 14", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(page.getByText("6–10 / 14", { exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: "Search all fields", exact: true }).fill("14");
+  await expect(page.getByText("1–1 / 1", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /^View:/ }).click();
+  await expect(page.getByRole("dialog", { name: "Record details", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Edit record", exact: true }).click();
+  const title = page.getByRole("textbox", { name: "Title", exact: true });
+  await title.fill("Unsubmitted record edit");
+  await page.getByRole("button", { name: "Close workspace panel", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Discard changes?", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await expect(title).toHaveValue("Unsubmitted record edit");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.getByText("Changes saved.", { exact: true })).toBeVisible();
+  await expect(title).toHaveCount(0);
+  await page.getByRole("textbox", { name: "Search all fields", exact: true }).clear();
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.getByRole("button", { name: "Create record", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "Title", exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("report applies filters deliberately and downloads the labelled export scope", async ({ page }) => {
+  await page.goto("/dev-guide/frontend/generated/page/generator-page-report--generator-page-report");
+  await expect(page.getByText("Choose a valid start and end date, then apply the filters.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Period start (inclusive)", exact: true }).fill("2026-01-01");
+  await page.getByRole("textbox", { name: "Period end (inclusive)", exact: true }).fill("2026-01-31");
+  await page.getByRole("button", { name: "Apply report filters", exact: true }).click();
+  await expect(page.getByText("1–5 / 14", { exact: true })).toBeVisible();
+  const currentDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download CSV", exact: true }).click();
+  const current = await currentDownload;
+  expect(current.suggestedFilename()).toContain("current-page.csv");
+  expect((await readFile((await current.path())!, "utf8")).split("\r\n")).toHaveLength(6);
+  await page.getByRole("combobox", { name: "Export scope", exact: true }).click();
+  await page.getByRole("option", { name: "All matching records", exact: true }).click();
+  const allDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download CSV", exact: true }).click();
+  const all = await allDownload;
+  expect(all.suggestedFilename()).toContain("all-matches.csv");
+  expect((await readFile((await all.path())!, "utf8")).split("\r\n")).toHaveLength(15);
+  await page.getByRole("textbox", { name: "Search all fields", exact: true }).fill("14");
+  await expect(page.getByText("1–5 / 14", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Apply report filters", exact: true }).click();
+  await expect(page.getByText("1–1 / 1", { exact: true })).toBeVisible();
+  await page.getByLabel("Fail the next save or export", { exact: true }).check();
+  await page.getByRole("button", { name: "Download CSV", exact: true }).click();
+  await expect(page.getByText("The export failed. Try again.", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 800 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

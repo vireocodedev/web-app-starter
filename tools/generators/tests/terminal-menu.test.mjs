@@ -77,6 +77,8 @@ test("groups display human-readable generator names in a predictable order", () 
     [
       "Component",
       "Form",
+      "Multi-section editor",
+      "Child-item editor",
       "Shell",
       "Workspace shell",
       "Deep navigation",
@@ -84,7 +86,9 @@ test("groups display human-readable generator names in a predictable order", () 
       "Page",
       "Dashboard page",
       "Detail page",
+      "Reports workspace",
       "Feature",
+      "Record workspace",
       "API client",
     ],
   );
@@ -97,7 +101,7 @@ test("groups display human-readable generator names in a predictable order", () 
   assert.match(view.text, /\x1b\[46m/);
   const text = stripVTControlCharacters(view.text);
   assert.match(text, /Frontend/);
-  assert.match(text, /11 recipes/);
+  assert.match(text, /15 recipes/);
   assert.match(text, /6 recipes/);
   assert.doesNotMatch(text, /frontend\/component/);
 });
@@ -166,7 +170,7 @@ test("Home/End and Page Up/Down navigate a scrollable generator list", async () 
 test("advanced recipes are selectable with their variant and supported inputs", async () => {
   const { io, selection } = await start();
   await press(io, "\r", "Frontend / Select generator");
-  await press(io, "\x1b[B\x1b[B\x1b[B\r");
+  await press(io, "\x1b[B".repeat(5) + "\r");
   const recipe = await selection;
   assert.equal(recipe.id, "frontend/shell");
   assert.equal(recipe.variant, "workspace");
