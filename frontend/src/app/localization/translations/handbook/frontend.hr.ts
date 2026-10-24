@@ -49,6 +49,15 @@ export const croatianFrontendHandbookTranslations = {
       title: "Trajno lokalno stanje",
       description: "Verzionirajte sheme lokalnih postavki i odvojite vlasništvo pohrane od autoriteta poslužitelja.",
     },
+    "frontend-forms": {
+      title: "Obrasci i naredbe",
+      description:
+        "Modelirajte izričito značenje polja, načine entiteta, validaciju među poljima i vlasništvo rezultata uvoza.",
+    },
+    "frontend-specialized": {
+      title: "Specijalizirana sučelja",
+      description: "Ograničite životni vijek imperativnih SDK-ova i uskladite nacrte s vanjskim vizualnim prikazima.",
+    },
   },
   articles: {
     "frontend-editing-pinned-values-and-revisions": {
@@ -163,6 +172,47 @@ export const croatianFrontendHandbookTranslations = {
       title: "Verzionirane trajne postavke",
       description:
         "Provjerite spremljene vrijednosti, sačuvajte žive postavke pri pogrešci pohrane i migrirajte značenje bez brisanja drugih podataka.",
+    },
+    "frontend-forms-schema-driven-fields-and-explicit-choices": {
+      title: "Polja prema shemi i izričiti izbori",
+      description:
+        "Dijelite mehaniku polja bez izmišljanja bitnih union izbora inicijalizacijom i skrivanja domenske validacije.",
+    },
+    "frontend-collections-filter-prerequisites-and-result-states": {
+      title: "Preduvjeti filtra i stanja rezultata",
+      description: "Razlikujte nedostajući preduvjet, prvi dohvat, prazni uspjeh, osvježavanje, pogrešku i zabranu.",
+    },
+    "frontend-collections-hierarchical-rows-and-nested-editors": {
+      title: "Hijerarhijski retci i ugniježđeni uređivači",
+      description: "Odvojite proširenje, odabir, uređivanje djeteta i slanje agregata uz stabilne lokalne identitete.",
+    },
+    "frontend-forms-entity-modes-and-validation-policy": {
+      title: "Načini entiteta i politika validacije",
+      description: "Stvaranje i ažuriranje ostavite izričitima uz dijeljenu lokaliziranu validaciju i čekano slanje.",
+    },
+    "frontend-forms-cross-field-constraints-and-reset": {
+      title: "Međupoljna ograničenja i reset",
+      description: "Provjerite potpune odnose i namjernim prijelazima uklonite samo nekompatibilne ovisne izbore.",
+    },
+    "frontend-specialized-imperative-sdk-lifetimes": {
+      title: "Životni vijek imperativnih SDK-ova",
+      description:
+        "Upravljajte DOM ciljevima, instancama, pretplatama i asinkronom inicijalizacijom uz određeno čišćenje.",
+    },
+    "frontend-specialized-draft-and-visualization-synchronization": {
+      title: "Usklađivanje nacrta i vizualizacije",
+      description:
+        "Čuvajte jedan kanonski nacrt uz izričito mapiranje vizuala, interakcije i zasebnu naredbu spremanja.",
+    },
+    "frontend-collections-reporting-and-export-scope": {
+      title: "Izvještavanje i opseg izvoza",
+      description:
+        "Izričito definirajte filtre, razdoblje, odabir, format i ishode generiranja na ekranu i u datoteci.",
+    },
+    "frontend-forms-file-import-command-results": {
+      title: "Ishodi naredbe uvoza datoteke",
+      description:
+        "Odvojite prijenos, prihvaćenu obradu, primijenjene zapise i oporavak uz sigurno ponavljanje i preuzimanje.",
     },
   },
 } satisfies StringLeaves<typeof englishFrontendHandbookTranslations>;

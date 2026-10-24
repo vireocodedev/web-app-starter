@@ -71,6 +71,20 @@ export const frontendHandbookCatalog = {
       titleKey: "handbook.topics.frontend-state.title",
       descriptionKey: "handbook.topics.frontend-state.description",
     },
+    {
+      id: "frontend-forms",
+      categoryId: "frontend-workflows",
+      slug: "forms",
+      titleKey: "handbook.topics.frontend-forms.title",
+      descriptionKey: "handbook.topics.frontend-forms.description",
+    },
+    {
+      id: "frontend-specialized",
+      categoryId: "frontend-workflows",
+      slug: "specialized",
+      titleKey: "handbook.topics.frontend-specialized.title",
+      descriptionKey: "handbook.topics.frontend-specialized.description",
+    },
   ],
   articles: [
     {
@@ -799,6 +813,267 @@ export const frontendHandbookCatalog = {
       relatedArticleIds: [
         "frontend-collections-query-key-scope-and-invalidation",
         "frontend-editing-drafts-across-routes",
+      ],
+    },
+    {
+      id: "frontend-forms-schema-driven-fields-and-explicit-choices",
+      topicId: "frontend-forms",
+      slug: "schema-driven-fields-and-explicit-choices",
+      contentPath: "frontend/forms/schema-driven-fields-and-explicit-choices",
+      titleKey: "handbook.articles.frontend-forms-schema-driven-fields-and-explicit-choices.title",
+      descriptionKey: "handbook.articles.frontend-forms-schema-driven-fields-and-explicit-choices.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "frontend/src/app/forms/types/structuredFields.ts",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "frontend/src/app/forms/utils/structuredFields.ts",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "frontend/src/app/forms/components/AppTopicEditor.tsx",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-forms-entity-modes-and-validation-policy",
+        "frontend-task-interfaces-topic-editors-and-error-focus",
+      ],
+    },
+    {
+      id: "frontend-collections-filter-prerequisites-and-result-states",
+      topicId: "frontend-collections",
+      slug: "filter-prerequisites-and-result-states",
+      contentPath: "frontend/collections/filter-prerequisites-and-result-states",
+      titleKey: "handbook.articles.frontend-collections-filter-prerequisites-and-result-states.title",
+      descriptionKey: "handbook.articles.frontend-collections-filter-prerequisites-and-result-states.description",
+      implementation: "reference",
+      size: "small",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/features/shift/components/ShiftTable/ShiftTable.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-collections-query-key-scope-and-invalidation",
+        "backend-queries-visibility-before-search-and-facets",
+      ],
+    },
+    {
+      id: "frontend-collections-hierarchical-rows-and-nested-editors",
+      topicId: "frontend-collections",
+      slug: "hierarchical-rows-and-nested-editors",
+      contentPath: "frontend/collections/hierarchical-rows-and-nested-editors",
+      titleKey: "handbook.articles.frontend-collections-hierarchical-rows-and-nested-editors.title",
+      descriptionKey: "handbook.articles.frontend-collections-hierarchical-rows-and-nested-editors.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/features/lockage/components/LockageForm/LockageForm.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "FRED/FRED-front",
+          path: "src/shared/components/data-display/FredTable/components/FredExpandableTableRow/FredExpandableTableRow.tsx",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+      ],
+      relatedArticleIds: ["frontend-editing-drafts-across-routes", "frontend-editing-complete-navigation-guards"],
+    },
+    {
+      id: "frontend-forms-entity-modes-and-validation-policy",
+      topicId: "frontend-forms",
+      slug: "entity-modes-and-validation-policy",
+      contentPath: "frontend/forms/entity-modes-and-validation-policy",
+      titleKey: "handbook.articles.frontend-forms-entity-modes-and-validation-policy.title",
+      descriptionKey: "handbook.articles.frontend-forms-entity-modes-and-validation-policy.description",
+      implementation: "starter",
+      size: "small",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/src/app/forms/types/AppEntityForm.ts",
+          revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/src/app/forms/utils/buildAppEntityFormOptions.ts",
+          revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/shared/hooks/useLmsForm.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-editing-pinned-values-and-revisions",
+        "backend-foundation-patch-tristate-and-write-dtos",
+      ],
+    },
+    {
+      id: "frontend-forms-cross-field-constraints-and-reset",
+      topicId: "frontend-forms",
+      slug: "cross-field-constraints-and-reset",
+      contentPath: "frontend/forms/cross-field-constraints-and-reset",
+      titleKey: "handbook.articles.frontend-forms-cross-field-constraints-and-reset.title",
+      descriptionKey: "handbook.articles.frontend-forms-cross-field-constraints-and-reset.description",
+      implementation: "mixed",
+      size: "small",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/src/features/development-guide/patterns/forms/components/DependentFieldsPanel/DepartmentAssigneePreview.tsx",
+          revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/src/features/development-guide/patterns/forms/components/DependentFieldsPanel/ConditionalReasonPreview.tsx",
+          revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/src/features/development-guide/patterns/forms/validation/forms.validation.ts",
+          revision: "7c2264746bd6d6c3fc00e373778831943666592b",
+        },
+        {
+          project: "FRED/FRED-front",
+          path: "src/lib/react-hook-form/hooks/useDependentFieldValidation.ts",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/lockage/components/LockageForm/LockageForm.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-forms-entity-modes-and-validation-policy",
+        "frontend-editing-pinned-values-and-revisions",
+      ],
+    },
+    {
+      id: "frontend-specialized-imperative-sdk-lifetimes",
+      topicId: "frontend-specialized",
+      slug: "imperative-sdk-lifetimes",
+      contentPath: "frontend/specialized/imperative-sdk-lifetimes",
+      titleKey: "handbook.articles.frontend-specialized-imperative-sdk-lifetimes.title",
+      descriptionKey: "handbook.articles.frontend-specialized-imperative-sdk-lifetimes.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "FRED/FRED-front",
+          path: "src/shared/providers/MapProvider/MapProvider.tsx",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+        {
+          project: "FRED/FRED-front",
+          path: "src/shared/hooks/useMapEvent.ts",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-async-commands-owned-reads-and-shared-subscriptions",
+        "frontend-async-commands-generation-guards-after-await",
+      ],
+    },
+    {
+      id: "frontend-specialized-draft-and-visualization-synchronization",
+      topicId: "frontend-specialized",
+      slug: "draft-and-visualization-synchronization",
+      contentPath: "frontend/specialized/draft-and-visualization-synchronization",
+      titleKey: "handbook.articles.frontend-specialized-draft-and-visualization-synchronization.title",
+      descriptionKey: "handbook.articles.frontend-specialized-draft-and-visualization-synchronization.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "FRED/FRED-front",
+          path: "src/features/map-interactions/hooks/useFormInteraction.ts",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/lockage/components/LockageForm/LockageForm.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-specialized-imperative-sdk-lifetimes",
+        "frontend-editing-pinned-values-and-revisions",
+      ],
+    },
+    {
+      id: "frontend-collections-reporting-and-export-scope",
+      topicId: "frontend-collections",
+      slug: "reporting-and-export-scope",
+      contentPath: "frontend/collections/reporting-and-export-scope",
+      titleKey: "handbook.articles.frontend-collections-reporting-and-export-scope.title",
+      descriptionKey: "handbook.articles.frontend-collections-reporting-and-export-scope.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/features/statistics/components/StatisticsReportTableCard/StatisticsReportTableCard.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/statistics/components/StatisticsDateNavigationButtons/StatisticsDateNavigationButtons.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/statistics/features/statisticsShiftComments/components/StatisticsShiftCommentsPdfDocument/StatisticsShiftCommentsPdfDocument.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-collections-client-and-server-table-ownership",
+        "backend-queries-read-budgets-and-unknown-coverage",
+      ],
+    },
+    {
+      id: "frontend-forms-file-import-command-results",
+      topicId: "frontend-forms",
+      slug: "file-import-command-results",
+      contentPath: "frontend/forms/file-import-command-results",
+      titleKey: "handbook.articles.frontend-forms-file-import-command-results.title",
+      descriptionKey: "handbook.articles.frontend-forms-file-import-command-results.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "LMS/lms-front",
+          path: "src/features/failureReport/features/failureRecipient/hooks/mutations/useFailureRecipientImportCsvMutation.tsx",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "LMS/lms-front",
+          path: "src/features/failureReport/features/failureRecipient/api/failureRecipient.online.ts",
+          revision: "09a8ea2fc438652a90e4400c088c282b81845443",
+        },
+        {
+          project: "FRED/FRED-front",
+          path: "src/infrastructure/utils/downloadTifFromZip.ts",
+          revision: "7a78e4f624e4b51ce1cdb9334036f2fb6119f62a",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-async-commands-committed-writes-and-observer-failures",
+        "frontend-task-interfaces-prerequisites-and-confirmed-receipts",
       ],
     },
   ],

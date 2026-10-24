@@ -43,6 +43,14 @@ export const englishFrontendHandbookTranslations = {
       title: "Persisted state",
       description: "Version local preference schemas and keep storage ownership separate from server authority.",
     },
+    "frontend-forms": {
+      title: "Forms and commands",
+      description: "Model explicit field meaning, entity modes, cross-field validation, and import result ownership.",
+    },
+    "frontend-specialized": {
+      title: "Specialized interfaces",
+      description: "Contain imperative SDK lifetimes and synchronize drafts with external visual representations.",
+    },
   },
   articles: {
     "frontend-editing-pinned-values-and-revisions": {
@@ -158,6 +166,51 @@ export const englishFrontendHandbookTranslations = {
       title: "Versioned persisted preferences",
       description:
         "Validate stored values, preserve live preferences on storage failure and migrate semantic meaning without erasing unrelated data.",
+    },
+    "frontend-forms-schema-driven-fields-and-explicit-choices": {
+      title: "Schema-driven fields and explicit choices",
+      description:
+        "Reuse field mechanics without letting initialization invent meaningful union choices or hide domain validation.",
+    },
+    "frontend-collections-filter-prerequisites-and-result-states": {
+      title: "Filter prerequisites and result states",
+      description:
+        "Distinguish missing prerequisites, first load, empty success, retained refresh, failure and denial.",
+    },
+    "frontend-collections-hierarchical-rows-and-nested-editors": {
+      title: "Hierarchical rows and nested editors",
+      description:
+        "Separate expansion, selection, child editing and aggregate submission with stable local identities.",
+    },
+    "frontend-forms-entity-modes-and-validation-policy": {
+      title: "Entity modes and validation policy",
+      description:
+        "Keep create/update explicit while sharing localized validation timing and awaited submission mechanics.",
+    },
+    "frontend-forms-cross-field-constraints-and-reset": {
+      title: "Cross-field constraints and reset",
+      description:
+        "Validate complete relationships and clear only incompatible downstream choices through deliberate transitions.",
+    },
+    "frontend-specialized-imperative-sdk-lifetimes": {
+      title: "Imperative SDK lifetimes",
+      description:
+        "Own mounted targets, instances, subscriptions and asynchronous initialization with deterministic cleanup.",
+    },
+    "frontend-specialized-draft-and-visualization-synchronization": {
+      title: "Draft and visualization synchronization",
+      description:
+        "Keep one canonical draft with explicit visual mapping, interaction updates and a separate persistence command.",
+    },
+    "frontend-collections-reporting-and-export-scope": {
+      title: "Reporting and export scope",
+      description:
+        "Make filtered data, period semantics, selection, output format and generation outcomes explicit across screen and file.",
+    },
+    "frontend-forms-file-import-command-results": {
+      title: "File import command results",
+      description:
+        "Separate file transport, accepted processing, applied records and recovery while preserving safe retry and download ownership.",
     },
   },
 } as const;

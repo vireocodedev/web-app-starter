@@ -45,6 +45,9 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 - [Client and server table ownership](en/frontend/collections/client-and-server-table-ownership.md) · [Hrvatski](hr/frontend/collections/client-and-server-table-ownership.md)
 - [Query-key scope and invalidation](en/frontend/collections/query-key-scope-and-invalidation.md) · [Hrvatski](hr/frontend/collections/query-key-scope-and-invalidation.md)
+- [Filter prerequisites and result states](en/frontend/collections/filter-prerequisites-and-result-states.md) · [Hrvatski](hr/frontend/collections/filter-prerequisites-and-result-states.md)
+- [Hierarchical rows and nested editors](en/frontend/collections/hierarchical-rows-and-nested-editors.md) · [Hrvatski](hr/frontend/collections/hierarchical-rows-and-nested-editors.md)
+- [Reporting and export scope](en/frontend/collections/reporting-and-export-scope.md) · [Hrvatski](hr/frontend/collections/reporting-and-export-scope.md)
 
 #### Task interfaces
 
@@ -67,6 +70,18 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Persisted state
 
 - [Versioned persisted preferences](en/frontend/state/versioned-persisted-preferences.md) · [Hrvatski](hr/frontend/state/versioned-persisted-preferences.md)
+
+#### Forms and commands
+
+- [Schema-driven fields and explicit choices](en/frontend/forms/schema-driven-fields-and-explicit-choices.md) · [Hrvatski](hr/frontend/forms/schema-driven-fields-and-explicit-choices.md)
+- [Entity modes and validation policy](en/frontend/forms/entity-modes-and-validation-policy.md) · [Hrvatski](hr/frontend/forms/entity-modes-and-validation-policy.md)
+- [Cross-field constraints and reset](en/frontend/forms/cross-field-constraints-and-reset.md) · [Hrvatski](hr/frontend/forms/cross-field-constraints-and-reset.md)
+- [File import command results](en/frontend/forms/file-import-command-results.md) · [Hrvatski](hr/frontend/forms/file-import-command-results.md)
+
+#### Specialized interfaces
+
+- [Imperative SDK lifetimes](en/frontend/specialized/imperative-sdk-lifetimes.md) · [Hrvatski](hr/frontend/specialized/imperative-sdk-lifetimes.md)
+- [Draft and visualization synchronization](en/frontend/specialized/draft-and-visualization-synchronization.md) · [Hrvatski](hr/frontend/specialized/draft-and-visualization-synchronization.md)
 
 ### Backend
 
