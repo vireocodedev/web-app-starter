@@ -260,5 +260,25 @@ export const englishBackendHandbookTranslations = {
       description:
         "Strip unfamiliar response additions while validating known shape and preserving separate create/patch intent, explicit null semantics and backend authority.",
     },
+    "backend-application-services-transition-specific-command-handlers": {
+      title: "Give each state transition a deliberate command handler",
+      description:
+        "Separate named lifecycle actions and their prerequisites, while distinguishing local transition success from legacy best-effort outbound work and unproven transition matrices.",
+    },
+    "backend-application-services-reconcile-owned-child-collections": {
+      title: "Reconcile an owned child collection by stable identity",
+      description:
+        "Define complete-set create/update/omit semantics, reject unknown, foreign and duplicate child IDs explicitly and preserve inverse relationships under one transactional replacement.",
+    },
+    "backend-application-services-move-children-between-aggregates": {
+      title: "Move children between aggregates as one authorized graph change",
+      description:
+        "Authorize both source and destination, revalidate locked assignments and dependent layouts, and roll back the complete transfer when either side cannot accept it.",
+    },
+    "backend-application-services-repair-dependent-sequences": {
+      title: "Repair the affected suffix of a dependent sequence",
+      description:
+        "Walk predecessor-dependent work from the changed point, preserve protected choices or reject the edit, and distinguish derived maintenance from durable distributed planning.",
+    },
   },
 } as const;

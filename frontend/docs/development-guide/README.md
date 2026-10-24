@@ -133,6 +133,10 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 - [One transaction for one complete business command](en/backend/application-services/transactional-commands.md) · [Hrvatski](hr/backend/application-services/transactional-commands.md)
 - [Notify clients after commit, and state delivery limits](en/backend/application-services/commit-aware-notifications.md) · [Hrvatski](hr/backend/application-services/commit-aware-notifications.md)
+- [Give each state transition a deliberate command handler](en/backend/application-services/transition-specific-command-handlers.md) · [Hrvatski](hr/backend/application-services/transition-specific-command-handlers.md)
+- [Reconcile an owned child collection by stable identity](en/backend/application-services/reconcile-owned-child-collections.md) · [Hrvatski](hr/backend/application-services/reconcile-owned-child-collections.md)
+- [Move children between aggregates as one authorized graph change](en/backend/application-services/move-children-between-aggregates.md) · [Hrvatski](hr/backend/application-services/move-children-between-aggregates.md)
+- [Repair the affected suffix of a dependent sequence](en/backend/application-services/repair-dependent-sequences.md) · [Hrvatski](hr/backend/application-services/repair-dependent-sequences.md)
 
 #### Data and schema
 

@@ -1589,5 +1589,142 @@ export const backendHandbookCatalog = {
         "backend-foundation-validation-and-error-contracts",
       ],
     },
+    {
+      id: "backend-application-services-transition-specific-command-handlers",
+      topicId: "backend-application-services",
+      slug: "transition-specific-command-handlers",
+      contentPath: "backend/application-services/transition-specific-command-handlers",
+      titleKey: "handbook.articles.backend-application-services-transition-specific-command-handlers.title",
+      descriptionKey: "handbook.articles.backend-application-services-transition-specific-command-handlers.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageLifecycleService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageConfirmer.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-transactional-commands",
+        "backend-integrations-claim-call-reconcile",
+      ],
+    },
+    {
+      id: "backend-application-services-reconcile-owned-child-collections",
+      topicId: "backend-application-services",
+      slug: "reconcile-owned-child-collections",
+      contentPath: "backend/application-services/reconcile-owned-child-collections",
+      titleKey: "handbook.articles.backend-application-services-reconcile-owned-child-collections.title",
+      descriptionKey: "handbook.articles.backend-application-services-reconcile-owned-child-collections.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/Lockage.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageMapper.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-transactional-commands",
+        "backend-security-resource-scope-and-composite-keys",
+        "frontend-collections-hierarchical-rows-and-nested-editors",
+      ],
+    },
+    {
+      id: "backend-application-services-move-children-between-aggregates",
+      topicId: "backend-application-services",
+      slug: "move-children-between-aggregates",
+      contentPath: "backend/application-services/move-children-between-aggregates",
+      titleKey: "handbook.articles.backend-application-services-move-children-between-aggregates.title",
+      descriptionKey: "handbook.articles.backend-application-services-move-children-between-aggregates.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockagePackingService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/Lockage.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/convoy/Convoy.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-reconcile-owned-child-collections",
+        "backend-data-lock-order-and-fresh-transaction-retries",
+        "backend-data-revision-conflicts-and-shared-locks",
+      ],
+    },
+    {
+      id: "backend-application-services-repair-dependent-sequences",
+      topicId: "backend-application-services",
+      slug: "repair-dependent-sequences",
+      contentPath: "backend/application-services/repair-dependent-sequences",
+      titleKey: "handbook.articles.backend-application-services-repair-dependent-sequences.title",
+      descriptionKey: "handbook.articles.backend-application-services-repair-dependent-sequences.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageLifecycleService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/LockageRepository.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/lockage/Lockage.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/planning/PlanningScheduler.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-transition-specific-command-handlers",
+        "backend-application-services-transactional-commands",
+        "backend-integrations-bounded-scheduled-work",
+      ],
+    },
   ],
 } as const satisfies HandbookCategoryCatalog;

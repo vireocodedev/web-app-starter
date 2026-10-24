@@ -265,5 +265,25 @@ export const croatianBackendHandbookTranslations = {
       description:
         "Uklonite additive response uz poznatu validaciju, create/patch intent, null semantiku i neovisnu backend ovlast.",
     },
+    "backend-application-services-transition-specific-command-handlers": {
+      title: "Svakom prijelazu stanja dajte namjenski command handler",
+      description:
+        "Odvojite lifecycle radnje i preduvjete te lokalni uspjeh od legacy best-effort transporta i nepotpune matrice stanja.",
+    },
+    "backend-application-services-reconcile-owned-child-collections": {
+      title: "Uskladite owned kolekciju stabilnim identitetom",
+      description:
+        "Definirajte complete-set create/update/omit, izričito odbijte unknown/foreign/duplicate ID i čuvajte inverse veze pod jednom transakcijom.",
+    },
+    "backend-application-services-move-children-between-aggregates": {
+      title: "Premještanje djece jedna je autorizirana graph promjena",
+      description:
+        "Autorizirajte source/target, provjerite zaključane veze i layout te poništite cijeli transfer ako bilo koja strana odbije.",
+    },
+    "backend-application-services-repair-dependent-sequences": {
+      title: "Popravite zahvaćeni nastavak ovisnog slijeda",
+      description:
+        "Popravite ovisni nastavak od promjene, čuvajte protected ili odbijte edit te razlikujte maintenance i trajni distribuirani planning.",
+    },
   },
 } satisfies StringLeaves<typeof englishBackendHandbookTranslations>;
