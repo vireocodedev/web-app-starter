@@ -43,6 +43,13 @@ export const backendHandbookCatalog = {
       titleKey: "handbook.topics.backend-queries.title",
       descriptionKey: "handbook.topics.backend-queries.description",
     },
+    {
+      id: "backend-integrations",
+      categoryId: "backend",
+      slug: "integrations",
+      titleKey: "handbook.topics.backend-integrations.title",
+      descriptionKey: "handbook.topics.backend-integrations.description",
+    },
   ],
   articles: [
     {
@@ -727,6 +734,256 @@ export const backendHandbookCatalog = {
       relatedArticleIds: [
         "backend-application-services-transactional-commands",
         "frontend-async-commands-committed-writes-and-observer-failures",
+      ],
+    },
+    {
+      id: "backend-integrations-transport-and-domain-boundaries",
+      topicId: "backend-integrations",
+      slug: "transport-and-domain-boundaries",
+      contentPath: "backend/integrations/transport-and-domain-boundaries",
+      titleKey: "handbook.articles.backend-integrations-transport-and-domain-boundaries.title",
+      descriptionKey: "handbook.articles.backend-integrations-transport-and-domain-boundaries.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/protocol/DroneMessageIngress.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/persistence/DroneObservationStore.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/transport/DroneMessagePublisher.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-foundation-http-service-persistence-boundaries",
+        "backend-integrations-durable-ingestion-deduplication",
+      ],
+    },
+    {
+      id: "backend-integrations-durable-ingestion-deduplication",
+      topicId: "backend-integrations",
+      slug: "durable-ingestion-deduplication",
+      contentPath: "backend/integrations/durable-ingestion-deduplication",
+      titleKey: "handbook.articles.backend-integrations-durable-ingestion-deduplication.title",
+      descriptionKey: "handbook.articles.backend-integrations-durable-ingestion-deduplication.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/protocol/DroneMessageIngress.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/persistence/DroneObservationStore.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-transactional-commands",
+        "backend-data-revision-conflicts-and-shared-locks",
+      ],
+    },
+    {
+      id: "backend-integrations-intent-and-observed-state",
+      topicId: "backend-integrations",
+      slug: "intent-and-observed-state",
+      contentPath: "backend/integrations/intent-and-observed-state",
+      titleKey: "handbook.articles.backend-integrations-intent-and-observed-state.title",
+      descriptionKey: "handbook.articles.backend-integrations-intent-and-observed-state.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/session/LivestreamSessionService.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/persistence/DroneObservationStore.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/protocol/DroneMessageIngress.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-integrations-lease-expiry-and-fresh-evidence",
+        "frontend-task-interfaces-prerequisites-and-confirmed-receipts",
+      ],
+    },
+    {
+      id: "backend-integrations-lease-expiry-and-fresh-evidence",
+      topicId: "backend-integrations",
+      slug: "lease-expiry-and-fresh-evidence",
+      contentPath: "backend/integrations/lease-expiry-and-fresh-evidence",
+      titleKey: "handbook.articles.backend-integrations-lease-expiry-and-fresh-evidence.title",
+      descriptionKey: "handbook.articles.backend-integrations-lease-expiry-and-fresh-evidence.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/session/LivestreamSessionService.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/persistence/DroneObservationStore.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-integrations-intent-and-observed-state",
+        "backend-integrations-claim-call-reconcile",
+      ],
+    },
+    {
+      id: "backend-integrations-uncertain-provider-outcomes",
+      topicId: "backend-integrations",
+      slug: "uncertain-provider-outcomes",
+      contentPath: "backend/integrations/uncertain-provider-outcomes",
+      titleKey: "handbook.articles.backend-integrations-uncertain-provider-outcomes.title",
+      descriptionKey: "handbook.articles.backend-integrations-uncertain-provider-outcomes.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingDocumentProvider.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/UnconfiguredBillingDocumentProvider.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/NotificationDeliveryProvider.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingDocumentService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingProviderOperations.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceNoticeService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: ["frontend-async-commands-stable-retry-identity", "backend-integrations-claim-call-reconcile"],
+    },
+    {
+      id: "backend-integrations-claim-call-reconcile",
+      topicId: "backend-integrations",
+      slug: "claim-call-reconcile",
+      contentPath: "backend/integrations/claim-call-reconcile",
+      titleKey: "handbook.articles.backend-integrations-claim-call-reconcile.title",
+      descriptionKey: "handbook.articles.backend-integrations-claim-call-reconcile.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceNoticeService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingDocumentService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingProviderOperations.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-application-services-transactional-commands",
+        "backend-integrations-uncertain-provider-outcomes",
+      ],
+    },
+    {
+      id: "backend-integrations-bounded-scheduled-work",
+      topicId: "backend-integrations",
+      slug: "bounded-scheduled-work",
+      contentPath: "backend/integrations/bounded-scheduled-work",
+      titleKey: "handbook.articles.backend-integrations-bounded-scheduled-work.title",
+      descriptionKey: "handbook.articles.backend-integrations-bounded-scheduled-work.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/app/flight/DroneFlightFinalizer.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/doris/DorisChamberStateService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/core/AsyncRetryConfig.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingProviderWorker.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingProviderOperations.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-queries-read-budgets-and-unknown-coverage",
+        "backend-data-lock-order-and-fresh-transaction-retries",
+      ],
+    },
+    {
+      id: "backend-integrations-process-adapter-boundaries",
+      topicId: "backend-integrations",
+      slug: "process-adapter-boundaries",
+      contentPath: "backend/integrations/process-adapter-boundaries",
+      titleKey: "handbook.articles.backend-integrations-process-adapter-boundaries.title",
+      descriptionKey: "handbook.articles.backend-integrations-process-adapter-boundaries.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/app/python/PythonService.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-integrations-transport-and-domain-boundaries",
+        "ci-verification-phase-deadlines-and-process-cleanup",
       ],
     },
   ],

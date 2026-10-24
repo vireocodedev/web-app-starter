@@ -30,6 +30,10 @@ export const croatianBackendHandbookTranslations = {
       description:
         "Projicirajte dopuštenu vidljivost, ograničite rezultate i trošak te opišite jamstva snimke i pokrivenosti.",
     },
+    "backend-integrations": {
+      title: "Vanjske integracije",
+      description: "Odvojite identitet ulaza, opaženo stanje, neizvjesnost pružatelja, usklađivanje i ograničeni rad.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -121,6 +125,46 @@ export const croatianBackendHandbookTranslations = {
       title: "Obavijestite klijente nakon commita i navedite granice isporuke",
       description:
         "Odvojite hint potvrđene promjene od trajne isporuke, uz fallback, ThreadLocal čišćenje, subscriber ovlasti i reconnect usklađivanje.",
+    },
+    "backend-integrations-transport-and-domain-boundaries": {
+      title: "Odvojite dekodiranje transporta od domenskih ovlasti",
+      description:
+        "Odvojite ograničeno wire dekodiranje i odgovore od source autentikacije, odobrene resource mape, živog vlasništva i transakcijske persistencije.",
+    },
+    "backend-integrations-durable-ingestion-deduplication": {
+      title: "Deduplirajte trajne učinke, ne samo primljene poruke",
+      description:
+        "Trajnim observation identitetom, lockovima i watermarkom čuvajte učinke kroz restart, uz ograničenu ulogu cachea i protokolskih odgovora.",
+    },
+    "backend-integrations-intent-and-observed-state": {
+      title: "Trajnu namjeru odvojite od opaženog vanjskog stanja",
+      description:
+        "Zadržite zahtjev odvojeno od svježeg pouzdanog opažanja, uz korelaciju, opseg i prijelaze umjesto izjednačavanja prihvata i remote uspjeha.",
+    },
+    "backend-integrations-lease-expiry-and-fresh-evidence": {
+      title: "Istek leasea ostaje neizvjesnost do svježeg dokaza",
+      description:
+        "Isteklu pripremu oporavite trenutačnim ovlastima i svježim inactive dokazom, uz imenovanu skew/age politiku umjesto preuzimanja samo timerom.",
+    },
+    "backend-integrations-uncertain-provider-outcomes": {
+      title: "Modelirajte neizvjesnost providera i zatvorite nepostavljenu putanju",
+      description:
+        "Definirajte capabilities i potvrđen, odbijen ili neizvjestan ishod te provjerite dokaze bez izmišljanja uspjeha nekonfiguriranog adaptera ili izgubljenog odgovora.",
+    },
+    "backend-integrations-claim-call-reconcile": {
+      title: "Preuzmite rad, pozovite izvan transakcije pa uskladite",
+      description:
+        "Potvrdite nepromjenjivu namjeru i claim, izvedite vanjski I/O bez database transakcije pa isti identitet uskladite pod eksplicitnom worker/evidence ovlasti.",
+    },
+    "backend-integrations-bounded-scheduled-work": {
+      title: "Ograničite scheduled rad i jasno odredite vlasništvo",
+      description:
+        "Odvojite cadence, event vrijeme, ograničen odabir i item transakcije, uz trajni claim te jasne granice kapaciteta, cancellationa i replika.",
+    },
+    "backend-integrations-process-adapter-boundaries": {
+      title: "Podproces tretirajte kao ograničen integracijski adapter",
+      description:
+        "Prilagodite tipizirani legacy protokol uz nove rokove, cancellation, bounded output, eksplicitan kvar i sigurno čišćenje vlastitog procesa.",
     },
   },
 } satisfies StringLeaves<typeof englishBackendHandbookTranslations>;

@@ -27,6 +27,10 @@ export const englishBackendHandbookTranslations = {
       description:
         "Project authorized visibility, bound results and cost, and describe snapshot and coverage guarantees.",
     },
+    "backend-integrations": {
+      title: "External integrations",
+      description: "Separate ingress identity, observed state, provider uncertainty, reconciliation, and bounded work.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -118,6 +122,46 @@ export const englishBackendHandbookTranslations = {
       title: "Notify clients after commit, and state delivery limits",
       description:
         "Separate committed-change hints from durable delivery, with explicit fallback behavior, ThreadLocal cleanup, subscriber authority and reconnect reconciliation.",
+    },
+    "backend-integrations-transport-and-domain-boundaries": {
+      title: "Decode transport separately from domain authority",
+      description:
+        "Separate bounded wire decoding and protocol replies from trusted source authentication, approved resource mapping, current ownership and transactional domain persistence.",
+    },
+    "backend-integrations-durable-ingestion-deduplication": {
+      title: "Deduplicate durable effects, not only received messages",
+      description:
+        "Use durable observation identity, resource locks and ordering watermarks for restart-safe effects, keeping a bounded ingress cache and transport acknowledgments in their limited roles.",
+    },
+    "backend-integrations-intent-and-observed-state": {
+      title: "Persist intent separately from observed external state",
+      description:
+        "Retain requested operations independently of fresh trusted observations, with explicit correlation, scope and state transitions instead of equating request acceptance with remote success.",
+    },
+    "backend-integrations-lease-expiry-and-fresh-evidence": {
+      title: "Lease expiry means uncertainty until fresh evidence resolves it",
+      description:
+        "Recover expired preparation only through current ownership and explicit fresh inactive evidence, with named skew and age policy rather than a timer-based takeover assumption.",
+    },
+    "backend-integrations-uncertain-provider-outcomes": {
+      title: "Model provider uncertainty and fail closed when unconfigured",
+      description:
+        "Expose configured capabilities and typed confirmed, rejected and uncertain outcomes, validating trusted evidence without manufacturing success for unconfigured adapters or lost responses.",
+    },
+    "backend-integrations-claim-call-reconcile": {
+      title: "Claim, call outside the transaction, then reconcile",
+      description:
+        "Commit immutable intent and lease-owned claims, perform external I/O without a database transaction and reconcile the same operation identity under explicit worker and evidence authority.",
+    },
+    "backend-integrations-bounded-scheduled-work": {
+      title: "Keep scheduled work bounded and ownership explicit",
+      description:
+        "Separate timer cadence, event time, bounded selection and per-item transactions, with durable claims for overlap and explicit capacity, cancellation and multi-replica limitations.",
+    },
+    "backend-integrations-process-adapter-boundaries": {
+      title: "Treat a subprocess as a bounded integration adapter",
+      description:
+        "Adapt a typed legacy process protocol while adding missing deadlines, cancellation, bounded output, explicit failure outcomes and guaranteed owned-process cleanup.",
     },
   },
 } as const;

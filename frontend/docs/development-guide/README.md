@@ -103,6 +103,17 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Signed cursors bind paging to semantic scope](en/backend/queries/signed-cursors-and-scope.md) · [Hrvatski](hr/backend/queries/signed-cursors-and-scope.md)
 - [Bound read work and report unknown coverage honestly](en/backend/queries/read-budgets-and-unknown-coverage.md) · [Hrvatski](hr/backend/queries/read-budgets-and-unknown-coverage.md)
 
+#### External integrations
+
+- [Decode transport separately from domain authority](en/backend/integrations/transport-and-domain-boundaries.md) · [Hrvatski](hr/backend/integrations/transport-and-domain-boundaries.md)
+- [Deduplicate durable effects, not only received messages](en/backend/integrations/durable-ingestion-deduplication.md) · [Hrvatski](hr/backend/integrations/durable-ingestion-deduplication.md)
+- [Persist intent separately from observed external state](en/backend/integrations/intent-and-observed-state.md) · [Hrvatski](hr/backend/integrations/intent-and-observed-state.md)
+- [Lease expiry means uncertainty until fresh evidence resolves it](en/backend/integrations/lease-expiry-and-fresh-evidence.md) · [Hrvatski](hr/backend/integrations/lease-expiry-and-fresh-evidence.md)
+- [Model provider uncertainty and fail closed when unconfigured](en/backend/integrations/uncertain-provider-outcomes.md) · [Hrvatski](hr/backend/integrations/uncertain-provider-outcomes.md)
+- [Claim, call outside the transaction, then reconcile](en/backend/integrations/claim-call-reconcile.md) · [Hrvatski](hr/backend/integrations/claim-call-reconcile.md)
+- [Keep scheduled work bounded and ownership explicit](en/backend/integrations/bounded-scheduled-work.md) · [Hrvatski](hr/backend/integrations/bounded-scheduled-work.md)
+- [Treat a subprocess as a bounded integration adapter](en/backend/integrations/process-adapter-boundaries.md) · [Hrvatski](hr/backend/integrations/process-adapter-boundaries.md)
+
 ### Continuous integration
 
 #### Pipelines and gates
