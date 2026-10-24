@@ -39,6 +39,25 @@ export const croatianBackendHandbookTranslations = {
       description:
         "Ograničite bajtove uploada i zajedničke kvote, odvojite projekcije metapodataka i autorizirajte svako privatno preuzimanje.",
     },
+    "backend-lifecycle": {
+      title: "Životni ciklus podataka",
+      description:
+        "Klasificirajte pohranjene vrijednosti, particionirajte zadržavanje i izričito odredite granice brisanja, kvota i zadržavanja.",
+    },
+    "backend-observability": {
+      title: "Operativna opažanja",
+      description:
+        "Koristite ograničene neutralne događaje i definirajte utjecaj dijagnostičkih pogrešaka na primarnu operaciju.",
+    },
+    "backend-time": {
+      title: "Vremenske vrijednosti",
+      description:
+        "Odvojite kanonske kalendarske vrijednosti, trenutke, odluke o vremenskoj zoni i lokalizirani prikaz.",
+    },
+    "backend-contracts": {
+      title: "Ugovori između slojeva",
+      description: "Izričito odredite generiranu semantiku prijenosa, kompatibilnost čitanja i točnu namjeru pisanja.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -205,6 +224,46 @@ export const croatianBackendHandbookTranslations = {
       title: "Vežite pregled i export uz točnu zadržanu verziju artefakta",
       description:
         "Zadržite pregledane bajtove, reviziju i input digeste te razlikujte povijesni export, current evidence, kanonizaciju i ovlasti.",
+    },
+    "backend-lifecycle-redaction-before-persistence": {
+      title: "Klasificirajte i redigirajte prije pohrane",
+      description:
+        "Prije spremanja odaberite minimum snapshot/body/header podataka, sačuvajte prisutnost događaja i pregledajte legacy redakciju kao promjenu podataka.",
+    },
+    "backend-lifecycle-tenant-partitioned-retention-and-quota": {
+      title: "Retention i kvotu podijelite trusted tenant opsegom",
+      description:
+        "Odredite trusted tenant partition, istek i eviction uz hold te jasno navedite nedostajuća concurrency, byte i purge jamstva.",
+    },
+    "backend-lifecycle-scoped-erasure-and-legal-holds": {
+      title: "Erasure i hold ograničite istim database predikatom",
+      description:
+        "Vežite partition i subject/record jednom promjenom, razlikujte held ostatak i potpuni erase te odredite admin i concurrency vlasnika.",
+    },
+    "backend-observability-bounded-metrics-and-neutral-events": {
+      title: "Emitirajte neutralne evente i ograničite metric dimenzije",
+      description:
+        "Koristite enum/boolean kategorije i numerička mjerenja bez privatnih labela, odvojeno od bridge callback trajanja.",
+    },
+    "backend-observability-telemetry-failure-isolation": {
+      title: "Kvar operativne telemetrije držite izvan poslovnog rezultata",
+      description:
+        "Sačuvajte query/replay/SSE ishod uz optional listener kvar, odvojeno od blokiranja, async i mandatory lifecycle transakcije.",
+    },
+    "backend-time-canonical-calendar-values-and-instants": {
+      title: "Kalendarske vrijednosti odvojite od trenutka događaja",
+      description:
+        "Sačuvajte calendar oblik bez zone, offset instant i aplikacijsku timezone/DST odluku bez zaključivanja iz pickera.",
+    },
+    "backend-contracts-generated-wire-contracts-and-schema-compatibility": {
+      title: "Generirajte wire ugovor bez skrivanja kompatibilnosti",
+      description:
+        "Koristite target-aware shemu/contract i drift dokaz uz eksplicitnu precision, error, migraciju i mixed-version isporuku.",
+    },
+    "backend-contracts-tolerant-readers-and-exact-write-intent": {
+      title: "Tolerirajte dodatna response polja bez slabljenja namjere pisanja",
+      description:
+        "Uklonite additive response uz poznatu validaciju, create/patch intent, null semantiku i neovisnu backend ovlast.",
     },
   },
 } satisfies StringLeaves<typeof englishBackendHandbookTranslations>;

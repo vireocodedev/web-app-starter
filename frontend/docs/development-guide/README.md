@@ -141,6 +141,26 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Bound actual upload bytes under a shared quota lock](en/backend/files/bounded-uploads-and-shared-quotas.md) · [Hrvatski](hr/backend/files/bounded-uploads-and-shared-quotas.md)
 - [Separate private file downloads from metadata projections](en/backend/files/private-downloads-and-metadata-projections.md) · [Hrvatski](hr/backend/files/private-downloads-and-metadata-projections.md)
 
+#### Data lifecycle
+
+- [Classify and redact before persistence](en/backend/lifecycle/redaction-before-persistence.md) · [Hrvatski](hr/backend/lifecycle/redaction-before-persistence.md)
+- [Partition retention and quota by trusted tenant scope](en/backend/lifecycle/tenant-partitioned-retention-and-quota.md) · [Hrvatski](hr/backend/lifecycle/tenant-partitioned-retention-and-quota.md)
+- [Scope erasure and holds in the same database predicate](en/backend/lifecycle/scoped-erasure-and-legal-holds.md) · [Hrvatski](hr/backend/lifecycle/scoped-erasure-and-legal-holds.md)
+
+#### Operational observations
+
+- [Emit neutral events and keep metric dimensions bounded](en/backend/observability/bounded-metrics-and-neutral-events.md) · [Hrvatski](hr/backend/observability/bounded-metrics-and-neutral-events.md)
+- [Keep operational telemetry failure outside the business result](en/backend/observability/telemetry-failure-isolation.md) · [Hrvatski](hr/backend/observability/telemetry-failure-isolation.md)
+
+#### Temporal values
+
+- [Keep calendar values distinct from event instants](en/backend/time/canonical-calendar-values-and-instants.md) · [Hrvatski](hr/backend/time/canonical-calendar-values-and-instants.md)
+
+#### Cross-stack contracts
+
+- [Generate wire contracts without hiding compatibility decisions](en/backend/contracts/generated-wire-contracts-and-schema-compatibility.md) · [Hrvatski](hr/backend/contracts/generated-wire-contracts-and-schema-compatibility.md)
+- [Tolerate additive response fields without weakening write intent](en/backend/contracts/tolerant-readers-and-exact-write-intent.md) · [Hrvatski](hr/backend/contracts/tolerant-readers-and-exact-write-intent.md)
+
 ### Quality and verification
 
 #### Test design

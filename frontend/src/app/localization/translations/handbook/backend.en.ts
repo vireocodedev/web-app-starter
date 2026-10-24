@@ -36,6 +36,23 @@ export const englishBackendHandbookTranslations = {
       description:
         "Bound uploaded bytes and shared quotas, separate metadata projections, and authorize each private download.",
     },
+    "backend-lifecycle": {
+      title: "Data lifecycle",
+      description:
+        "Classify persisted values, partition retention, and make erasure, quota, and hold boundaries explicit.",
+    },
+    "backend-observability": {
+      title: "Operational observations",
+      description: "Use bounded neutral events and define how diagnostic failures affect the primary operation.",
+    },
+    "backend-time": {
+      title: "Temporal values",
+      description: "Separate canonical calendar values, instants, timezone decisions, and localized presentation.",
+    },
+    "backend-contracts": {
+      title: "Cross-stack contracts",
+      description: "Keep generated wire semantics, read compatibility, and exact write intent explicit.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -202,6 +219,46 @@ export const englishBackendHandbookTranslations = {
       title: "Bind review and export to exact retained artifact versions",
       description:
         "Retain reviewed bytes, revision and generating-input digests, distinguishing historical export from current execution evidence and hashing from canonicalization or authority.",
+    },
+    "backend-lifecycle-redaction-before-persistence": {
+      title: "Classify and redact before persistence",
+      description:
+        "Choose minimum retained snapshots/body/headers before storage, preserve event presence semantics and review destructive legacy redaction as an explicit data migration.",
+    },
+    "backend-lifecycle-tenant-partitioned-retention-and-quota": {
+      title: "Partition retention and quota by trusted tenant scope",
+      description:
+        "Define trusted tenant partitions, expiry and eviction policy while preserving held data and identifying concurrency, byte-budget and purge-cadence guarantees still to implement.",
+    },
+    "backend-lifecycle-scoped-erasure-and-legal-holds": {
+      title: "Scope erasure and holds in the same database predicate",
+      description:
+        "Bind partition and subject/record scope into each mutation, distinguish held leftovers from complete erasure and retain explicit administrative and concurrency ownership.",
+    },
+    "backend-observability-bounded-metrics-and-neutral-events": {
+      title: "Emit neutral events and keep metric dimensions bounded",
+      description:
+        "Use bounded enum/boolean categories and numeric measurements without private enrichment, separating original event duration from optional bridge callback observations.",
+    },
+    "backend-observability-telemetry-failure-isolation": {
+      title: "Keep operational telemetry failure outside the business result",
+      description:
+        "Preserve authoritative query/replay/SSE outcomes across optional listener failures while treating blocking, asynchronous and mandatory transactional lifecycle events separately.",
+    },
+    "backend-time-canonical-calendar-values-and-instants": {
+      title: "Keep calendar values distinct from event instants",
+      description:
+        "Preserve timezone-free calendar shapes, explicit offset instants and application-owned timezone/DST conversion without inferring business meaning from picker internals.",
+    },
+    "backend-contracts-generated-wire-contracts-and-schema-compatibility": {
+      title: "Generate wire contracts without hiding compatibility decisions",
+      description:
+        "Use target-aware schema/contracts and managed-file drift evidence while retaining explicit scalar precision, error, migration and mixed-version rollout decisions.",
+    },
+    "backend-contracts-tolerant-readers-and-exact-write-intent": {
+      title: "Tolerate additive response fields without weakening write intent",
+      description:
+        "Strip unfamiliar response additions while validating known shape and preserving separate create/patch intent, explicit null semantics and backend authority.",
     },
   },
 } as const;
