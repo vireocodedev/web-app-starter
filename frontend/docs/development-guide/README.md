@@ -1,6 +1,6 @@
 # Development guide
 
-Use this index before implementing a web-app change. It links focused patterns for the frontend, backend, CI, delivery, local development and AI-agent workflow. The same articles are available in the authenticated development-only `/dev-guide` UI.
+Use this index before implementing a web-app change. It links focused patterns for the frontend, backend, quality and verification, CI, delivery, local development and AI-agent workflow. The same articles are available in the authenticated development-only `/dev-guide` UI.
 
 ## Choose the smallest relevant pattern
 
@@ -140,6 +140,30 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 - [Bound actual upload bytes under a shared quota lock](en/backend/files/bounded-uploads-and-shared-quotas.md) · [Hrvatski](hr/backend/files/bounded-uploads-and-shared-quotas.md)
 - [Separate private file downloads from metadata projections](en/backend/files/private-downloads-and-metadata-projections.md) · [Hrvatski](hr/backend/files/private-downloads-and-metadata-projections.md)
+
+### Quality and verification
+
+#### Test design
+
+- [Assert boundary outcomes](en/quality/test-design/assert-boundary-outcomes.md) · [Hrvatski](hr/quality/test-design/assert-boundary-outcomes.md)
+- [Deterministic fixtures and clock ownership](en/quality/test-design/deterministic-fixtures-and-clock-ownership.md) · [Hrvatski](hr/quality/test-design/deterministic-fixtures-and-clock-ownership.md)
+
+#### Frontend verification
+
+- [Fresh runtime and query fixtures](en/quality/frontend/fresh-runtime-and-query-fixtures.md) · [Hrvatski](hr/quality/frontend/fresh-runtime-and-query-fixtures.md)
+- [HTTP contract mocks and handler lifetimes](en/quality/frontend/http-contract-mocks-and-handler-lifetimes.md) · [Hrvatski](hr/quality/frontend/http-contract-mocks-and-handler-lifetimes.md)
+- [Async generation and stale-result scenarios](en/quality/frontend/async-generation-and-stale-result-scenarios.md) · [Hrvatski](hr/quality/frontend/async-generation-and-stale-result-scenarios.md)
+- [Signal effect disposal and storage failures](en/quality/frontend/signal-effect-disposal-and-storage-failures.md) · [Hrvatski](hr/quality/frontend/signal-effect-disposal-and-storage-failures.md)
+
+#### Backend verification
+
+- [Real PostgreSQL and HTTP contracts](en/quality/backend/real-postgres-and-http-contracts.md) · [Hrvatski](hr/quality/backend/real-postgres-and-http-contracts.md)
+- [Transaction conflicts and lock scenarios](en/quality/backend/transaction-conflicts-and-lock-scenarios.md) · [Hrvatski](hr/quality/backend/transaction-conflicts-and-lock-scenarios.md)
+
+#### Browser and accessibility
+
+- [Assembled routes and development profiles](en/quality/browser/assembled-routes-and-development-profiles.md) · [Hrvatski](hr/quality/browser/assembled-routes-and-development-profiles.md)
+- [Keyboard, responsive and accessibility evidence](en/quality/browser/keyboard-responsive-and-accessibility-evidence.md) · [Hrvatski](hr/quality/browser/keyboard-responsive-and-accessibility-evidence.md)
 
 ### Continuous integration
 

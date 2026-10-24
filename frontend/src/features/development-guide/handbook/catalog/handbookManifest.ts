@@ -1,6 +1,7 @@
 import type { HandbookArticleDefinition } from "../types/HandbookArticle.ts";
 
 import { backendHandbookCatalog } from "./handbookBackend.ts";
+import { qualityHandbookCatalog } from "./handbookQuality.ts";
 import { ciHandbookCatalog } from "./handbookCi.ts";
 import { deliveryHandbookCatalog } from "./handbookDelivery.ts";
 import { developerWorkflowHandbookCatalog } from "./handbookDeveloperWorkflow.ts";
@@ -10,6 +11,7 @@ import { frontendHandbookCatalog } from "./handbookFrontend.ts";
 /** Category order is declared once; each category owns its topic and article order. */
 const orderedHandbookCatalog = [
   backendHandbookCatalog,
+  qualityHandbookCatalog,
   ciHandbookCatalog,
   deliveryHandbookCatalog,
   developerWorkflowHandbookCatalog,

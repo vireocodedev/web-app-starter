@@ -90,7 +90,7 @@ test("links from the replaceable Home starter to the development guide categorie
   await expect(page.locator("[data-rgo-header-context]")).toHaveText("Development guide");
   await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
   const categories = page.getByRole("navigation", { name: "Development guide categories" });
-  await expect(categories.getByRole("link")).toHaveCount(6);
+  await expect(categories.getByRole("link")).toHaveCount(7);
   await expect(categories.getByRole("link", { name: "Frontend", exact: true })).toHaveAttribute(
     "href",
     "/dev-guide/frontend",

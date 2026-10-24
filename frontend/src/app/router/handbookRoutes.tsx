@@ -1,3 +1,4 @@
+import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
@@ -42,6 +43,7 @@ export type HandbookRouteId =
 const categoryIcons: Readonly<Record<HandbookCategoryId, SvgIconComponent>> = {
   "frontend-workflows": AccountTreeOutlinedIcon,
   backend: StorageOutlinedIcon,
+  quality: FactCheckOutlinedIcon,
   ci: HubOutlinedIcon,
   delivery: CloudUploadOutlinedIcon,
   "developer-workflow": BuildOutlinedIcon,

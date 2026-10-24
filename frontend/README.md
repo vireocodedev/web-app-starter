@@ -128,7 +128,7 @@ top-level route context, quick actions, and account access. `/dev-guide` lists
 the fullstack guide categories without section tabs. Frontend keeps Example pages,
 interactive Patterns, Workflow patterns and Architecture under `/dev-guide/frontend`.
 Example pages lists Contacts dashboard and Contacts CRUD; Patterns uses the shared
-Settings-style navigation for its examples. Backend, CI, delivery and workflow
+Settings-style navigation for its examples. Backend, Quality and verification, CI, delivery and workflow
 categories expose source-backed handbook articles. **Find articles** at `/dev-guide/find`
 searches handbook metadata and source references with shareable category/type/size
 filters; Ctrl/Cmd+K remains title-and-context page navigation. See the

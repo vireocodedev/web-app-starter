@@ -1,4 +1,5 @@
 import { englishBackendHandbookTranslations } from "./handbook/backend.en.ts";
+import { englishQualityHandbookTranslations } from "./handbook/quality.en.ts";
 import { englishCiHandbookTranslations } from "./handbook/ci.en.ts";
 import { englishDeliveryHandbookTranslations } from "./handbook/delivery.en.ts";
 import { englishDeveloperWorkflowHandbookTranslations } from "./handbook/developer-workflow.en.ts";
@@ -52,6 +53,7 @@ export const englishHandbookTranslations = /* @__PURE__ */ (() =>
     },
     categories: {
       ...englishBackendHandbookTranslations.categories,
+      ...englishQualityHandbookTranslations.categories,
       ...englishCiHandbookTranslations.categories,
       ...englishDeliveryHandbookTranslations.categories,
       ...englishDeveloperWorkflowHandbookTranslations.categories,
@@ -60,6 +62,7 @@ export const englishHandbookTranslations = /* @__PURE__ */ (() =>
     },
     topics: {
       ...englishBackendHandbookTranslations.topics,
+      ...englishQualityHandbookTranslations.topics,
       ...englishCiHandbookTranslations.topics,
       ...englishDeliveryHandbookTranslations.topics,
       ...englishDeveloperWorkflowHandbookTranslations.topics,
@@ -68,6 +71,7 @@ export const englishHandbookTranslations = /* @__PURE__ */ (() =>
     },
     articles: {
       ...englishBackendHandbookTranslations.articles,
+      ...englishQualityHandbookTranslations.articles,
       ...englishCiHandbookTranslations.articles,
       ...englishDeliveryHandbookTranslations.articles,
       ...englishDeveloperWorkflowHandbookTranslations.articles,

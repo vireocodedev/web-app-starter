@@ -2,6 +2,7 @@ import type { StringLeaves } from "../types/TranslationShape.ts";
 import type { englishHandbookTranslations } from "./development-guide-handbook.en.ts";
 
 import { croatianBackendHandbookTranslations } from "./handbook/backend.hr.ts";
+import { croatianQualityHandbookTranslations } from "./handbook/quality.hr.ts";
 import { croatianCiHandbookTranslations } from "./handbook/ci.hr.ts";
 import { croatianDeliveryHandbookTranslations } from "./handbook/delivery.hr.ts";
 import { croatianDeveloperWorkflowHandbookTranslations } from "./handbook/developer-workflow.hr.ts";
@@ -55,6 +56,7 @@ export const croatianHandbookTranslations = /* @__PURE__ */ (() =>
     },
     categories: {
       ...croatianBackendHandbookTranslations.categories,
+      ...croatianQualityHandbookTranslations.categories,
       ...croatianCiHandbookTranslations.categories,
       ...croatianDeliveryHandbookTranslations.categories,
       ...croatianDeveloperWorkflowHandbookTranslations.categories,
@@ -63,6 +65,7 @@ export const croatianHandbookTranslations = /* @__PURE__ */ (() =>
     },
     topics: {
       ...croatianBackendHandbookTranslations.topics,
+      ...croatianQualityHandbookTranslations.topics,
       ...croatianCiHandbookTranslations.topics,
       ...croatianDeliveryHandbookTranslations.topics,
       ...croatianDeveloperWorkflowHandbookTranslations.topics,
@@ -71,6 +74,7 @@ export const croatianHandbookTranslations = /* @__PURE__ */ (() =>
     },
     articles: {
       ...croatianBackendHandbookTranslations.articles,
+      ...croatianQualityHandbookTranslations.articles,
       ...croatianCiHandbookTranslations.articles,
       ...croatianDeliveryHandbookTranslations.articles,
       ...croatianDeveloperWorkflowHandbookTranslations.articles,
