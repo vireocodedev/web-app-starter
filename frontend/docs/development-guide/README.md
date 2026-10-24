@@ -205,6 +205,11 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Implementation workflow
 
 - [Find the owner before editing](en/agent-workflow/implementation/owner-first-change.md) · [Hrvatski](hr/agent-workflow/implementation/owner-first-change.md)
+- [Claim one bounded outcome and preserve its decision gates](en/agent-workflow/implementation/bounded-task-and-decision-contract.md) · [Hrvatski](hr/agent-workflow/implementation/bounded-task-and-decision-contract.md)
+- [Put each change behind the capability that owns its contract](en/agent-workflow/implementation/capability-owners-and-review-boundaries.md) · [Hrvatski](hr/agent-workflow/implementation/capability-owners-and-review-boundaries.md)
+- [Deliver a coherent increment with a truthful review record](en/agent-workflow/implementation/incremental-reviewable-delivery.md) · [Hrvatski](hr/agent-workflow/implementation/incremental-reviewable-delivery.md)
+- [Bind each completion claim to its source and evidence layer](en/agent-workflow/implementation/source-bound-evidence-and-handoff.md) · [Hrvatski](hr/agent-workflow/implementation/source-bound-evidence-and-handoff.md)
+- [Separate setup readiness from accepted business V1](en/agent-workflow/implementation/initialization-to-business-acceptance.md) · [Hrvatski](hr/agent-workflow/implementation/initialization-to-business-acceptance.md)
 
 ## Existing frontend guidance
 
