@@ -175,16 +175,50 @@ POST and other unsafe requests require the CSRF response's header and the sessio
 cookie. Missing or invalid CSRF is `403`; malformed login JSON or missing fields
 is `400`. A session expires after 30 minutes of inactivity.
 
+Backend API errors use JSON `{ "code": "...", "message": "...", "fieldErrors": [] }`
+across MVC, authentication and servlet error handling; `fieldErrors` is always an
+array. The frontend renders local messages from stable codes and explicitly
+allowed field metadata, never the server's message text. See the
+[public error contract](frontend/docs/development-guide/en/backend/foundation/validation-and-error-contracts.md)
+for status/code mappings, validation limits and recovery behavior.
+
+Before changing that API, follow the
+[API evolution and compatibility policy](frontend/docs/development-guide/en/backend/contracts/api-evolution-and-compatibility.md)
+for old/new reader and writer review, independent consumer fixtures, rollout and
+explicit approval of breaking changes or removals.
+
 ## Verification
+
+Use the [application generators](docs/generators.md) before creating standardized
+frontend or backend code. Run `npm run generate -- --list` from the workspace root;
+visual output automatically appears in the existing development-only Guide.
+The [source analysis](docs/generators-analysis.md) records pattern provenance.
 
 ```sh
 cd backend
-./gradlew test bootJar
+./gradlew --no-daemon --console=plain test bootJar
 ```
 
 Backend integration tests start isolated PostgreSQL containers using
 Testcontainers. Docker must be running; tests do not use or reset your local
 development database and do not require a local `.env`.
+
+ArchUnit architecture checks run as ordinary JUnit tests within that command and
+the existing CI test shards. They inspect compiled production bytecode and
+intentional violation fixtures without starting Spring or PostgreSQL. For a
+focused architecture iteration, run from `backend/`:
+
+```sh
+./gradlew --no-daemon --console=plain test --tests '*.architecture.*'
+```
+
+The [backend guide](frontend/docs/development-guide/en/backend/foundation/http-service-persistence-boundaries.md#automated-architecture-checks)
+owns the enforced contracts and remaining review obligations. New approved
+collaborations must keep that contract, its rules and violation proofs aligned.
+
+The [architecture invariant map](frontend/docs/development-guide/en/quality/test-design/architecture-invariants-and-checks.md)
+links all installed frontend/backend architecture guards to their executable
+checks, proof fixtures and remaining review obligations.
 
 ```sh
 cd frontend

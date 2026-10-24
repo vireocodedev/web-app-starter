@@ -134,6 +134,7 @@ test("opens the guide from the account menu and switches its Frontend sections",
     "Example pages",
     "Patterns",
     "Workflow patterns",
+    "Generated examples",
     "Architecture",
   ]);
   await expect(sections.getByRole("link", { name: "Example pages" })).toHaveAttribute("aria-current", "page");

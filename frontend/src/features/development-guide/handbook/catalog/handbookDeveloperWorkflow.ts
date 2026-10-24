@@ -32,6 +32,33 @@ export const developerWorkflowHandbookCatalog = {
   ],
   articles: [
     {
+      id: "developer-workflow-template-evolution-generator-first-workflow",
+      topicId: "developer-template-evolution",
+      slug: "generator-first-workflow",
+      contentPath: "developer-workflow/template-evolution/generator-first-workflow",
+      titleKey: "handbook.articles.developer-workflow-template-evolution-generator-first-workflow.title",
+      descriptionKey: "handbook.articles.developer-workflow-template-evolution-generator-first-workflow.description",
+      implementation: "starter",
+      size: "medium",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          revision: "a7defb9e45dc418036d4d62af742fadf42ffde05",
+          path: "frontend/src/app/router/routeRegistry.tsx",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          revision: "a7defb9e45dc418036d4d62af742fadf42ffde05",
+          path: "frontend/src/features/development-guide/contacts/components/ContactForm.tsx",
+        },
+        {
+          project: "client-discovery-app",
+          revision: "9fcbf2f17a09329333c3d53c7a3750c48fc1db52",
+          path: "frontend/src/features/sales/components/LeadForm.tsx",
+        },
+      ],
+    },
+    {
       id: "developer-workflow-local-development-workspace-runtimes",
       topicId: "developer-workflow-local-development",
       slug: "workspace-runtimes",

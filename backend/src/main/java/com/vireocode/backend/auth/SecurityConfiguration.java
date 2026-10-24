@@ -2,11 +2,11 @@ package com.vireocode.backend.auth;
 
 import java.util.List;
 
+import com.vireocode.backend.http.ApiErrors;
 import com.vireocode.backend.user.AppUserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -24,6 +24,7 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 
@@ -74,7 +75,7 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokens,
-            SecurityContextRepository securityContexts) throws Exception {
+            SecurityContextRepository securityContexts, ApiErrors errors) throws Exception {
         return http
                 .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens))
                 .securityContext(context -> context.securityContextRepository(securityContexts))
@@ -83,16 +84,10 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/csrf", "/auth/login", "/actuator/health", "/error").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((request, response, exception) -> {
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.getWriter().write("{\"message\":\"Authentication required\"}");
-                        })
-                        .accessDeniedHandler((request, response, exception) -> {
-                            response.setStatus(HttpStatus.FORBIDDEN.value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.getWriter().write("{\"message\":\"Request not permitted\"}");
-                        }))
+                        .authenticationEntryPoint((request, response, exception) ->
+                                errors.writeAuthenticationRequired(response))
+                        .accessDeniedHandler((request, response, exception) ->
+                                errors.writeAccessDenied(response, exception instanceof CsrfException)))
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
                         .deleteCookies("SESSION")

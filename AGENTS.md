@@ -1,5 +1,28 @@
 # Workspace agent guide
 
+## Mandatory development-guide workflow
+
+For **every task in this repository**, agents MUST first follow the
+[guide discovery and reuse workflow](frontend/docs/development-guide/README.md#mandatory-agent-workflow).
+Use its live inventory and search to discover the whole guide, then read all
+applicable documentation and examples before planning or changing code. This
+applies to frontend, backend, infrastructure, CI, documentation and verification.
+Reuse the documented infrastructure and existing code patterns.
+
+If a required pattern is undocumented, the guide conflicts with current code,
+or the proposed approach departs from an existing pattern, STOP the affected
+implementation and request Bruno's explicit approval. Present the gap,
+alternatives and recommendation first. An explicit instruction already approving
+that specific departure satisfies this gate; agents cannot approve it themselves
+by changing guidance or weakening checks.
+
+## Task-specific owners
+
+Before creating frontend or backend source, follow the mandatory
+[Generator-first workflow](docs/generators.md#generator-first-agent-policy).
+Discover generators, evaluate genuine compatibility (default **80%**), use compatible
+output before customization, and include automatic Dev Guide examples for visual UI.
+
 For coordinating a consumer from clone through accepted production business V1,
 read [the V1 workflow](docs/v1-workflow.md); follow its linked owners for each task.
 
@@ -35,9 +58,6 @@ than install another copy.
 Privileged lifecycle or isolation changes require independent review and
 fresh-host validation before activation.
 
+For backend changes, also follow [the backend agent guide](backend/AGENTS.md).
 For frontend changes, also follow [the frontend agent guide](frontend/AGENTS.md).
-Before implementing a web-app change, use [the development guide](frontend/docs/development-guide/README.md)
-to select focused frontend, backend, CI, delivery or agent-workflow patterns.
-It distinguishes installed template behavior from source-backed reference recipes;
-the current source owners and task authorization remain authoritative.
 For local development and verification, use [the workspace README](README.md).

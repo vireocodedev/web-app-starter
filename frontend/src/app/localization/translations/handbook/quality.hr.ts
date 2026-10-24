@@ -30,6 +30,11 @@ export const croatianQualityHandbookTranslations = {
     },
   },
   articles: {
+    "quality-test-design-architecture-invariants-and-checks": {
+      title: "Arhitekturne invarijante i provjere",
+      description:
+        "Povežite ugrađene frontend source zaštite i backend bytecode invarijante s naredbama, implementacijom i dokaznim fixtureima uz odvojene provjere ponašanja i ljudski pregled.",
+    },
     "quality-test-design-assert-boundary-outcomes": {
       title: "Provjerite ishode granice",
       description:

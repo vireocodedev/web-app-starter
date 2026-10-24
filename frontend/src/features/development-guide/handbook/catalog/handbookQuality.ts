@@ -39,6 +39,34 @@ export const qualityHandbookCatalog = {
   ],
   articles: [
     {
+      id: "quality-test-design-architecture-invariants-and-checks",
+      topicId: "quality-test-design",
+      slug: "architecture-invariants-and-checks",
+      contentPath: "quality/test-design/architecture-invariants-and-checks",
+      titleKey: "handbook.articles.quality-test-design-architecture-invariants-and-checks.title",
+      descriptionKey: "handbook.articles.quality-test-design-architecture-invariants-and-checks.description",
+      implementation: "starter",
+      size: "large",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/scripts/application-architecture-policy.mjs",
+          revision: "a7defb9e45dc418036d4d62af742fadf42ffde05",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          path: "frontend/scripts/verify-application-architecture.mjs",
+          revision: "a7defb9e45dc418036d4d62af742fadf42ffde05",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-foundation-http-service-persistence-boundaries",
+        "quality-test-design-assert-boundary-outcomes",
+        "quality-frontend-http-contract-mocks-and-handler-lifetimes",
+        "quality-backend-real-postgres-and-http-contracts",
+      ],
+    },
+    {
       id: "quality-test-design-assert-boundary-outcomes",
       topicId: "quality-test-design",
       slug: "assert-boundary-outcomes",

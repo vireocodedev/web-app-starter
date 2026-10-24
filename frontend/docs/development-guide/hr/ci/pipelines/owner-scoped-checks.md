@@ -36,6 +36,12 @@ Dijagram objašnjava ugovor; nije zamjenski workflow koji treba kopirati.
 
 ## Stvarni odabir provjera
 
+`tools/generators/**`, korijenski `package.json` i `generator-policy.json` odabiru
+oba aplikacijska skupa. Statička frontend provjera izvršava testove generatora i
+serijaliziranu provjeru izoliranog izlaza uz postojeću infrastrukturu aplikacije.
+Generirani TypeScript provjerava se uvijek, a Java ondje samo kad su odabrana oba
+aplikacijska vlasnika. Promjena samo frontenda zadržava frontend opseg.
+
 | Promjena                                                               | Odabrani poslovi                                                      |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `backend/**`                                                           | Backend slika, smoke provjera i testni shardovi                       |

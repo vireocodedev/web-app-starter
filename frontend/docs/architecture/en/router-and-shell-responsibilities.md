@@ -42,6 +42,13 @@ Previous Home/Contacts URLs redirect to the corresponding Example page, while
 old Patterns/Architecture URLs redirect beneath Frontend. Redirects preserve
 query parameters and fragments. The whole guide remains development-only.
 
+Generated examples appears under Frontend at `/dev-guide/frontend/generated`.
+The router-owned `generatedExampleRoutes.tsx` discovers lazy visual preview pages
+by filename in development and derives their records and grouped index links.
+Generation requires no per-example registry edits. Actual generated components
+retain ordinary feature ownership; previews use local fixtures and the existing
+providers. Removing a preview file removes its registration on the next build.
+
 Guide routes inherit `contentMaxWidth: "xl"`. The shell places local breadcrumbs
 and routed content inside the same container. The deepest explicitly supplied
 width wins; descendants without an override retain their ancestor's width.

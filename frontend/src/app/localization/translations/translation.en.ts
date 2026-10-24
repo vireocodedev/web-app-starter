@@ -1,4 +1,7 @@
+import { generatedEnglishTranslations } from "./generated";
+
 export const englishTranslations = {
+  generated: generatedEnglishTranslations,
   authentication: {
     account: "Account",
     openAccountMenu: "Open user navigation menu",
@@ -11,6 +14,16 @@ export const englishTranslations = {
     signOutFailed: "Sign out failed. Try again.",
     title: "Sign in",
     username: "Username",
+  },
+  httpErrors: {
+    authenticationRequired: "Please sign in again.",
+    csrfInvalid: "The security check failed. Try again.",
+    forbidden: "You do not have permission to perform this action.",
+    internalError: "The service is temporarily unavailable. Try again.",
+    invalidRequest: "The request could not be read. Check your input and try again.",
+    requestRejected: "The request could not be completed.",
+    validationFailed: "Some fields need attention.",
+    fields: { REQUIRED: "This field is required.", TOO_LONG: "This value is too long." },
   },
   commandPalette: {
     close: "Close search",

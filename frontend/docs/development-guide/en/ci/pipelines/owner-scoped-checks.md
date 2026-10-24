@@ -36,6 +36,12 @@ This diagram describes ownership and dependency, not a proposed replacement work
 
 ## Read the actual selection table
 
+`tools/generators/**`, root `package.json` and `generator-policy.json` select both
+application lanes. Frontend static verification runs generator tests and the
+sequential isolated-output rehearsal against the installed application infrastructure.
+It always checks generated TypeScript; generated Java runs there only when both
+application owners are selected. A frontend-only change retains its frontend scope.
+
 | Change                                                                    | Required owner lanes                                            |
 | ------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | `backend/**`                                                              | Backend image/smoke and backend test shards                     |

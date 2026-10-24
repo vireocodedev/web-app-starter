@@ -310,6 +310,7 @@ describe("application routes", () => {
           labelKey: "handbook.categories.frontend-workflows.title",
           to: "/dev-guide/frontend/workflow-patterns",
         },
+        { labelKey: "generatedExamples.title", to: "/dev-guide/frontend/generated" },
         { labelKey: "navigation.architecture", to: "/dev-guide/frontend/architecture" },
       ]);
     });

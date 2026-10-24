@@ -2,6 +2,36 @@ import type { DevelopmentGuideTranslationShape } from "../types/TranslationShape
 import { croatianHandbookTranslations } from "./development-guide-handbook.hr";
 
 export const croatianDevelopmentGuideTranslations = {
+  generatedExamples: {
+    title: "Generirani primjeri",
+    description: "Interaktivni primjeri generiranih komponenti aplikacije. Svaki primjer koristi lokalne podatke.",
+    kinds: {
+      component: "Komponente",
+      form: "Obrasci",
+      shell: "Rasporedi",
+      table: "Tablice",
+      page: "Stranice",
+      feature: "Značajke",
+    },
+    default: "Zadano",
+    populated: "Popunjeno",
+    disabled: "Onemogućeno",
+    simulateFailure: "Simuliraj pogrešku",
+    saved: "Spremljeno",
+    pending: "Slanje",
+    complete: "Dovrši slanje",
+    reset: "Poništi",
+    filter: "Filtar",
+    state: "Stanje",
+    empty: "Prazno",
+    loading: "Učitavanje",
+    error: "Pogreška",
+    content: "Sadržaj",
+    sidebar: "Bočna traka",
+    header: "Zaglavlje",
+    action: "Radnja",
+    count: "Broj: {{count}}",
+  },
   handbook: croatianHandbookTranslations,
   categories: {
     title: "Kategorije",

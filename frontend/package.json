@@ -18,6 +18,8 @@
     }
   },
   "scripts": {
+    "generate": "node ../tools/generators/cli.mjs",
+    "test:generators": "node --test --test-concurrency=1 ../tools/generators/tests/*.test.mjs",
     "dev": "vite",
     "preview": "vite preview",
     "build": "tsc -b && vite build",
@@ -25,7 +27,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "verify:architecture": "node scripts/verify-application-architecture.mjs",
-    "verify:dev-guide": "node scripts/verify-development-guide.mjs",
+    "guide:index": "node scripts/development-guide-index.mjs",
+    "verify:dev-guide": "node --test scripts/tests/development-guide-index.test.mjs && node scripts/verify-development-guide.mjs",
     "test": "vitest run",
     "test:browser": "playwright test",
     "test:browser:fixed-settings": "RGO_FIXED_SETTINGS_BROWSER=true VITE_SETTINGS_NOCFG_LOCALE=en VITE_SETTINGS_NOCFG_DRAWER_MODE=permanent VITE_SETTINGS_NOCFG_HEADER_STICKINESS=both-rows VITE_SETTINGS_NOCFG_FONT_SIZE=big VITE_SETTINGS_NOCFG_DESKTOP_TABLE_SIZE=medium VITE_SETTINGS_NOCFG_THEME=soft-dark VITE_SETTINGS_NOCFG_INCREASED_CONTRAST=true VITE_SETTINGS_NOCFG_MOTION=reduce VITE_SETTINGS_NOCFG_LINK_UNDERLINES=always VITE_SETTINGS_NOCFG_EDITOR_PRESENTATION=overlay VITE_SETTINGS_NOCFG_SURFACE_BORDER_RADIUS=18 playwright test --grep @fixed-settings",
@@ -33,7 +36,7 @@
     "typecheck": "tsc -b",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "verify": "npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck && npm run test && npm run build && npm run build-storybook"
+    "verify": "npm run test:generators && npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck && npm run test && npm run build && npm run build-storybook"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

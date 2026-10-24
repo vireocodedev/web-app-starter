@@ -14,6 +14,9 @@ class CIScopeTests(unittest.TestCase):
         for paths, expected in (
                 (['backend/src/main/App.java'], (True, False, False)),
                 (['frontend/package-lock.json'], (False, True, False)),
+                (['tools/generators/templates/backend.mjs'], (True, True, False)),
+                (['package.json'], (True, True, False)),
+                (['generator-policy.json'], (True, True, False)),
                 (['backend/build.gradle', 'frontend/src/main.tsx'], (True, True, False)),
                 (['docs/template-initialization.md'], (False, False, False)),
                 (['infrastructure/ci/manage.py'], (False, False, True)),

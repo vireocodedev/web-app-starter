@@ -41,6 +41,13 @@ za razvoj > Frontend. Prethodni URL-ovi za Početnu i Kontakte preusmjeravaju na
 odgovarajući Primjer stranice, a stari Obrasci i Arhitektura pod Frontend.
 Parametri upita i fragmenti ostaju sačuvani. Cijeli vodič ostaje samo razvojni.
 
+Generirani primjeri nalaze se pod Frontendom na `/dev-guide/frontend/generated`.
+Routerov `generatedExampleRoutes.tsx` u razvoju otkriva lijeno učitane stranice
+pregleda prema nazivu datoteke i izvodi zapise ruta te grupirane poveznice indeksa.
+Pojedinačni primjeri ne zahtijevaju izmjene registra. Stvarne generirane komponente
+ostaju unutar svojih značajki; pregledi koriste lokalne podatke i postojeće
+providere. Uklanjanje datoteke pregleda uklanja registraciju pri sljedećem buildu.
+
 Rute vodiča nasljeđuju `contentMaxWidth: "xl"`. Ljuska smješta lokalne mrvice i
 sadržaj u isti spremnik. Odlučuje najdublja izričito zadana širina; potomci bez
 vlastite postavke zadržavaju širinu pretka.

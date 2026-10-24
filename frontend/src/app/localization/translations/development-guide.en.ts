@@ -1,6 +1,36 @@
 import { englishHandbookTranslations } from "./development-guide-handbook.en";
 
 export const englishDevelopmentGuideTranslations = {
+  generatedExamples: {
+    title: "Generated examples",
+    description: "Interactive examples of generated application components. Each example uses local fixtures.",
+    kinds: {
+      component: "Components",
+      form: "Forms",
+      shell: "Layouts",
+      table: "Tables",
+      page: "Pages",
+      feature: "Features",
+    },
+    default: "Default",
+    populated: "Populated",
+    disabled: "Disabled",
+    simulateFailure: "Simulate failure",
+    saved: "Saved",
+    pending: "Submitting",
+    complete: "Complete submission",
+    reset: "Reset",
+    filter: "Filter",
+    state: "State",
+    empty: "Empty",
+    loading: "Loading",
+    error: "Error",
+    content: "Content",
+    sidebar: "Sidebar",
+    header: "Header",
+    action: "Action",
+    count: "Count: {{count}}",
+  },
   handbook: englishHandbookTranslations,
   categories: {
     title: "Categories",

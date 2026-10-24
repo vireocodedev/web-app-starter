@@ -68,12 +68,12 @@ export const croatianBackendHandbookTranslations = {
     "backend-foundation-http-service-persistence-boundaries": {
       title: "Granice HTTP-a, aplikacijskog servisa i persistencije",
       description:
-        "Odvojite transportne DTO-e, žive ovlasti, cjelovite transakcijske radnje i persistenciju, uz jasno označen recept promjene s revizijom.",
+        "Definirajte vlasništvo backend paketa i uloga; ArchUnitom provodite statičke ovisnosti, točne autentikacijske dohvate i objavljeni zajednički Interface pogrešaka.",
     },
     "backend-foundation-validation-and-error-contracts": {
       title: "Validacija i javni ugovori pogrešaka",
       description:
-        "Razlikujte ugrađene autentikacijske odgovore od namjernog protokola domenskih pogrešaka, sigurnih detalja validacije i oporavka koji čuva nacrt.",
+        "Koristite ugrađeni sigurni code/message/fieldErrors ugovor za MVC, autentikacijske i servlet pogreške uz ograničeno frontend dekodiranje i lokalne prijevode; domenske kodove proširujte namjerno.",
     },
     "backend-security-session-and-csrf-lifecycle": {
       title: "Session autentikacija i CSRF imaju zajednički životni ciklus",
@@ -254,6 +254,11 @@ export const croatianBackendHandbookTranslations = {
       title: "Kalendarske vrijednosti odvojite od trenutka događaja",
       description:
         "Sačuvajte calendar oblik bez zone, offset instant i aplikacijsku timezone/DST odluku bez zaključivanja iz pickera.",
+    },
+    "backend-contracts-api-evolution-and-compatibility": {
+      title: "Razvoj API-ja i kompatibilnost",
+      description:
+        "Klasificirajte API promjene, sačuvajte namjerne ugovore čitanja/pisanja, pregledajte stare/nove kombinacije i koristite neovisne potrošačke fixturee uz odobreni postupak proširenja/isporuke/sužavanja.",
     },
     "backend-contracts-generated-wire-contracts-and-schema-compatibility": {
       title: "Generirajte wire ugovor bez skrivanja kompatibilnosti",

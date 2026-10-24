@@ -43,7 +43,7 @@ The removable development guidance is grouped without merging its owners:
 
 ```text
 src/features/development-guide/{architecture,contacts,handbook,patterns/<category>}
-src/pages/development-guide/{architecture,contacts,handbook,patterns}
+src/pages/development-guide/{architecture,contacts,handbook,patterns,generated}
 tests/features/development-guide/{architecture,contacts,patterns/<category>}
 ```
 

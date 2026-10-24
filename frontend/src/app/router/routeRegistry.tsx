@@ -75,6 +75,7 @@ import { PatternsIndexPage } from "@/pages/development-guide/patterns/PatternsIn
 import { PatternCategoryLayoutRoute } from "./components/PatternCategoryLayoutRoute";
 import { patternCategoryDefinitions } from "./patternCategories";
 import { handbookCategoryEntries, handbookFinderEntry, handbookRouteRegistry } from "./handbookRoutes";
+import { generatedExampleRouteRegistry } from "./generatedExampleRoutes";
 import { ApplicationStateEffectsAndCleanupPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateEffectsAndCleanupPage";
 import { ApplicationStatePersistentStatePage } from "@/pages/development-guide/patterns/applicationState/ApplicationStatePersistentStatePage";
 import { ApplicationStateSharingBetweenRoutesPage } from "@/pages/development-guide/patterns/applicationState/ApplicationStateSharingBetweenRoutesPage";
@@ -402,6 +403,7 @@ const developmentRouteRegistry = {
   },
   ...patternCategoryRoutes,
   ...handbookRouteRegistry,
+  ...generatedExampleRouteRegistry,
   architecture: {
     Component: ArchitectureRouteLayout,
     access: "authenticated",

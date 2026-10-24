@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { RgoContainerGrid, useRgoForm } from "@rgo-web/frontend";
 
+import { appHttpErrorMessageKey, decodeAppHttpError, type AppHttpError } from "@/app/data/http/appHttpError";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
 import { useAppAuth } from "../hooks/useAppAuth";
 import { appLoginCredentialsSchema } from "../models/AppLoginCredentials";
@@ -13,7 +14,24 @@ export function LoginForm({ returnTo = "/" }: Readonly<{ returnTo?: string }>) {
   const auth = useAppAuth();
   const { t } = useAppTranslation();
   const navigate = useNavigate();
-  const [loginError, setLoginError] = useState<"invalid" | "unavailable" | null>(null);
+  const [loginError, setLoginError] = useState<"invalid" | AppHttpError | null>(null);
+  const [loginFailed, setLoginFailed] = useState(false);
+  const errorMessageKey =
+    loginError === "invalid"
+      ? "authentication.invalidCredentials"
+      : (appHttpErrorMessageKey(loginError) ?? "authentication.signInFailed");
+  const fieldError = (name: string) =>
+    loginError && loginError !== "invalid"
+      ? loginError.fieldErrors.find(detail => detail.field === name)?.code
+      : undefined;
+  function fieldHelper(name: string) {
+    const code = fieldError(name);
+    return code ? t(`httpErrors.fields.${code}`) : undefined;
+  }
+  function clearServerErrors() {
+    setLoginError(null);
+    setLoginFailed(false);
+  }
   const form = useRgoForm({
     defaultValues: { password: "", username: "" },
     validationLogic: revalidateLogic({
@@ -23,11 +41,14 @@ export function LoginForm({ returnTo = "/" }: Readonly<{ returnTo?: string }>) {
     validators: { onDynamic: appLoginCredentialsSchema },
     onSubmit: async ({ value }) => {
       try {
-        setLoginError(null);
+        clearServerErrors();
         await auth.login(appLoginCredentialsSchema.parse(value));
         navigate(returnTo, { replace: true });
       } catch (error) {
-        setLoginError(error instanceof AppInvalidCredentialsError ? "invalid" : "unavailable");
+        setLoginFailed(true);
+        setLoginError(
+          error instanceof AppInvalidCredentialsError ? "invalid" : decodeAppHttpError(error, ["username", "password"]),
+        );
       }
     },
   });
@@ -42,20 +63,23 @@ export function LoginForm({ returnTo = "/" }: Readonly<{ returnTo?: string }>) {
             {auth.loginAssistance ? (
               <Alert severity="info">{t("authentication.demoCredentials", auth.loginAssistance)}</Alert>
             ) : null}
-            {loginError ? (
-              <Alert severity="error">
-                {t(loginError === "invalid" ? "authentication.invalidCredentials" : "authentication.signInFailed")}
-              </Alert>
-            ) : null}
-            <form.AppField name="username">
+            {loginFailed ? <Alert severity="error">{t(errorMessageKey)}</Alert> : null}
+            <form.AppField listeners={{ onChange: clearServerErrors }} name="username">
               {field => (
-                <field.TextField autoComplete="username" autoFocus label={t("authentication.username")} required />
+                <field.TextField
+                  autoComplete="username"
+                  autoFocus
+                  helperText={fieldHelper("username")}
+                  label={t("authentication.username")}
+                  required
+                />
               )}
             </form.AppField>
-            <form.AppField name="password">
+            <form.AppField listeners={{ onChange: clearServerErrors }} name="password">
               {field => (
                 <field.TextField
                   autoComplete="current-password"
+                  helperText={fieldHelper("password")}
                   label={t("authentication.password")}
                   required
                   type="password"

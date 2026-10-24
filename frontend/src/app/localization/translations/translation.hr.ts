@@ -1,6 +1,8 @@
 import type { TranslationShape } from "../types/TranslationShape";
+import { generatedCroatianTranslations } from "./generated";
 
 export const croatianTranslations = {
+  generated: generatedCroatianTranslations,
   authentication: {
     account: "Račun",
     openAccountMenu: "Otvori izbornik korisničke navigacije",
@@ -13,6 +15,16 @@ export const croatianTranslations = {
     signOutFailed: "Odjava nije uspjela. Pokušajte ponovno.",
     title: "Prijava",
     username: "Korisničko ime",
+  },
+  httpErrors: {
+    authenticationRequired: "Prijavite se ponovno.",
+    csrfInvalid: "Sigurnosna provjera nije uspjela. Pokušajte ponovno.",
+    forbidden: "Nemate dopuštenje za ovu radnju.",
+    internalError: "Usluga je privremeno nedostupna. Pokušajte ponovno.",
+    invalidRequest: "Zahtjev nije moguće pročitati. Provjerite unos i pokušajte ponovno.",
+    requestRejected: "Zahtjev nije moguće dovršiti.",
+    validationFailed: "Potrebno je provjeriti neka polja.",
+    fields: { REQUIRED: "Ovo je polje obavezno.", TOO_LONG: "Ova je vrijednost preduga." },
   },
   commandPalette: {
     close: "Zatvori pretraživanje",

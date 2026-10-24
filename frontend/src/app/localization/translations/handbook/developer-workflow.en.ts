@@ -22,6 +22,11 @@ export const englishDeveloperWorkflowHandbookTranslations = {
     },
   },
   articles: {
+    "developer-workflow-template-evolution-generator-first-workflow": {
+      title: "Generate first, customize through the owning boundary",
+      description:
+        "Discover compatible generators, preserve adopted code and inspect actual visual examples through the existing Dev Guide router.",
+    },
     "developer-workflow-local-development-workspace-runtimes": {
       title: "One workspace, two runtimes",
       description:

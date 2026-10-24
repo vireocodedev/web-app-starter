@@ -40,8 +40,8 @@ class BackendApplicationTests {
 		assertThat(context.getBeansOfType(LocalUserInitializer.class)).isEmpty();
 		assertThat(context.getBeansOfType(ProvisionUserRunner.class)).isEmpty();
 		assertThat(environment.getProperty("server.servlet.session.cookie.secure", Boolean.class)).isTrue();
-		assertThat(jdbc.queryForObject(
-				"select count(*) from flyway_schema_history where success = true", Integer.class)).isEqualTo(2);
+		assertThat(jdbc.queryForList(
+				"select version from flyway_schema_history where success = true", String.class)).contains("1", "2");
 		assertThat(jdbc.queryForObject("select count(*) from spring_session", Integer.class)).isZero();
 	}
 

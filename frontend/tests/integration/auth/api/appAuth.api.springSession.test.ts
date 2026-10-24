@@ -44,6 +44,29 @@ describe("Spring-session application authentication API", () => {
     );
   });
 
+  it.each([
+    [{ username: " ", password: "secret" }, "username", "REQUIRED"],
+    [{ username: "a".repeat(101), password: "secret" }, "username", "TOO_LONG"],
+    [{ username: "demo", password: "a".repeat(73) }, "password", "TOO_LONG"],
+  ] as const)(
+    "keeps mocked backend validation separate from credential rejection %#",
+    async (credentials, field, code) => {
+      const api = createApi();
+      const failure = await api.login(credentials).catch((error: unknown) => error);
+      expect(failure).toMatchObject({
+        response: {
+          status: 400,
+          data: {
+            code: "VALIDATION_FAILED",
+            fieldErrors: [{ field, code }],
+          },
+        },
+      });
+      expect(failure).not.toBeInstanceOf(AppInvalidCredentialsError);
+      await expect(api.getSession()).resolves.toBeNull();
+    },
+  );
+
   it("does not mislabel an unavailable server as invalid credentials", async () => {
     const api = createApi();
     server.use(
@@ -100,6 +123,45 @@ describe("Spring-session application authentication API", () => {
 
     await expect(api.login(mockLoginCredentials)).rejects.toMatchObject({ response: { status: 503 } });
     expect(loginCount).toBe(0);
+  });
+
+  it("does not mislabel a CSRF preflight 401 or submit the login request", async () => {
+    const api = createApi();
+    let loginCount = 0;
+    server.use(
+      http.get(`${apiBaseUrl}${appAuthSpringSessionEndpoints.csrf}`, () =>
+        HttpResponse.json(
+          {
+            code: "AUTHENTICATION_FAILED",
+            message: "private diagnostic",
+            fieldErrors: [],
+          },
+          { status: 401 },
+        ),
+      ),
+      http.post(`${apiBaseUrl}${appAuthSpringSessionEndpoints.login}`, () => {
+        loginCount += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const failure = await api.login(mockLoginCredentials).catch((error: unknown) => error);
+    expect(failure).toMatchObject({ response: { status: 401 }, config: { url: appAuthSpringSessionEndpoints.csrf } });
+    expect(failure).not.toBeInstanceOf(AppInvalidCredentialsError);
+    expect(loginCount).toBe(0);
+  });
+
+  it.each([
+    { message: "legacy response" },
+    { code: "UNKNOWN", message: "private diagnostic", fieldErrors: [] },
+    { code: "AUTHENTICATION_REQUIRED", message: "private diagnostic", fieldErrors: [] },
+  ])("keeps unrecognized login 401s as original transport failures %#", async body => {
+    const api = createApi();
+    server.use(
+      http.post(`${apiBaseUrl}${appAuthSpringSessionEndpoints.login}`, () => HttpResponse.json(body, { status: 401 })),
+    );
+    const failure = await api.login(mockLoginCredentials).catch((error: unknown) => error);
+    expect(failure).toMatchObject({ response: { status: 401 } });
+    expect(failure).not.toBeInstanceOf(AppInvalidCredentialsError);
   });
 
   it("rejects a malformed CSRF response instead of sending an unprotected mutation", async () => {

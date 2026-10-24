@@ -1,77 +1,83 @@
 # Validacija i javni ugovori pogrešaka
 
-**Status podrške: ugrađena autentikacijska validacija i pogreške; referentni recept za širi domenski protokol.** Predložak ima Bean Validation, autentikacijski handler ograničen kontrolerom i Security filter handlere. Nema univerzalni oblik field-error odgovora, biblioteku iznimki s prijevodnim ključevima ni opću aplikacijsku ProblemDetail politiku.
+**Status podrške: ugrađeni zajednički HTTP ugovor pogrešaka uz referentni recept za domenska proširenja.** MVC handleri, autentikacijski advice, Security filtri i servlet obrada pogrešaka koriste isti sigurni JSON oblik. Frontend dekodira ograničene strojne metapodatke i prikazuje lokalne prijevode. Domenski kodovi konflikta, korelacijski identifikatori i ProblemDetail protokol nisu ugrađeni ovim ugovorom.
 
-Koristite ovaj obrazac pri definiranju request DTO-a, povezivanju forme s endpointom ili odluci kako frontend razlikuje nevaljan unos, isteklu autentikaciju i konflikt poslovnog stanja. Status, sigurni javni podaci i stabilno strojno značenje pripadaju ugovoru endpointa prije nego UI počne granati ponašanje prema pogreškama.
+Koristite ovaj obrazac pri definiranju request DTO-a, povezivanju forme s endpointom ili razlikovanju nevaljanog unosa, nedostajuće autentikacije i konflikta poslovnog stanja. HTTP status i stabilan strojni kod upravljaju ponašanjem, a ne proizvoljan tekst poslužitelja.
 
-## Što predložak stvarno jamči
+## Ugrađeni oblik odgovora i vlasnici
 
-`AuthController.LoginRequest` request je record validiran s `@Valid @RequestBody`. Korisničko ime ne smije biti prazno i ima najviše 100 znakova; lozinka ne smije biti prazna i ima najviše 72 znaka. To je ugovor prijave, ne politika lozinke pri provisioningu: provisioning zasebno zahtijeva barem 12 znakova i izričito provjerava najviše 72 UTF-8 bajta za BCrypt. Anotacija broja znakova ne može osigurati granicu bajtova za ne-ASCII tekst.
+Svaki odgovor pogreške sadrži `code`, `message` i `fieldErrors`. Posljednje polje uvijek je niz, i kada je prazan:
 
-Odgovor sesije zaseban je record s poljima `id`, `displayName` i `email`. Entitet i hash lozinke ne objavljuju se. Validacija zahtjeva također je odvojena od autorizacije: ispravan UUID ili valjan tekst ne daje pravo korištenja resursa.
+```json
+{
+  "code": "AUTHENTICATION_FAILED",
+  "message": "Invalid credentials or expired session",
+  "fieldErrors": []
+}
+```
 
-| Ugrađena putanja obrade                   | Status | Javno tijelo                                           |
-| ----------------------------------------- | ------ | ------------------------------------------------------ |
-| Security authentication entry point       | 401    | `{"message":"Authentication required"}`                |
-| Security access-denied handler            | 403    | `{"message":"Request not permitted"}`                  |
-| AuthenticationException za AuthController | 401    | `{"message":"Invalid credentials or expired session"}` |
+Trenutačni vlasnici u radnoj kopiji su [ApiErrors](../../../../../../backend/src/main/java/com/vireocode/backend/http/ApiErrors.java), [ApiExceptionHandler](../../../../../../backend/src/main/java/com/vireocode/backend/http/ApiExceptionHandler.java), [ApiErrorController](../../../../../../backend/src/main/java/com/vireocode/backend/http/ApiErrorController.java), [AuthExceptionHandler](../../../../../../backend/src/main/java/com/vireocode/backend/auth/AuthExceptionHandler.java) i [SecurityConfiguration](../../../../../../backend/src/main/java/com/vireocode/backend/auth/SecurityConfiguration.java). Ove poveznice opisuju ugrađenu implementaciju; izvori vezani uz reviziju na kraju opisuju podrijetlo, a ne trenutačni oblik odgovora.
 
-Posljednji handler ograničen je s `assignableTypes = AuthController.class`. Nije globalni handler budućih poslovnih kontrolera. Nedostajući CSRF token obrađuje Security i može vratiti access-denied odgovor prije kontrolera. Klijent zato ne smije svaki 403 smatrati dokazom nedostajuće domenske uloge.
+| Status     | Kod                       | Okidač i sigurna javna poruka                                                                                                                                                     |
+| ---------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400        | `VALIDATION_FAILED`       | Pogreška Bean Validationa: `Some fields need attention`.                                                                                                                          |
+| 400        | `INVALID_REQUEST`         | Nevaljan JSON ili drugi nevaljan zahtjev: `The request is not valid`.                                                                                                             |
+| 401        | `AUTHENTICATION_REQUIRED` | Nedostajuća autentikacija, uključujući Security entry point: `Authentication required`.                                                                                           |
+| 401        | `AUTHENTICATION_FAILED`   | Odbijena autentikacija ograničena na `AuthController`, uključujući nedostupan račun sesije, ali bez pogrešaka autentikacijskog servisa: `Invalid credentials or expired session`. |
+| 403        | `CSRF_INVALID`            | Security odbija nedostajući/nevaljani CSRF token: `Request not permitted`.                                                                                                        |
+| 403        | `FORBIDDEN`               | Druga zabrana pristupa: `Request not permitted`.                                                                                                                                  |
+| Ostali 4xx | `REQUEST_REJECTED`        | Zadržava status odbijanja: `The request was rejected`.                                                                                                                            |
+| 5xx        | `INTERNAL_ERROR`          | Neočekivana/poslužiteljska pogreška, uključujući nedostupnost autentikacijskog servisa ili pohrane korisnika: `The request could not be completed`.                               |
 
-Osnovna konfiguracija poslužitelja skriva poruke iznimki i stack trace u zadanim odgovorima. Framework obrada nevaljanog JSON-a ili Bean Validation pogrešaka ovdje nije ugrađena frontend-stabilna shema pogrešaka polja. Nemojte tvrditi da ti slučajevi već proizvode recept u nastavku.
+`ApiExceptionHandler` obrađuje opće MVC pogreške s najnižim prioritetom; autentikacijski advice ograničen kontrolerom zadržava uže značenje. `AuthenticationServiceException`, uključujući `InternalAuthenticationServiceException`, označava pogrešku autentikacijskog backenda/pohrane korisnika, a ne odbijene podatke za prijavu; oba advice toka vraćaju 500 `INTERNAL_ERROR` bez otkrivanja uzroka. Postojeći framework statusi i zaglavlja, poput `Allow` pri odbijanju metode, ostaju sačuvani, a javno tijelo/content type postaju zajednički JSON ugovor. Servlet fallback čita atribut statusa pogreške, a ne tekst iznimke ili poslani unos. Nedostajući/nevaljani metapodaci statusa daju 500. Ugovor ne pretvara pogreške u odgovore 200.
 
-## Namjerno definirajte protokol projekta
+## Detalji validacije eksplicitno su ograničeni
 
-LMS daje usporedbu sa starijom implementacijom: njegov advice razlikuje validaciju tijela zahtjeva, constraint violations, zabranu pristupa i iznimku s prijevodnim ključem. `ErrorResponse` sadrži timestamp, status, error, message, path i opcionalni translationKey. To pokazuje središnju granicu prevođenja, ali payload i Spring API-je starog projekta ne treba kopirati kao da su ugrađeni u Boot 4 predložak. Prosljeđivanje proizvoljne poruke iznimke posebno nije opća politika javnih podataka.
+`AuthController.LoginRequest` validira se s `@Valid @RequestBody`: korisničko ime nije prazno i ima najviše 100 znakova; lozinka nije prazna i ima najviše 72 znaka. To se razlikuje od provisioninga, koji dodatno zahtijeva barem 12 znakova i provjerava BCrypt granicu od 72 UTF-8 bajta. Anotacije broja znakova ne jamče granicu bajtova za ne-ASCII unos.
 
-Za novi domenski modul odaberite najmanji ugovor koji frontend može pouzdano koristiti. Slijedi **JSON recept, a ne trenutačni odgovor predloška**:
+Kao detalji polja objavljuju se samo login polja `username` i `password`, tim redoslijedom, s najviše jednim zapisom po polju. `NotBlank` postaje `REQUIRED`, a `Size` postaje `TOO_LONG`; obveznost ima prednost kada vrijede oba pravila. Primjer:
 
 ```json
 {
   "code": "VALIDATION_FAILED",
   "message": "Some fields need attention",
-  "fieldErrors": [{ "field": "displayName", "code": "REQUIRED" }],
-  "requestId": "example-correlation-id"
+  "fieldErrors": [{ "field": "username", "code": "REQUIRED" }]
 }
 ```
 
-Prije objave backend vlasnik mora implementirati DTO, ograničeno mapiranje putanja polja, prevođenje iznimki i izvor correlation ID-a. Frontend vlasnik mora implementirati tipizirani decoder, lokalizirano mapiranje kodova i fallback nepoznatih kodova. Bean Validation već postoji; zajednički registar kodova, globalni advice i tracing sustav ne nastaju samim ovim člankom. O ProblemDetailu odlučite zasebnim dizajnom; ne miješajte nepregledane formate odgovora po endpointima.
+Ostale pogreške validacije ulaza zadržavaju `VALIDATION_FAILED` s praznim nizom ako ne postoji eksplicitno podržano mapiranje. Validacija povratne vrijednosti pogreška je poslužitelja i zadržava 500 s `INTERNAL_ERROR`. Nikada ne serijalizirajte sirove putanje vezivanja, odbijene vrijednosti, poruke ograničenja, tajne, SQL ili stack trace. Valjano polje ili UUID također ne daje ovlast za korištenje resursa. Odgovor sesije ostaje zasebna projekcija `id`/`displayName`/`email`; ni entitet ni hash lozinke ne postaju javni.
 
-Strojni kodovi upravljaju ponašanjem, a lokalizirane frontend poruke prikazom. Poslužiteljska poruka može biti siguran fallback, ali UI ne treba parsirati englesku rečenicu kako bi razlikovao zastarjelu reviziju od validacije. Ne uključujte odbijene lozinke, credential zaglavlja, SQL, stack trace ili cijeli poslani payload. Metapodaci validacije moraju koristiti dopušteni skup polja i kodova.
+## Frontend dekodiranje i oporavak
 
-## Cjelovit scenarij forme
+[appHttpError.ts](../../../../../../frontend/src/app/data/http/appHttpError.ts) čita izvornu Axios pogrešku bez omatanja ili mijenjanja. Poznati kod mora odgovarati HTTP statusu; `message` mora biti tekst do 512 znakova, a `fieldErrors` niz s najviše 32 zapisa. Tekst polja/koda u svakom zapisu ograničen je na 100 znakova. Nevaljani oblici odgovora, nepodržani kodovi najviše razine, nepodudaranje statusa, otkazivanje i pogreške bez odgovora ne daju prepoznate metapodatke.
 
-Uređivač zapisa šalje naziv i očekivanu reviziju. Prazan naziv pogreška je zahtjeva; sintaktički ispravan naziv zabranjen trenutačnim domenskim stanjem poslovna je pogreška; starija revizija predstavlja konflikt. Forma zahtijeva različit oporavak:
+Decoder zadržava detalje polja samo za `VALIDATION_FAILED`, poznate kodove `REQUIRED`/`TOO_LONG` i eksplicitno dopuštena polja tog pozivatelja. Zadržava prvi podržani detalj po polju te isključuje nazive povezane s prototipom čak i ako ih pozivatelj navede. Login odabire `username` i `password`; druga forma ne nasljeđuje to dopuštenje automatski.
 
-| Pogreška                                 | Odluka ugovora projekta                         | Oporavak                                               |
-| ---------------------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
-| Nevaljan JSON ili polje                  | Obično 400 sa sigurnim strukturiranim detaljima | Sačuvati nacrt; označiti podržana polja                |
-| Nedostajuća ili istekla autentikacija    | 401                                             | Ponovna prijava bez otkrivanja tajni                   |
-| Autentikacija postoji, radnja zabranjena | 403 ili dokumentirano skrivanje resursa         | Objasniti granicu; bez slijepog ponavljanja            |
-| Skriven ili nepostojeći resurs           | Dokumentirani 404                               | Sigurno napustiti uređivač; ne zaključivati postojanje |
-| Zastarjela očekivana revizija            | 409                                             | Sačuvati nacrt; osvježiti i uskladiti                  |
-| Neočekivani kvar poslužitelja            | Siguran 5xx                                     | Sačuvati nacrt; ograničen retry i korelacija           |
+Stabilni kodovi tijekom prikaza mapiraju se na lokalne prijevodne ključeve. Poslužiteljski `message` provjerava se prema obliku, ali se nikada ne prikazuje. Login čuva unesene vrijednosti, prikazuje lokaliziranu obavijest i podržani pomoćni tekst polja te briše zastarjele pogreške pri promjeni unosa; odjava koristi isto zajedničko mapiranje poruka. Nepoznate/nevaljane pogreške koriste lokalizirani fallback vlasničkog UI-ja.
 
-Ovo su preporučene odluke projekta, ne dokaz da predložak već implementira svaki red. Skrivanje resursa mora biti dosljedno u čitanju, pisanju i pogreškama. Utrka ograničenja jedinstvenosti također zahtijeva eksplicitno prevođenje ako odgovara korisničkom konfliktu; prethodna provjera ne jamči uspjeh uz konkurenciju.
+[Spring-session adapter](../../../../../../frontend/src/app/auth/api/appAuth.api.springSession.ts) klasificira podatke za prijavu kao nevaljane samo kada je izvorni neuspjeli zahtjev `POST /auth/login` i dekodirani kod `AUTHENTICATION_FAILED`. Odgovor 401 CSRF preflighta nije neuspjeli login POST i ne smije postati poruka o nevaljanim podacima za prijavu. Istek sesije i obrada anonimne sesije zadržavaju zasebne odgovornosti.
 
-## Kvar, oporavak i kriteriji prihvata
+## Domenska proširenja ostaju namjerna
 
-Handler koji hvata sve i vraća 200 uništava razliku uspjeha i neuspjeha. Handler koji vraća svaku poruku iznimke stvara nekontroliran informacijski kanal. Zadržite uska poznata prevođenja, sigurno ponašanje neočekivanih pogrešaka i internu dijagnostiku povezanu correlation identifikatorom kad projekt ima tu mogućnost.
+Ugrađeni skup kodova ne definira kod zastarjele revizije ili domenskog konflikta. Budući uređivač mora zasebno definirati značenje statusa 409, sigurna polja, autorizaciju/skrivanje resursa i oporavak koji čuva nacrt, pa zajedno ažurirati backend izgradnju, frontend dekodiranje/prijevode i pokrivenost ugovora. Nemojte zaključiti domenski protokol iz generičkog fallbacka `REQUEST_REJECTED` niti dodavati nepregledana polja odgovora po endpointima.
 
-Budući kriteriji prihvata, ovdje samo dokumentirani:
+LMS ostaje usporedba sa starijom implementacijom: njegov stariji `ErrorResponse` sadrži timestamp/status/path i opcionalni prijevodni ključ. To pokazuje seam prevođenja, a ne uputu za kopiranje payloada ili prosljeđivanje proizvoljnih poruka iznimki. Ovaj predložak ne šalje `requestId` niti obećava mehanizam korelacijskog identifikatora. Takav mehanizam uvedite samo kroz zaseban odobreni dizajn.
 
-- Prazno korisničko ime odbija se prije autentikacije; pogrešni podaci daju kontrolirani odgovor.
-- Nedostajući CSRF zaustavlja promjenu i ne prikazuje se kao obmanjujuća pogreška polja.
-- Forma razlikuje 400, 401, 403 i konflikt revizije 409 te čuva nespremljeni rad.
-- Ne-ASCII lozinke provisioninga provjeravaju se u UTF-8 bajtovima i znakovima.
-- Neočekivana iznimka ne otkriva tajne, SQL ili stack trace.
-- Nepoznat strojni kod prelazi na siguran lokaliziran fallback umjesto rušenja prikaza pogreške.
+## Odgovornosti provjere
+
+Odaberite odobrenu pokrivenost na stvarnim HTTP i UI seamovima; ovaj članak sam ne pokreće provjere:
+
+- Provjerite da nevaljana login polja, nevaljan JSON, nedostajući/nevaljani CSRF, anonimni pristup i nevaljani podaci za prijavu vraćaju dokumentirani status/kod/niz.
+- Provjerite da ostali 4xx i 5xx odgovori čuvaju status i framework zaglavlja, a skrivaju detalje iznimki/unosa, uključujući servlet obradu pogrešaka.
+- Provjerite da frontend ograničenja, podudaranje statusa/koda, nepodržana polja/kodovi i nevaljani payloadi sigurno prelaze na fallback bez mijenjanja izvorne Axios pogreške.
+- Provjerite da odgovor 401 CSRF preflighta ne šalje login POST i ne prikazuje se kao nevaljani podaci za prijavu.
+- Provjerite lokalne prijevode, pomoćni tekst polja i sačuvane korisničke nacrte; provisioning ograničenja znakova/UTF-8 bajtova ostaju zaseban ugovor provisioninga računa.
 
 ## Točni izvori
 
-- `vireocode-web-app-starter@785de22420b7ec42c15373522b324f4319b4dfd8:backend/src/main/java/com/vireocode/backend/auth/AuthController.java` — validirani login record i session DTO.
-- `vireocode-web-app-starter@785de22420b7ec42c15373522b324f4319b4dfd8:backend/src/main/java/com/vireocode/backend/auth/AuthExceptionHandler.java` — generički 401 ograničen kontrolerom.
-- `vireocode-web-app-starter@785de22420b7ec42c15373522b324f4319b4dfd8:backend/src/main/java/com/vireocode/backend/auth/SecurityConfiguration.java` — filter odgovori 401 i 403.
+- `vireocode-web-app-starter@785de22420b7ec42c15373522b324f4319b4dfd8:backend/src/main/java/com/vireocode/backend/auth/AuthController.java` — polazni validirani login record i session DTO.
+- `vireocode-web-app-starter@785de22420b7ec42c15373522b324f4319b4dfd8:backend/src/main/java/com/vireocode/backend/auth/AuthExceptionHandler.java` — polazno prevođenje autentikacije ograničeno kontrolerom; trenutačna zajednička izgradnja povezana je ranije.
+- `vireocode-web-app-starter@785de22420b7ec42c15373522b324f4319b4dfd8:backend/src/main/java/com/vireocode/backend/auth/SecurityConfiguration.java` — polazno vlasništvo Security filtara; trenutačni zajednički writeri povezani su ranije.
 - `vireocode-web-app-starter@785de22420b7ec42c15373522b324f4319b4dfd8:backend/src/main/java/com/vireocode/backend/user/LocalUserProperties.java` — ograničenja provisioning polja.
-- `LMS/lms-back@6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee:src/main/java/hr/rgo/lms/core/RestResponseEntityExceptionHandler.java` — starija granica prevođenja pogrešaka.
-- `LMS/lms-back@6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee:src/main/java/hr/rgo/lms/core/ErrorResponse.java` — stariji oblik odgovora, nije API predloška.
+- `LMS/lms-back@6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee:src/main/java/hr/rgo/lms/core/RestResponseEntityExceptionHandler.java` — stariji seam prevođenja pogrešaka.
+- `LMS/lms-back@6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee:src/main/java/hr/rgo/lms/core/ErrorResponse.java` — stariji oblik odgovora, nije ugovor predloška.

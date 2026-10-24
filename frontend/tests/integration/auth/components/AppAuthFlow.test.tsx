@@ -42,6 +42,20 @@ function LocalizedThemeProvider({ children }: PropsWithChildren) {
   );
 }
 
+function LocaleSwitch() {
+  const { setLocale } = useAppLocalization();
+  return (
+    <>
+      <button onClick={() => setLocale("hr")} type="button">
+        Use Croatian
+      </button>
+      <button onClick={() => setLocale("en")} type="button">
+        Use English
+      </button>
+    </>
+  );
+}
+
 function ProtectedScreen() {
   return (
     <main>
@@ -77,11 +91,13 @@ function ProtectedChildScreen() {
 function renderAuthFlow({
   initialEntry = "/protected/child?view=private",
   loginAssistance,
+  localeSwitcher = false,
   sessionDelay,
   sessionResponse,
 }: Readonly<{
   initialEntry?: string;
   loginAssistance?: AppAuthLoginAssistance;
+  localeSwitcher?: boolean;
   sessionDelay?: Promise<void>;
   sessionResponse?: () => Response | Promise<Response>;
 }> = {}) {
@@ -148,6 +164,7 @@ function renderAuthFlow({
         <LocalizedThemeProvider>
           <QueryClientProvider client={queryClient}>
             <AppAuthProvider runtime={runtime}>
+              {localeSwitcher ? <LocaleSwitch /> : null}
               <RouterProvider router={router} />
             </AppAuthProvider>
           </QueryClientProvider>
@@ -335,6 +352,73 @@ describe("application authentication flow", () => {
 
     expect(await screen.findByText("Sign in failed. Try again.")).toBeVisible();
     expect(screen.queryByText("Invalid username or password.")).not.toBeInTheDocument();
+  });
+
+  it("keeps a rejected draft and translates allowlisted server field errors on locale changes", async () => {
+    const user = userEvent.setup();
+    renderAuthFlow({ localeSwitcher: true });
+    server.use(
+      http.post(`${apiBaseUrl}${appAuthSpringSessionEndpoints.login}`, () =>
+        HttpResponse.json(
+          {
+            code: "VALIDATION_FAILED",
+            message: "SECRET SQL and rejected password",
+            fieldErrors: [
+              { field: "username", code: "TOO_LONG" },
+              { field: "unknown", code: "REQUIRED" },
+              { field: "password", code: "UNTRUSTED_MESSAGE" },
+            ],
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    const username = await screen.findByRole("textbox", { name: /Username/ });
+    const password = screen.getByLabelText(/Password/);
+    const draft = "a".repeat(101);
+    await user.type(username, draft);
+    await user.type(password, "preserved-password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByText("Some fields need attention.")).toBeVisible();
+    expect(username).toHaveAccessibleDescription("This value is too long.");
+    expect(username).toHaveValue(draft);
+    expect(password).toHaveValue("preserved-password");
+    expect(screen.queryByText(/SECRET SQL/)).not.toBeInTheDocument();
+    expect(screen.queryByText("UNTRUSTED_MESSAGE")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Use Croatian" }));
+    expect(await screen.findByText("Potrebno je provjeriti neka polja.")).toBeVisible();
+    expect(username).toHaveAccessibleDescription("Ova je vrijednost preduga.");
+    expect(username).toHaveValue(draft);
+    await user.type(username, "b");
+    expect(screen.queryByText("Potrebno je provjeriti neka polja.")).not.toBeInTheDocument();
+    expect(username).not.toHaveAccessibleDescription("Ova je vrijednost preduga.");
+    await user.click(screen.getByRole("button", { name: "Use English" }));
+  });
+
+  it("presents a CSRF failure with local recovery text and retains login input", async () => {
+    const user = userEvent.setup();
+    renderAuthFlow();
+    server.use(
+      http.post(`${apiBaseUrl}${appAuthSpringSessionEndpoints.login}`, () =>
+        HttpResponse.json(
+          {
+            code: "CSRF_INVALID",
+            message: "private server prose",
+            fieldErrors: [],
+          },
+          { status: 403 },
+        ),
+      ),
+    );
+    const username = await screen.findByRole("textbox", { name: /Username/ });
+    await user.type(username, "demo");
+    await user.type(screen.getByLabelText(/Password/), "demo-password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByText("The security check failed. Try again.")).toBeVisible();
+    expect(username).toHaveValue("demo");
+    expect(screen.queryByText("private server prose")).not.toBeInTheDocument();
   });
 
   it("disables logout while pending and reports a logout failure", async () => {

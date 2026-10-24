@@ -1,14 +1,35 @@
 # Development guide
 
-Use this index before implementing a web-app change. It links focused patterns for the frontend, backend, quality and verification, CI, delivery, local development and AI-agent workflow. The same articles are available in the authenticated development-only `/dev-guide` UI.
+This is the central guide for repository workflows, practices and patterns: frontend, backend, quality and verification, CI, delivery, local development and AI-agent workflow. The same articles are available in the authenticated development-only `/dev-guide` UI.
 
-## Choose the smallest relevant pattern
+## Mandatory agent workflow
 
-1. Read the applicable `AGENTS.md` and the owner of the affected source.
-2. Find the category and topic below; read the pattern and its failure cases.
-3. Distinguish an **installed pattern** from a **reference recipe**. A recipe names seams to implement; its illustrative classes are not imports already provided by this template. Mixed articles identify both parts explicitly.
-4. Confirm examples against the current application source. Pinned peer snapshots explain provenance, while the current owner defines the contract for your change.
-5. Implement one observable outcome and collect the authorized acceptance evidence. Repository scripts define verification; explicit session constraints decide which commands may run. Publication, deployment and data changes require their own authorization.
+Every repository task starts with discovery, including analysis, reviews, documentation, backend and infrastructure work. Discover the whole guide through the live index; read all applicable articles and source examples in full before deciding how to implement the task. The index makes selective reading possible as the guide grows.
+
+1. Read the applicable `AGENTS.md` files and run the overview below. Review all category/topic and source-owner groups, including cross-cutting workflow and verification guidance.
+2. Search each affected concern using domain terms, operation names and likely source paths. Follow related articles and source references. A short result list or no exact keyword match does not establish that a pattern is missing: broaden the search and inspect the relevant owner groups.
+3. Read every selected article's contract, failure cases and examples; inspect the actual implementation and public interfaces it names. English and Croatian versions represent the same article; one complete language version is sufficient. Search excerpts and metadata help select reading; they do not replace it.
+4. Map the intended change to the documented patterns and current owners. Reuse their infrastructure, components, APIs and lifecycle conventions. Distinguish an **installed pattern** from a **reference recipe**: a recipe describes collaborators to implement, not APIs already installed here. Pinned peer snapshots explain provenance; inspect the current source before using their examples.
+5. If the required pattern is undocumented, documentation and code disagree, or you propose a different approach, stop that affected implementation and ask Bruno to approve the specific gap or departure. Explain the searched guidance, affected owners, alternatives, tradeoffs and recommendation. Continue that portion only after explicit approval; a current instruction already approving the same departure is sufficient. Keep unrelated authorized work moving. Editing the guide, an instruction or a check cannot grant the agent its own approval.
+6. Before editing, briefly identify the applicable guide paths and existing patterns being reused. Implement the approved outcome and run the owning repository checks. In the handoff, identify the reused patterns, any explicitly approved departure and actual verification evidence. Publication, deployment and data changes retain their own authorization boundaries.
+
+### Live inventory and full-text search
+
+Run from the workspace root with the repository's Node 24 launcher:
+
+```sh
+bash backend/scripts/with-local-node.sh frontend/scripts/development-guide-index.mjs
+bash backend/scripts/with-local-node.sh frontend/scripts/development-guide-index.mjs search session csrf
+bash backend/scripts/with-local-node.sh frontend/scripts/development-guide-index.mjs search forms --limit 10
+```
+
+With Node 24 already selected, `npm --prefix frontend run guide:index -- search session csrf` is equivalent. The overview lists the current categories, topics and source groups; search returns exact paths, line excerpts and available pattern status/source references. Results report their total and any truncation. Refine truncated searches before deciding which guidance applies.
+
+The index scans the working tree on every invocation, without a generated cache. Its corpus includes both `frontend/src/features/development-guide/**` and `frontend/src/pages/development-guide/**`, the articles under `frontend/docs/development-guide/**` and `frontend/docs/architecture/**`, and development-guide translations. Newly added source files remain discoverable even before catalog registration. Reading examples never executes their code.
+
+Rerun discovery after guide changes or when the task expands into another concern. If Node 24 is unavailable, use `rg --files` and `rg -n` over the same corpus for equivalent inventory and full-text discovery; report that fallback instead of skipping consultation.
+
+### Browser navigation
 
 Each topic has a browser index, article sidebar, local breadcrumbs and an article contents menu. English and Croatian content use the same stable paths. Code samples are inert documentation; reading a command does not run it. Handbook Markdown loads only for the selected article and language; indexes validate paired file keys without fetching bodies. Local failures offer a best-effort retry and page refresh if the browser retains a failed module request. Editing handbook Markdown in development reloads the page so native module caching cannot keep an old body.
 
@@ -205,6 +226,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 #### Cross-stack contracts
 
+- [API evolution and compatibility](en/backend/contracts/api-evolution-and-compatibility.md) · [Hrvatski](hr/backend/contracts/api-evolution-and-compatibility.md)
 - [Generate wire contracts without hiding compatibility decisions](en/backend/contracts/generated-wire-contracts-and-schema-compatibility.md) · [Hrvatski](hr/backend/contracts/generated-wire-contracts-and-schema-compatibility.md)
 - [Tolerate additive response fields without weakening write intent](en/backend/contracts/tolerant-readers-and-exact-write-intent.md) · [Hrvatski](hr/backend/contracts/tolerant-readers-and-exact-write-intent.md)
 - [Make coordinate order and geometry units explicit](en/backend/contracts/geospatial-units-and-coordinate-order.md) · [Hrvatski](hr/backend/contracts/geospatial-units-and-coordinate-order.md)
@@ -213,6 +235,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 #### Test design
 
+- [Architecture invariants and checks](en/quality/test-design/architecture-invariants-and-checks.md) · [Hrvatski](hr/quality/test-design/architecture-invariants-and-checks.md)
 - [Assert boundary outcomes](en/quality/test-design/assert-boundary-outcomes.md) · [Hrvatski](hr/quality/test-design/assert-boundary-outcomes.md)
 - [Deterministic fixtures and clock ownership](en/quality/test-design/deterministic-fixtures-and-clock-ownership.md) · [Hrvatski](hr/quality/test-design/deterministic-fixtures-and-clock-ownership.md)
 
@@ -299,6 +322,8 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 #### Template and package evolution
 
+- [Generate first, customize through the owning boundary](en/developer-workflow/template-evolution/generator-first-workflow.md) · [Hrvatski](hr/developer-workflow/template-evolution/generator-first-workflow.md)
+
 - [Identify the installed stack before applying a platform recipe](en/developer-workflow/template-evolution/identify-the-installed-stack-profile.md) · [Hrvatski](hr/developer-workflow/template-evolution/identify-the-installed-stack-profile.md)
 - [Keep application policy outside reusable library mechanics](en/developer-workflow/template-evolution/application-and-library-responsibility.md) · [Hrvatski](hr/developer-workflow/template-evolution/application-and-library-responsibility.md)
 - [Distinguish published dependencies from local candidate overrides](en/developer-workflow/template-evolution/published-artifacts-and-local-overrides.md) · [Hrvatski](hr/developer-workflow/template-evolution/published-artifacts-and-local-overrides.md)
@@ -337,6 +362,8 @@ The manifest generates indexes, routes, breadcrumbs, command-palette entries, si
 
 A useful article states its trigger, ownership and lifetime, actual contract, minimal example, failure/recovery decisions, acceptance evidence and exact `project@revision:relative/path` sources. Keep identifiers and examples neutral. Explain a source limitation beside the recipe that depends on it.
 
-Run `npm --prefix frontend run verify:dev-guide` to statically check paired content, labels, hierarchy, provenance and Markdown links. This is a content validator; it executes no code samples or tests. Select other authorized checks from the repository instructions and scripts.
+The agent index discovers files directly from the working tree; adding or moving guidance needs no separate index-generation step. Keep the existing UI catalogs, paired articles and source references current through the procedure above.
+
+Run `npm --prefix frontend run verify:dev-guide` to validate paired content, labels, hierarchy, provenance and Markdown links, and test the live index's discovery/search contract. It executes no guide examples. Select other authorized checks from the repository instructions and scripts.
 
 Source references name repositories and pinned revisions rather than machine-specific paths. Generated applications can use the guidance without possessing the peer workspaces. Operational runbooks remain authoritative for actual provisioning and deployments.

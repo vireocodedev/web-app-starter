@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance } from "axios";
 import { z } from "zod";
 
+import { decodeAppHttpError } from "@/app/data/http/appHttpError";
 import { AppInvalidCredentialsError, type AppAuthApi } from "./appAuth.api";
 import { appLoginCredentialsSchema, type AppLoginCredentials } from "../models/AppLoginCredentials";
 import { appAuthUserSchema } from "../models/AppAuthUser";
@@ -33,11 +34,12 @@ export interface SpringSessionJsonObject {
 /**
  * Converts application credentials into the concrete login request. Keep its
  * inverse below aligned when adapting JSON to form encoding or another wire
- * format for a Spring backend.
+ * format for a Spring backend. Project writable fields explicitly: structurally
+ * compatible callers can carry additional response-only properties.
  */
 export function serializeSpringSessionLogin(credentials: AppLoginCredentials) {
   return {
-    body: credentials,
+    body: { username: credentials.username, password: credentials.password },
     headers: { "Content-Type": "application/json" },
   } as const;
 }
@@ -74,7 +76,12 @@ function isAnonymousSessionResponse(error: unknown) {
 }
 
 function isInvalidCredentialsResponse(error: unknown) {
-  return axios.isAxiosError(error) && error.response?.status === 401;
+  return (
+    axios.isAxiosError(error) &&
+    error.config?.method?.toUpperCase() === "POST" &&
+    hasEndpoint(error.config.url, appAuthSpringSessionEndpoints.login) &&
+    decodeAppHttpError(error)?.code === "AUTHENTICATION_FAILED"
+  );
 }
 
 /** Uses the real HTTP contract in every mode; MSW replaces only the server. */

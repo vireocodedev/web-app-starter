@@ -142,7 +142,21 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Verify formatting, lint, architecture and all TypeScript projects
-        run: npm run format:check && npm run lint && npm run verify:architecture && npm run typecheck
+        run: npm run test:generators && npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        if: needs.changes.outputs.backend == 'true'
+        env:
+          RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Compile and exercise isolated generated frontend output
+        working-directory: .
+        run: npm run verify:generated -- --frontend
+      - name: Compile and exercise isolated generated backend output for shared changes
+        if: needs.changes.outputs.backend == 'true'
+        working-directory: .
+        run: npm run verify:generated -- --backend
 
   frontend-tests:
     name: Frontend tests (${{ matrix.shard }}/3)

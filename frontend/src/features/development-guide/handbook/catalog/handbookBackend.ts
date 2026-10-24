@@ -1527,6 +1527,40 @@ export const backendHandbookCatalog = {
       ],
     },
     {
+      id: "backend-contracts-api-evolution-and-compatibility",
+      topicId: "backend-contracts",
+      slug: "api-evolution-and-compatibility",
+      contentPath: "backend/contracts/api-evolution-and-compatibility",
+      titleKey: "handbook.articles.backend-contracts-api-evolution-and-compatibility.title",
+      descriptionKey: "handbook.articles.backend-contracts-api-evolution-and-compatibility.description",
+      implementation: "mixed",
+      size: "large",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+          path: "backend/src/main/java/com/vireocode/backend/auth/AuthController.java",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          revision: "ffa585acff758020fc7e82e501e35e50876b5316",
+          path: "frontend/tests/setup.ts",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+          path: "infrastructure/release/README.md",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-contracts-tolerant-readers-and-exact-write-intent",
+        "backend-contracts-generated-wire-contracts-and-schema-compatibility",
+        "backend-foundation-validation-and-error-contracts",
+        "backend-security-session-and-csrf-lifecycle",
+        "quality-frontend-http-contract-mocks-and-handler-lifetimes",
+      ],
+    },
+    {
       id: "backend-contracts-generated-wire-contracts-and-schema-compatibility",
       topicId: "backend-contracts",
       slug: "generated-wire-contracts-and-schema-compatibility",

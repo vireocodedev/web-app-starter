@@ -63,12 +63,12 @@ export const englishBackendHandbookTranslations = {
     "backend-foundation-http-service-persistence-boundaries": {
       title: "HTTP, application service and persistence boundaries",
       description:
-        "Separate transport DTOs, live authority, complete transactional actions and persistence, with a clearly marked revision-aware mutation recipe.",
+        "Define backend package and role ownership; enforce static dependencies, exact authentication lookups and the published shared-error Interface with ArchUnit.",
     },
     "backend-foundation-validation-and-error-contracts": {
       title: "Validation and public error contracts",
       description:
-        "Distinguish installed authentication responses from a deliberate domain-error protocol, safe validation detail and draft-preserving recovery.",
+        "Use the installed safe code/message/fieldErrors contract across MVC, authentication and servlet errors, with bounded frontend decoding and local translations; extend domain codes deliberately.",
     },
     "backend-security-session-and-csrf-lifecycle": {
       title: "Session authentication and CSRF are one lifecycle",
@@ -249,6 +249,11 @@ export const englishBackendHandbookTranslations = {
       title: "Keep calendar values distinct from event instants",
       description:
         "Preserve timezone-free calendar shapes, explicit offset instants and application-owned timezone/DST conversion without inferring business meaning from picker internals.",
+    },
+    "backend-contracts-api-evolution-and-compatibility": {
+      title: "API evolution and compatibility",
+      description:
+        "Classify API changes, preserve deliberate read/write contracts, review old/new combinations and use independent consumer fixtures with an approved expand/deploy/contract procedure.",
     },
     "backend-contracts-generated-wire-contracts-and-schema-compatibility": {
       title: "Generate wire contracts without hiding compatibility decisions",

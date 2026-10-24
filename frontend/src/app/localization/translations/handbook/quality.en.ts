@@ -26,6 +26,11 @@ export const englishQualityHandbookTranslations = {
     },
   },
   articles: {
+    "quality-test-design-architecture-invariants-and-checks": {
+      title: "Architecture invariants and checks",
+      description:
+        "Map installed frontend source guards and backend bytecode invariants to commands, implementations and proof fixtures while separating behavior checks and human review.",
+    },
     "quality-test-design-assert-boundary-outcomes": {
       title: "Assert boundary outcomes",
       description:

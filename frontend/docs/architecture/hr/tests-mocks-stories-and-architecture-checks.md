@@ -33,6 +33,10 @@ ručni popis u `docs/manual-accessibility-checklist.md`.
 
 ## Automatizirane provjere i prosudba pregleda
 
+Za cijelu mapu ugrađenih frontend/backend zaštita, provjera, vlasnika dokaza,
+naredbi i granica automatizacije koristite
+[Arhitekturne invarijante i provjere](/dev-guide/quality/test-design/architecture-invariants-and-checks).
+
 `npm run verify:architecture` mehanički provjerava dopuštene korijene, smještaj
 testova, uvoze preko vlasnika, javna sučelja, privatne kontekste, runtime hook
 wrappere, prijavljene ovisnosti značajki, Signal nazive i registracije, nazive
