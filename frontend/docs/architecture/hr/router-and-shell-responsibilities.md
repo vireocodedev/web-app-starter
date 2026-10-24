@@ -48,6 +48,16 @@ Pojedinačni primjeri ne zahtijevaju izmjene registra. Stvarne generirane kompon
 ostaju unutar svojih značajki; pregledi koriste lokalne podatke i postojeće
 providere. Uklanjanje datoteke pregleda uklanja registraciju pri sljedećem buildu.
 
+Generator navigacije stvara routerovu tvornicu pod
+`app/router/generated/<feature>--<name>.routes.tsx`. Njezin `createRoutes(mount)`
+vraća obične autentificirane zapise registra: odjeljke zaglavlja, ugniježđene
+rasporede, zadane podstranice i duboke stranice. Otkrivanje samo u razvoju
+postavlja te tvornice pod Generirane primjere, s odvojenim identifikatorima ruta
+i provjerenim putanjama. Registracija u proizvodu namjerno uvozi istu tvornicu
+uz zaseban mount; značajke i dalje primaju odredišta bočne navigacije kroz props
+i koriste `AppPageNavigation`. Generirani modul ne uvozi vlasnika otkrivanja
+pregleda, a produkcijska grana potpuno izostavlja automatske uvoze pregleda.
+
 Rute vodiča nasljeđuju `contentMaxWidth: "xl"`. Ljuska smješta lokalne mrvice i
 sadržaj u isti spremnik. Odlučuje najdublja izričito zadana širina; potomci bez
 vlastite postavke zadržavaju širinu pretka.
@@ -63,7 +73,9 @@ ali ne uvozi registar, stranice ni auth implementaciju.
 Roditeljska ruta uključuje drugi redak zaglavlja s `headerNavigation: true`.
 Usmjerivač izvodi kartice neposredne djece u
 `AppRouteHandle.sectionNavigation`; aktivni odjeljak ostaje označen i na
-dubljim rutama. Višak kartica na računalu ulazi u izbornik Više, dok aktivna
+dubljim rutama. Kada više ugniježđenih skupina ruta definira odjeljke zaglavlja,
+redak prikazuje najbližu podudarnu skupinu. Potomci bez vlastitih odjeljaka
+nasljeđuju odjeljke najbližeg pretka. Višak kartica na računalu ulazi u izbornik Više, dok aktivna
 ostaje vidljiva. Oznaka aktivne kartice prekriva donji rub zajedničke razdjelne
 crte i dvostruko je deblja. Na mobilnim uređajima drugi redak zadržava aktivni odjeljak vidljivim i prikazuje još jednu karticu na širim mobilnim prikazima. Zaseban gumb Više sekcija otvara donju ladicu sa svim neposrednim odjeljcima, pa za veće skupine ruta nije potrebno vodoravno pomicanje. Prvi redak nema gumb Više za brze radnje.
 Najdublja ruta može dati komponentu `HeaderContext` koja prima parametre

@@ -129,7 +129,7 @@ for (const generator of generators) {
       kind: generator.kind,
       name: "InventoryItem",
       feature: "Inventory",
-      fields: "title,notes?",
+      fields: generator.acceptsFields === false ? undefined : "title,notes?",
       migration: ["domain", "feature"].includes(generator.kind) && generator.target === "backend" ? "2" : undefined,
     };
     if (generator.target === "backend" && ["repository", "service", "controller"].includes(generator.kind)) {
@@ -149,9 +149,14 @@ for (const generator of generators) {
     assert.equal(new Set(first.files.map(file => file.path)).size, first.files.length);
     assert.ok(first.files.every(file => file.content.endsWith("\n")));
     if (generator.visual) {
-      const example = first.files.find(file => file.path.endsWith(".example.tsx"));
+      const example = first.files.find(file =>
+        file.path.endsWith(generator.kind === "navigation" ? ".routes.tsx" : ".example.tsx"),
+      );
       assert.ok(example);
-      assert.match(example.content, /export function Component/);
+      assert.match(
+        example.content,
+        generator.kind === "navigation" ? /export function createRoutes/ : /export function Component/,
+      );
       assert.match(example.content, /@\/features\/inventory|@\/pages\/inventory/);
       assert.ok(first.files.some(file => file.path.endsWith(`${first.context.translationId}.hr.ts`)));
     } else assert.ok(first.files.every(file => !file.path.endsWith(".example.tsx")));
@@ -189,6 +194,39 @@ test("backend scalars and request/response variations preserve validation/nullab
     domain.files.find(file => file.path.endsWith(".sql")).content,
     /amount INTEGER,\n    active BOOLEAN NOT NULL/,
   );
+});
+
+test("layout recipes preserve defaults and validate variants before mutation", async t => {
+  const { directory } = await fixture(t);
+  for (const kind of ["shell", "page"]) {
+    const base = { target: "frontend", kind, name: "WorkspaceLayout" };
+    assert.deepEqual(
+      (await createPlan(directory, base)).files,
+      (await createPlan(directory, { ...base, variant: "simple" })).files,
+    );
+  }
+  for (const [kind, variant] of [
+    ["shell", "workspace"],
+    ["page", "dashboard"],
+    ["page", "detail"],
+  ]) {
+    const options = { target: "frontend", kind, variant, name: "WorkspaceLayout" };
+    const plan = await createPlan(directory, options);
+    assert.deepEqual(plan, await createPlan(directory, options));
+    assert.ok(plan.files.some(file => file.path.endsWith(".example.tsx")));
+    assert.ok(plan.files.some(file => file.path.endsWith(".en.ts")));
+    await assert.rejects(createPlan(directory, { ...options, fields: "title" }), /composition props/);
+    assert.equal((await readdir(path.join(directory, translationDirectory))).length, 1);
+  }
+  for (const [kind, variant] of [
+    ["form", "workspace"],
+    ["shell", "detail"],
+    ["page", "workspace"],
+  ])
+    await assert.rejects(
+      createPlan(directory, { target: "frontend", kind, variant, name: "WorkspaceLayout" }),
+      /Unsupported --variant/,
+    );
 });
 
 test("CLI dry-run creates no files; help, discovery, failure and assessments work without a TTY", async t => {

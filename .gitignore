@@ -6,3 +6,4 @@
 !.env.example
 .npmrc
 /.template-initialization/
+/.generator-samples.lock

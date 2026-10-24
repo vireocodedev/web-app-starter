@@ -6,14 +6,23 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
-import { createPlan } from "./core.mjs";
+import { createIndexPlan, createPlan } from "./core.mjs";
 import { applyPlan } from "./filesystem.mjs";
+import { sampleInvocations, sampleReceipt } from "./samples.mjs";
 
 const source = fileURLToPath(new URL("../../", import.meta.url));
 const args = new Set(process.argv.slice(2));
 if ([...args].some(arg => !["--frontend", "--backend", "--browser", "--prepare-only"].includes(arg)))
   throw new Error("Use --frontend, --backend, --browser and/or --prepare-only.");
 const fixture = await mkdtemp(path.join(os.tmpdir(), "starter-generator-rehearsal-"));
+let samplePaths = new Set();
+try {
+  samplePaths = new Set(
+    JSON.parse(await readFile(path.join(source, sampleReceipt), "utf8")).files.map(file => file.path),
+  );
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
 const excluded = new Set([
   "node_modules",
   ".git",
@@ -44,7 +53,10 @@ for (const entry of [
 ]) {
   await cp(path.join(source, entry), path.join(fixture, entry), {
     recursive: true,
-    filter: file => !excluded.has(path.basename(file)) && !/^\.env(?:\.|$)/.test(path.basename(file)),
+    filter: file =>
+      !excluded.has(path.basename(file)) &&
+      !/^\.env(?:\.|$)/.test(path.basename(file)) &&
+      !samplePaths.has(path.relative(source, file)),
   });
 }
 // Each copy owns compiler/bundler caches; package bytes are reused read-only.
@@ -82,22 +94,9 @@ async function run(command, argv, cwd) {
 }
 
 const generated = [];
-for (const [kind, name] of [
-  ["component", "GeneratorCard"],
-  ["form", "GeneratorProfile"],
-  ["shell", "GeneratorDashboard"],
-  ["table", "GeneratorOrders"],
-  ["page", "GeneratorOverview"],
-  ["feature", "GeneratorWorkspace"],
-  ["api", "GeneratorProduct"],
-]) {
-  const plan = await createPlan(fixture, {
-    target: "frontend",
-    kind,
-    name,
-    feature: kind === "api" ? "GeneratorCatalog" : name,
-    fields: kind === "api" ? "title,quantity:integer?,active:boolean" : "title,notes?",
-  });
+await applyPlan(fixture, await createIndexPlan(fixture));
+for (const options of sampleInvocations()) {
+  const plan = await createPlan(fixture, options);
   await applyPlan(fixture, plan.files);
   generated.push({ generator: plan.generator, files: plan.files.map(file => file.path) });
 }
@@ -156,7 +155,7 @@ if (!args.has("--prepare-only")) {
     await run(npm, ["run", "build", "--", "--manifest"], cwd);
     const manifest = await readFile(path.join(cwd, "dist/.vite/manifest.json"), "utf8");
     if (
-      /\.example\.tsx|generatedExamples|generator-profile|generator-orders|generator-workspace|GeneratorProfile|GeneratorWorkspace/.test(
+      /\.example\.tsx|generatedExamples|generator-profile|generator-orders|generator-workspace|GeneratorProfile|GeneratorWorkspace|generator-navigation|GeneratorNavigation|generator-page-dashboard|generator-page-detail/.test(
         manifest,
       )
     )

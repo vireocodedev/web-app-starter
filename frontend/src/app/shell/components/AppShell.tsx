@@ -205,7 +205,8 @@ function AppShellContent({
   const mobileSurface = deepestRouteHandle?.mobileSurface ?? "inset";
   const mainPaddingX = !desktop && mobileSurface === "flush" ? 0 : { sm: 3, xs: 2 };
   const showBottomNavigation = !desktop && mobileBottomNavigation !== false && bottomNavigationItems.length > 0;
-  const groupHandle = matches
+  const groupHandle = [...matches]
+    .reverse()
     .map(match => match.handle as AppRouteHandle | undefined)
     .find(handle => handle?.sectionNavigation?.length);
   const sectionNavigation = groupHandle?.sectionNavigation;

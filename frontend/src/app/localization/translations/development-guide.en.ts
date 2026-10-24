@@ -11,6 +11,7 @@ export const englishDevelopmentGuideTranslations = {
       table: "Tables",
       page: "Pages",
       feature: "Features",
+      navigation: "Navigation workspaces",
     },
     default: "Default",
     populated: "Populated",

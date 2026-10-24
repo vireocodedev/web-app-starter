@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 test("discovers every generated visual example through normal guide navigation", async ({ page }) => {
   await page.goto("/dev-guide/frontend/generated");
   const navigation = page.getByRole("navigation", { name: "Generated examples" });
-  await expect(navigation.getByRole("link")).toHaveCount(6);
+  await expect(navigation.getByRole("link")).toHaveCount(10);
   for (const label of [
     "Generator Card",
     "Generator Profile",
@@ -21,11 +21,78 @@ test("discovers every generated visual example through normal guide navigation",
     "Generator Orders",
     "Generator Overview",
     "Generator Workspace",
+    "Generator Shell Workspace",
+    "Generator Page Dashboard",
+    "Generator Page Detail",
+    "Generator Navigation",
   ])
     await expect(navigation.getByRole("link", { name: label })).toBeVisible();
   await navigation.getByRole("link", { name: "Generator Card" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("Count: 1");
+});
+
+test("rich dashboard and detail pages expose data states and retry without stale content", async ({ page }) => {
+  for (const [name, content] of [
+    ["dashboard", "Recent activity"],
+    ["detail", "Record summary"],
+  ]) {
+    await page.goto(`/dev-guide/frontend/generated/page/generator-page-${name}--generator-page-${name}`);
+    await expect(page.getByRole("heading", { name: content, exact: true })).toBeVisible();
+    await page.getByRole("combobox", { name: "State", exact: true }).click();
+    await page.getByRole("option", { name: "Error", exact: true }).click();
+    await expect(page.getByText("This workspace could not be loaded.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: content, exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect(page.getByRole("heading", { name: content, exact: true })).toBeVisible();
+    await page.setViewportSize({ width: 375, height: 800 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+});
+
+test("navigation scaffold uses real header sections, nested sidebar state and browser history", async ({ page }) => {
+  const base = "/dev-guide/frontend/generated/navigation/generator-navigation--generator-navigation";
+  await page.goto(base);
+  await expect(page).toHaveURL(new RegExp(`${base}/overview$`));
+  const sections = page.locator("[data-rgo-section-navigation]");
+  await sections.getByRole("link", { name: "Workspace", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`${base}/workspace/records$`));
+  await expect(page.locator("[data-rgo-page-navigation]")).toBeVisible();
+  await page.getByRole("link", { name: "Open record details", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`${base}/workspace/records/details$`));
+  await expect(sections.getByRole("link", { name: "Workspace", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(
+    page.locator("[data-rgo-page-navigation]").getByRole("link", { name: "Records", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`${base}/workspace/records$`));
+  await page.goForward();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Details", exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.getByRole("button", { name: "Choose page: Records", exact: true }).click();
+  const pages = page.getByRole("dialog", { name: "Workspace pages", exact: true });
+  await pages.getByRole("link", { name: "Activity", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`${base}/workspace/activity$`));
+  await expect(pages).toHaveCount(0);
+  await page.getByRole("button", { name: "More sections", exact: true }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`${base}/settings$`));
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("workspace shell uses the installed narrow page menu and restores keyboard focus", async ({ page }) => {
+  await page.goto("/dev-guide/frontend/generated/shell/generator-shell-workspace--generator-shell-workspace");
+  await page.getByRole("button", { name: "Review workspace", exact: true }).click();
+  await expect(page.getByText("Workspace reviewed.", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 800 });
+  const selector = page.getByRole("button", { name: "Choose page: Overview", exact: true });
+  await selector.click();
+  await expect(page.getByRole("dialog", { name: "Workspace pages", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Workspace pages", exact: true })).toHaveCount(0);
+  await expect(selector).toBeFocused();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 test("generated form validates, awaits acknowledgement, reports errors and disables fields", async ({ page }) => {

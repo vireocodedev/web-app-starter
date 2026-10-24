@@ -47,13 +47,62 @@ export const generators = [
     purpose,
     visual: true,
     output,
-    inputs: { required: ["name"], optional: ["feature", "fields (text only)"] },
+    inputs: {
+      required: ["name"],
+      optional: ["feature", "fields (text only)", ...(["shell", "page"].includes(kind) ? ["variant"] : [])],
+    },
+    ...(kind === "shell"
+      ? {
+          variants: [
+            { value: "simple", label: "Shell", purpose, acceptsFields: true },
+            {
+              value: "workspace",
+              label: "Workspace shell",
+              purpose: "Responsive workspace with sticky page navigation, mobile page selector and composition slots",
+              acceptsFields: false,
+            },
+          ],
+        }
+      : kind === "page"
+        ? {
+            variants: [
+              { value: "simple", label: "Page", purpose, acceptsFields: true },
+              {
+                value: "dashboard",
+                label: "Dashboard page",
+                purpose: "Data-driven metrics, activity and secondary content with loading, empty and recovery states",
+                acceptsFields: false,
+              },
+              {
+                value: "detail",
+                label: "Detail page",
+                purpose: "Record summary, metadata, status, actions and complementary content with recovery states",
+                acceptsFields: false,
+              },
+            ],
+          }
+        : {}),
     guide: frontendGuide,
     reference:
       "client-discovery-app@9fcbf2f17a09329333c3d53c7a3750c48fc1db52:frontend/src/features/sales/components/LeadForm.tsx",
     limitations:
       "New feature owner only; visual preview auto-registered; no production route or persistence policy inferred.",
   })),
+  {
+    id: "frontend/navigation",
+    target: "frontend",
+    kind: "navigation",
+    purpose: "Deep routed workspace with real header tabs, page sidebar, breadcrumbs and nested records",
+    visual: true,
+    acceptsFields: false,
+    output: "public workspace UI, thin pages, app/router/generated/<feature>--<name>.routes.tsx",
+    inputs: { required: ["name"], optional: ["feature"] },
+    guide: "frontend/docs/architecture/en/router-and-shell-responsibilities.md",
+    reference:
+      "vireocode-web-app-starter@a8d8632086a26c33d6a2d8f15f9aa8446daef95a:frontend/src/app/router/handbookRoutes.tsx",
+    limitations:
+      "Editable authenticated route scaffold. Preview mounts in development only; product mount and drawer registration remain explicit. No backend, permissions or application preferences inferred.",
+  },
   ...[
     ["dto", "Validated request or typed response record", "<Name>Request.java or <Name>Response.java", []],
     [

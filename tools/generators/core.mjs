@@ -108,9 +108,7 @@ async function translationIndexPlan(root, translationId, format) {
   return { ...next, previous };
 }
 
-/** Rebuild only reproducible locale imports after deliberately removing locale pairs. */
-export async function createIndexPlan(root) {
-  const format = await formatter(root);
+async function canonicalTranslationIndex(root, format) {
   const relative = `${translationDirectory}/index.ts`;
   const indexPath = await safePath(root, relative);
   const previous = await readFile(indexPath, "utf8");
@@ -120,6 +118,18 @@ export async function createIndexPlan(root) {
     throw new Error(
       "Managed index drift: preserve customizations and restore the canonical translation index before maintenance.",
     );
+  return { relative, indexPath, previous };
+}
+
+/** Validate mechanical bytes even when a receipt-owned removal interrupted a locale pair. */
+export async function verifyTranslationIndex(root) {
+  await canonicalTranslationIndex(root, await formatter(root));
+}
+
+/** Rebuild only reproducible locale imports after deliberately removing locale pairs. */
+export async function createIndexPlan(root) {
+  const format = await formatter(root);
+  const { relative, indexPath, previous } = await canonicalTranslationIndex(root, format);
   const names = await readdir(path.dirname(indexPath));
   const ids = names.filter(name => name.endsWith(".en.ts")).map(name => name.slice(0, -6));
   if (
@@ -137,15 +147,21 @@ export async function createPlan(root, options) {
   const name = naming(options.name),
     feature = naming(options.feature ?? options.name);
   const fields = parseFields(options.fields);
+  const variant = options.variant ?? generator.variants?.[0].value ?? "request";
+  const allowedVariants =
+    generator.variants?.map(item => item.value) ?? (generator.id === "backend/dto" ? ["request", "response"] : []);
+  if (options.variant !== undefined && !allowedVariants.includes(variant))
+    throw new Error(`Unsupported --variant for ${generator.id}. Supported: ${allowedVariants.join(", ") || "none"}.`);
+  const recipe = generator.variants?.find(item => item.value === variant) ?? generator;
+  if (recipe.acceptsFields === false && options.fields !== undefined)
+    throw new Error(`${generator.id}${options.variant ? ` (${variant})` : ""} uses composition props, not --fields.`);
   const context = {
     name,
     feature,
     fields,
     translationId: `${feature.camel}_${options.kind}_${name.camel}`,
-    variant: options.variant ?? "request",
+    variant,
   };
-  if (!["request", "response"].includes(context.variant) || (options.variant && generator.id !== "backend/dto"))
-    throw new Error("--variant request|response is supported only for backend dto.");
   let files;
   if (generator.target === "frontend") {
     if (generator.visual && fields.some(field => field.type !== "string"))

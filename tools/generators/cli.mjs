@@ -25,7 +25,8 @@ Options:
   --feature Name        New capability owner (defaults to Name)
   --fields a,b:string?  1–20 lowerCamelCase fields, ? means optional
                         Backend: string, integer, boolean. Frontend: string.
-  --variant request|response   Backend DTO only (default request)
+  --variant Name        Shell: simple|workspace; Page: simple|dashboard|detail
+                        Backend DTO: request|response (default request)
   --migration N         Explicit new Flyway version (backend domain/feature)
   --dry-run             Validate and print the complete plan without writing
   --json                Machine-readable catalog, plan, result or error
@@ -72,12 +73,16 @@ async function interactive() {
   });
   try {
     const name = (await prompt.question("Name: ")).trim();
-    const fields = (await prompt.question("Fields (default name; e.g. title,description?): ")).trim() || "name";
+    const fields =
+      generator.acceptsFields === false
+        ? undefined
+        : (await prompt.question("Fields (default name; e.g. title,description?): ")).trim() || "name";
     const options = {
       target: generator.target,
       kind: generator.kind,
       name,
       fields,
+      ...(generator.variant ? { variant: generator.variant } : {}),
     };
     if (generator.inputs.required.includes("migration"))
       options.migration = (await prompt.question("New Flyway integer version: ")).trim();
@@ -153,6 +158,7 @@ export async function main(argv = process.argv.slice(2)) {
   const result = {
     schemaVersion: 1,
     generator: plan.generator,
+    ...(findGenerator(invocation.target, invocation.kind).variants ? { variant: plan.context.variant } : {}),
     dryRun: Boolean(options["dry-run"]),
     files: plan.files.map(file => ({
       path: file.path,

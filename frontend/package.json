@@ -19,6 +19,7 @@
   },
   "scripts": {
     "generate": "node ../tools/generators/cli.mjs",
+    "generate:samples": "node ../tools/generators/samples.mjs",
     "test:generators": "node --test --test-concurrency=1 ../tools/generators/tests/*.test.mjs",
     "dev": "vite",
     "preview": "vite preview",

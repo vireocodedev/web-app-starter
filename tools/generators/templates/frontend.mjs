@@ -2,6 +2,8 @@
  * Application-owned presentation templates. Inputs have already been validated
  * by the CLI; this module renders files without reading or writing the workspace.
  */
+import { renderAdvancedFrontend } from "./frontend-advanced.mjs";
+
 const quote = value => JSON.stringify(value);
 const role = (name, suffix) => (name.endsWith(suffix) ? name : `${name}${suffix}`);
 const file = (path, content) => ({ path, content: `${content.trim()}\n` });
@@ -534,6 +536,8 @@ export function Component() {
 
 /** Render a complete plan; callers own collision checks, formatting and writes. */
 export function renderFrontend(kind, context) {
+  const advanced = renderAdvancedFrontend(kind, context);
+  if (advanced) return advanced;
   const { owner } = paths(context);
   const name = context.name.pascal;
   const files = [...localeFiles(kind, context)];

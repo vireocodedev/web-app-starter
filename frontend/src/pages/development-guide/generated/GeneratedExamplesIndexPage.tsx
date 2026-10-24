@@ -5,7 +5,7 @@ import { AppCategoryList } from "@/app/shell/components/AppCategoryList";
 
 export type GeneratedExampleEntry = Readonly<{
   id: string;
-  kind: "component" | "form" | "shell" | "table" | "page" | "feature";
+  kind: "component" | "form" | "shell" | "table" | "page" | "feature" | "navigation";
   label: string;
   to: string;
 }>;
@@ -13,7 +13,7 @@ export type GeneratedExampleEntry = Readonly<{
 /** The router supplies destinations; this adapter only presents the existing guide navigation. */
 export function GeneratedExamplesIndexPage({ entries }: Readonly<{ entries: readonly GeneratedExampleEntry[] }>) {
   const { t } = useDevelopmentGuideTranslation();
-  const kinds = ["component", "form", "shell", "table", "page", "feature"] as const;
+  const kinds = ["component", "form", "shell", "table", "page", "feature", "navigation"] as const;
   return (
     <AppCategoryList
       title={t("generatedExamples.title")}

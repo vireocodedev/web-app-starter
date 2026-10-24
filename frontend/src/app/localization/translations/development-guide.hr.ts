@@ -12,6 +12,7 @@ export const croatianDevelopmentGuideTranslations = {
       table: "Tablice",
       page: "Stranice",
       feature: "Značajke",
+      navigation: "Navigacijski radni prostori",
     },
     default: "Zadano",
     populated: "Popunjeno",

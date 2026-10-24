@@ -2,6 +2,24 @@
 
 The implementation targets the current working tree based on `a7defb9e45dc418036d4d62af742fadf42ffde05`, preserving pre-existing changes. The [catalog and policy](generators.md) and [source analysis](generators-analysis.md) describe its contract and provenance.
 
+## Rich frontend recipe iteration
+
+The follow-up based on `a8d8632086a26c33d6a2d8f15f9aa8446daef95a` adds workspace-shell, dashboard-page and detail-page variants plus a navigation generator. The frontend catalog now has eight kinds and eleven recipes; ten produce interactive Dev Guide destinations. The sample refresh command emits 73 application-owned sample files and keeps its cleanup receipt uncommitted.
+
+This iteration reuses `AppPageNavigation`, normal route factories and `AppRouteDefinition` metadata. The shell now takes header sections from the nearest matched nonempty group, with a rendered regression covering nested precedence and ancestor fallback. Sample refresh tests cover deterministic replacement, edited/tracked file refusal, unsafe paths, symlinks, unknown files, dry runs and interrupted locale-pair cleanup.
+
+| Check                                               | Actual result                                                                                                                                                  | Evidence log under `/tmp/`                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Generator, recipe/menu and sample-lifecycle tests   | 48 passed                                                                                                                                                      | `repo-verification-1000-_d7nfjp1/output.log` |
+| Isolated emitted frontend                           | Formatting, lint, architecture, TypeScript, 41 tests in 7 files, production build and preview-isolation assertions passed                                      | `repo-verification-1000-6kk89ogy/output.log` |
+| Generated browser scenarios after integration fixes | All 9 passed in one run, including discovery, rich page states, real nested navigation/history, mobile menus, keyboard focus, forms, tables and locale changes | `repo-verification-1000-74vs_beh/output.log` |
+
+Full main-workspace `npm --prefix frontend run verify` also passed in 123.540 seconds: 48 generator tests, formatting/lint/architecture, five guide-index tests, 159 paired articles and 43 topics, TypeScript, **655 frontend tests in 97 files**, production build and Storybook build. That check included all freshly generated samples and the nested-header regression. Evidence: `/tmp/repo-verification-1000-80p08w6d/output.log`. The nine-case browser run took 24.715 seconds.
+
+The isolated aggregate initially exposed type mismatches and the outer header-group selection defect. Its later static/unit/build phases passed, but its original browser phase failed; the all-nine passing browser evidence above comes from the corrected run. A responsive-width assertion now waits for the existing asynchronous breakpoint update using the repository's `expect.poll` pattern. The retained generated fixture is `/tmp/starter-generator-rehearsal-s7lcHS`.
+
+Backend templates were unchanged in this follow-up, so Java checks were not repeated. The initial fullstack evidence below remains a separate historical record.
+
 ## Reproduce
 
 ```sh

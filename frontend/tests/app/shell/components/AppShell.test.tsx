@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { createMemoryRouter, Outlet, RouterProvider, useSearchParams } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import type { AppNavigationLink } from "@/app/router/types/AppRoute";
 import { AppShell } from "@/app/shell/components/AppShell";
 import { AppThemeProvider } from "@/app/theme/components/AppThemeProvider";
 import { noFixedAppSettings } from "@/app/bootstrap/config/fixedSettings";
@@ -151,6 +152,65 @@ describe("AppShell", () => {
     expect(await screen.findByText("Choose a category")).toBeVisible();
     expect(header().getByRole("heading", { level: 1 })).toHaveTextContent(/^Development guide$/);
     expect(header().queryByRole("link", { name: "Development guide" })).toBeNull();
+  });
+
+  it("uses the nearest nonempty section group for deep pages and inherits the outer group elsewhere", async () => {
+    const outerSections: readonly AppNavigationLink[] = [
+      { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.home", to: "/guide/overview" },
+    ];
+    const workspaceSections: readonly AppNavigationLink[] = [
+      { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.settings", to: "/guide/workspace/settings" },
+    ];
+    const router = createMemoryRouter(
+      [
+        {
+          element: <AppShell navigationItems={[]} />,
+          path: "/guide",
+          handle: { sectionNavigation: outerSections },
+          children: [
+            { element: <p>Guide overview</p>, path: "overview" },
+            {
+              Component: Outlet,
+              path: "workspace",
+              handle: { sectionNavigation: workspaceSections },
+              children: [
+                {
+                  Component: Outlet,
+                  path: "settings",
+                  children: [
+                    {
+                      element: <p>Workspace setting details</p>,
+                      path: "details",
+                      handle: { sectionNavigation: [] },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      { initialEntries: ["/guide/workspace/settings/details"] },
+    );
+    render(
+      <AppThemeProvider>
+        <RouterProvider router={router} />
+      </AppThemeProvider>,
+    );
+    const sections = () => within(screen.getByRole("navigation", { name: "navigation.sections" }));
+    expect(screen.getByText("Workspace setting details")).toBeVisible();
+    expect(sections().getByRole("link", { name: "navigation.settings" })).toHaveAttribute(
+      "href",
+      "/guide/workspace/settings",
+    );
+    expect(sections().getByRole("link", { name: "navigation.settings" })).toHaveAttribute("aria-current", "page");
+    expect(sections().queryByRole("link", { name: "navigation.home" })).toBeNull();
+
+    await act(() => router.navigate("/guide/overview"));
+    expect(screen.getByText("Guide overview")).toBeVisible();
+    expect(sections().getByRole("link", { name: "navigation.home" })).toHaveAttribute("href", "/guide/overview");
+    expect(sections().getByRole("link", { name: "navigation.home" })).toHaveAttribute("aria-current", "page");
+    expect(sections().queryByRole("link", { name: "navigation.settings" })).toBeNull();
   });
 
   it("retains the deepest dynamic header context after category breadcrumbs", () => {

@@ -49,6 +49,16 @@ Generation requires no per-example registry edits. Actual generated components
 retain ordinary feature ownership; previews use local fixtures and the existing
 providers. Removing a preview file removes its registration on the next build.
 
+The navigation generator emits a router-owned factory under
+`app/router/generated/<feature>--<name>.routes.tsx`. Its `createRoutes(mount)`
+returns ordinary authenticated registry records: header sections, nested layouts,
+default children and deep pages. Development-only eager discovery mounts these
+factories beneath Generated examples, with isolated route IDs and validated paths.
+Product registration imports the same factory deliberately with a separate mount;
+features still receive sidebar destinations through props and reuse
+`AppPageNavigation`. The generated module never imports the preview discovery
+owner, and the production branch excludes automatic preview imports entirely.
+
 Guide routes inherit `contentMaxWidth: "xl"`. The shell places local breadcrumbs
 and routed content inside the same container. The deepest explicitly supplied
 width wins; descendants without an override retain their ancestor's width.
@@ -65,7 +75,9 @@ authentication implementation.
 A parent route opts into the second header row with
 `headerNavigation: true`. The router derives immediate-child tabs in
 `AppRouteHandle.sectionNavigation`; the active child remains selected on
-deeper descendants. The desktop row puts overflowing sections in a More menu
+deeper descendants. When nested route groups both declare header sections, the
+nearest matched group supplies the row; descendants without their own sections
+inherit the nearest ancestor's sections. The desktop row puts overflowing sections in a More menu
 while keeping the active section visible. The active indicator overlays the bottom edge of
 the shared divider and is twice its thickness. On mobile, the row keeps the active section visible and shows up to one more tab on wider mobile rows. A separate More sections button opens a bottom sheet containing every immediate section, so a growing route group does not require horizontal scrolling. The first row omits the More quick-action button. A deepest matched route may provide `HeaderContext`, a component that
 receives route params and extends the first-row identity with dynamic content.

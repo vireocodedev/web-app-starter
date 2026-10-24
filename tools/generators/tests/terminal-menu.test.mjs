@@ -74,7 +74,19 @@ test("groups display human-readable generator names in a predictable order", () 
   );
   assert.deepEqual(
     menuItems(generators, "frontend").map(item => item.label),
-    ["Component", "Form", "Shell", "Table", "Page", "Feature", "API client"],
+    [
+      "Component",
+      "Form",
+      "Shell",
+      "Workspace shell",
+      "Deep navigation",
+      "Table",
+      "Page",
+      "Dashboard page",
+      "Detail page",
+      "Feature",
+      "API client",
+    ],
   );
   const view = menuPresentation(
     generators,
@@ -85,8 +97,8 @@ test("groups display human-readable generator names in a predictable order", () 
   assert.match(view.text, /\x1b\[46m/);
   const text = stripVTControlCharacters(view.text);
   assert.match(text, /Frontend/);
-  assert.match(text, /7 generators/);
-  assert.match(text, /6 generators/);
+  assert.match(text, /11 recipes/);
+  assert.match(text, /6 recipes/);
   assert.doesNotMatch(text, /frontend\/component/);
 });
 
@@ -148,6 +160,17 @@ test("Home/End and Page Up/Down navigate a scrollable generator list", async () 
   await press(io, "\x1b[F", "API client");
   await press(io, "\x1b[H\x1b[6~\x1b[5~\x1b[B\r");
   assert.equal((await selection).id, "frontend/form");
+  assertRestored(io);
+});
+
+test("advanced recipes are selectable with their variant and supported inputs", async () => {
+  const { io, selection } = await start();
+  await press(io, "\r", "Frontend / Select generator");
+  await press(io, "\x1b[B\x1b[B\x1b[B\r");
+  const recipe = await selection;
+  assert.equal(recipe.id, "frontend/shell");
+  assert.equal(recipe.variant, "workspace");
+  assert.equal(recipe.acceptsFields, false);
   assertRestored(io);
 });
 

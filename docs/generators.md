@@ -22,6 +22,49 @@ The [Inquirer terminal engine](https://github.com/SBoudrias/Inquirer.js/tree/mai
 
 Names accept PascalCase, lowerCamelCase, acronym words, and separated words. Output consistently uses PascalCase types/components, lowerCamelCase members, kebab-case feature directories and lowercase Java package segments. Paths, reserved identifiers and case aliases are rejected. `--feature Inventory` chooses the capability owner; its default is the supplied name. Fields use `--fields title,notes:string?,quantity:integer,active:boolean`; `?` means optional. Defaults: one required `name` field, maximum text length 120. Visual generators support bounded text fields. Backend and API generators also support signed int32 and boolean values. Identity is server-owned and is never a caller field.
 
+## Rich layout recipes
+
+The keyboard menu includes each recipe below. Existing `shell` and `page` invocations retain their simple output; `--variant simple` selects it explicitly.
+
+```sh
+npm run generate -- frontend shell Operations --variant workspace
+npm run generate -- frontend page Overview --variant dashboard
+npm run generate -- frontend page Record --variant detail
+npm run generate -- frontend navigation Workspace
+```
+
+| Recipe          | Public composition surface                                                               | What its preview demonstrates                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Workspace shell | Title, summary, actions, sidebar links, content and footer                               | Sticky left navigation and a mobile page selector using the installed `AppPageNavigation`           |
+| Dashboard page  | Caller-supplied metrics, activity, actions, main and secondary content                   | Responsive metric cards, activity, loading, empty, error and retry states                           |
+| Detail page     | Title, summary, metadata, status, actions, main and aside content                        | Record summary, complementary context, loading, empty, error and retry states                       |
+| Deep navigation | Public workspace UI, thin page adapters and a router-owned `createRoutes(mount)` factory | Actual header tabs, left page navigation, nested Records/Details, default redirects and breadcrumbs |
+
+These recipes use composition props rather than `--fields`. Callers own data, number/date formatting, actions, authorization and persistence. Layouts reuse application theme tokens and adapt to their available container width.
+
+The navigation factory at `frontend/src/app/router/generated/<feature>--<name>.routes.tsx` owns the route inventory. It creates Overview, Workspace and Settings header sections; Workspace contains Records and Activity, and Records contains an index and deeper Details page. It emits no second application header or router. In development the existing preview discovery mounts it automatically. For product integration, import its `createRoutes` into `routeRegistry.tsx`, spread a mount such as `createRoutes({ idPrefix: "operations", path: "operations" })`, and deliberately add its destination to application navigation. The factory creates authenticated routes; business-specific authority still needs its own implementation. Use a distinct mount prefix for each registration.
+
+## Refresh the sample gallery after each iteration
+
+After every generator change, remove the previous sample set and regenerate **every frontend generator and variant** through the repeatable command:
+
+```sh
+npm run generate:samples -- --dry-run
+npm run generate:samples
+```
+
+Open `/dev-guide/frontend/generated` in the running development app. The sample inputs reuse the output rehearsal: `title,notes?` for text examples, and scalar title/quantity/active values for the API. Additional catalog variants receive their own names and owners automatically. API output stays nonvisual under `frontend/src/features/generator-catalog/`.
+
+The command records sample paths and hashes in the untracked `.generator-samples.json`. It removes only unchanged files owned by that receipt, rejects edited or tracked samples, refuses symlinks and unexpected files inside sample owners, then rebuilds the mechanical locale index. It never recursively deletes an arbitrary feature directory or grants ordinary generators overwrite rights. A partial refresh retains a receipt for the files already generated; address the reported conflict before retrying. Previously created manual experiments without a receipt require deliberate removal or stashing first.
+
+If a process is killed, inspect running generators before removing its stale `.generator-samples.lock` and retrying. Receipt-owned missing files and interrupted locale-pair removal can then be reconciled; unrelated locale damage still refuses before cleanup.
+
+Leave the samples and receipt uncommitted for inspection. When finished, stash both tracked locale-index changes and untracked output:
+
+```sh
+git stash push -u -m "frontend generator samples"
+```
+
 ## Catalog
 
 Every visual command creates a new `src/features/<feature>/index.ts` public interface, paired typed English/Croatian resources and a working preview page. Existing owners require deliberate adaptation; the CLI refuses to replace their interface. `--help` after a target and kind and `--list --json` expose metadata. All paths below are relative to `frontend/` or `backend/`.
@@ -30,11 +73,12 @@ Every visual command creates a new `src/features/<feature>/index.ts` public inte
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `frontend component UserCard`            | Feature component and public props/index                                                                                | name; optional feature; callback, disabled and content props                                                                  | [Ownership](../frontend/docs/architecture/en/source-map-and-ownership.md), Home page; CDA feature UI composition                                                       |
 | `frontend form UserProfile`              | `components/UserProfileForm.tsx`, `models/UserProfile.ts`, schema tests                                                 | name; optional feature, text fields; explicit create/update, awaited submit, disabled/error lifecycle                         | [Entity forms](../frontend/docs/development-guide/en/frontend/forms/entity-modes-and-validation-policy.md), ContactForm; CDA LeadForm                                  |
-| `frontend shell Dashboard`               | `components/DashboardShell.tsx`, public props/index                                                                     | name; optional feature; responsive header/sidebar/content slots                                                               | [Page composition](../frontend/docs/architecture/en/route-entries-and-feature-composition.md), AppShell ownership; CDA LifecyclePageLayout                             |
+| `frontend shell Dashboard`               | `components/DashboardShell.tsx`, public props/index                                                                     | name; optional feature; simple slots or `--variant workspace` with installed page navigation                                  | [Page composition](../frontend/docs/architecture/en/route-entries-and-feature-composition.md), AppShell ownership; CDA LifecyclePageLayout                             |
 | `frontend table Orders`                  | `components/OrdersTable.tsx`, `models/Orders.ts`, public index                                                          | name; optional feature, text fields; bounded complete client collection, loading/error/empty, sort/pagination                 | [Collection ownership](../frontend/docs/development-guide/en/frontend/collections/client-and-server-table-ownership.md), ContactsTable; CDA SalesTable                 |
-| `frontend page Orders`                   | Feature content and thin `src/pages/<feature>/OrdersPage.tsx`                                                           | name; optional feature; public props forwarded                                                                                | [Route entries](../frontend/docs/architecture/en/route-entries-and-feature-composition.md), ContactsPage; CDA thin lifecycle pages                                     |
+| `frontend page Orders`                   | Feature content and thin `src/pages/<feature>/OrdersPage.tsx`                                                           | name; optional feature; simple content, `--variant dashboard` or `--variant detail`                                           | [Route entries](../frontend/docs/architecture/en/route-entries-and-feature-composition.md), ContactsPage; CDA thin lifecycle pages                                     |
 | `frontend feature Orders`                | Form + table + model + composing feature + public interface + schema tests                                              | name; optional feature, text fields; caller supplies rows and acknowledged submit callback                                    | [Feature anatomy](../frontend/docs/architecture/en/feature-anatomy-filenames-and-public-interfaces.md), Contacts; CDA form/table composition                           |
 | `frontend api Product --feature Catalog` | `models/Product.ts`, `api/product.api.ts`, `.api.http.ts`, `.querykeys.ts`, `.query.ts`, public index, HTTP/query tests | name; optional feature, scalar fields; UUID detail GET, explicit cache scope, abort signal, nullable optional producer fields | [API/Query boundaries](../frontend/docs/architecture/en/apis-models-queries-and-mutations.md), Contact API/query; CDA paidDiscovery HTTP adapter                       |
+| `frontend navigation Workspace`          | Public workspace UI, thin pages, `app/router/generated/<feature>--<name>.routes.tsx`                                    | name; optional feature; real header sections, left page navigation and nested records                                         | [Route and shell ownership](../frontend/docs/architecture/en/router-and-shell-responsibilities.md), installed route hierarchy and page navigation                      |
 | `backend dto CreateProduct`              | `<Name>Request.java` and validation tests                                                                               | name; optional feature, scalar fields, `--variant request` (default) or `response`                                            | [Validation](../frontend/docs/development-guide/en/backend/foundation/validation-and-error-contracts.md), AuthController records; CDA explicit input checks            |
 | `backend domain Product --migration 3`   | JPA entity + matching `V3__create_<table>.sql`                                                                          | name and explicit migration version; optional feature, scalar fields                                                          | [Flyway](../frontend/docs/development-guide/en/backend/data/flyway-and-schema-ownership.md), starter/CDA AppUser                                                       |
 | `backend repository Product`             | `<Name>Repository.java`                                                                                                 | existing same-owner entity; name and optional feature                                                                         | Starter/CDA AppUserRepository; [service/persistence boundaries](../frontend/docs/development-guide/en/backend/foundation/http-service-persistence-boundaries.md)       |
@@ -54,7 +98,7 @@ Open `/dev-guide/frontend/generated` in authenticated local mock mode. The exist
 /dev-guide/frontend/generated/form/user-profile--user-profile
 ```
 
-Examples are thin pages at `src/pages/development-guide/generated/<kind>/<feature>--<name>.example.tsx`, exporting `Component`. They import the actual generated public component. Page previews render the public content used by the generated thin page adapter, preserving the rule that only the router imports page entries; the adapter itself is covered by compilation. The router's DEV-only file discovery derives route records and list entries; it uses the normal route hierarchy and authentication gate. No per-invocation route edits or separate explorer are involved.
+Examples are thin pages at `src/pages/development-guide/generated/<kind>/<feature>--<name>.example.tsx`, exporting `Component`. They import the actual generated public component. Page previews render the public content used by the generated thin page adapter, preserving the rule that only the router imports page entries; the adapter itself is covered by compilation. Navigation previews instead discover the router-owned `.routes.tsx` factories and mount their real hierarchy beneath the Generated examples index. The router's DEV-only file discovery derives route records and list entries; it uses the normal route hierarchy and authentication gate. No per-invocation registry edits or separate explorer are involved.
 
 Forms demonstrate empty/populated values, submit-first validation, disabled controls, held pending submission, success and simulated rejection. Tables offer client filtering, sorting/pagination and populated/empty/loading/error states. Layouts toggle the sidebar slot and adapt to narrow viewports. Components and pages exercise their callback; feature examples add rows through a local callback. The existing application supplies theme, localization and router providers. These examples perform no HTTP writes or production persistence. API tests use an in-process Axios adapter; backend tests use disposable Testcontainers PostgreSQL.
 

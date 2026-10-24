@@ -155,6 +155,17 @@ only: numeric empty/null/zero and date/instant semantics need their own design.
 
 ## Development Guide integration and existing coverage
 
+The richer layout recipes extend the installed composition surfaces at baseline
+`a8d8632086a26c33d6a2d8f15f9aa8446daef95a`: `frontend/src/app/shell/components/AppPageNavigation.tsx`
+owns the responsive page rail and mobile sheet; `frontend/src/app/router/routeHierarchy.tsx`
+owns nested routes and header sections; `frontend/src/app/router/handbookRoutes.tsx`
+establishes router-owned factories. The workspace shell composes that existing
+page navigation. Dashboard/detail pages expose data and content props rather than
+choosing transport or write policy. The navigation composite emits a factory
+under `app/router/generated/`; the existing preview owner mounts it in development
+and product composition can mount it explicitly elsewhere. No consumer-specific
+navigation framework or duplicate application header is copied.
+
 The installed guide already contains interactive Forms, Overlays, Tables and
 collections, Server data, Application state, Routing and URLs, Localization and
 Feedback examples, plus complete Contacts dashboard/CRUD pages. Its router,
@@ -162,8 +173,9 @@ hierarchy, navigation metadata, authenticated providers and development-only
 branch are the integration owners. No separate preview application is required.
 
 Generated visual output adds a real component-consuming example beneath
-`frontend/src/pages/development-guide/generated/<kind>/`. Router-owned discovery
-uses those filenames to supply ordinary route definitions and an index under
+`frontend/src/pages/development-guide/generated/<kind>/`; the navigation composite
+instead emits a router-owned factory so its preview exercises the actual nested
+route hierarchy. Router-owned discovery uses these files to supply ordinary route definitions and an index under
 `/dev-guide/frontend/generated`. Example removal is reflected by discovery; no
 independent registration manifest or manual per-example route edit is needed.
 Generated demonstration writes are in-memory callbacks, not production requests.

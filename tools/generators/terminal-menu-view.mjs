@@ -8,6 +8,7 @@ const labels = {
   page: "Page",
   feature: "Feature",
   api: "API client",
+  navigation: "Deep navigation",
   dto: "DTO",
   domain: "Domain",
   repository: "Repository",
@@ -15,7 +16,7 @@ const labels = {
   controller: "Controller",
 };
 const order = {
-  frontend: ["component", "form", "shell", "table", "page", "feature", "api"],
+  frontend: ["component", "form", "shell", "navigation", "table", "page", "feature", "api"],
   backend: ["dto", "domain", "repository", "service", "controller", "feature"],
 };
 const groups = {
@@ -30,6 +31,7 @@ const groups = {
 };
 
 export function generatorLabel(generator) {
+  if (generator.recipeLabel) return generator.recipeLabel;
   const kind = generator.kind ?? generator.id.split("/")[1];
   return labels[kind] ?? kind;
 }
@@ -38,8 +40,10 @@ export function menuItems(generators, group) {
   const target = generator => generator.target ?? generator.id.split("/")[0];
   if (!group)
     return Object.entries(groups).flatMap(([value, details]) => {
-      const count = generators.filter(generator => target(generator) === value).length;
-      return count ? [{ value, ...details, badge: `${count} generators` }] : [];
+      const count = generators
+        .filter(generator => target(generator) === value)
+        .reduce((total, generator) => total + (generator.variants?.length ?? 1), 0);
+      return count ? [{ value, ...details, badge: `${count} recipes` }] : [];
     });
   return generators
     .filter(generator => target(generator) === group)
@@ -50,12 +54,19 @@ export function menuItems(generators, group) {
       };
       return rank(a) - rank(b);
     })
-    .map(generator => ({
-      value: generator,
-      label: generatorLabel(generator),
-      description: generator.purpose,
-      badge: generator.visual ? "UI" : "Code",
-    }));
+    .flatMap(generator =>
+      (generator.variants ?? [null]).map(variant => {
+        const value = variant
+          ? { ...generator, variant: variant.value, recipeLabel: variant.label, acceptsFields: variant.acceptsFields }
+          : generator;
+        return {
+          value,
+          label: generatorLabel(value),
+          description: variant?.purpose ?? generator.purpose,
+          badge: generator.visual ? "UI" : "Code",
+        };
+      }),
+    );
 }
 
 export function menuViewport({ columns, rows }) {
