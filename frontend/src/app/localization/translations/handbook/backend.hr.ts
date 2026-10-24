@@ -34,6 +34,11 @@ export const croatianBackendHandbookTranslations = {
       title: "Vanjske integracije",
       description: "Odvojite identitet ulaza, opaženo stanje, neizvjesnost pružatelja, usklađivanje i ograničeni rad.",
     },
+    "backend-files": {
+      title: "Privatne datoteke",
+      description:
+        "Ograničite bajtove uploada i zajedničke kvote, odvojite projekcije metapodataka i autorizirajte svako privatno preuzimanje.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -165,6 +170,41 @@ export const croatianBackendHandbookTranslations = {
       title: "Podproces tretirajte kao ograničen integracijski adapter",
       description:
         "Prilagodite tipizirani legacy protokol uz nove rokove, cancellation, bounded output, eksplicitan kvar i sigurno čišćenje vlastitog procesa.",
+    },
+    "backend-security-live-authority-and-session-claims": {
+      title: "Provjerite žive ovlasti umjesto zastarjelih session tvrdnji",
+      description:
+        "Razlikujte session identitet predloška i žive account, role, membership i resource politike zaštićenih radnji.",
+    },
+    "backend-security-api-key-selectors-and-one-time-secrets": {
+      title: "API ključevi: javni selektor i jednokratna tajna",
+      description:
+        "Odvojite javni lookup i hashiranu bearer tajnu uz jednokratnu objavu, lifecycle, machine ovlasti i rotaciju.",
+    },
+    "backend-security-remembered-credentials-and-fixed-expiry": {
+      title: "Zapamćena prijava ima vlastiti istek i vezu s računom",
+      description:
+        "Obnovite identitet cookie tajnom i stored digest/fingerprintom uz fixed-expiry konkurenciju, bez obnove operativnog bindinga.",
+    },
+    "backend-files-bounded-uploads-and-shared-quotas": {
+      title: "Ograničite stvarne upload bajtove pod zajedničkim quota lockom",
+      description:
+        "Provedite transport/domain/database granice, serializirajte count/byte kvotu i provjerite sadržaj umjesto metadata povjerenja.",
+    },
+    "backend-files-private-downloads-and-metadata-projections": {
+      title: "Odvojite privatno preuzimanje i metadata projekcije",
+      description:
+        "Izostavite blobove iz lista/kvota, autorizirajte scoped download i attachment transport bez izmišljenog scan/streaminga.",
+    },
+    "backend-data-exact-decimals-and-rounding-policy": {
+      title: "Odvojite točne decimale, zaokruživanje i prikaz",
+      description:
+        "Sačuvajte bounded decimalne stringove i BigDecimal uz eksplicitne sign/unit/precision i rounding mode/fazu, odvojeno od prikaza.",
+    },
+    "backend-data-digests-and-reviewed-artifact-versions": {
+      title: "Vežite pregled i export uz točnu zadržanu verziju artefakta",
+      description:
+        "Zadržite pregledane bajtove, reviziju i input digeste te razlikujte povijesni export, current evidence, kanonizaciju i ovlasti.",
     },
   },
 } satisfies StringLeaves<typeof englishBackendHandbookTranslations>;

@@ -31,6 +31,11 @@ export const englishBackendHandbookTranslations = {
       title: "External integrations",
       description: "Separate ingress identity, observed state, provider uncertainty, reconciliation, and bounded work.",
     },
+    "backend-files": {
+      title: "Private files",
+      description:
+        "Bound uploaded bytes and shared quotas, separate metadata projections, and authorize each private download.",
+    },
   },
   articles: {
     "backend-foundation-runtime-and-configuration": {
@@ -162,6 +167,41 @@ export const englishBackendHandbookTranslations = {
       title: "Treat a subprocess as a bounded integration adapter",
       description:
         "Adapt a typed legacy process protocol while adding missing deadlines, cancellation, bounded output, explicit failure outcomes and guaranteed owned-process cleanup.",
+    },
+    "backend-security-live-authority-and-session-claims": {
+      title: "Resolve live authority instead of trusting stale session claims",
+      description:
+        "Distinguish installed session identity checks from current account, role, membership and operational binding policies required by each protected action.",
+    },
+    "backend-security-api-key-selectors-and-one-time-secrets": {
+      title: "API keys: public selector and one-time secret",
+      description:
+        "Separate public credential lookup from hashed high-entropy bearer verification, with one-time disclosure, current lifecycle, machine authority and deliberate rotation.",
+    },
+    "backend-security-remembered-credentials-and-fixed-expiry": {
+      title: "Remembered credentials have their own expiry and account binding",
+      description:
+        "Restore account identity through a high-entropy cookie and stored digest/fingerprint, with fixed-expiry concurrency tradeoffs and no implicit operational binding.",
+    },
+    "backend-files-bounded-uploads-and-shared-quotas": {
+      title: "Bound actual upload bytes under a shared quota lock",
+      description:
+        "Enforce transport, domain and database limits while serializing count/byte quota and checking actual content rather than trusting upload metadata.",
+    },
+    "backend-files-private-downloads-and-metadata-projections": {
+      title: "Separate private file downloads from metadata projections",
+      description:
+        "Keep blobs out of lists and quotas, authorize parent/child-scoped download and use deliberate attachment headers without claiming unimplemented scanning or streaming.",
+    },
+    "backend-data-exact-decimals-and-rounding-policy": {
+      title: "Keep exact decimals separate from rounding and display policy",
+      description:
+        "Preserve bounded decimal strings and BigDecimal arithmetic while making sign, unit, precision and reviewed rounding stage/mode explicit and separate from display.",
+    },
+    "backend-data-digests-and-reviewed-artifact-versions": {
+      title: "Bind review and export to exact retained artifact versions",
+      description:
+        "Retain reviewed bytes, revision and generating-input digests, distinguishing historical export from current execution evidence and hashing from canonicalization or authority.",
     },
   },
 } as const;

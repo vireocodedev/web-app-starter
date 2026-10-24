@@ -50,6 +50,13 @@ export const backendHandbookCatalog = {
       titleKey: "handbook.topics.backend-integrations.title",
       descriptionKey: "handbook.topics.backend-integrations.description",
     },
+    {
+      id: "backend-files",
+      categoryId: "backend",
+      slug: "files",
+      titleKey: "handbook.topics.backend-files.title",
+      descriptionKey: "handbook.topics.backend-files.description",
+    },
   ],
   articles: [
     {
@@ -984,6 +991,255 @@ export const backendHandbookCatalog = {
       relatedArticleIds: [
         "backend-integrations-transport-and-domain-boundaries",
         "ci-verification-phase-deadlines-and-process-cleanup",
+      ],
+    },
+    {
+      id: "backend-security-live-authority-and-session-claims",
+      topicId: "backend-security",
+      slug: "live-authority-and-session-claims",
+      contentPath: "backend/security/live-authority-and-session-claims",
+      titleKey: "handbook.articles.backend-security-live-authority-and-session-claims.title",
+      descriptionKey: "handbook.articles.backend-security-live-authority-and-session-claims.description",
+      implementation: "mixed",
+      size: "medium",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          path: "backend/src/main/java/com/vireocode/backend/auth/AuthController.java",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+        },
+        {
+          project: "vireocode-web-app-starter",
+          path: "backend/src/main/java/com/vireocode/backend/auth/SecurityConfiguration.java",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DiscoveryService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/pilot/PilotUserAccess.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-security-session-and-csrf-lifecycle",
+        "backend-security-resource-scope-and-composite-keys",
+        "frontend-access-revocation-and-private-cache",
+      ],
+    },
+    {
+      id: "backend-security-api-key-selectors-and-one-time-secrets",
+      topicId: "backend-security",
+      slug: "api-key-selectors-and-one-time-secrets",
+      contentPath: "backend/security/api-key-selectors-and-one-time-secrets",
+      titleKey: "handbook.articles.backend-security-api-key-selectors-and-one-time-secrets.title",
+      descriptionKey: "handbook.articles.backend-security-api-key-selectors-and-one-time-secrets.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/partner_api_key/PartnerApiKeyService.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/partner_api_key/PartnerApiKey.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/partner_api_key/PartnerApiKeyDTO.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/partner_api_key/IssuedPartnerApiKeyDTO.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/partner_api_key/PartnerApiKeyAuthenticationFilter.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+        {
+          project: "LMS/lms-back",
+          path: "src/main/java/hr/rgo/lms/app/partner_api_key/PartnerApiKeyController.java",
+          revision: "6daf0c4f8a02ef7d35a8a1f5129ac0b2d75782ee",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-security-live-authority-and-session-claims",
+        "backend-application-services-transactional-commands",
+      ],
+    },
+    {
+      id: "backend-security-remembered-credentials-and-fixed-expiry",
+      topicId: "backend-security",
+      slug: "remembered-credentials-and-fixed-expiry",
+      contentPath: "backend/security/remembered-credentials-and-fixed-expiry",
+      titleKey: "handbook.articles.backend-security-remembered-credentials-and-fixed-expiry.title",
+      descriptionKey: "handbook.articles.backend-security-remembered-credentials-and-fixed-expiry.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/pilot/PilotRememberService.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/pilot/PilotRememberToken.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+        {
+          project: "FRED/FRED-back",
+          path: "src/main/java/hr/rgo/fred/mqtt/pilot/PilotUserAccess.java",
+          revision: "0fc326394fbc785cf50d23155506b444feb92725",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-security-live-authority-and-session-claims",
+        "backend-security-session-and-csrf-lifecycle",
+      ],
+    },
+    {
+      id: "backend-files-bounded-uploads-and-shared-quotas",
+      topicId: "backend-files",
+      slug: "bounded-uploads-and-shared-quotas",
+      contentPath: "backend/files/bounded-uploads-and-shared-quotas",
+      titleKey: "handbook.articles.backend-files-bounded-uploads-and-shared-quotas.title",
+      descriptionKey: "handbook.articles.backend-files-bounded-uploads-and-shared-quotas.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesController.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFileLimits.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/resources/application.yaml",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/resources/db/migration/V5__project_files.sql",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-files-private-downloads-and-metadata-projections",
+        "backend-data-revision-conflicts-and-shared-locks",
+      ],
+    },
+    {
+      id: "backend-files-private-downloads-and-metadata-projections",
+      topicId: "backend-files",
+      slug: "private-downloads-and-metadata-projections",
+      contentPath: "backend/files/private-downloads-and-metadata-projections",
+      titleKey: "handbook.articles.backend-files-private-downloads-and-metadata-projections.title",
+      descriptionKey: "handbook.articles.backend-files-private-downloads-and-metadata-projections.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectFilesController.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/resources/db/migration/V5__project_files.sql",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-security-resource-scope-and-composite-keys",
+        "backend-queries-visibility-before-search-and-facets",
+      ],
+    },
+    {
+      id: "backend-data-exact-decimals-and-rounding-policy",
+      topicId: "backend-data",
+      slug: "exact-decimals-and-rounding-policy",
+      contentPath: "backend/data/exact-decimals-and-rounding-policy",
+      titleKey: "handbook.articles.backend-data-exact-decimals-and-rounding-policy.title",
+      descriptionKey: "handbook.articles.backend-data-exact-decimals-and-rounding-policy.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BillingData.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-foundation-validation-and-error-contracts",
+        "backend-foundation-patch-tristate-and-write-dtos",
+      ],
+    },
+    {
+      id: "backend-data-digests-and-reviewed-artifact-versions",
+      topicId: "backend-data",
+      slug: "digests-and-reviewed-artifact-versions",
+      contentPath: "backend/data/digests-and-reviewed-artifact-versions",
+      titleKey: "handbook.articles.backend-data-digests-and-reviewed-artifact-versions.title",
+      descriptionKey: "handbook.articles.backend-data-digests-and-reviewed-artifact-versions.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectPreparationService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ProjectPreparationModel.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DiscoveryService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/resources/db/migration/V10__specification_development.sql",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/DeliveryJson.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "frontend-editing-pinned-values-and-revisions",
+        "frontend-task-interfaces-readable-review-and-exact-decisions",
+        "backend-queries-signed-cursors-and-scope",
       ],
     },
   ],

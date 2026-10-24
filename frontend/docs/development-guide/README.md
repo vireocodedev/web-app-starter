@@ -99,6 +99,9 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Session authentication and CSRF are one lifecycle](en/backend/security/session-and-csrf-lifecycle.md) · [Hrvatski](hr/backend/security/session-and-csrf-lifecycle.md)
 - [Local seeding and one-time account provisioning](en/backend/security/account-provisioning.md) · [Hrvatski](hr/backend/security/account-provisioning.md)
 - [Enforce resource scope in authority, queries and keys](en/backend/security/resource-scope-and-composite-keys.md) · [Hrvatski](hr/backend/security/resource-scope-and-composite-keys.md)
+- [Resolve live authority instead of trusting stale session claims](en/backend/security/live-authority-and-session-claims.md) · [Hrvatski](hr/backend/security/live-authority-and-session-claims.md)
+- [API keys: public selector and one-time secret](en/backend/security/api-key-selectors-and-one-time-secrets.md) · [Hrvatski](hr/backend/security/api-key-selectors-and-one-time-secrets.md)
+- [Remembered credentials have their own expiry and account binding](en/backend/security/remembered-credentials-and-fixed-expiry.md) · [Hrvatski](hr/backend/security/remembered-credentials-and-fixed-expiry.md)
 
 #### Application services
 
@@ -111,6 +114,8 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Revision conflicts and shared invariant locks](en/backend/data/revision-conflicts-and-shared-locks.md) · [Hrvatski](hr/backend/data/revision-conflicts-and-shared-locks.md)
 - [Stable lock order and retries in a fresh transaction](en/backend/data/lock-order-and-fresh-transaction-retries.md) · [Hrvatski](hr/backend/data/lock-order-and-fresh-transaction-retries.md)
 - [Audit fields, events and immutable versions answer different questions](en/backend/data/audit-fields-events-and-versions.md) · [Hrvatski](hr/backend/data/audit-fields-events-and-versions.md)
+- [Keep exact decimals separate from rounding and display policy](en/backend/data/exact-decimals-and-rounding-policy.md) · [Hrvatski](hr/backend/data/exact-decimals-and-rounding-policy.md)
+- [Bind review and export to exact retained artifact versions](en/backend/data/digests-and-reviewed-artifact-versions.md) · [Hrvatski](hr/backend/data/digests-and-reviewed-artifact-versions.md)
 
 #### Queries and read models
 
@@ -130,6 +135,11 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Claim, call outside the transaction, then reconcile](en/backend/integrations/claim-call-reconcile.md) · [Hrvatski](hr/backend/integrations/claim-call-reconcile.md)
 - [Keep scheduled work bounded and ownership explicit](en/backend/integrations/bounded-scheduled-work.md) · [Hrvatski](hr/backend/integrations/bounded-scheduled-work.md)
 - [Treat a subprocess as a bounded integration adapter](en/backend/integrations/process-adapter-boundaries.md) · [Hrvatski](hr/backend/integrations/process-adapter-boundaries.md)
+
+#### Private files
+
+- [Bound actual upload bytes under a shared quota lock](en/backend/files/bounded-uploads-and-shared-quotas.md) · [Hrvatski](hr/backend/files/bounded-uploads-and-shared-quotas.md)
+- [Separate private file downloads from metadata projections](en/backend/files/private-downloads-and-metadata-projections.md) · [Hrvatski](hr/backend/files/private-downloads-and-metadata-projections.md)
 
 ### Continuous integration
 
