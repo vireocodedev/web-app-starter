@@ -337,5 +337,40 @@ export const croatianBackendHandbookTranslations = {
       description:
         "Koristi placeholders, strict bytes i plain-text artefakt bez pretvaranja regexa ili finalnog limita u univerzalnu zaštitu.",
     },
+    "backend-files-bounded-csv-interchange-contracts": {
+      title: "Tretirajte CSV kao ograničen jezik za razmjenu",
+      description:
+        "Definirajte točan UTF-8, navodnike, zaglavlje i granice bez miješanja razmjene sa spreadsheet sigurnošću ili autentičnim podrijetlom.",
+    },
+    "backend-integrations-parsed-imports-and-qualified-observations": {
+      title: "Odvojite parsirani uvoz od kvalificiranog opažanja",
+      description:
+        "Zadržite originalne bajtove i parser digest te prije važnih učinaka izričito kvalificirajte podrijetlo i sukobe.",
+    },
+    "backend-data-conservation-across-allocations-and-reversals": {
+      title: "Čuvajte kapacitet kroz raspodjele i kompenzacijske događaje",
+      description:
+        "Zbrojite kapacitet izvora, cilja i para kroz cijelu naredbu, zadržite kompenzacije i izolaciju u command owneru.",
+    },
+    "backend-application-services-reservations-under-uncertain-outcomes": {
+      title: "Zadržite rezervaciju dok je vanjski ishod neizvjestan",
+      description:
+        "Odvojite rezervaciju, potvrđenu potrošnju i dokazanu ograničenu restoraciju; istek ili izgubljen odgovor ne dokazuju neizvršenje.",
+    },
+    "backend-contracts-geospatial-units-and-coordinate-order": {
+      title: "Izričito odredite redoslijed koordinata i jedinice geometrije",
+      description:
+        "Imenujte longitude/latitude, CRS i jedinice te odvojite source provjere od nedostajućih finite, range i topology jamstava.",
+    },
+    "backend-files-complete-multipart-export-artifacts": {
+      title: "Objavite višedijelni izvoz tek kada su sve komponente dovršene",
+      description:
+        "Dovršite writer, zahtijevajte svaki sidecar, ograničite arhiv i posjedujte cleanup prije objave potpunog artefakta.",
+    },
+    "backend-integrations-time-series-alignment-and-resampling": {
+      title: "Poravnajte vremenske nizove po timestampu prije resamplinga",
+      description:
+        "Normalizirajte vektore, jedinice i zone prije mergea; razlikujte carry-forward od interpolacije i odredite ograničeno pravilo po mjeri.",
+    },
   },
 } satisfies StringLeaves<typeof englishBackendHandbookTranslations>;

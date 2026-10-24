@@ -335,5 +335,40 @@ export const englishBackendHandbookTranslations = {
       description:
         "Use explicit placeholders, strict template bytes and retained plain-text artifacts without mistaking tag regexes or post-render limits for general safety.",
     },
+    "backend-files-bounded-csv-interchange-contracts": {
+      title: "Treat CSV as a bounded interchange language",
+      description:
+        "Define exact UTF-8, quoting, header, row and field limits without confusing software interchange with spreadsheet safety or authenticated provenance.",
+    },
+    "backend-integrations-parsed-imports-and-qualified-observations": {
+      title: "Keep parsed imports separate from qualified observations",
+      description:
+        "Retain original bytes and parser digests, then bind explicit current provenance qualification before consequential effects or conflict reconciliation.",
+    },
+    "backend-data-conservation-across-allocations-and-reversals": {
+      title: "Preserve capacity across allocations and compensating events",
+      description:
+        "Aggregate source, target and pair capacity across the whole command, preserve releases and reversals as evidence and keep isolation at the command owner.",
+    },
+    "backend-application-services-reservations-under-uncertain-outcomes": {
+      title: "Keep reservations while an external outcome is uncertain",
+      description:
+        "Separate reservation, confirmed consumption and bounded evidence-backed restoration; expiry or a lost response never proves non-execution.",
+    },
+    "backend-contracts-geospatial-units-and-coordinate-order": {
+      title: "Make coordinate order and geometry units explicit",
+      description:
+        "Name longitude/latitude order, CRS and physical units, while distinguishing source variant validation from missing finite, range and topology guarantees.",
+    },
+    "backend-files-complete-multipart-export-artifacts": {
+      title: "Publish a multipart export only when every component is complete",
+      description:
+        "Finish and release format writers, require every sidecar, bound the archive and own cleanup on every failure before advertising a complete artifact.",
+    },
+    "backend-integrations-time-series-alignment-and-resampling": {
+      title: "Align time series by timestamps before resampling",
+      description:
+        "Normalize parallel vectors, units and zones before merging; distinguish carry-forward from interpolation and choose bounded measure-specific resampling.",
+    },
   },
 } as const;

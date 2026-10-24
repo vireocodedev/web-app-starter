@@ -143,6 +143,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Cross-owner acknowledgments](en/backend/application-services/cross-owner-acknowledgments.md) · [Hrvatski](hr/backend/application-services/cross-owner-acknowledgments.md)
 - [Resumable batches and item receipts](en/backend/application-services/resumable-batches-and-item-receipts.md) · [Hrvatski](hr/backend/application-services/resumable-batches-and-item-receipts.md)
 - [Receive requests before qualified decisions](en/backend/application-services/receive-requests-before-qualified-decisions.md) · [Hrvatski](hr/backend/application-services/receive-requests-before-qualified-decisions.md)
+- [Keep reservations while an external outcome is uncertain](en/backend/application-services/reservations-under-uncertain-outcomes.md) · [Hrvatski](hr/backend/application-services/reservations-under-uncertain-outcomes.md)
 
 #### Data and schema
 
@@ -154,6 +155,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Bind review and export to exact retained artifact versions](en/backend/data/digests-and-reviewed-artifact-versions.md) · [Hrvatski](hr/backend/data/digests-and-reviewed-artifact-versions.md)
 - [Namespaced deterministic identities](en/backend/data/namespaced-deterministic-identities.md) · [Hrvatski](hr/backend/data/namespaced-deterministic-identities.md)
 - [Replacement lineage and cycle rejection](en/backend/data/replacement-lineage-and-cycle-rejection.md) · [Hrvatski](hr/backend/data/replacement-lineage-and-cycle-rejection.md)
+- [Preserve capacity across allocations and compensating events](en/backend/data/conservation-across-allocations-and-reversals.md) · [Hrvatski](hr/backend/data/conservation-across-allocations-and-reversals.md)
 
 #### Queries and read models
 
@@ -175,11 +177,15 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Treat a subprocess as a bounded integration adapter](en/backend/integrations/process-adapter-boundaries.md) · [Hrvatski](hr/backend/integrations/process-adapter-boundaries.md)
 - [Preserve the approved destination and revalidate the recipient before use](en/backend/integrations/captured-destinations-and-recipient-revalidation.md) · [Hrvatski](hr/backend/integrations/captured-destinations-and-recipient-revalidation.md)
 - [Render a small allowlisted plain-text language, not arbitrary templates](en/backend/integrations/restricted-message-template-rendering.md) · [Hrvatski](hr/backend/integrations/restricted-message-template-rendering.md)
+- [Keep parsed imports separate from qualified observations](en/backend/integrations/parsed-imports-and-qualified-observations.md) · [Hrvatski](hr/backend/integrations/parsed-imports-and-qualified-observations.md)
+- [Align time series by timestamps before resampling](en/backend/integrations/time-series-alignment-and-resampling.md) · [Hrvatski](hr/backend/integrations/time-series-alignment-and-resampling.md)
 
 #### Private files
 
 - [Bound actual upload bytes under a shared quota lock](en/backend/files/bounded-uploads-and-shared-quotas.md) · [Hrvatski](hr/backend/files/bounded-uploads-and-shared-quotas.md)
 - [Separate private file downloads from metadata projections](en/backend/files/private-downloads-and-metadata-projections.md) · [Hrvatski](hr/backend/files/private-downloads-and-metadata-projections.md)
+- [Treat CSV as a bounded interchange language](en/backend/files/bounded-csv-interchange-contracts.md) · [Hrvatski](hr/backend/files/bounded-csv-interchange-contracts.md)
+- [Publish a multipart export only when every component is complete](en/backend/files/complete-multipart-export-artifacts.md) · [Hrvatski](hr/backend/files/complete-multipart-export-artifacts.md)
 
 #### Data lifecycle
 
@@ -201,6 +207,7 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 - [Generate wire contracts without hiding compatibility decisions](en/backend/contracts/generated-wire-contracts-and-schema-compatibility.md) · [Hrvatski](hr/backend/contracts/generated-wire-contracts-and-schema-compatibility.md)
 - [Tolerate additive response fields without weakening write intent](en/backend/contracts/tolerant-readers-and-exact-write-intent.md) · [Hrvatski](hr/backend/contracts/tolerant-readers-and-exact-write-intent.md)
+- [Make coordinate order and geometry units explicit](en/backend/contracts/geospatial-units-and-coordinate-order.md) · [Hrvatski](hr/backend/contracts/geospatial-units-and-coordinate-order.md)
 
 ### Quality and verification
 
