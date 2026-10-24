@@ -192,6 +192,13 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 #### Local development
 
 - [One workspace, two runtimes](en/developer-workflow/local-development/workspace-runtimes.md) · [Hrvatski](hr/developer-workflow/local-development/workspace-runtimes.md)
+- [Diagnose the VS Code launch contract in dependency order](en/developer-workflow/local-development/vscode-launch-contract.md) · [Hrvatski](hr/developer-workflow/local-development/vscode-launch-contract.md)
+- [Give parallel checkouts explicit database identity](en/developer-workflow/local-development/parallel-checkouts-and-database-identity.md) · [Hrvatski](hr/developer-workflow/local-development/parallel-checkouts-and-database-identity.md)
+- [Debug the session through one browser origin](en/developer-workflow/local-development/same-origin-session-debugging.md) · [Hrvatski](hr/developer-workflow/local-development/same-origin-session-debugging.md)
+
+#### Verification workflow
+
+- [Select verification by changed contract and report its limits](en/developer-workflow/verification/verification-selection-and-evidence.md) · [Hrvatski](hr/developer-workflow/verification/verification-selection-and-evidence.md)
 
 ### AI-agent workflow
 
