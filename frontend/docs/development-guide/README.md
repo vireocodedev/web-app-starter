@@ -128,6 +128,9 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Resolve live authority instead of trusting stale session claims](en/backend/security/live-authority-and-session-claims.md) · [Hrvatski](hr/backend/security/live-authority-and-session-claims.md)
 - [API keys: public selector and one-time secret](en/backend/security/api-key-selectors-and-one-time-secrets.md) · [Hrvatski](hr/backend/security/api-key-selectors-and-one-time-secrets.md)
 - [Remembered credentials have their own expiry and account binding](en/backend/security/remembered-credentials-and-fixed-expiry.md) · [Hrvatski](hr/backend/security/remembered-credentials-and-fixed-expiry.md)
+- [Revalidate delegated authority against the current principal binding](en/backend/security/scoped-grants-and-principal-rebinding.md) · [Hrvatski](hr/backend/security/scoped-grants-and-principal-rebinding.md)
+- [Qualify exact evidence under the current procedure policy](en/backend/security/qualified-evidence-and-independent-review.md) · [Hrvatski](hr/backend/security/qualified-evidence-and-independent-review.md)
+- [Admit privileged file commands through a narrow protected entrypoint](en/backend/security/protected-operator-file-commands.md) · [Hrvatski](hr/backend/security/protected-operator-file-commands.md)
 
 #### Application services
 
@@ -170,6 +173,8 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 - [Claim, call outside the transaction, then reconcile](en/backend/integrations/claim-call-reconcile.md) · [Hrvatski](hr/backend/integrations/claim-call-reconcile.md)
 - [Keep scheduled work bounded and ownership explicit](en/backend/integrations/bounded-scheduled-work.md) · [Hrvatski](hr/backend/integrations/bounded-scheduled-work.md)
 - [Treat a subprocess as a bounded integration adapter](en/backend/integrations/process-adapter-boundaries.md) · [Hrvatski](hr/backend/integrations/process-adapter-boundaries.md)
+- [Preserve the approved destination and revalidate the recipient before use](en/backend/integrations/captured-destinations-and-recipient-revalidation.md) · [Hrvatski](hr/backend/integrations/captured-destinations-and-recipient-revalidation.md)
+- [Render a small allowlisted plain-text language, not arbitrary templates](en/backend/integrations/restricted-message-template-rendering.md) · [Hrvatski](hr/backend/integrations/restricted-message-template-rendering.md)
 
 #### Private files
 

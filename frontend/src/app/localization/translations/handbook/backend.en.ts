@@ -310,5 +310,30 @@ export const englishBackendHandbookTranslations = {
       description:
         "Keep authorized intake, verified source evidence, qualified decisions and effective application as separately retained lifecycle facts.",
     },
+    "backend-security-scoped-grants-and-principal-rebinding": {
+      title: "Revalidate delegated authority against the current principal binding",
+      description:
+        "Bind retained grants to current principal, action, purpose, scope and half-open validity while keeping trusted noninteractive channels explicit.",
+    },
+    "backend-security-qualified-evidence-and-independent-review": {
+      title: "Qualify exact evidence under the current procedure policy",
+      description:
+        "Separate retained candidates from qualified facts and apply exact proof, current procedure and policy-specific verifier independence.",
+    },
+    "backend-security-protected-operator-file-commands": {
+      title: "Admit privileged file commands through a narrow protected entrypoint",
+      description:
+        "Separate one-shot operator modes, bounded POSIX file admission and application authorization while stating race and UTF-8 limits.",
+    },
+    "backend-integrations-captured-destinations-and-recipient-revalidation": {
+      title: "Preserve the approved destination and revalidate the recipient before use",
+      description:
+        "Retain message/destination identity, revalidate current grant and binding, and preserve uncertainty across the remote dispatch race.",
+    },
+    "backend-integrations-restricted-message-template-rendering": {
+      title: "Render a small allowlisted plain-text language, not arbitrary templates",
+      description:
+        "Use explicit placeholders, strict template bytes and retained plain-text artifacts without mistaking tag regexes or post-render limits for general safety.",
+    },
   },
 } as const;

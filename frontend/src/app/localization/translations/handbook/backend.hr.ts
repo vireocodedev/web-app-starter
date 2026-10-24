@@ -315,5 +315,27 @@ export const croatianBackendHandbookTranslations = {
       description:
         "Odvojeno zadržite autorizirano zaprimanje, verificirani izvor, kvalificiranu odluku i primjenu učinka.",
     },
+    "backend-security-scoped-grants-and-principal-rebinding": {
+      title: "Delegiranu ovlast ponovno veži uz aktualni principal",
+      description: "Veži grant uz current principal, action, purpose, scope i vrijeme uz izričite external kanale.",
+    },
+    "backend-security-qualified-evidence-and-independent-review": {
+      title: "Točan dokaz kvalificiraj prema aktualnoj proceduri",
+      description:
+        "Odvoji candidate od qualified činjenica uz exact proof, current procedure i policy-specific neovisnost.",
+    },
+    "backend-security-protected-operator-file-commands": {
+      title: "Privilegirani file command prima uski zaštićeni ulaz",
+      description: "Odvoji operator mode, bounded POSIX file i app ovlast uz jasno navedene race/UTF-8 granice.",
+    },
+    "backend-integrations-captured-destinations-and-recipient-revalidation": {
+      title: "Sačuvaj odobreno odredište i ponovno provjeri primatelja",
+      description: "Sačuvaj message/route identitet, revalidiraj grant/binding i uncertainty preko remote racea.",
+    },
+    "backend-integrations-restricted-message-template-rendering": {
+      title: "Renderiraj mali allowlisted plain-text jezik",
+      description:
+        "Koristi placeholders, strict bytes i plain-text artefakt bez pretvaranja regexa ili finalnog limita u univerzalnu zaštitu.",
+    },
   },
 } satisfies StringLeaves<typeof englishBackendHandbookTranslations>;

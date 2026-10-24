@@ -1873,5 +1873,169 @@ export const backendHandbookCatalog = {
         "backend-integrations-intent-and-observed-state",
       ],
     },
+    {
+      id: "backend-security-scoped-grants-and-principal-rebinding",
+      topicId: "backend-security",
+      slug: "scoped-grants-and-principal-rebinding",
+      contentPath: "backend/security/scoped-grants-and-principal-rebinding",
+      titleKey: "handbook.articles.backend-security-scoped-grants-and-principal-rebinding.title",
+      descriptionKey: "handbook.articles.backend-security-scoped-grants-and-principal-rebinding.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/CommercialGrantPolicy.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceGrantPolicy.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-security-live-authority-and-session-claims",
+        "backend-security-resource-scope-and-composite-keys",
+        "backend-security-remembered-credentials-and-fixed-expiry",
+      ],
+    },
+    {
+      id: "backend-security-qualified-evidence-and-independent-review",
+      topicId: "backend-security",
+      slug: "qualified-evidence-and-independent-review",
+      contentPath: "backend/security/qualified-evidence-and-independent-review",
+      titleKey: "handbook.articles.backend-security-qualified-evidence-and-independent-review.title",
+      descriptionKey: "handbook.articles.backend-security-qualified-evidence-and-independent-review.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceOperatorService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceAgreementService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServicePolicy.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/BankReconciliationService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/CustomerBillingPolicy.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-data-digests-and-reviewed-artifact-versions",
+        "frontend-task-interfaces-readable-review-and-exact-decisions",
+        "backend-security-scoped-grants-and-principal-rebinding",
+      ],
+    },
+    {
+      id: "backend-security-protected-operator-file-commands",
+      topicId: "backend-security",
+      slug: "protected-operator-file-commands",
+      contentPath: "backend/security/protected-operator-file-commands",
+      titleKey: "handbook.articles.backend-security-protected-operator-file-commands.title",
+      descriptionKey: "handbook.articles.backend-security-protected-operator-file-commands.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/BackendApplication.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/CommercialPolicyOperatorRunner.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceOperatorRunner.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceOperatorService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-security-account-provisioning",
+        "backend-security-qualified-evidence-and-independent-review",
+      ],
+    },
+    {
+      id: "backend-integrations-captured-destinations-and-recipient-revalidation",
+      topicId: "backend-integrations",
+      slug: "captured-destinations-and-recipient-revalidation",
+      contentPath: "backend/integrations/captured-destinations-and-recipient-revalidation",
+      titleKey: "handbook.articles.backend-integrations-captured-destinations-and-recipient-revalidation.title",
+      descriptionKey:
+        "handbook.articles.backend-integrations-captured-destinations-and-recipient-revalidation.description",
+      implementation: "reference",
+      size: "large",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceNoticeService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceGrantPolicy.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/CommercialGrantPolicy.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/NotificationDeliveryProvider.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-security-scoped-grants-and-principal-rebinding",
+        "backend-integrations-claim-call-reconcile",
+        "backend-integrations-uncertain-provider-outcomes",
+      ],
+    },
+    {
+      id: "backend-integrations-restricted-message-template-rendering",
+      topicId: "backend-integrations",
+      slug: "restricted-message-template-rendering",
+      contentPath: "backend/integrations/restricted-message-template-rendering",
+      titleKey: "handbook.articles.backend-integrations-restricted-message-template-rendering.title",
+      descriptionKey: "handbook.articles.backend-integrations-restricted-message-template-rendering.description",
+      implementation: "reference",
+      size: "medium",
+      sources: [
+        {
+          project: "client-discovery-app",
+          path: "backend/src/main/java/com/vireocode/clientdiscovery/discovery/ServiceNoticeService.java",
+          revision: "df1feaef58d52e7e07c12a736aed607e64d7918c",
+        },
+      ],
+      relatedArticleIds: [
+        "backend-integrations-captured-destinations-and-recipient-revalidation",
+        "backend-files-bounded-uploads-and-shared-quotas",
+      ],
+    },
   ],
 } as const satisfies HandbookCategoryCatalog;
