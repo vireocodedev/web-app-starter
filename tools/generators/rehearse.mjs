@@ -80,12 +80,20 @@ async function run(command, argv, cwd) {
     const child = spawn(command, argv, {
       cwd,
       stdio: "inherit",
-      env: { ...process.env, GENERATOR_REHEARSAL: "true", RGO_BROWSER_DEV_PORT: "4181" },
+      env: {
+        ...process.env,
+        GENERATOR_REHEARSAL: "true",
+        RGO_BROWSER_DEV_PORT: "4181",
+      },
     });
     child.once("error", reject);
     child.once("exit", (code, signal) => (signal ? reject(new Error(`Interrupted: ${signal}`)) : resolve(code)));
   });
-  commands.push({ command: [command, ...argv], exitCode: code, seconds: (Date.now() - started) / 1000 });
+  commands.push({
+    command: [command, ...argv],
+    exitCode: code,
+    seconds: (Date.now() - started) / 1000,
+  });
   await writeFile(
     path.join(fixture, "rehearsal.json"),
     JSON.stringify({ source, fixture, generated, commands }, null, 2) + "\n",
@@ -98,24 +106,81 @@ await applyPlan(fixture, await createIndexPlan(fixture));
 for (const options of sampleInvocations()) {
   const plan = await createPlan(fixture, options);
   await applyPlan(fixture, plan.files);
-  generated.push({ generator: plan.generator, files: plan.files.map(file => file.path) });
+  generated.push({
+    generator: plan.generator,
+    files: plan.files.map(file => file.path),
+  });
+}
+// Compile accepted edge inputs and unchanged preview bodies without extra gallery destinations.
+for (const [kind, variant, name, fields] of [
+  ["component", "entity-picker", "Autocomplete"],
+  ["component", "quick-create", "CreateEditor"],
+  ["component", "entity-picker", "Demo"],
+  ["form", "wizard", "RichBoolean", "active:boolean"],
+  ["form", "wizard", "RichNumber", "amount:number"],
+  ["form", "wizard", "RichDate", "startDate:date"],
+  ["form", "wizard", "RichChoice", "category:select?"],
+  ["form", "wizard", "RichAutocomplete", "person:autocomplete"],
+  [
+    "feature",
+    "workspace",
+    "RichWorkspace",
+    "active:boolean,amount:number,startDate:date,category:select?,person:autocomplete?",
+  ],
+]) {
+  const plan = await createPlan(fixture, {
+    target: "frontend",
+    kind,
+    variant,
+    name,
+    feature: `GeneratorEdge${name}`,
+    ...(fields ? { fields } : {}),
+  });
+  const files = plan.files.map(file =>
+    file.path.endsWith(".example.tsx")
+      ? { ...file, path: `frontend/tests/features/${plan.context.feature.kebab}/preview.tsx` }
+      : file,
+  );
+  await applyPlan(fixture, files);
+  generated.push({ generator: plan.generator, edgeInput: true, files: files.map(file => file.path) });
 }
 const migrations = (await readdir(path.join(fixture, "backend/src/main/resources/db/migration"))).map(name =>
   Number(/^V(\d+)/.exec(name)?.[1] ?? 0),
 );
 const nextVersion = Math.max(...migrations) + 1;
 for (const options of [
-  { kind: "dto", name: "GeneratorCreateProduct", fields: "title,quantity:integer,active:boolean?" },
-  { kind: "dto", name: "GeneratorSummary", variant: "response", fields: "title" },
+  {
+    kind: "dto",
+    name: "GeneratorCreateProduct",
+    fields: "title,quantity:integer,active:boolean?",
+  },
+  {
+    kind: "dto",
+    name: "GeneratorSummary",
+    variant: "response",
+    fields: "title",
+  },
   {
     kind: "domain",
     name: "GeneratorPart",
     migration: String(nextVersion),
     fields: "title,quantity:integer?,active:boolean",
   },
-  { kind: "repository", name: "GeneratorPart", fields: "title,quantity:integer?,active:boolean" },
-  { kind: "service", name: "GeneratorPart", fields: "title,quantity:integer?,active:boolean" },
-  { kind: "controller", name: "GeneratorPart", fields: "title,quantity:integer?,active:boolean" },
+  {
+    kind: "repository",
+    name: "GeneratorPart",
+    fields: "title,quantity:integer?,active:boolean",
+  },
+  {
+    kind: "service",
+    name: "GeneratorPart",
+    fields: "title,quantity:integer?,active:boolean",
+  },
+  {
+    kind: "controller",
+    name: "GeneratorPart",
+    fields: "title,quantity:integer?,active:boolean",
+  },
   {
     kind: "feature",
     name: "GeneratorProduct",
@@ -126,7 +191,10 @@ for (const options of [
 ]) {
   const plan = await createPlan(fixture, { target: "backend", ...options });
   await applyPlan(fixture, plan.files);
-  generated.push({ generator: plan.generator, files: plan.files.map(file => file.path) });
+  generated.push({
+    generator: plan.generator,
+    files: plan.files.map(file => file.path),
+  });
 }
 await writeFile(
   path.join(fixture, "rehearsal.json"),
@@ -155,7 +223,7 @@ if (!args.has("--prepare-only")) {
     await run(npm, ["run", "build", "--", "--manifest"], cwd);
     const manifest = await readFile(path.join(cwd, "dist/.vite/manifest.json"), "utf8");
     if (
-      /\.example\.tsx|generatedExamples|generator-profile|generator-orders|generator-workspace|GeneratorProfile|GeneratorWorkspace|generator-navigation|GeneratorNavigation|generator-page-dashboard|generator-page-detail|generator-form-wizard|generator-form-collection|generator-feature-workspace|generator-page-report/.test(
+      /\.example\.tsx|generatedExamples|generator-profile|generator-orders|generator-workspace|GeneratorProfile|GeneratorWorkspace|generator-navigation|GeneratorNavigation|generator-page-dashboard|generator-page-detail|generator-form-wizard|generator-form-collection|generator-feature-workspace|generator-page-report|generator-component-|GeneratorComponent/.test(
         manifest,
       )
     )
@@ -164,7 +232,7 @@ if (!args.has("--prepare-only")) {
     for (const chunk of chunks.filter(name => name.endsWith(".js"))) {
       const body = await readFile(path.join(cwd, "dist/assets", chunk), "utf8");
       if (
-        /Simulated submission failure|sample-12|generator-profile--generator-profile|Complete submission|Fail the next save or export|Sample data covers 1–14 January 2026/.test(
+        /Simulated submission failure|sample-12|generator-profile--generator-profile|Complete submission|Fail the next save or export|Sample data covers 1–14 January 2026|Apply filters, change pages, then use browser Back|Selection includes explicit record IDs across pages|Hold pending action/.test(
           body,
         )
       )

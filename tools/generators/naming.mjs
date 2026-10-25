@@ -41,13 +41,23 @@ export function naming(value) {
   };
 }
 
-export function parseFields(value = "name") {
+export function parseFields(value = "name", { rich = false } = {}) {
+  const types = rich
+    ? ["string", "integer", "boolean", "number", "multiline", "date", "select", "autocomplete"]
+    : ["string", "integer", "boolean"];
   const fields = value.split(",").map(item => {
-    const match = /^([a-z][a-zA-Z0-9]*)(?::(string|integer|boolean))?(\?)?$/.exec(item);
-    if (!match) throw new Error(`Invalid field: ${item}. Expected name[:string|integer|boolean][?].`);
+    const match = /^([a-z][a-zA-Z0-9]*)(?::([a-z]+))?(\?)?$/.exec(item);
+    if (!match || !types.includes(match[2] ?? "string"))
+      throw new Error(`Invalid field: ${item}. Expected name[:${types.join("|")}][?].`);
     const [, name, type = "string", optional] = match;
     identifier(name, "field");
-    return { name, type, required: !optional, maxLength: 120, label: naming(name).title };
+    return {
+      name,
+      type,
+      required: !optional,
+      maxLength: type === "multiline" ? 4000 : 120,
+      label: naming(name).title,
+    };
   });
   if (!fields.length || fields.length > 20 || new Set(fields.map(field => field.name)).size !== fields.length) {
     throw new Error("Supply 1–20 distinct fields.");

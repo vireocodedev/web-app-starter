@@ -1,9 +1,28 @@
+import {
+  choiceFields,
+  control,
+  defaultValue,
+  displayValue,
+  fieldTranslations,
+  fieldType,
+  hasChoices,
+  optionImport,
+  optionMembers,
+  optionTypes,
+  optionsParameter,
+  optionsProp,
+  richAssertions,
+  sampleValue,
+  schemaField,
+  valueType,
+} from "./frontend-fields.mjs";
 /** Pure workflow-form recipes. The CLI validates identifiers and bounded text fields. */
 const file = (path, content) => ({ path, content: `${content.trim()}\n` });
 const role = (name, suffix) => (name.endsWith(suffix) ? name : `${name}${suffix}`);
 
 function resources(context) {
   const en = {
+    ...fieldTranslations.en,
     title: context.name.title,
     fields: Object.fromEntries(context.fields.map(field => [field.name, field.label])),
     aggregateTitle: "Collection title",
@@ -35,8 +54,21 @@ function resources(context) {
     stagedHint: "Apply changes to the local collection or cancel this edit before saving the collection.",
     localHint: "Item changes stay in this draft until you save the complete collection.",
   };
-  const known = { title: "Naslov", name: "Naziv", notes: "Bilješke", description: "Opis", email: "E-pošta" };
+  const known = {
+    title: "Naslov",
+    name: "Naziv",
+    notes: "Bilješke",
+    quantity: "Količina",
+    budget: "Proračun",
+    active: "Aktivno",
+    dueOn: "Rok",
+    status: "Status",
+    owner: "Odgovorna osoba",
+    description: "Opis",
+    email: "E-pošta",
+  };
   const hr = {
+    ...fieldTranslations.hr,
     title: context.name.title,
     fields: Object.fromEntries(
       context.fields.map(field => [field.name, field.labelHr ?? known[field.name] ?? field.label]),
@@ -83,25 +115,22 @@ export const translations = ${JSON.stringify(hr, null, 2)} as const satisfies St
 }
 
 function schemaMembers(context) {
-  const key = `generated.${context.translationId}`;
   return context.fields
-    .map(
-      field =>
-        `${field.name}: z.string().trim()${field.required ? `.min(1, t("${key}.required"))` : ""}.max(${field.maxLength}, t("${key}.max", { max: ${field.maxLength} }))`,
-    )
+    .map(field => `${field.name}: ${schemaField(field, `generated.${context.translationId}`)}`)
     .join(",\n");
 }
 
 function model(context, collection) {
   const name = context.name.pascal;
   const key = `generated.${context.translationId}`;
-  const members = context.fields.map(field => `${field.name}: string;`).join("\n");
-  const defaults = context.fields.map(field => `${field.name}: ""`).join(", ");
+  const members = context.fields.map(field => `${field.name}: ${valueType(field)};`).join("\n");
+  const defaults = context.fields.map(field => `${field.name}: ${defaultValue(field)}`).join(", ");
   return file(
     `frontend/src/features/${context.feature.kebab}/models/${name}.ts`,
     `import type { TFunction } from "i18next";
 import { z } from "zod";
 
+${optionTypes(context)}
 ${
   collection
     ? `export type ${name}Item = Readonly<{ localId: string; serverId: string | null; ${members} }>;
@@ -118,7 +147,8 @@ export function create${name}ItemValidationSchema(t: TFunction<"translation">) {
 export function buildDefault${name}Input(): ${name}FormValue {
   return { ${collection ? 'title: "", items: []' : defaults} };
 }
-export function create${name}ValidationSchema(t: TFunction<"translation">) {
+export function create${name}ValidationSchema(t: TFunction<"translation">${optionsParameter(context)}) {
+  void t;
   return z.object({ ${
     collection
       ? `title: z.string().trim().min(1, t("${key}.required")).max(160, t("${key}.max", { max: 160 })),
@@ -151,9 +181,9 @@ import { useFormStateReporter } from "@/app/forms/hooks/useFormStateReporter";
 import type { AppEntityFormProps } from "@/app/forms/types/AppEntityForm";
 import { buildAppEntityFormOptions } from "@/app/forms/utils/buildAppEntityFormOptions";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
-import { buildDefault${name}Input, create${name}ValidationSchema, type ${name}FormValue } from "../models/${name}";
+import { buildDefault${name}Input, create${name}ValidationSchema, type ${name}FormValue${optionImport(context)} } from "../models/${name}";
 
-export type ${component}Props = AppEntityFormProps<${name}FormValue> & Readonly<{ disabled?: boolean }>;
+export type ${component}Props = AppEntityFormProps<${name}FormValue> & Readonly<{ disabled?: boolean; ${optionsProp(context)} }>;
 
 /** One complete draft. Section navigation neither validates nor persists values. */
 export function ${component}(props: ${component}Props) {
@@ -163,7 +193,8 @@ export function ${component}(props: ${component}Props) {
   const [topic, setTopic] = useState(0);
   const focusTarget = useRef<string | null>(null);
   const [focusRevision, setFocusRevision] = useState(0);
-  const schema = create${name}ValidationSchema(t);
+  ${hasChoices(context) ? `const options = props.options ?? empty${name}Options;` : ""}
+  const schema = create${name}ValidationSchema(t${hasChoices(context) ? ", options" : ""});
   const form = useRgoForm({
     defaultValues: props.group === RgoFormGroup.CREATE ? buildDefault${name}Input() : props.initialValue,
     ...buildAppEntityFormOptions(schema, props),
@@ -183,7 +214,7 @@ export function ${component}(props: ${component}Props) {
   useEffect(() => {
     if (focusTarget.current === null) return;
     const target = root.current?.querySelector<HTMLElement>("[id=" + JSON.stringify(focusTarget.current) + "]");
-    target?.focus();
+    (target?.querySelector<HTMLElement>("input, textarea, [role=combobox], button") ?? target)?.focus();
     focusTarget.current = null;
   }, [focusRevision, topic]);
   const selectTopic = (next: number) => {
@@ -211,7 +242,7 @@ ${groups
     ) => `        <Box component="section" hidden={topic !== ${index}} aria-labelledby={id + "-heading-${index}"}>
           <Stack spacing={2}>
             <Typography id={id + "-heading-${index}"} tabIndex={-1} component="h3" variant="h6">{labels[${index}]}</Typography>
-${fields.map(field => `            <form.AppField name="${field.name}">{field => <field.TextField id={id + "-${field.name}"} fullWidth label={t("${key}.fields.${field.name}")} ${field.required ? "required " : ""}disabled={disabled} />}</form.AppField>`).join("\n")}
+${fields.map(field => `            <form.AppField name="${field.name}">{field => ${control(field, key, { id: `id + "-${field.name}"` })}}</form.AppField>`).join("\n")}
           </Stack>
         </Box>`,
   )
@@ -221,7 +252,7 @@ ${fields.map(field => `            <form.AppField name="${field.name}">{field =>
             <Typography id={id + "-heading-" + (labels.length - 1)} tabIndex={-1} component="h3" variant="h6">{t("${key}.review")}</Typography>
             <Typography color="text.secondary">{t("${key}.reviewHint")}</Typography>
             <Paper variant="outlined" sx={{ p: 2 }}><Box component="dl" sx={{ m: 0, overflowWrap: "anywhere" }}>
-${context.fields.map(field => `              <Typography component="dt" variant="subtitle2">{t("${key}.fields.${field.name}")}</Typography><Typography component="dd" sx={{ ml: 0, mb: 2 }}>{values.${field.name} || t("${key}.noValue")}</Typography>`).join("\n")}
+${context.fields.map(field => `              <Typography component="dt" variant="subtitle2">{t("${key}.fields.${field.name}")}</Typography><Typography component="dd" sx={{ ml: 0, mb: 2 }}>{${displayValue(field, `values.${field.name}`, key)}}</Typography>`).join("\n")}
             </Box></Paper>
           </Stack>
         </Box>
@@ -363,7 +394,7 @@ ${context.fields.map(field => `        <form.AppField name="${field.name}">{fiel
 function example(context, collection) {
   const name = context.name.pascal;
   const component = role(name, "Form");
-  const sample = `{ ${context.fields.map(field => `${field.name}: ${JSON.stringify(`${field.label} sample`.slice(0, field.maxLength))}`).join(", ")} }`;
+  const sample = `{ ${context.fields.map(field => `${field.name}: ${sampleValue(field, JSON.stringify(`${field.label} sample`.slice(0, field.maxLength)))}`).join(", ")} }`;
   const value = collection
     ? `{ title: "Sample collection", items: [{ localId: "sample-item-1", serverId: "retained-item-1", ...${sample} }] }`
     : sample;
@@ -398,7 +429,7 @@ export function Component() {
     {state.submitting ? <Alert severity="info" action={<Button onClick={() => complete.current?.()}>{t("generatedExamples.complete")}</Button>}>{t("generatedExamples.pending")}</Alert> : null}
     {saved ? <Alert severity="success">{t("generatedExamples.saved")}</Alert> : null}
     <${component} key={epoch} {...(populated ? { group: RgoFormGroup.UPDATE, initialValue: ${value} } : { group: RgoFormGroup.CREATE })}
-      disabled={disabled} saveFailed={failed} onStateChange={setState} onSaved={() => setSaved(true)}
+      ${hasChoices(context) ? `options={{ ${optionMembers(context, `t("generatedExamples.sampleRecord")`)} }} ` : ""}disabled={disabled} saveFailed={failed} onStateChange={setState} onSaved={() => setSaved(true)}
       onSubmit={async value => {
         setSaved(false); setFailed(false);
         await new Promise<void>(resolve => { complete.current = resolve; });
@@ -416,12 +447,13 @@ function BoxedResult({ value }: Readonly<{ value: ${name}FormValue }>) {
 }
 
 function tests(context, collection) {
+  if (!collection && context.fields.some(field => fieldType(field) !== "string")) return richTests(context);
   const name = context.name.pascal;
   const component = role(name, "Form");
   const key = `generated.${context.translationId}`;
   const first = context.fields[0];
   const required = context.fields.find(field => field.required);
-  const sample = `{ ${context.fields.map(field => `${field.name}: "v"`).join(", ")} }`;
+  const sample = `{ ${context.fields.map(field => `${field.name}: ${sampleValue(field)}`).join(", ")} }`;
   const value = collection
     ? `{ title: "Collection", items: [{ localId: "local-1", serverId: "server-1", ...${sample} }] }`
     : sample;
@@ -431,7 +463,7 @@ function tests(context, collection) {
 import { createAppI18n } from "@/app/localization/createAppI18n";
 import { buildDefault${name}Input, create${name}ValidationSchema } from "@/features/${context.feature.kebab}/models/${name}";
 describe("${name} complete input", () => {
-  const schema = create${name}ValidationSchema(createAppI18n("en").getFixedT(null, "translation"));
+  const schema = create${name}ValidationSchema(createAppI18n("en").getFixedT(null, "translation")${hasChoices(context) ? `, { ${optionMembers(context)} }` : ""});
   it("validates complete input and trims text before the owner receives it", () => {
     const value = ${value};
     ${collection ? `value.items[0]!.${first.name} = " v ";` : `value.${first.name} = " v ";`}
@@ -452,7 +484,7 @@ ${
     expect(schema.safeParse(value).success).toBe(false);
   });`
     : `  it("keeps defaults as an explicit draft", () => {
-    expect(buildDefault${name}Input()).toEqual({ ${context.fields.map(field => `${field.name}: ""`).join(", ")} });
+    expect(buildDefault${name}Input()).toEqual({ ${context.fields.map(field => `${field.name}: ${defaultValue(field)}`).join(", ")} });
   });`
 }
 });`,
@@ -473,7 +505,7 @@ ${
     const initialValue = ${value};
     initialValue.items[0]!.${first.name} = "x".repeat(${first.maxLength + 1});
     const onSubmit = vi.fn(async () => {});
-    render(<${component} group={RgoFormGroup.UPDATE} initialValue={initialValue} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
+    render(<${component} ${hasChoices(context) ? `options={{ ${optionMembers(context)} }} ` : ""}group={RgoFormGroup.UPDATE} initialValue={initialValue} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
     fireEvent.click(screen.getByRole("button", { name: t("${key}.update") }));
     const summaryLabel = t("${key}.edit", { number: 1 }) + ": " + t("${key}.max", { max: ${first.maxLength} });
     fireEvent.click(await screen.findByRole("button", { name: summaryLabel }));
@@ -489,7 +521,7 @@ ${
   !collection && required
     ? `  it("reveals a hidden invalid section and focuses the actual input from its error link", async () => {
     const onSubmit = vi.fn(async () => {});
-    render(<${component} group={RgoFormGroup.CREATE} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
+    render(<${component} ${hasChoices(context) ? `options={{ ${optionMembers(context)} }} ` : ""}group={RgoFormGroup.CREATE} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
     fireEvent.click(screen.getByRole("tab", { name: t("${key}.review") }));
     fireEvent.click(screen.getByRole("button", { name: t("${key}.create") }));
     const link = await screen.findByRole("button", { name: t("${key}.fields.${required.name}") + ": " + t("${key}.required") });
@@ -503,7 +535,7 @@ ${
   collection
     ? `  it("discards a canceled child draft and applies local changes without submitting the aggregate", async () => {
     const onSubmit = vi.fn(async () => {});
-    render(<${component} group={RgoFormGroup.UPDATE} initialValue={${value}} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
+    render(<${component} ${hasChoices(context) ? `options={{ ${optionMembers(context)} }} ` : ""}group={RgoFormGroup.UPDATE} initialValue={${value}} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
     fireEvent.click(screen.getByRole("button", { name: t("${key}.edit", { number: 1 }) }));
     fireEvent.change(screen.getByRole("textbox", { name: t("${key}.fields.${first.name}") }), { target: { value: "x" } });
     fireEvent.click(screen.getByRole("button", { name: t("${key}.cancel") }));
@@ -519,7 +551,7 @@ ${
   });`
     : `  it("retains field values across navigation without submitting", () => {
     const onSubmit = vi.fn(async () => {});
-    render(<${component} group={RgoFormGroup.CREATE} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
+    render(<${component} ${hasChoices(context) ? `options={{ ${optionMembers(context)} }} ` : ""}group={RgoFormGroup.CREATE} saveFailed={false} onSaved={vi.fn()} onStateChange={vi.fn()} onSubmit={onSubmit} />);
     fireEvent.change(screen.getByRole("textbox", { name: t("${key}.fields.${first.name}") }), { target: { value: "x" } });
     fireEvent.click(screen.getByRole("button", { name: t("${key}.next") }));
     fireEvent.click(screen.getByRole("button", { name: t("${key}.previous") }));
@@ -530,8 +562,8 @@ ${
   it("awaits the complete command and preserves a rejected draft", async () => {
     let reject: ((error: Error) => void) | undefined;
     const onSaved = vi.fn();
-    const onSubmit = vi.fn(() => new Promise<void>((_, rejectPromise) => { reject = rejectPromise; }));
-    render(<${component} group={RgoFormGroup.UPDATE} initialValue={${value}} saveFailed={false} onSaved={onSaved} onStateChange={vi.fn()} onSubmit={onSubmit} />);
+    const onSubmit = vi.fn((_value: unknown) => { void _value; return new Promise<void>((_, rejectPromise) => { reject = rejectPromise; }); });
+    render(<${component} ${hasChoices(context) ? `options={{ ${optionMembers(context)} }} ` : ""}group={RgoFormGroup.UPDATE} initialValue={${value}} saveFailed={false} onSaved={onSaved} onStateChange={vi.fn()} onSubmit={onSubmit} />);
 ${collection ? "" : `    fireEvent.click(screen.getByRole("tab", { name: t("${key}.review") }));`}
     fireEvent.click(screen.getByRole("button", { name: t("${key}.update") }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
@@ -552,6 +584,112 @@ ${
   return [modelTest, componentTest];
 }
 
+function richTests(c) {
+  const n = c.name.pascal,
+    component = role(n, "Form"),
+    key = `generated.${c.translationId}`;
+  const accepted = `{ ${c.fields.map(f => `${f.name}: ${sampleValue(f)}`).join(", ")} }`;
+  const opts = hasChoices(c) ? `options={{ ${optionMembers(c)} }}` : "";
+  const text = c.fields
+    .slice(0, Math.ceil(c.fields.length / 2))
+    .find(f => ["string", "multiline"].includes(fieldType(f)));
+  const invalid = c.fields.find(f => f.required && fieldType(f) !== "boolean");
+  const select = c.fields.find(f => fieldType(f) === "select");
+  const invalidKey =
+    invalid &&
+    (["select", "autocomplete"].includes(fieldType(invalid))
+      ? "requiredChoice"
+      : fieldType(invalid) === "date"
+        ? "date"
+        : "required");
+  return [
+    file(
+      `frontend/tests/features/${c.feature.kebab}/models/${n}.test.ts`,
+      `import { describe, expect, it } from "vitest";
+import { createAppI18n } from "@/app/localization/createAppI18n";
+import { buildDefault${n}Input, create${n}ValidationSchema } from "@/features/${c.feature.kebab}/models/${n}";
+describe("${n} explicit field semantics", () => {
+  const schema = create${n}ValidationSchema(createAppI18n("en").getFixedT(null, "translation")${hasChoices(c) ? `, { ${optionMembers(c)} }` : ""});
+  it("preserves zero and false, distinguishes empty values, rejects invalid dates and stale choices", () => {
+    const accepted = ${accepted};
+    expect(schema.safeParse(accepted).success).toBe(true);
+    ${richAssertions(c)}
+  });
+  it("builds explicit unselected and empty defaults", () => {
+    expect(buildDefault${n}Input()).toEqual({ ${c.fields.map(f => `${f.name}: ${defaultValue(f)}`).join(", ")} });
+  });
+});`,
+    ),
+    file(
+      `frontend/tests/features/${c.feature.kebab}/components/${component}.test.tsx`,
+      `import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { RgoFormGroup } from "@rgo-web/frontend";
+import { describe, expect, it, vi } from "vitest";
+import { createAppI18n } from "@/app/localization/createAppI18n";
+import { ${component} } from "@/features/${c.feature.kebab}";
+const t = createAppI18n("en").getFixedT(null, "translation");
+vi.mock("@/app/localization/hooks/useAppTranslation", () => ({ useAppTranslation: () => ({ t }) }));
+describe("${component} rich draft ownership", () => {
+${
+  select
+    ? `  it("allows a selected value to be deliberately cleared", () => {
+    render(<${component} ${opts} group={RgoFormGroup.UPDATE} initialValue={${accepted}} onSubmit={vi.fn()} onSaved={vi.fn()} onStateChange={vi.fn()} saveFailed={false} />);
+    fireEvent.click(screen.getByRole("tab", { name: t("${key}.${c.fields.indexOf(select) < Math.ceil(c.fields.length / 2) ? "details" : "additional"}") }));
+    const choice = screen.getByRole("combobox", { name: t("${key}.fields.${select.name}") });
+    fireEvent.mouseDown(choice);
+    fireEvent.click(screen.getByRole("option", { name: t("${key}.noValue") }));
+    fireEvent.mouseDown(choice);
+    expect(screen.getByRole("option", { name: t("${key}.noValue") })).toHaveAttribute("aria-selected", "true");
+  });`
+    : ""
+}
+${
+  invalid
+    ? `  it("reveals and focuses an invalid field from the linked summary", async () => {
+    render(<${component} ${opts} group={RgoFormGroup.CREATE} onSubmit={vi.fn()} onSaved={vi.fn()} onStateChange={vi.fn()} saveFailed={false} />);
+    fireEvent.click(screen.getByRole("tab", { name: t("${key}.review") }));
+    fireEvent.click(screen.getByRole("button", { name: t("${key}.create") }));
+    fireEvent.click(await screen.findByRole("button", { name: t("${key}.fields.${invalid.name}") + ": " + t("${key}.${invalidKey}") }));
+    await waitFor(() => expect(screen.getByLabelText(t("${key}.fields.${invalid.name}"), { exact: false })).toHaveFocus());
+  });`
+    : ""
+}
+  it("awaits acknowledgement and retains a rejected complete draft", async () => {
+    let reject!: (error: Error) => void;
+    const onSubmit = vi.fn((_value: unknown) => { void _value; return new Promise<void>((_, rejectPromise) => { reject = rejectPromise; }); });
+    const onSaved = vi.fn();
+    render(<${component} ${opts} group={RgoFormGroup.UPDATE} initialValue={${accepted}} onSubmit={onSubmit} onSaved={onSaved} onStateChange={vi.fn()} saveFailed={false} />);
+    fireEvent.click(screen.getByRole("tab", { name: t("${key}.review") }));
+    fireEvent.click(screen.getByRole("button", { name: t("${key}.update") }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit.mock.calls[0]?.[0]).toEqual(${accepted});
+    expect(screen.getByRole("button", { name: t("${key}.update") })).toBeDisabled();
+    reject(new Error("Rejected"));
+    await waitFor(() => expect(screen.getByRole("button", { name: t("${key}.update") })).toBeEnabled());
+    expect(onSaved).not.toHaveBeenCalled();
+    ${
+      text
+        ? `fireEvent.click(screen.getByRole("tab", { name: t("${key}.details") }));
+    expect(screen.getByRole("textbox", { name: t("${key}.fields.${text.name}") })).toHaveValue("v");`
+        : ""
+    }
+  });
+${
+  text
+    ? `  it("preserves an edited field across section navigation", () => {
+    render(<${component} ${opts} group={RgoFormGroup.CREATE} onSubmit={vi.fn()} onSaved={vi.fn()} onStateChange={vi.fn()} saveFailed={false} />);
+    fireEvent.change(screen.getByRole("textbox", { name: t("${key}.fields.${text.name}") }), { target: { value: "Changed" } });
+    fireEvent.click(screen.getByRole("button", { name: t("${key}.next") }));
+    fireEvent.click(screen.getByRole("button", { name: t("${key}.previous") }));
+    expect(screen.getByRole("textbox", { name: t("${key}.fields.${text.name}") })).toHaveValue("Changed");
+  });`
+    : ""
+}
+});`,
+    ),
+  ];
+}
+
 export function renderWorkflowEditors(kind, context) {
   if (kind !== "form" || !["wizard", "collection"].includes(context.variant)) return undefined;
   const collectionVariant = context.variant === "collection";
@@ -564,7 +702,7 @@ export function renderWorkflowEditors(kind, context) {
       `frontend/src/features/${context.feature.kebab}/index.ts`,
       `export { ${component} } from "./components/${component}";
 export type { ${component}Props } from "./components/${component}";
-export type { ${name}FormValue${collectionVariant ? `, ${name}Item` : ""} } from "./models/${name}";`,
+export type { ${name}FormValue${hasChoices(context) ? `, ${name}Option, ${name}ChoiceOptions` : ""}${collectionVariant ? `, ${name}Item` : ""} } from "./models/${name}";`,
     ),
     ...resources(context),
     example(context, collectionVariant),

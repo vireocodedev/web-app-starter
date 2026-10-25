@@ -24,9 +24,13 @@ Esc/← returns to groups; Esc at groups or Ctrl+C cancels.
 Options:
   --feature Name        New capability owner (defaults to Name)
   --fields a,b:string?  1–20 lowerCamelCase fields, ? means optional
-                        Backend: string, integer, boolean. Frontend: string.
+                        Backend/API: string, integer, boolean. Default UI: string.
+                        Wizard/workspace: also multiline, integer, number, boolean,
+                        date (calendar YYYY-MM-DD), select and autocomplete.
   --variant Name        Shell: simple|workspace; Page: simple|dashboard|detail|report
                         Form: simple|wizard|collection; Feature: simple|workspace
+                        Component: simple|entity-picker|quick-create|filter-bar|
+                        dependent-fields|save-controls|related-records|bulk-actions
                         Backend DTO: request|response (default request)
   --migration N         Explicit new Flyway version (backend domain/feature)
   --dry-run             Validate and print the complete plan without writing

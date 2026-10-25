@@ -45,8 +45,19 @@ test("sample inventory covers every frontend kind and variant, including future 
   assert.equal(cases.length, count);
   assert.equal(new Set(cases.map(item => item.feature)).size, count);
   assert.ok(cases.every(item => item.target === "frontend"));
+  assert.equal(cases.find(item => item.variant === "entity-picker").name, "GeneratorComponentEntityPicker");
+  assert.equal(cases.find(item => item.variant === "entity-picker").fields, undefined);
+  assert.match(
+    cases.find(item => item.kind === "form" && item.variant === "wizard").fields,
+    /budget:number\?.*status:select/,
+  );
+  assert.match(cases.find(item => item.kind === "feature" && item.variant === "workspace").fields, /active:boolean/);
   const future = sampleInvocations([
-    { target: "frontend", kind: "new-layout", variants: [{ value: "rich", acceptsFields: false }] },
+    {
+      target: "frontend",
+      kind: "new-layout",
+      variants: [{ value: "rich", acceptsFields: false }],
+    },
   ]);
   assert.equal(future[0].name, "GeneratorNewLayoutRich");
   assert.equal(future[0].fields, undefined);
@@ -115,7 +126,10 @@ test("unsafe receipts, symlinks and new files in sample owners never grant delet
   const directory = await fixture(t);
   await writeFile(
     path.join(directory, sampleReceipt),
-    JSON.stringify({ schemaVersion: 1, files: [{ path: "../outside", sha256: "a".repeat(64) }] }),
+    JSON.stringify({
+      schemaVersion: 1,
+      files: [{ path: "../outside", sha256: "a".repeat(64) }],
+    }),
   );
   await assert.rejects(refreshSamples(directory), /receipt/);
   await rm(path.join(directory, sampleReceipt));

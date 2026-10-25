@@ -1,3 +1,20 @@
+import {
+  control,
+  defaultValue,
+  displayValue,
+  fieldTranslations,
+  fieldType,
+  hasChoices,
+  optionImport,
+  optionMembers,
+  optionTypes,
+  optionsParameter,
+  optionsProp,
+  richAssertions,
+  sampleValue,
+  schemaField,
+  valueType,
+} from "./frontend-fields.mjs";
 /** Pure workflow recipes; callers retain transport, persistence and result authority. */
 const file = (path, content) => ({ path, content: `${content.trim()}\n` });
 const role = (name, suffix) => (name.endsWith(suffix) ? name : `${name}${suffix}`);
@@ -14,6 +31,7 @@ function paths(c) {
 function locales(c) {
   const { locale } = paths(c);
   const en = {
+    ...fieldTranslations.en,
     title: c.name.title,
     search: "Search all fields",
     filter: `Filter ${c.fields[0].label}`,
@@ -61,6 +79,7 @@ function locales(c) {
     fields: Object.fromEntries(c.fields.map(f => [f.name, f.label])),
   };
   const hr = {
+    ...fieldTranslations.hr,
     title: c.name.title,
     search: "Pretraži sva polja",
     filter: `Filtriraj: ${c.fields[0].labelHr ?? c.fields[0].label}`,
@@ -108,7 +127,21 @@ function locales(c) {
     fields: Object.fromEntries(
       c.fields.map(f => [
         f.name,
-        f.labelHr ?? { name: "Naziv", title: "Naslov", description: "Opis", email: "E-pošta" }[f.name] ?? f.label,
+        f.labelHr ??
+          {
+            name: "Naziv",
+            title: "Naslov",
+            description: "Opis",
+            notes: "Bilješke",
+            quantity: "Količina",
+            budget: "Proračun",
+            active: "Aktivno",
+            dueOn: "Rok",
+            status: "Status",
+            owner: "Odgovorna osoba",
+            email: "E-pošta",
+          }[f.name] ??
+          f.label,
       ]),
     ),
   };
@@ -128,13 +161,14 @@ function model(c, report) {
     `import type { RgoDesktopTableState } from "@rgo-web/frontend";
 import type { TFunction } from "i18next";
 import { z } from "zod";
-export type ${n}Values = Readonly<{ ${c.fields.map(f => `${f.name}: string`).join("; ")} }>;
+${optionTypes(c)}
+export type ${n}Values = Readonly<{ ${c.fields.map(f => `${f.name}: ${valueType(f)}`).join("; ")} }>;
 export type ${n}Row = Readonly<{ id: string; values: ${n}Values;${report ? " recordedOn: string;" : ""} }>;
 export type ${n}Request = Readonly<{ search: string; filter: string; table: RgoDesktopTableState;${report ? " start: string; end: string;" : ""} }>;
-export function buildDefault${n}Values(): ${n}Values { return { ${c.fields.map(f => `${f.name}: ""`).join(", ")} }; }
+export function buildDefault${n}Values(): ${n}Values { return { ${c.fields.map(f => `${f.name}: ${defaultValue(f)}`).join(", ")} }; }
 export function buildDefault${n}Request(): ${n}Request { return { search: "", filter: "", table: { page: 0, rowsPerPage: 5, sort: null }${report ? ', start: "", end: ""' : ""} }; }
-export function create${n}Schema(t: TFunction<"translation">) { return z.object({
-${c.fields.map(f => `  ${f.name}: z.string().trim()${f.required ? `.min(1, t("${key}.required"))` : ""}.max(${f.maxLength}, t("${key}.max", { max: ${f.maxLength} })),`).join("\n")}
+export function create${n}Schema(t: TFunction<"translation">${optionsParameter(c)}) { void t; return z.object({
+${c.fields.map(f => `  ${f.name}: ${schemaField(f, key)},`).join("\n")}
 }); }
 /** Filter/size/sort changes reset page; paging alone keeps its requested page. */
 export function change${n}Table(request: ${n}Request, table: RgoDesktopTableState): ${n}Request {
@@ -145,11 +179,11 @@ export function change${n}Table(request: ${n}Request, table: RgoDesktopTableStat
 export function select${n}Matches(rows: readonly ${n}Row[], request: ${n}Request): ${n}Row[] {
   const search = request.search.trim().toLocaleLowerCase();
   const filter = request.filter.trim().toLocaleLowerCase();
-  const matches = rows.filter(row => ${report ? "row.recordedOn >= request.start && row.recordedOn <= request.end && " : ""}Object.values(row.values).some(value => value.toLocaleLowerCase().includes(search)) && row.values.${c.fields[0].name}.toLocaleLowerCase().includes(filter));
+  const matches = rows.filter(row => ${report ? "row.recordedOn >= request.start && row.recordedOn <= request.end && " : ""}Object.values(row.values).some(value => String(value ?? "").toLocaleLowerCase().includes(search)) && String(row.values.${c.fields[0].name} ?? "").toLocaleLowerCase().includes(filter));
   const sort = request.table.sort;
   if (sort) matches.sort((left, right) => {
     const field = sort.columnId.replace(/^values\\./, "") as keyof ${n}Values;
-    const comparison = ${report ? 'sort.columnId === "recordedOn" ? left.recordedOn.localeCompare(right.recordedOn) : ' : ""}(left.values[field] ?? "").localeCompare(right.values[field] ?? "");
+    const comparison = ${report ? 'sort.columnId === "recordedOn" ? left.recordedOn.localeCompare(right.recordedOn) : ' : ""}(typeof left.values[field] === "number" && typeof right.values[field] === "number" ? Number(left.values[field]) - Number(right.values[field]) : typeof left.values[field] === "boolean" && typeof right.values[field] === "boolean" ? Number(left.values[field]) - Number(right.values[field]) : String(left.values[field] ?? "").localeCompare(String(right.values[field] ?? "")));
     return (sort.direction === "asc" ? comparison : -comparison) || left.id.localeCompare(right.id);
   });
   return matches;
@@ -184,14 +218,15 @@ ${report ? "" : `import { Button, Stack } from "@mui/material";`}
 import { RgoDesktopTable, type TableColumnDef } from "@rgo-web/frontend";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
 import { useAppDisplayPreferences } from "@/app/theme/preferences/useAppDisplayPreferences";
-import { change${n}Table, type ${n}Request, type ${n}Row } from "../models/${n}";
-export type ${component}Props = Readonly<{ rows: readonly ${n}Row[]; totalCount: number; request: ${n}Request; onRequestChange: (request: ${n}Request) => void; loading: boolean;${report ? "" : ` onDetails: (row: ${n}Row) => void; onEdit: (row: ${n}Row) => void;`} }>;
+import { change${n}Table, type ${n}Request, type ${n}Row${optionImport(c)} } from "../models/${n}";
+export type ${component}Props = Readonly<{ rows: readonly ${n}Row[]; totalCount: number; ${optionsProp(c)} request: ${n}Request; onRequestChange: (request: ${n}Request) => void; loading: boolean;${report ? "" : ` onDetails: (row: ${n}Row) => void; onEdit: (row: ${n}Row) => void;`} }>;
 export function ${component}(props: ${component}Props) {
   const { t } = useAppTranslation();
   const { desktopTableSize } = useAppDisplayPreferences();
+  ${hasChoices(c) ? `const options = props.options ?? empty${n}Options;` : ""}
   const columns: readonly TableColumnDef<${n}Row>[] = [
 ${report ? `    { id: "recordedOn", header: t("${key}.recordedOn"), renderCell: ({ row }) => row.recordedOn, sort: { serverField: "recordedOn" } },` : ""}
-${c.fields.map((f, i) => `    { id: "values.${f.name}", header: t("${key}.fields.${f.name}"), renderCell: ({ row }) => row.values.${f.name}, ${i === 0 ? "rowHeader: true, " : ""}sort: { serverField: "${f.name}" } },`).join("\n")}
+${c.fields.map((f, i) => `    { id: "values.${f.name}", header: t("${key}.fields.${f.name}"), renderCell: ({ row }) => ${displayValue(f, `row.values.${f.name}`, key)}, ${i === 0 ? "rowHeader: true, " : ""}sort: { serverField: "${f.name}" } },`).join("\n")}
 ${report ? "" : `    { id: "__actions", header: t("${key}.actions"), renderCell: ({ row }) => <Stack direction="row" spacing={1}><Button onClick={() => props.onDetails(row)} aria-label={t("${key}.view") + ": " + row.values.${c.fields[0].name}}>{t("${key}.view")}</Button><Button onClick={() => props.onEdit(row)} aria-label={t("${key}.edit") + ": " + row.values.${c.fields[0].name}}>{t("${key}.edit")}</Button></Stack> },`}
   ];
   return <RgoDesktopTable mode="server" rows={props.rows} columns={columns} totalCount={props.totalCount}
@@ -222,15 +257,16 @@ import { useFormStateReporter } from "@/app/forms/hooks/useFormStateReporter";
 import type { AppEntityFormProps } from "@/app/forms/types/AppEntityForm";
 import { buildAppEntityFormOptions } from "@/app/forms/utils/buildAppEntityFormOptions";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
-import { buildDefault${n}Values, create${n}Schema, type ${n}Values } from "../models/${n}";
-export function ${form}(props: AppEntityFormProps<${n}Values>) {
+import { buildDefault${n}Values, create${n}Schema, type ${n}Values${optionImport(c)} } from "../models/${n}";
+export function ${form}(props: AppEntityFormProps<${n}Values> & Readonly<{ ${optionsProp(c)} }>) {
   const { t } = useAppTranslation();
-  const form = useRgoForm({ defaultValues: props.group === RgoFormGroup.CREATE ? buildDefault${n}Values() : props.initialValue, ...buildAppEntityFormOptions(create${n}Schema(t), props) });
+  ${hasChoices(c) ? `const options = props.options ?? empty${n}Options;` : ""}
+  const form = useRgoForm({ defaultValues: props.group === RgoFormGroup.CREATE ? buildDefault${n}Values() : props.initialValue, ...buildAppEntityFormOptions(create${n}Schema(t${hasChoices(c) ? ", options" : ""}), props) });
   useFormStateReporter(form.store, props.onStateChange);
   const submitting = useStore(form.store, state => state.isSubmitting);
   return <form.AppForm><form.Form><RgoContainerGrid container columns={{ xs: 1, sm: 2 }} spacing={2}>
     {props.saveFailed ? <RgoContainerGrid size={{ xs: 1, sm: 2 }}><Alert severity="error">{t("${key}.failed")}</Alert></RgoContainerGrid> : null}
-${c.fields.map(f => `    <RgoContainerGrid size={1}><form.AppField name="${f.name}">{field => <field.TextField fullWidth label={t("${key}.fields.${f.name}")} ${f.required ? "required " : ""}disabled={submitting} />}</form.AppField></RgoContainerGrid>`).join("\n")}
+${c.fields.map(f => `    <RgoContainerGrid size={1}><form.AppField name="${f.name}">{field => ${control(f, key, { disabled: "submitting" })}}</form.AppField></RgoContainerGrid>`).join("\n")}
     <RgoContainerGrid size={{ xs: 1, sm: 2 }}><form.SubmitButton disabled={submitting} variant="contained">{t(props.group === RgoFormGroup.CREATE ? "${key}.create" : "${key}.save")}</form.SubmitButton></RgoContainerGrid>
   </RgoContainerGrid></form.Form></form.AppForm>;
 }`,
@@ -243,19 +279,19 @@ import { useCallback, useState } from "react";
 import type { AppFormState } from "@/app/forms/types/AppEntityForm";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
 import type { AppOverlayViewSession } from "@/app/overlays/hooks/useAppMultiViewOverlay";
-import type { ${n}Row, ${n}SaveCommand, ${n}View } from "../models/${n}";
+import  { ${hasChoices(c) ? `empty${n}Options, type ${n}ChoiceOptions, ` : ""}type ${n}Row, type ${n}SaveCommand, type ${n}View } from "../models/${n}";
 import { ${form} } from "./${form}";
 export type ${panel}Props = RgoOverlayContentProps<void> & Readonly<{
-  session: AppOverlayViewSession<${n}View>; editorState: AppFormState; beforeClose: RgoOverlayBeforeClose;
+  ${optionsProp(c)} session: AppOverlayViewSession<${n}View>; editorState: AppFormState; beforeClose: RgoOverlayBeforeClose;
   onSave: (command: ${n}SaveCommand) => Promise<void>; onEdit: (row: ${n}Row) => void;
   onStateChange: (sessionId: number, state: AppFormState) => void; onSaved: (sessionId: number) => boolean;
 }>;
-function Editor({ session, onSave, onStateChange, onSaved, overlay }: ${panel}Props) {
+function Editor({ session, onSave, onStateChange, onSaved, overlay${hasChoices(c) ? ", options" : ""} }: ${panel}Props) {
   const [failed, setFailed] = useState(false);
   const view = session.view;
   const reportState = useCallback((state: AppFormState) => onStateChange(session.sessionId, state), [onStateChange, session.sessionId]);
   if (view.mode === "details") return null;
-  const shared = { onSaved: async () => { if (onSaved(session.sessionId)) await overlay.complete(undefined); },
+  const shared = { ${hasChoices(c) ? "options, " : ""}onSaved: async () => { if (onSaved(session.sessionId)) await overlay.complete(undefined); },
     onStateChange: reportState, saveFailed: failed,
     onSubmit: async (values: Parameters<typeof onSave>[0]["values"]) => {
       setFailed(false);
@@ -267,9 +303,10 @@ function Editor({ session, onSave, onStateChange, onSaved, overlay }: ${panel}Pr
 export function ${panel}(props: ${panel}Props) {
   const { t } = useAppTranslation();
   const view = props.session.view;
+  ${hasChoices(c) ? `const options = props.options ?? empty${n}Options;` : ""}
   return <RgoOverlayFrame beforeClose={props.beforeClose} busy={props.editorState.submitting} title={t(view.mode === "create" ? "${key}.create" : view.mode === "edit" ? "${key}.edit" : "${key}.details")}>
     {view.mode === "details" ? <Stack spacing={2}><Box component="dl" sx={{ m: 0 }}>
-${c.fields.map(f => `      <Box sx={{ mb: 2 }}><Typography component="dt" color="text.secondary">{t("${key}.fields.${f.name}")}</Typography><Typography component="dd" sx={{ m: 0, overflowWrap: "anywhere" }}>{view.row.values.${f.name}}</Typography></Box>`).join("\n")}
+${c.fields.map(f => `      <Box sx={{ mb: 2 }}><Typography component="dt" color="text.secondary">{t("${key}.fields.${f.name}")}</Typography><Typography component="dd" sx={{ m: 0, overflowWrap: "anywhere" }}>{${displayValue(f, `view.row.values.${f.name}`, key)}}</Typography></Box>`).join("\n")}
       </Box><Button variant="contained" onClick={() => props.onEdit(view.row)}>{t("${key}.edit")}</Button></Stack>
       : <Editor key={props.session.sessionId} {...props} />}
   </RgoOverlayFrame>;
@@ -284,15 +321,15 @@ import { useEffect, useRef } from "react";
 import type { AppFormState } from "@/app/forms/types/AppEntityForm";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
 import { useAppMultiViewOverlay } from "@/app/overlays/hooks/useAppMultiViewOverlay";
-import type { ${n}Request, ${n}Row, ${n}SaveCommand, ${n}View } from "../models/${n}";
+import type { ${n}Request, ${n}Row, ${n}SaveCommand, ${n}View${hasChoices(c) ? `, ${n}ChoiceOptions` : ""} } from "../models/${n}";
 import { ${panel}, type ${panel}Props } from "./${panel}";
 import { ${tab} } from "./${tab}";
-export type ${component}Props = Readonly<{ rows: readonly ${n}Row[]; totalCount: number; request: ${n}Request;
+export type ${component}Props = Readonly<{ rows: readonly ${n}Row[]; totalCount: number; ${optionsProp(c)} request: ${n}Request;
   onRequestChange: (request: ${n}Request) => void; state: "ready" | "loading" | "error"; onRetry: () => void;
   /** Resolve only after authoritative acknowledgement. Observer/refresh failure must not reject a committed save. */
   onSave: (command: ${n}SaveCommand) => Promise<void>;
 }>;
-type Patch = Pick<${panel}Props, "editorState" | "onSave">;
+type Patch = Pick<${panel}Props, "editorState" | "onSave"${hasChoices(c) ? ` | "options"` : ""}>;
 function WorkspaceBody(props: ${component}Props) {
   const { t } = useAppTranslation();
   const feedback = useRgoFeedback();
@@ -309,7 +346,7 @@ function WorkspaceBody(props: ${component}Props) {
     },
     mount: (session, controls) => {
       editor.current = { dirty: false, submitting: false };
-      const handle = overlays.open(${panel}, { session, editorState: editor.current, beforeClose: controls.beforeClose, onSave: props.onSave,
+      const handle = overlays.open(${panel}, { session, ${hasChoices(c) ? "options: props.options, " : ""}editorState: editor.current, beforeClose: controls.beforeClose, onSave: props.onSave,
         onEdit: row => void controls.show({ mode: "edit", row }),
         onStateChange: (sessionId, state) => { if (!controls.isCurrent(sessionId)) return; if (editor.current.dirty === state.dirty && editor.current.submitting === state.submitting) return; editor.current = state; controls.updateProps({ editorState: state }); },
         onSaved: sessionId => { if (!controls.isCurrent(sessionId)) return false; editor.current = { dirty: false, submitting: false }; return true; },
@@ -318,7 +355,7 @@ function WorkspaceBody(props: ${component}Props) {
     },
   });
   const { updateProps } = controller;
-  useEffect(() => { updateProps({ onSave: props.onSave }); }, [props.onSave, updateProps]);
+  useEffect(() => { updateProps({ onSave: props.onSave${hasChoices(c) ? ", options: props.options" : ""} }); }, [props.onSave${hasChoices(c) ? ", props.options" : ""}, updateProps]);
   const changeFilter = (patch: Partial<Pick<${n}Request, "search" | "filter">>) => props.onRequestChange({ ...props.request, ...patch, table: { ...props.request.table, page: 0 } });
   return <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 3 }, minWidth: 0, overflow: "hidden" }}><Stack spacing={2}>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}><Typography component="h2" variant="h5">{t("${key}.title")}</Typography><Button variant="contained" onClick={() => void controller.show({ mode: "create" })}>{t("${key}.create")}</Button></Stack>
@@ -430,8 +467,8 @@ export function Component() {
   const { t } = useAppTranslation();
   const { t: guideT } = useDevelopmentGuideTranslation();
   const initialRows = useMemo<readonly ${n}Row[]>(() => Array.from({ length: 14 }, (_, index) => ({ id: "sample-" + String(index + 1).padStart(2, "0"), values: {
-${c.fields.map(f => `    ${f.name}: (guideT("generatedExamples.sampleRecord") + " " + String(index + 1).padStart(2, "0") + " · " + t("${key}.fields.${f.name}")).slice(0, ${f.maxLength}),`).join("\n")}
-  }${isReport ? ', recordedOn: "2026-01-" + String(index + 1).padStart(2, "0")' : ""} })), [t, guideT]);
+${c.fields.map(f => `    ${f.name}: ${sampleValue(f, `(guideT("generatedExamples.sampleRecord") + " " + String(index + 1).padStart(2, "0") + " · " + t("${key}.fields.${f.name}")).slice(0, ${f.maxLength ?? 500})`)},`).join("\n")}
+  }${isReport ? ', recordedOn: "2026-01-" + String(index + 1).padStart(2, "0")' : ""} })), [${c.fields.some(f => ["string", "multiline"].includes(fieldType(f))) ? "t, guideT" : ""}]);
   ${isReport ? "const rows = initialRows;" : "const [rows, setRows] = useState(initialRows);"}
   const [request, setRequest] = useState<${n}Request${isReport ? " | null" : ""}>(() => ${isReport ? "null" : `buildDefault${n}Request()`});
   const [state, setState] = useState<"ready" | "loading" | "empty" | "error">("ready");
@@ -475,7 +512,7 @@ ${c.fields.map(f => `    ${f.name}: (guideT("generatedExamples.sampleRecord") + 
       <FormControlLabel control={<Switch checked={failNext} onChange={event => setFailNext(event.target.checked)} />} label={guideT("generatedExamples.failNext")} />
     </Stack>
     ${isReport ? `<Alert severity="info">{guideT("generatedExamples.reportSampleHint")}</Alert>` : `{saved ? <Alert severity="success" onClose={() => setSaved(false)}>{t("${key}.saved")}</Alert> : null}`}
-    <${component} request={request} onRequestChange={next => { setRequest(next); setState("ready"); }} rows={state === "empty" ? [] : page} totalCount={state === "empty" ? 0 : matches.length} state={state === "empty" ? "ready" : state} onRetry={() => setState("ready")} ${isReport ? "onExport={onExport}" : "onSave={onSave}"} />
+    <${component} ${hasChoices(c) ? `options={{ ${optionMembers(c, `guideT("generatedExamples.sampleRecord")`)} }} ` : ""}request={request} onRequestChange={next => { setRequest(next); setState("ready"); }} rows={state === "empty" ? [] : page} totalCount={state === "empty" ? 0 : matches.length} state={state === "empty" ? "ready" : state} onRetry={() => setState("ready")} ${isReport ? "onExport={onExport}" : "onSave={onSave}"} />
   </Stack>;
 }`,
   );
@@ -485,9 +522,13 @@ function tests(c, isReport) {
     n = c.name.pascal,
     first = c.fields[0],
     component = role(n, isReport ? "Report" : "Workspace");
+  const firstKind = fieldType(first);
+  const firstA = ["integer", "number"].includes(firstKind) ? "1" : firstKind === "boolean" ? "false" : '\"Alpha\"';
+  const firstB = ["integer", "number"].includes(firstKind) ? "2" : firstKind === "boolean" ? "true" : '\"Beta\"';
+  const matchingFilter = ["integer", "number"].includes(firstKind) ? "2" : firstKind === "boolean" ? "tru" : "bet";
   const values = c.fields
     .filter(f => f.name !== first.name)
-    .map(f => `${f.name}: "record"`)
+    .map(f => `${f.name}: ${sampleValue(f, '"record"')}`)
     .join(", ");
   return [
     file(
@@ -503,10 +544,10 @@ describe("${n} collection ownership", () => {
     expect(change${n}Table(request, { ...request.table, page: 2, sort: { columnId: "values.${first.name}", direction: "desc" } }).table.page).toBe(0);
   });
   it("filters and orders the complete fixture before the caller selects a page", () => {
-    const rows: readonly ${n}Row[] = [{ id: "b", values: { ${values ? values + ", " : ""}${first.name}: "Beta" }${isReport ? ', recordedOn: "2026-01-02"' : ""} }, { id: "a", values: { ${values ? values + ", " : ""}${first.name}: "Alpha" }${isReport ? ', recordedOn: "2026-01-03"' : ""} }];
+    const rows: readonly ${n}Row[] = [{ id: "b", values: { ${values ? values + ", " : ""}${first.name}: ${firstB} }${isReport ? ', recordedOn: "2026-01-02"' : ""} }, { id: "a", values: { ${values ? values + ", " : ""}${first.name}: ${firstA} }${isReport ? ', recordedOn: "2026-01-03"' : ""} }];
     const request = { ...buildDefault${n}Request(), ${isReport ? 'start: "2026-01-01", end: "2026-01-31", ' : ""}table: { page: 0, rowsPerPage: 1, sort: { columnId: "values.${first.name}", direction: "asc" as const } } };
     expect(select${n}Matches(rows, request).map(row => row.id)).toEqual(["a", "b"]);
-    expect(select${n}Matches(rows, { ...request, filter: "bet" }).map(row => row.id)).toEqual(["b"]);
+    expect(select${n}Matches(rows, { ...request, filter: "${matchingFilter}" }).map(row => row.id)).toEqual(["b"]);
     expect(rows.map(row => row.id)).toEqual(["b", "a"]);
   });
 ${
@@ -522,11 +563,10 @@ ${
     expect(encode${n}CsvCell("=1+1")).toBe('"\\'=1+1"');
     expect(encode${n}CsvCell("safe\\ntext")).toBe('"safe\\ntext"');
   });`
-    : `  it("trims accepted values and rejects values beyond each declared text bound", () => {
-    const schema = create${n}Schema(createAppI18n("en").getFixedT(null, "translation"));
-    const accepted = { ${c.fields.map(f => `${f.name}: " v "`).join(", ")} };
-    expect(schema.parse(accepted).${first.name}).toBe("v");
-    expect(schema.safeParse({ ...accepted, ${first.name}: "x".repeat(${first.maxLength + 1}) }).success).toBe(false);
+    : `  it("validates each declared field without conflating empty values, zero or false", () => {
+    const schema = create${n}Schema(createAppI18n("en").getFixedT(null, "translation")${hasChoices(c) ? `, { ${optionMembers(c)} }` : ""});
+    const accepted = { ${c.fields.map(f => `${f.name}: ${sampleValue(f, '" v "')}`).join(", ")} };
+    ${richAssertions(c)}
   });`
 }
 });`,
@@ -566,7 +606,7 @@ describe("${component} applied request", () => {
     let finish!: (value: { count: number }) => void;
     const onExport = vi.fn<${component}Props["onExport"]>(() => new Promise<{ count: number }>(resolve => { finish = resolve; }));
     const request = { ...buildDefault${n}Request(), start: "2026-01-01", end: "2026-01-31" };
-    const row = { id: "a", recordedOn: "2026-01-03", values: { ${c.fields.map(f => `${f.name}: "record"`).join(", ")} } };
+    const row = { id: "a", recordedOn: "2026-01-03", values: { ${c.fields.map(f => `${f.name}: ${sampleValue(f, '"record"')}`).join(", ")} } };
     const props = { request, rows: [row], totalCount: 1, state: "ready" as const, onRetry: vi.fn(), onRequestChange: vi.fn(), onExport };
     const { rerender } = render(<${component} {...props} />);
     await userEvent.setup().click(screen.getByRole("button", { name: "export" }));
@@ -610,7 +650,7 @@ export function renderWorkflowWorkspaces(kind, context) {
   files.push(
     file(
       `${owner}/index.ts`,
-      `export { ${component} } from "./components/${component}";\nexport type { ${component}Props } from "./components/${component}";\nexport { buildDefault${n}Request, change${n}Table, select${n}Matches, ${isReport ? `is${n}PeriodValid, encode${n}CsvCell` : `buildDefault${n}Values, create${n}Schema`} } from "./models/${n}";\nexport type { ${n}Values, ${n}Row, ${n}Request, ${isReport ? `${n}ExportScope, ${n}ExportRequest` : `${n}SaveCommand`} } from "./models/${n}";`,
+      `export { ${component} } from "./components/${component}";\nexport type { ${component}Props } from "./components/${component}";\nexport { buildDefault${n}Request, change${n}Table, select${n}Matches, ${isReport ? `is${n}PeriodValid, encode${n}CsvCell` : `buildDefault${n}Values, create${n}Schema`} } from "./models/${n}";\nexport type { ${n}Values, ${n}Row, ${n}Request, ${hasChoices(context) ? `${n}Option, ${n}ChoiceOptions, ` : ""}${isReport ? `${n}ExportScope, ${n}ExportRequest` : `${n}SaveCommand`} } from "./models/${n}";`,
     ),
   );
   if (isReport) {

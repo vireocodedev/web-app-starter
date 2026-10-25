@@ -12,6 +12,8 @@ import { selectGenerator } from "../terminal-menu.mjs";
 
 const frontendRequire = createRequire(new URL("../../../frontend/package.json", import.meta.url));
 const { default: measure } = frontendRequire("fast-string-width");
+const frontendIndex = (id, variant = "simple") =>
+  menuItems(generators, "frontend").findIndex(item => item.value.id === id && item.value.variant === variant);
 
 function terminal({ raw = false, rows = 24, columns = 80, output = new PassThrough() } = {}) {
   const input = new PassThrough();
@@ -76,6 +78,13 @@ test("groups display human-readable generator names in a predictable order", () 
     menuItems(generators, "frontend").map(item => item.label),
     [
       "Component",
+      "Entity picker",
+      "Quick-create relationship",
+      "Search and filter bar",
+      "Dependent form section",
+      "Save/discard controls",
+      "Related records section",
+      "Selection and bulk actions",
       "Form",
       "Multi-section editor",
       "Child-item editor",
@@ -101,7 +110,7 @@ test("groups display human-readable generator names in a predictable order", () 
   assert.match(view.text, /\x1b\[46m/);
   const text = stripVTControlCharacters(view.text);
   assert.match(text, /Frontend/);
-  assert.match(text, /15 recipes/);
+  assert.match(text, /22 recipes/);
   assert.match(text, /6 recipes/);
   assert.doesNotMatch(text, /frontend\/component/);
 });
@@ -144,7 +153,7 @@ test("Unicode descriptions and color-free mode keep the same measured layout", (
 test("Enter opens Frontend and arrows plus Enter choose Form", async () => {
   const { io, selection } = await start();
   await press(io, "\r", "Frontend / Select generator");
-  await press(io, "\x1b[B\r");
+  await press(io, "\x1b[B".repeat(frontendIndex("frontend/form")) + "\r");
   assert.equal((await selection).id, "frontend/form");
   assert.match(stripVTControlCharacters(io.content()), /Generator: Frontend \/ Form/);
   assertRestored(io);
@@ -162,7 +171,7 @@ test("Home/End and Page Up/Down navigate a scrollable generator list", async () 
   const { io, selection } = await start();
   await press(io, "\r", "Frontend / Select generator");
   await press(io, "\x1b[F", "API client");
-  await press(io, "\x1b[H\x1b[6~\x1b[5~\x1b[B\r");
+  await press(io, "\x1b[H\x1b[6~\x1b[5~" + "\x1b[B".repeat(frontendIndex("frontend/form")) + "\r");
   assert.equal((await selection).id, "frontend/form");
   assertRestored(io);
 });
@@ -170,7 +179,7 @@ test("Home/End and Page Up/Down navigate a scrollable generator list", async () 
 test("advanced recipes are selectable with their variant and supported inputs", async () => {
   const { io, selection } = await start();
   await press(io, "\r", "Frontend / Select generator");
-  await press(io, "\x1b[B".repeat(5) + "\r");
+  await press(io, "\x1b[B".repeat(frontendIndex("frontend/shell", "workspace")) + "\r");
   const recipe = await selection;
   assert.equal(recipe.id, "frontend/shell");
   assert.equal(recipe.variant, "workspace");
@@ -226,7 +235,7 @@ test("resizing switches layouts while preserving selection and flowing input", a
   io.input.resume();
   const { selection } = await start(io);
   await press(io, "\r", "Frontend / Select generator");
-  await press(io, "\x1b[B", "Form");
+  await press(io, "\x1b[B".repeat(frontendIndex("frontend/form")), "Form");
   const offset = io.content().length;
   io.output.columns = 24;
   io.output.rows = 8;

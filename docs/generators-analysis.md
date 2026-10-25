@@ -40,6 +40,22 @@ library publishes its package-root API, not its maintainer-only scripts.
 
 ## Installed frontend patterns and Client Discovery adaptations
 
+### Approved smaller workflow components
+
+The iteration based on starter `163552b7a0cfc1091506e6d4b003fa13879993fe` adds seven approved variants of `frontend/component`. They extract working interactions that recur across applications, using existing installed controls and public feature interfaces. Their menu entries retain source and guide references in the live registry.
+
+| Variant            | Reference and current boundary                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `entity-picker`    | LMS VesselInputSearch; current async lookup and owned-read lifecycle, controlled selection and explicit ID hydration.                |
+| `quick-create`     | LMS ConvoyForm relationship creation; current guarded RGO overlay sessions and acknowledged ID resolution.                           |
+| `filter-bar`       | LMS VesselFilters; current draft/applied filters and atomic URL changes with page reset.                                             |
+| `dependent-fields` | Current DepartmentAssigneePreview and conditional reason example; controlled section inside one parent form and complete validation. |
+| `save-controls`    | Client Discovery navigation guard; installed Router blockers, unload guard and an explicit reusable close admission function.        |
+| `related-records`  | LMS VesselDetails; current controlled server-table ownership with parent/result identity.                                            |
+| `bulk-actions`     | Current ContactsBulkActions; explicit selected IDs, captured command input, confirmation and acknowledgement.                        |
+
+Wizard and Workspace now emit explicit typed fields rather than a runtime generic form renderer. Numeric null/zero, boolean false, calendar strings and current choice membership have deliberate defaults and schemas. Runtime option arrays remain caller-owned; backend/API scalar contracts are unchanged. The [usage guide](generators.md) defines these boundaries and the [verification report](generators-verification.md) records executed checks.
+
 ### Approved workflow recipe iteration
 
 The follow-up based on starter `61051c79f212fa6f5197bb70a91debc67ee1f645` selects four additional frontend workflows after read-only inspection of Client Discovery, LMS and FRED and Bruno's approval of the recommended batch. They extend existing kinds as variants, retaining default output and automatic preview discovery. The base generators already supply useful bounded forms/tables but do not cover these complete workflows; the new pure renderers reuse their installed controls and ownership conventions.
@@ -165,8 +181,9 @@ Standalone categories are deliberately consolidated where one composite produces
 equivalent complete output. A generated form already owns its model, schema,
 labels and example; invoking overlapping generators would create duplication.
 Repository/service/controller fragments require compatible prerequisites rather
-than emitting unresolved type references. Frontend fields are deliberately text
-only: numeric empty/null/zero and date/instant semantics need their own design.
+than emitting unresolved type references. The initial frontend fields were text
+only; the approved Wizard/Workspace iteration now defines numeric empty/null/zero,
+calendar-date and caller-owned choice semantics explicitly.
 
 ## Development Guide integration and existing coverage
 

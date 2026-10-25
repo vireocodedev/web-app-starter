@@ -2,6 +2,24 @@
 
 The implementation targets the current working tree based on `a7defb9e45dc418036d4d62af742fadf42ffde05`, preserving pre-existing changes. The [catalog and policy](generators.md) and [source analysis](generators-analysis.md) describe its contract and provenance.
 
+## Smaller workflow component iteration
+
+The follow-up based on `163552b7a0cfc1091506e6d4b003fa13879993fe` adds seven approved component variants: entity picker, quick-create relationship, search/filter bar, dependent form section, save/discard controls, related records and bulk actions. Wizard and Workspace now support all eight explicit field types. The live catalog has 22 frontend recipes and 21 visual destinations.
+
+The isolated rehearsal additionally emits nine edge-input fixtures: collision-prone component names, boolean/numeric/date/choice first fields and a scalar-only workspace. Their unchanged preview bodies compile under disposable test paths so they do not add gallery destinations. Emitted tests cover optional-select clearing, current option membership, stale lookup completion, acknowledged relationship resolution retry, parent-form dependencies, filter draft identity, server-page ownership and captured bulk inputs.
+
+Independent review checked public interfaces, installed APIs, async lifetimes, leave guards and production isolation. Its findings were corrected before final checks. Preview-only collection copy and fixture adapters now stay in development-only owners, with production chunk sentinels.
+
+The final isolated aggregate passed in 187.201 seconds: formatting, lint, architecture, TypeScript, **119 emitted tests in 43 files**, production build and preview-isolation assertions, and **all 20 browser scenarios together**. Log: `/tmp/repo-verification-1000-tqir4zvk/output.log`. The retained fixture is `/tmp/starter-generator-rehearsal-lS8NFH`; its `rehearsal.json` records each sequential stage. Root's known sample refresh changed the status snapshot during this disposable-fixture check; the copied implementation was unchanged.
+
+The refreshed root gallery contains **164 receipt-owned sample files**, 20 example modules and one navigation factory. All 22 frontend recipes were generated; the API bundle remains nonvisual. Samples, their receipt and the mechanical locale-index change remain uncommitted for local inspection and stashing.
+
+Full root frontend verification with those samples passed in **238.040 seconds**: 52 generator/menu/sample-lifecycle tests, five guide-index tests, 159 paired articles/43 topics, **702 frontend tests in 117 files**, formatting, lint, architecture, TypeScript, production build and Storybook. Log: `/tmp/repo-verification-1000-b0z2ja_g/output.log`. The implementation and sample status remained stable throughout that check.
+
+Dashboard generation passed in 0.599 seconds (`/tmp/repo-verification-1000-uoi3ij_l/output.log`). Documentation-package verification passed in 11.441 seconds: preparation 35 passed/one documented skip, seven documentation tests, 15 Python contracts, one offline browser flow and freshness (`/tmp/repo-verification-1000-86xck8qk/output.log`). Portable installation passed in 11.486 seconds (`/tmp/repo-verification-1000-8o61xunj/output.log`). This evidence-only addition is followed by dashboard regeneration and a final freshness check; unchanged application suites are not repeated.
+
+Earlier attempts exposed installed overlay handler requirements, React lifecycle lint errors, aliasing mistakes, boolean-only unused arguments and a dialog-transition test race. The final aggregate above supersedes those attempts. Browser checks exercise keyboard lookup/retry, parent draft retention and explicit quick-create acceptance, mobile filter Apply/Cancel/history, complete dependency validation, pending/rejected save and leave guards, parent-scoped related records and captured cross-page bulk actions. Backend templates were unchanged; Java checks were not repeated.
+
 ## Workflow recipe iteration
 
 The follow-up based on `61051c79f212fa6f5197bb70a91debc67ee1f645` adds four approved variants: `feature/workspace`, `form/wizard`, `form/collection` and `page/report`. The catalog now contains 15 frontend recipes, including the nonvisual API bundle, and 14 visual Dev Guide destinations. Receipt-protected refresh replaced the previous sample set with 110 sample files; the receipt and application sample output remain uncommitted for inspection.
@@ -81,7 +99,7 @@ Public dashboards were regenerated before the documentation checks (`repo-verifi
 
 ## Scope and remaining limits
 
-- Visual forms generate bounded text fields. Specialized controls, cross-field business choices, relations and command normalization stay with the feature.
+- Base visual forms generate bounded text fields. Wizard/Workspace additionally support explicit typed fields and current caller-owned options. Cross-field business choices, relations and command normalization stay with the feature.
 - Backend composites are shared-authenticated read-only records. Mutation, private/tenant authority and role semantics need their specific approved contract; they are not inferred from a name.
 - API runtime wiring, cache authority cleanup and product route/access policy remain explicit application composition. The frontend composite receives caller-owned rows and submission callbacks.
 - Existing frontend owners are not rewritten. Adopted source/migrations are not regenerated or deleted. Preview file discovery supports preview removal/rename; paired locale maintenance is explicit.

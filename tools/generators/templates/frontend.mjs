@@ -5,6 +5,9 @@
 import { renderAdvancedFrontend } from "./frontend-advanced.mjs";
 import { renderWorkflowWorkspaces } from "./frontend-workspaces.mjs";
 import { renderWorkflowEditors } from "./frontend-editors.mjs";
+import { renderSelectionRecipes } from "./frontend-selectors.mjs";
+import { renderCollectionRecipes } from "./frontend-collections.mjs";
+import { renderSaveControls } from "./frontend-save-controls.mjs";
 
 const quote = value => JSON.stringify(value);
 const role = (name, suffix) => (name.endsWith(suffix) ? name : `${name}${suffix}`);
@@ -33,7 +36,12 @@ function localeFiles(kind, context) {
   }
   if (form || table) {
     en.fields = Object.fromEntries(context.fields.map(field => [field.name, field.label]));
-    const knownLabels = { name: "Naziv", title: "Naslov", description: "Opis", email: "E-pošta" };
+    const knownLabels = {
+      name: "Naziv",
+      title: "Naslov",
+      description: "Opis",
+      email: "E-pošta",
+    };
     hr.fields = Object.fromEntries(
       context.fields.map(field => [field.name, field.labelHr ?? knownLabels[field.name] ?? field.label]),
     );
@@ -538,6 +546,11 @@ export function Component() {
 
 /** Render a complete plan; callers own collision checks, formatting and writes. */
 export function renderFrontend(kind, context) {
+  const recipe =
+    renderSelectionRecipes(kind, context) ??
+    renderCollectionRecipes(kind, context) ??
+    renderSaveControls(kind, context);
+  if (recipe) return recipe;
   const workflow = renderWorkflowWorkspaces(kind, context) ?? renderWorkflowEditors(kind, context);
   if (workflow) return workflow;
   const advanced = renderAdvancedFrontend(kind, context);

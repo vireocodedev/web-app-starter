@@ -23,7 +23,13 @@ async function formatter(root) {
   const options = await prettier.resolveConfig(path.join(root, "frontend/package.json"));
   return async file =>
     /\.(?:tsx?|json|md)$/.test(file.path)
-      ? { ...file, content: await prettier.format(file.content, { ...options, filepath: path.join(root, file.path) }) }
+      ? {
+          ...file,
+          content: await prettier.format(file.content, {
+            ...options,
+            filepath: path.join(root, file.path),
+          }),
+        }
       : file;
 }
 
@@ -99,8 +105,12 @@ async function translationIndexPlan(root, translationId, format) {
   }
   if (names.filter(name => name.endsWith(".hr.ts")).length !== ids.length)
     throw new Error("Unpaired generated Croatian locale.");
-  const previous = (await format({ path: `${translationDirectory}/index.ts`, content: renderTranslationIndex(ids) }))
-    .content;
+  const previous = (
+    await format({
+      path: `${translationDirectory}/index.ts`,
+      content: renderTranslationIndex(ids),
+    })
+  ).content;
   const next = await format({
     path: `${translationDirectory}/index.ts`,
     content: renderTranslationIndex([...ids, translationId]),
@@ -113,7 +123,10 @@ async function canonicalTranslationIndex(root, format) {
   const indexPath = await safePath(root, relative);
   const previous = await readFile(indexPath, "utf8");
   const previousIds = [...previous.matchAll(/from "\.\/([a-z][a-zA-Z0-9_]*)\.en";/g)].map(match => match[1]);
-  const canonical = await format({ path: relative, content: renderTranslationIndex(previousIds) });
+  const canonical = await format({
+    path: relative,
+    content: renderTranslationIndex(previousIds),
+  });
   if (previous !== canonical.content)
     throw new Error(
       "Managed index drift: preserve customizations and restore the canonical translation index before maintenance.",
@@ -137,7 +150,10 @@ export async function createIndexPlan(root) {
     names.filter(name => name.endsWith(".hr.ts")).length !== ids.length
   )
     throw new Error("Generated locales must have paired, valid English/Croatian filenames.");
-  const next = await format({ path: relative, content: renderTranslationIndex(ids) });
+  const next = await format({
+    path: relative,
+    content: renderTranslationIndex(ids),
+  });
   return next.content === previous ? [] : [{ ...next, previous }];
 }
 
@@ -146,8 +162,11 @@ export async function createPlan(root, options) {
   const generator = findGenerator(options.target, options.kind);
   const name = naming(options.name),
     feature = naming(options.feature ?? options.name);
-  const fields = parseFields(options.fields);
   const variant = options.variant ?? generator.variants?.[0].value ?? "request";
+  const rich =
+    generator.target === "frontend" &&
+    ((generator.kind === "form" && variant === "wizard") || (generator.kind === "feature" && variant === "workspace"));
+  const fields = parseFields(options.fields, { rich });
   const allowedVariants =
     generator.variants?.map(item => item.value) ?? (generator.id === "backend/dto" ? ["request", "response"] : []);
   if (options.variant !== undefined && !allowedVariants.includes(variant))
@@ -172,9 +191,9 @@ export async function createPlan(root, options) {
   };
   let files;
   if (generator.target === "frontend") {
-    if (generator.visual && fields.some(field => field.type !== "string"))
+    if (generator.visual && !rich && fields.some(field => field.type !== "string"))
       throw new Error(
-        "Visual frontend generators support text fields only. Specialized scalar controls need explicit value/empty-state semantics.",
+        "This visual recipe supports text fields only. Rich fields are supported by form/wizard and feature/workspace.",
       );
     if (options.migration !== undefined) throw new Error("--migration is supported only for backend domain/feature.");
     const ownerPath = `frontend/src/features/${feature.kebab}`;

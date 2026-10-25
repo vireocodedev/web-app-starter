@@ -33,7 +33,10 @@ async function fixture(t) {
   const config = await prettier.resolveConfig(path.join(root, "frontend/package.json"));
   await put(
     `${translationDirectory}/index.ts`,
-    await prettier.format(renderTranslationIndex([]), { ...config, parser: "typescript" }),
+    await prettier.format(renderTranslationIndex([]), {
+      ...config,
+      parser: "typescript",
+    }),
   );
   await put(
     "backend/src/main/java/example/app/ExampleApplication.java",
@@ -114,10 +117,18 @@ test("compatibility uses weighted evidence and disqualifiers regardless of numer
   assert.equal(assessCompatibility(assessment).mandatory, true);
   assert.equal(assessCompatibility(assessment, 81).mandatory, false);
   assert.equal(
-    assessCompatibility({ ...assessment, disqualifiers: ["Violates approved architecture"] }).mandatory,
+    assessCompatibility({
+      ...assessment,
+      disqualifiers: ["Violates approved architecture"],
+    }).mandatory,
     false,
   );
-  assert.throws(() => assessCompatibility({ ...assessment, coverage: { score: 100, evidence: "" } }));
+  assert.throws(() =>
+    assessCompatibility({
+      ...assessment,
+      coverage: { score: 100, evidence: "" },
+    }),
+  );
   assert.throws(() => assessCompatibility(assessment, 101));
 });
 
@@ -139,7 +150,11 @@ for (const generator of generators) {
         controller: ["domain", "repository", "service"],
       }[generator.kind];
       for (const kind of prerequisiteKinds) {
-        const plan = await createPlan(directory, { ...options, kind, migration: kind === "domain" ? "2" : undefined });
+        const plan = await createPlan(directory, {
+          ...options,
+          kind,
+          migration: kind === "domain" ? "2" : undefined,
+        });
         await applyPlan(directory, plan.files);
       }
     }
@@ -180,7 +195,12 @@ test("backend scalars and request/response variations preserve validation/nullab
   assert.match(request.files[0].content, /@NotBlank @Size\(max = 120\) String title/);
   assert.match(request.files[0].content, /@NotNull Integer amount/);
   assert.match(request.files[0].content, /Boolean accepted/);
-  const response = await createPlan(directory, { target: "backend", kind: "dto", name: "Quote", variant: "response" });
+  const response = await createPlan(directory, {
+    target: "backend",
+    kind: "dto",
+    name: "Quote",
+    variant: "response",
+  });
   assert.match(response.files[0].content, /UUID id/);
   assert.doesNotMatch(response.files[0].content, /@NotBlank/);
   const domain = await createPlan(directory, {
@@ -198,7 +218,7 @@ test("backend scalars and request/response variations preserve validation/nullab
 
 test("layout recipes preserve defaults and validate variants before mutation", async t => {
   const { directory } = await fixture(t);
-  for (const kind of ["shell", "page", "form", "feature"]) {
+  for (const kind of ["component", "shell", "page", "form", "feature"]) {
     const base = { target: "frontend", kind, name: "WorkspaceLayout" };
     assert.deepEqual(
       (await createPlan(directory, base)).files,
@@ -210,7 +230,12 @@ test("layout recipes preserve defaults and validate variants before mutation", a
     ["page", "dashboard"],
     ["page", "detail"],
   ]) {
-    const options = { target: "frontend", kind, variant, name: "WorkspaceLayout" };
+    const options = {
+      target: "frontend",
+      kind,
+      variant,
+      name: "WorkspaceLayout",
+    };
     const plan = await createPlan(directory, options);
     assert.deepEqual(plan, await createPlan(directory, options));
     assert.ok(plan.files.some(file => file.path.endsWith(".example.tsx")));
@@ -224,8 +249,96 @@ test("layout recipes preserve defaults and validate variants before mutation", a
     ["page", "workspace"],
   ])
     await assert.rejects(
-      createPlan(directory, { target: "frontend", kind, variant, name: "WorkspaceLayout" }),
+      createPlan(directory, {
+        target: "frontend",
+        kind,
+        variant,
+        name: "WorkspaceLayout",
+      }),
       /Unsupported --variant/,
+    );
+});
+
+test("composable component recipes emit complete deterministic previews and reject fields before writing", async t => {
+  const { directory } = await fixture(t);
+  const component = generators.find(item => item.id === "frontend/component");
+  for (const variant of component.variants.filter(item => item.value !== "simple")) {
+    const options = {
+      target: "frontend",
+      kind: "component",
+      variant: variant.value,
+      name: `Reusable${naming(variant.value).pascal}`,
+    };
+    const plan = await createPlan(directory, options);
+    assert.deepEqual(plan, await createPlan(directory, options));
+    assert.ok(plan.files.some(file => file.path.endsWith(".example.tsx")));
+    assert.ok(plan.files.some(file => file.path.includes("/tests/features/")));
+    assert.ok(plan.files.some(file => file.path.endsWith(".hr.ts")));
+    assert.ok(variant.guide && variant.reference);
+    await assert.rejects(createPlan(directory, { ...options, fields: "title" }), /composition props/);
+    await applyPlan(directory, plan.files);
+    await assert.rejects(createPlan(directory, options), /Existing frontend feature owner/);
+  }
+});
+
+test("rich field types are deliberate wizard/workspace inputs and leave backend/API parsing strict", async t => {
+  const { directory } = await fixture(t);
+  const fields =
+    "title,notes:multiline?,quantity:integer?,budget:number?,active:boolean,dueOn:date?,status:select,owner:autocomplete?";
+  assert.deepEqual(
+    parseFields(fields, { rich: true }).map(field => field.type),
+    ["string", "multiline", "integer", "number", "boolean", "date", "select", "autocomplete"],
+  );
+  assert.throws(() => parseFields("budget:number"));
+  assert.throws(() => parseFields("title:unknown", { rich: true }));
+  assert.throws(() => parseFields("status:select(active|paused)", { rich: true }));
+  for (const [kind, variant] of [
+    ["form", "wizard"],
+    ["feature", "workspace"],
+  ]) {
+    const plan = await createPlan(directory, {
+      target: "frontend",
+      kind,
+      variant,
+      name: `Rich${kind}`,
+      fields,
+    });
+    assert.equal(plan.context.fields.length, 8);
+    assert.match(
+      plan.files.find(file => file.path.includes("/models/") && file.path.endsWith(".ts")).content,
+      /number \| null/,
+    );
+    for (const primary of [
+      "active:boolean",
+      "amount:number",
+      "startDate:date",
+      "category:select",
+      "person:autocomplete?",
+    ]) {
+      const edge = await createPlan(directory, {
+        target: "frontend",
+        kind,
+        variant,
+        name: `Edge${kind}`,
+        fields: primary,
+      });
+      assert.ok(edge.files.some(file => file.path.endsWith(".example.tsx")));
+    }
+  }
+  for (const options of [
+    { target: "backend", kind: "dto" },
+    { target: "frontend", kind: "api" },
+    { target: "frontend", kind: "form", variant: "simple" },
+    { target: "frontend", kind: "form", variant: "collection" },
+    { target: "frontend", kind: "page", variant: "report" },
+  ])
+    await assert.rejects(
+      createPlan(directory, {
+        ...options,
+        name: "UnsupportedRich",
+        fields: "budget:number",
+      }),
+      /Invalid field/,
     );
 });
 
@@ -263,7 +376,13 @@ test("child-item identity fields cannot be replaced by caller fields", async t =
   const { directory } = await fixture(t);
   for (const fields of ["localId", "serverId", "subject,localId?"])
     await assert.rejects(
-      createPlan(directory, { target: "frontend", kind: "form", variant: "collection", name: "Order", fields }),
+      createPlan(directory, {
+        target: "frontend",
+        kind: "form",
+        variant: "collection",
+        name: "Order",
+        fields,
+      }),
       /reserves localId and serverId/,
     );
   assert.equal((await readdir(path.join(directory, translationDirectory))).length, 1);
@@ -352,16 +471,29 @@ test("validation rejects missing prerequisites, migration reuse and incompatible
     { ...base, kind: "domain", migration: "1" },
     { ...base, kind: "dto", variant: "unknown" },
     { ...base, kind: "dto", feature: "Auth" },
-    { target: "frontend", kind: "form", name: "Order", fields: "amount:integer" },
+    {
+      target: "frontend",
+      kind: "form",
+      name: "Order",
+      fields: "amount:integer",
+    },
   ])
     await assert.rejects(() => createPlan(directory, options));
 });
 
 test("translation index merges multiple owners deterministically and refuses edited mechanical content", async t => {
   const { directory, put } = await fixture(t);
-  const first = await createPlan(directory, { target: "frontend", kind: "form", name: "Zebra" });
+  const first = await createPlan(directory, {
+    target: "frontend",
+    kind: "form",
+    name: "Zebra",
+  });
   await applyPlan(directory, first.files);
-  const next = await createPlan(directory, { target: "frontend", kind: "component", name: "Alpha" });
+  const next = await createPlan(directory, {
+    target: "frontend",
+    kind: "component",
+    name: "Alpha",
+  });
   await applyPlan(directory, next.files);
   const index = await readFile(path.join(directory, translationDirectory, "index.ts"), "utf8");
   assert.ok(index.indexOf("alpha_component_alpha") < index.indexOf("zebra_form_zebra"));
@@ -374,7 +506,11 @@ test("translation index merges multiple owners deterministically and refuses edi
 
 test("index maintenance reconciles removed locale pairs without overwriting customized mechanics", async t => {
   const { directory } = await fixture(t);
-  const plan = await createPlan(directory, { target: "frontend", kind: "form", name: "Retired" });
+  const plan = await createPlan(directory, {
+    target: "frontend",
+    kind: "form",
+    name: "Retired",
+  });
   await applyPlan(directory, plan.files);
   const id = plan.context.translationId;
   for (const locale of ["en", "hr"]) await rm(path.join(directory, translationDirectory, `${id}.${locale}.ts`));

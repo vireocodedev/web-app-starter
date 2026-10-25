@@ -2,6 +2,24 @@ import { englishHandbookTranslations } from "./development-guide-handbook.en";
 
 export const englishDevelopmentGuideTranslations = {
   generatedExamples: {
+    collectionRecipes: {
+      page: "Page {{page}}",
+      parent: "Parent record",
+      parentA: "Project Alpha",
+      parentB: "Project Beta",
+      previewState: "Preview state",
+      ready: "Ready",
+      details: "Selected record: {{name}}",
+      sample: "Record {{number}}",
+      selectRow: "Select {{name}}",
+      save: "Save changes",
+      failNext: "Fail next action",
+      hold: "Hold pending action",
+      release: "Release pending action",
+      scope: "Selection includes explicit record IDs across pages.",
+      urlHint: "Apply filters, change pages, then use browser Back to restore the applied view.",
+      linked: "Linked record",
+    },
     title: "Generated examples",
     description: "Interactive examples of generated application components. Each example uses local fixtures.",
     kinds: {
@@ -17,6 +35,11 @@ export const englishDevelopmentGuideTranslations = {
     populated: "Populated",
     disabled: "Disabled",
     simulateFailure: "Simulate failure",
+    saveControlsHint:
+      "Edit the title, save or discard, and try closing the editor. Route and search changes share the same leave policy.",
+    tryCloseEditor: "Try closing the editor",
+    editorClosed: "Editor closed.",
+    reopenEditor: "Reopen editor",
     previewState: "Preview result state",
     ready: "Ready",
     failNext: "Fail the next save or export",

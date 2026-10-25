@@ -32,7 +32,7 @@ export function sampleInvocations(catalog = generators) {
         const name =
           index === 0 && legacyNames[generator.kind]
             ? legacyNames[generator.kind]
-            : `Generator${naming(generator.kind).pascal}${variant ? naming(variant.value).pascal : ""}`;
+            : naming(["Generator", generator.kind, variant?.value].filter(Boolean).join(" ")).pascal;
         const acceptsFields = (variant ?? generator).acceptsFields !== false;
         return {
           target: "frontend",
@@ -41,7 +41,11 @@ export function sampleInvocations(catalog = generators) {
           feature: generator.kind === "api" ? "GeneratorCatalog" : name,
           ...(variant ? { variant: variant.value } : {}),
           ...(acceptsFields
-            ? { fields: generator.kind === "api" ? "title,quantity:integer?,active:boolean" : "title,notes?" }
+            ? {
+                fields:
+                  variant?.sampleFields ??
+                  (generator.kind === "api" ? "title,quantity:integer?,active:boolean" : "title,notes?"),
+              }
             : {}),
         };
       }),
@@ -144,7 +148,12 @@ export async function refreshSamples(root = workspaceRoot, { dryRun = false } = 
     // Owned missing halves can be completed after interruption; unrelated locale damage still refuses before cleanup.
     await checkRemainingLocales(root, receipt.files);
     const invocations = sampleInvocations();
-    if (dryRun) return { dryRun: true, remove: receipt.files.map(file => file.path), recipes: invocations };
+    if (dryRun)
+      return {
+        dryRun: true,
+        remove: receipt.files.map(file => file.path),
+        recipes: invocations,
+      };
     for (const file of receipt.files) {
       const destination = await safePath(root, file.path);
       if (!(await exists(destination))) continue;
@@ -190,7 +199,12 @@ export async function refreshSamples(root = workspaceRoot, { dryRun = false } = 
         name: invocation.name,
       });
     }
-    return { dryRun: false, recipes: results, files: files.length, preview: "/dev-guide/frontend/generated" };
+    return {
+      dryRun: false,
+      recipes: results,
+      files: files.length,
+      preview: "/dev-guide/frontend/generated",
+    };
   } finally {
     if (lock) {
       await lock.close();

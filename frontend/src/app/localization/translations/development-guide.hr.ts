@@ -3,6 +3,24 @@ import { croatianHandbookTranslations } from "./development-guide-handbook.hr";
 
 export const croatianDevelopmentGuideTranslations = {
   generatedExamples: {
+    collectionRecipes: {
+      page: "Stranica {{page}}",
+      parent: "Nadređeni zapis",
+      parentA: "Projekt Alfa",
+      parentB: "Projekt Beta",
+      previewState: "Stanje primjera",
+      ready: "Spremno",
+      details: "Odabrani zapis: {{name}}",
+      sample: "Zapis {{number}}",
+      selectRow: "Odaberi: {{name}}",
+      save: "Spremi promjene",
+      failNext: "Sljedeća radnja ne uspijeva",
+      hold: "Zadrži radnju na čekanju",
+      release: "Nastavi radnju",
+      scope: "Odabir sadrži izričite identifikatore zapisa s više stranica.",
+      urlHint: "Primijenite filtre, promijenite stranicu pa gumbom Natrag vratite primijenjeni prikaz.",
+      linked: "Povezani zapis",
+    },
     title: "Generirani primjeri",
     description: "Interaktivni primjeri generiranih komponenti aplikacije. Svaki primjer koristi lokalne podatke.",
     kinds: {
@@ -18,6 +36,11 @@ export const croatianDevelopmentGuideTranslations = {
     populated: "Popunjeno",
     disabled: "Onemogućeno",
     simulateFailure: "Simuliraj pogrešku",
+    saveControlsHint:
+      "Uredite naslov, spremite ili odbacite promjene pa pokušajte zatvoriti uređivač. Promjene rute i parametara pretrage koriste ista pravila izlaska.",
+    tryCloseEditor: "Pokušaj zatvoriti uređivač",
+    editorClosed: "Uređivač je zatvoren.",
+    reopenEditor: "Ponovno otvori uređivač",
     previewState: "Stanje rezultata u primjeru",
     ready: "Spremno",
     failNext: "Sljedeće spremanje ili izvoz ne uspijeva",
