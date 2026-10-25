@@ -4,9 +4,13 @@ For every task, follow the root
 [mandatory development-guide workflow](../AGENTS.md#mandatory-development-guide-workflow),
 including its pattern-reuse and approval gate.
 
-Before creating source, follow the mandatory
-[Generator-first workflow](../docs/generators.md#generator-first-agent-policy),
-including compatibility evaluation and automatic visual Dev Guide previews.
+For **every frontend addition**, including new UI or logic inside existing
+features, first run `npm run generate -- --list --json` from the workspace root
+and inspect applicable generators and recipe variants. Follow the mandatory
+[Generator-first workflow](../docs/generators.md#generator-first-agent-policy):
+assess each reusable part, **use compatible generated output before customizing**,
+and retain its automatic visual Dev Guide preview. Implement an unsupported
+portion manually only after recording why the available generators do not fit.
 
 For route and page lifecycle changes, use [app-route-pages](.agents/skills/app-route-pages/SKILL.md). For drawer, section, header, breadcrumb, and page-sidebar navigation, use [app-shell-navigation](.agents/skills/app-shell-navigation/SKILL.md). For shell appearance and preferences, use [app-shell-preferences](.agents/skills/app-shell-preferences/SKILL.md). Load the related skill when one request crosses these owners.
 

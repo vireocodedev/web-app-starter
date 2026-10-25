@@ -18,10 +18,13 @@ by changing guidance or weakening checks.
 
 ## Task-specific owners
 
-Before creating frontend or backend source, follow the mandatory
+Before writing any new frontend or backend code, AI agents MUST follow the
 [Generator-first workflow](docs/generators.md#generator-first-agent-policy).
-Discover generators, evaluate genuine compatibility (default **80%**), use compatible
-output before customization, and include automatic Dev Guide examples for visual UI.
+Always check existing generators and recipe variants for each reusable part,
+including additions inside existing frontend features. Evaluate genuine
+compatibility (default **80%**); when a generator fits, generate and use its output
+before customization. Record the specific gap for any manual portion, and include
+automatic Dev Guide examples for generated visual UI.
 
 For coordinating a consumer from clone through accepted production business V1,
 read [the V1 workflow](docs/v1-workflow.md); follow its linked owners for each task.
