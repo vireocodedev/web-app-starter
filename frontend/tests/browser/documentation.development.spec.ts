@@ -134,17 +134,28 @@ test("opens the guide from the account menu and switches its Frontend sections",
     "Example pages",
     "Patterns",
     "Workflow patterns",
-    "Generated examples",
     "Architecture",
   ]);
   await expect(sections.getByRole("link", { name: "Example pages" })).toHaveAttribute("aria-current", "page");
   await page.locator("#main-content").getByRole("link", { name: "Contacts CRUD", exact: true }).click();
   await expect(page).toHaveURL("/dev-guide/frontend/example-pages/contacts-crud");
-  await sections.getByRole("link", { name: "Patterns" }).click();
+  await sections.getByRole("link", { name: "Patterns", exact: true }).click();
   await expect(page).toHaveURL("/dev-guide/frontend/patterns");
   await expect(page.getByRole("navigation", { name: "Pattern categories" })).toBeVisible();
   await sections.getByRole("link", { name: "Architecture" }).click();
   await expect(page).toHaveURL(/\/dev-guide\/frontend\/architecture\/source-map-and-ownership$/);
+});
+
+test("retired generated example URLs render Not Found in development", async ({ page }) => {
+  for (const path of [
+    "/dev-guide/frontend/generated",
+    "/dev-guide/frontend/generated/form/user-profile--user-profile",
+  ]) {
+    await page.goto(path);
+    await expect(page).toHaveTitle("Page not found · RGO application");
+    await expect(page.locator("#main-content").getByRole("alert")).toHaveText("Page not found");
+    await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  }
 });
 
 test("opens Backend without tabs and returns through the category header breadcrumb", async ({ page }) => {
@@ -675,7 +686,7 @@ test("keeps mobile sections accessible through a sheet, separate from the page m
   await more.click();
   const sheet = page.getByRole("dialog", { name: "Sections" });
   await expect(sheet.getByRole("link", { name: "Example pages" })).toBeVisible();
-  await expect(sheet.getByRole("link", { name: "Patterns" })).toBeVisible();
+  await expect(sheet.getByRole("link", { name: "Patterns", exact: true })).toBeVisible();
   await expect(sheet.getByRole("link", { name: "Architecture" })).toHaveAttribute("aria-current", "page");
   await sheet.getByRole("link", { name: "Example pages" }).click();
   await expect(page).toHaveURL("/dev-guide/frontend/example-pages");
@@ -720,7 +731,9 @@ test("keeps mobile sections accessible through a sheet, separate from the page m
   await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Vodič za razvoj.*Frontend/);
   await expect(sections.getByRole("link", { name: "Arhitektura" })).toHaveAttribute("aria-current", "page");
   await page.getByRole("button", { name: "Više sekcija" }).click();
-  await expect(page.getByRole("dialog", { name: "Odjeljci" }).getByRole("link", { name: "Obrasci" })).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "Odjeljci" }).getByRole("link", { name: "Obrasci", exact: true }),
+  ).toBeVisible();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Na ovoj stranici" }).click();
   await expect(page.getByRole("navigation", { name: "Arhitektura", exact: true })).toBeVisible();

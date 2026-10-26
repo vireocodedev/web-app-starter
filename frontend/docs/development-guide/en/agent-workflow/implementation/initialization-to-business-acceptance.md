@@ -1,86 +1,117 @@
 # Separate setup readiness from accepted business V1
 
-Coordinate a generated application through setup, agreed scope, specification, implementation and release without confusing one stage's evidence with another's. A deployed skeleton is valuable setup progress; it is not an accepted business product.
+Coordinate setup, agreed requirements, implementation and release without
+confusing one stage's evidence with another's. A deployed skeleton is setup
+progress; an accepted business product requires implemented and verified journeys.
 
-**Documented starter workflow.** `docs/v1-workflow.md` is the stage coordinator. Initialization, Discovery export/specification and release procedures retain their own contracts. This article adds a decision map, not a new end-to-end automation or authority to run every stage.
+**Documented starter workflow.** `docs/v1-workflow.md` coordinates the stages.
+The current setup owners are `.agents/skills/initialization-intake/SKILL.md` and
+`.agents/skills/initialization-execution/SKILL.md`; detailed procedures remain with
+those packages and the CI/release owners. This article adds no execution authority.
 
 ## Trigger, owner and invariant
 
-Use when planning a generated consumer, resuming partial setup, selecting the implementation baseline or deciding whether V1 is complete. The developer/operator owns setup within written scope. Administrator and designated client own business approval/lock. Implementers own bounded issue outcomes; release and business acceptance retain their separate owners.
+Use when planning a consumer, resuming partial setup or deciding whether V1 is
+complete. The developer/operator owns setup within confirmed scope. Product/client
+owners agree requirements and accept delivered business behavior. Implementers
+own bounded outcomes; release operators own promotion and recovery.
 
-The invariant is independent state with explicit transitions. Preparation review does not imply business approval. Business lock does not authorize infrastructure changes. Specification completeness does not mean issues were published or code implemented. Production health does not replace accepted business journeys.
+Intake completion, execution acceptance, business agreement and business acceptance
+are independent states. Completing one does not imply the others.
 
 ```text
-consumer capability + reviewed developer preparation
-             -> authorized initialization evidence
-                         |
-independent business review -> same-hash approvals -> explicit LOCKED
-                         |
-           pinned specification + decision/issue graph
-                         |
-          approved publication -> bounded implementation
-                         |
-             staging business acceptance
-                         |
-             exact-pair production promotion + handoff
+checkout -> upfront intake -> confirmed, saved answers
+                         -> gated initialization -> verified setup
+
+agreed business requirements -> bounded implementation -> staging acceptance
+                         -> exact-pair production promotion + handoff
 ```
 
-Setup and business discovery can proceed in parallel. Specification needs the actual initialized context and intended locked business baseline; the diagram is not a requirement to wait on every unrelated branch of preparation.
+## Establish the consumer and finish intake
 
-## Establish the consumer before mutating it
+Inspect actual Git origin, identity, local work and compatible packages. Preserve
+existing data, credentials, initialization receipts and private resume state.
+Adoption needs both complete skills, not a copied helper without its references.
 
-Inspect actual Git origin, identity, existing work and compatible workflow packages. Preserve completed initialization, private resume state and existing data. Older clones may lack full specification capabilities; copying one script without its references/metadata/tools is not a complete adoption.
+A bare skill invocation offers a short action menu and waits. A concrete request
+such as `$initialization-intake prepare initialization for this repository` starts
+intake directly. The agent presents all known questions upfront, proposes detected
+facts for review and resolves human service-access prerequisites before execution.
 
-Initialization uses reviewed developer preparation with its own revision, signed bounded execution scope and live readiness. A bare status invocation reports preparation/setup/scope state rather than starting setup or downloading a business export. Plan-only does not become execution because every checkbox is checked.
+Answers, unknowns and prerequisite evidence live in the Git-ignored
+`.agents/skills/initialization-intake/state/intake.json`. Keep nonsecret values and
+protected references there. Another agent session can resume with
+`$initialization-intake resume intake`, preserving answered questions and showing
+what remains. Completion binds the user's confirmation to the resolved scope and
+current state; answer changes invalidate it.
 
-The initializer supports a bounded local-only task when explicitly requested. That completes local scope only, not full CI/deployment/recovery acceptance. Missing provider access or setup evidence must remain visible instead of borrowing historical template receipts.
+## Gate execution on completed intake
 
-## Lock the intended business source
+`$initialization-execution initialize this repository` first checks intake
+completion, current answers and checkout identity. Missing, partial, changed or
+mismatched intake explicitly stops with `$initialization-intake` guidance before
+provider checks or initialization actions. Execution must not silently answer
+remaining questions or mark intake complete.
 
-The administrator and designated client independently approve the same saved snapshot hash, then the administrator explicitly locks it. Two approvals without lock remain awaiting lock. A newer draft does not replace the old locked baseline, and a participant's tentative answer remains tentative even inside an approved snapshot.
+Once the gate passes, verify live readiness and execute the confirmed scope using
+the execution contract/runbook. Full setup requires real consumer evidence for
+local development, CI/protection, staging, production and initialized recovery.
+Explicit local-only scope proves only local setup. Unexpected provider failures or
+scope changes can block execution; known questions belong in intake.
 
-The specification capture selects the highest-version `LOCKED` baseline. Confirm it is the intended V1 source. Retain original export bytes, project/baseline/version/content hash, approval identity and separate whole-file digest. Supporting asset bytes are outside that export/hash and need their own authorized retrieval/provenance.
+No Client Discovery service, project UUID, export or business approval is needed
+for initialization. Preserve completed legacy evidence when adopting the skills;
+incomplete execution requires intake before continuing mutations.
 
-## Generate actionable scope without fabricating facts
+## Keep later requirements separate
 
-The package includes specification, acceptance scenarios, decisions, traceability, page map, issue manifest and implementation workflow. Technical delegation can be resolved with rationale. `PROPOSED` and `REQUIRES_INPUT` outcomes remain visible and gate affected tasks; unaffected ready work can proceed.
+The replacement requirements/specification workflow is outside this initialization
+change and remains to be defined. No new automated specification workflow is
+installed. The existing `discovery-specification` package is a legacy app
+integration, outside the new setup path; local intake is not its business source.
 
-Local structural validation and semantic review have different purposes. Passing tools do not establish client approval. Generation initially leaves implementation unimplemented, and ready-for-spec-review is not coding authorization.
-
-Client artifacts belong in the explicit private/nested output, away from public dashboard inputs. Generation does not authorize committing or publishing them. Issue publication requires the selected target and explicit request, retaining stable keys/import mappings and partial-failure evidence.
+Business scope still needs useful acceptance criteria, exclusions, permissions,
+journeys and owned unresolved decisions before affected implementation. Setup
+confirmation does not approve those business decisions. Track actual issue/PR
+progress independently of initialization state.
 
 ## Accept behavior before promoting artifacts
 
-| Stage result              | Required distinction                                                              |
-| ------------------------- | --------------------------------------------------------------------------------- |
-| Local app starts          | Local setup, not deployed business acceptance.                                    |
-| CI/protection configured  | Consumer delivery foundation, not completed features.                             |
-| Specification validated   | Source/graph consistency plus separate semantic review.                           |
-| Issues published          | Execution records, not implemented code.                                          |
-| PR integrated             | Bounded implementation with actual checks; full V1 may remain.                    |
-| Staging candidate healthy | Artifact/runtime readiness; test agreed journeys/roles/failures separately.       |
-| Exact pair promoted       | Production identity; still retain smoke, operating and recovery handoff evidence. |
+| Stage result              | Required distinction                                                    |
+| ------------------------- | ----------------------------------------------------------------------- |
+| Intake complete           | Confirmed setup inputs, not successful setup.                           |
+| Local app starts          | Local setup, not deployed business acceptance.                          |
+| CI/protection configured  | Delivery foundation, not implemented business features.                 |
+| Reviewed implementation   | Bounded outcome with actual checks; full V1 may remain.                 |
+| Staging candidate healthy | Runtime readiness; verify agreed journeys/roles/failures separately.    |
+| Exact pair promoted       | Production identity still needs smoke, operating and recovery evidence. |
 
-Use the generated `ACCEPTANCE.md` to verify agreed business behavior on the exact staging candidate and record client acceptance/release blockers. Scope approval agrees what to build; it does not accept the delivered code.
-
-Production promotes the exact accepted frontend/backend pair without rebuilding. Migrations, backup, account provisioning and recovery follow their operator owners. Keep source identity and actual run/pair receipts intact.
+Record business acceptance and blockers against the exact staging candidate.
+Production promotes that accepted frontend/backend pair without rebuilding.
+Migrations, backups, account provisioning and recovery follow their existing owners.
+Keep source identity and actual run/pair receipts intact.
 
 ## Failure and decision table
 
-| Observation                                         | Decision                                                           |
-| --------------------------------------------------- | ------------------------------------------------------------------ |
-| Setup complete, features missing                    | Continue implementation; do not mark business V1 delivered.        |
-| Both approvals exist, no explicit lock              | Finish the intended lock process before export selection.          |
-| New draft appears during coding                     | Preserve pinned source; reviewed refresh/change cycle is separate. |
-| Package tools pass, consequential policy unresolved | Block affected work with an owned decision.                        |
-| Staging infrastructure green, journey fails         | Business acceptance remains open.                                  |
-| Production image differs from accepted staging pair | Promotion contract fails; reconcile artifact identity.             |
+| Observation                                        | Decision                                                 |
+| -------------------------------------------------- | -------------------------------------------------------- |
+| Intake missing or no longer valid                  | Stop execution and resume intake.                        |
+| Another session has answered questions             | Load saved state and continue only remaining questions.  |
+| Setup complete, business features missing          | Continue implementation; business V1 remains incomplete. |
+| Consequential business policy unresolved           | Block affected work with an owned decision.              |
+| Staging infrastructure green, journey fails        | Business acceptance remains open.                        |
+| Production pair differs from accepted staging pair | Reconcile artifact identity before claiming promotion.   |
 
 ## Acceptance and handoff
 
-Final V1 evidence includes accepted requirement/issue coverage, exact candidate/pair identity, real business smoke, current operating/access docs, recovery evidence and known limitations. Consumer-specific setup belongs in its authoritative runbook entrypoint.
+Final V1 evidence includes accepted requirement coverage, exact candidate/pair
+identity, real business smoke, current operating/access docs, recovery and limits.
+Consumer setup belongs in its authoritative setup entry point. Historical template
+receipts never prove consumer acceptance. A fresh-consumer rehearsal is required
+before claiming the new setup experience needs no follow-up intervention.
 
-The stage owners decide and execute their authorized procedures. This article performs no setup, export capture, issue publication, implementation claim or deployment.
+The pinned references below describe historical stage/evidence contracts. Current
+intake and execution behavior is owned by the current skill paths named above.
 
 ## Source provenance
 

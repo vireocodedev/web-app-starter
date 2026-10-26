@@ -42,23 +42,6 @@ Previous Home/Contacts URLs redirect to the corresponding Example page, while
 old Patterns/Architecture URLs redirect beneath Frontend. Redirects preserve
 query parameters and fragments. The whole guide remains development-only.
 
-Generated examples appears under Frontend at `/dev-guide/frontend/generated`.
-The router-owned `generatedExampleRoutes.tsx` discovers lazy visual preview pages
-by filename in development and derives their records and grouped index links.
-Generation requires no per-example registry edits. Actual generated components
-retain ordinary feature ownership; previews use local fixtures and the existing
-providers. Removing a preview file removes its registration on the next build.
-
-The navigation generator emits a router-owned factory under
-`app/router/generated/<feature>--<name>.routes.tsx`. Its `createRoutes(mount)`
-returns ordinary authenticated registry records: header sections, nested layouts,
-default children and deep pages. Development-only eager discovery mounts these
-factories beneath Generated examples, with isolated route IDs and validated paths.
-Product registration imports the same factory deliberately with a separate mount;
-features still receive sidebar destinations through props and reuse
-`AppPageNavigation`. The generated module never imports the preview discovery
-owner, and the production branch excludes automatic preview imports entirely.
-
 Guide routes inherit `contentMaxWidth: "xl"`. The shell places local breadcrumbs
 and routed content inside the same container. The deepest explicitly supplied
 width wins; descendants without an override retain their ancestor's width.

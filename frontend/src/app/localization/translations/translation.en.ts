@@ -1,7 +1,4 @@
-import { generatedEnglishTranslations } from "./generated";
-
 export const englishTranslations = {
-  generated: generatedEnglishTranslations,
   authentication: {
     account: "Account",
     openAccountMenu: "Open user navigation menu",

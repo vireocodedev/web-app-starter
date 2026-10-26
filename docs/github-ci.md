@@ -18,18 +18,21 @@ not settings inherited by **Use this template**.
 | Documentation outside the app folders | Portable initialization/docs and aggregate gate |
 | Manual dispatch or the first branch push | All lanes |
 
-The template also treats `.agents/skills/initialize-project/**` as shared setup
-changes. The change job only detects owners; it does not install Node, browsers
-or application dependencies. It compares the prospective PR merge commit with
+The template also treats `.agents/skills/initialization-intake/**` and
+`.agents/skills/initialization-execution/**` as shared setup changes. The change
+job only detects owners; it does not install Node, browsers or application
+dependencies. It compares the prospective PR merge commit with
 the event's base, or a main push with its preceding commit. Renames select both
 owners. Keep the workflow itself unfiltered so required checks always report.
 
 The independent **Portable initialization and documentation** lane always runs,
-including for documentation-only changes. It selects the skill's pinned Node/npm,
-installs that package's lockfile, verifies preparation/contract/documentation and
-Chromium desktop/mobile flows, checks generated pages and repeats verification
-in an isolated skill-only consumer. Browser binaries and dependencies remain in
-the disposable job. Template-only assertions remain required in a real checkout.
+including for documentation-only changes. It selects the execution package's
+pinned Node/npm,
+installs the execution package's lockfile, verifies the intake state/completion
+contract and execution documentation, and runs Chromium desktop/mobile flows.
+It checks generated pages and repeats verification in an isolated consumer
+containing both skills. Browser binaries and dependencies remain in the
+disposable job. Template-only assertions remain required in a real checkout.
 
 Selected frontend work has separate static, build and test lanes. Static checks
 retain formatting, lint, architecture and every TypeScript project. The build

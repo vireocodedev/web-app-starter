@@ -36,22 +36,16 @@ This diagram describes ownership and dependency, not a proposed replacement work
 
 ## Read the actual selection table
 
-`tools/generators/**`, root `package.json` and `generator-policy.json` select both
-application lanes. Frontend static verification runs generator tests and the
-sequential isolated-output rehearsal against the installed application infrastructure.
-It always checks generated TypeScript; generated Java runs there only when both
-application owners are selected. A frontend-only change retains its frontend scope.
-
-| Change                                                                    | Required owner lanes                                            |
-| ------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `backend/**`                                                              | Backend image/smoke and backend test shards                     |
-| `frontend/**`                                                             | Frontend static, Storybook/image/smoke and frontend test shards |
-| Ordinary `infrastructure/ci/**`                                           | Foundation                                                      |
-| `.github/**`, `.vscode/**`, `infrastructure/release/**`                   | All owner lanes                                                 |
-| CI routing/shard helpers, timing configuration and designated shard tests | All owner lanes                                                 |
-| `.agents/skills/initialize-project/**`                                    | All owner lanes                                                 |
-| Documentation outside application folders                                 | Portable lane and aggregate gate                                |
-| Manual dispatch or zero-base initial push                                 | All owner lanes                                                 |
+| Change                                                                                  | Required owner lanes                                            |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `backend/**`                                                                            | Backend image/smoke and backend test shards                     |
+| `frontend/**`                                                                           | Frontend static, Storybook/image/smoke and frontend test shards |
+| Ordinary `infrastructure/ci/**`                                                         | Foundation                                                      |
+| `.github/**`, `.vscode/**`, `infrastructure/release/**`                                 | All owner lanes                                                 |
+| CI routing/shard helpers, timing configuration and designated shard tests               | All owner lanes                                                 |
+| `.agents/skills/initialization-intake/**`, `.agents/skills/initialization-execution/**` | All owner lanes                                                 |
+| Documentation outside application folders                                               | Portable lane and aggregate gate                                |
+| Manual dispatch or zero-base initial push                                               | All owner lanes                                                 |
 
 Portable verification is mandatory in every row. The explicit helper paths in `scope()` are authoritative; do not generalize them into “every documentation change is cheap.” A guide article under `frontend/` legitimately selects frontend work because its build/runtime owner is the frontend.
 

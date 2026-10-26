@@ -25,11 +25,6 @@ export const croatianDeveloperWorkflowHandbookTranslations = {
     },
   },
   articles: {
-    "developer-workflow-template-evolution-generator-first-workflow": {
-      title: "Prvo generirajte, zatim prilagodite unutar vlasničke granice",
-      description:
-        "Pronađite kompatibilne generatore, sačuvajte usvojeni izvor i pregledajte stvarne primjere kroz postojeći router vodiča.",
-    },
     "developer-workflow-local-development-workspace-runtimes": {
       title: "Jedan workspace, dva runtimea",
       description:

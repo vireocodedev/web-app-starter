@@ -4,79 +4,73 @@ A single-repository starter with a Java Spring Boot backend and a Vite React
 TypeScript frontend. Manual paired GHCR/Hetzner release workflows require the
 explicit operator setup below; copying this template does not deploy an app.
 
-For the complete journey, follow [From a cloned template to a production V1](docs/v1-workflow.md):
-developer setup, the Client Discovery scope checklist, specification/issue handoff,
-implementation, staging acceptance and production promotion.
+For the journey from setup through business acceptance, follow
+[From a cloned template to a production V1](docs/v1-workflow.md). Setup uses the
+two bundled skills below. The later requirements/specification workflow remains
+to be defined separately.
 
 ## Create your project from this template
 
 Use GitHub's **Use this template**, create your repository, and clone it locally.
-Open the consumer as a trusted VS Code workspace and invoke `$initialize-project`.
-Supply the production Client Discovery project ID once. The skill remembers the
-association locally and reports developer preparation, recorded setup progress,
-client approvals, scope locking and export eligibility before offering the next
-task. Configure the protected user-local administrator profile once using the
-[preparation guide](.agents/skills/initialize-project/references/preparation.md).
-See [project status](.agents/skills/initialize-project/references/project-status.md)
-for status meanings. To explicitly initialize after completing and reviewing the
-project's **Developer preparation**:
+Open the consumer as a trusted VS Code workspace, then start intake:
 
 ```text
-$initialize-project initialize this consumer from production project PROJECT_UUID
+$initialization-intake prepare initialization for this repository
 ```
 
-The agent automatically captures the reviewed workbook and provenance, checks
-the actual checkout and live readiness, and executes the signed bounded scope.
-Existing manual workbooks and incomplete runs can still be resumed. A bare
-`$initialize-project` shows current status and offers a short task menu; no
-configuration interview or manual download is required. Status inspection starts
-no setup, export download or deployment.
-Codex uses `$` skill mentions; `/initialize-project` is the entry point for
-agents that support skill slash commands.
+The agent inspects the checkout, presents all setup questions upfront and records
+answers, missing inputs and prerequisite evidence privately in
+`.agents/skills/initialization-intake/state/intake.json`. Resume in another agent
+session with `$initialization-intake resume intake`. Detectable facts and defaults
+are proposed for review; credentials stay in protected stores, with references in
+state. Complete all applicable answers, human login/consent steps and the final
+confirmation of the resolved execution scope before starting execution.
 
-The [project skill](.agents/skills/initialize-project/SKILL.md) ships with the template;
-no personal/global skill is required. See the
-[registration guidance](.agents/skills/initialize-project/references/runbook.md#codex-skill-registration)
-if the skill does not appear. It reads the saved workbook, verifies
-live readiness and current written scope, then prepares and verifies local
-development, shared CI, both real deployments and recovery. Missing inputs or
-access produce a private readiness report, not another configuration interview.
-Tool/provider approvals and out-of-scope decisions remain explicit boundaries.
-Its status controls whether verified blocker lessons can update reusable guidance
-automatically; it is not a simulation flag or additional infrastructure authority.
+```text
+$initialization-execution initialize this repository
+```
 
-See the [initialization contract](docs/initialization-contract.md) for inputs,
-operator profile, readiness, resume and acceptance, and the
-[runbook](docs/template-initialization.md) for exact identity edits and setup
-owners. There is no renaming generator. Existing credentials/data are preserved.
-An explicitly requested personalization-only task can use the runbook without
-authorizing remote publication or deployment.
+Execution first validates that intake is complete for this checkout and its
+current answers. Missing, partial, changed or mismatched intake causes an explicit
+stop directing you to `$initialization-intake`. Once valid, the agent verifies
+live readiness and executes only the confirmed scope: application identity, local
+development, shared CI, staging/production and recovery for full initialization.
+Unexpected access failures or work outside that scope remain explicit blockers.
+Known configuration questions and human prerequisites belong in intake.
 
-The file-first workflow still needs a clean fresh-consumer rehearsal to prove
-the complete no-follow-up experience. Template deployment
-evidence below is not evidence that a new consumer has been initialized.
+The [intake skill](.agents/skills/initialization-intake/SKILL.md) and
+[execution skill](.agents/skills/initialization-execution/SKILL.md) ship with the
+template; no personal/global skill or Client Discovery service is required.
+A bare invocation of either skill offers a short task menu and waits. See
+[skill registration](.agents/skills/initialization-execution/references/runbook.md#codex-skill-registration)
+if they do not appear. Agents supporting slash commands use the same skill names
+with `/` instead of `$`.
 
-The [portable package](.agents/skills/initialize-project/) contains the standalone capture helper,
-generic procedures, documentation generator and tests. Its
-[dashboard verification](.agents/skills/initialize-project/references/runbook.md#project-documentation-dashboard)
+See the [initialization contract](docs/initialization-contract.md) for the intake
+completion gate, authorization and resume rules, and the
+[setup entry point](docs/template-initialization.md) for procedure owners and
+consumer-specific setup. Existing credentials, data and accepted setup evidence
+are preserved. An explicit local-only scope verifies only local setup.
+
+A clean fresh-consumer rehearsal is still required to prove the complete
+experience without follow-up intervention. Historical template deployment
+evidence below does not prove initialization of a new consumer.
+
+The [execution package](.agents/skills/initialization-execution/) owns generic
+procedures, the documentation generator and its dependency lockfile. Its
+[dashboard verification](.agents/skills/initialization-execution/references/runbook.md#project-documentation-dashboard)
 is independent of frontend dependencies. The [project dashboard](docs/project.html)
-shows only committed public documentation and evidence, never private preparation.
+contains public documentation and sanitized evidence; private intake and execution
+state stay outside its inputs.
 
-## Generate the implementation specification
+## After initialization
 
-After initialization, use the bundled
-[Discovery specification skill](docs/discovery-specification.md) to turn a locked
-production discovery scope into a specification and GitHub issue handoff:
-
-```text
-$discovery-specification Generate from production project PROJECT_UUID into ./docs/specifications/my-project
-```
-
-Configure the protected Discovery credential profile once using the linked guide.
-The skill uses the initialized application's architecture, records technical
-choices and unresolved client inputs, and validates source coverage and issue
-dependencies. It generates local files; GitHub publication is a separate explicit
-action. Existing consumers can copy the complete skill package to adopt it.
+Setup delivers a verified application foundation. Business requirements,
+specification, implementation and acceptance are separate stages in the
+[V1 workflow](docs/v1-workflow.md). Their replacement requirements/specification
+process is outside this initialization change. The existing
+[Discovery specification package](docs/discovery-specification.md) is a legacy
+Client Discovery integration, not a next step or a consumer of local intake state.
 
 ## Local development
 
@@ -143,7 +137,7 @@ Stopping Java does not delete or stop the PostgreSQL service.
 
 Backend tasks select the Node version declared in `frontend/.nvmrc`, using an
 existing nvm installation if VS Code's desktop PATH has an older Node. See the
-[local debugger setup](.agents/skills/initialize-project/references/runbook.md#local-backend-debugger)
+[local debugger setup](.agents/skills/initialization-execution/references/runbook.md#local-backend-debugger)
 for prerequisites and troubleshooting.
 
 ## Backend and authentication
@@ -189,10 +183,8 @@ explicit approval of breaking changes or removals.
 
 ## Verification
 
-Use the [application generators](docs/generators.md) before creating standardized
-frontend or backend code. Run `npm run generate -- --list` from the workspace root;
-visual output automatically appears in the existing development-only Guide.
-The [source analysis](docs/generators-analysis.md) records pattern provenance.
+Follow the [Development Guide](frontend/docs/development-guide/README.md) and
+current source examples when implementing frontend or backend changes.
 
 ```sh
 cd backend
@@ -235,7 +227,7 @@ This repository owns the [shared CI foundation](infrastructure/ci/README.md):
 one isolated, disposable worker pool for explicitly registered private monorepos.
 Template consumers register their repository for that pool rather than install
 another permanent runner. The
-[initialization runbook](.agents/skills/initialize-project/references/runbook.md#5-configure-shared-ci-access)
+[initialization runbook](.agents/skills/initialization-execution/references/runbook.md#5-configure-shared-ci-access)
 covers the required inputs and operator handoff.
 
 The selected template host has been rebuilt, installed, and passed

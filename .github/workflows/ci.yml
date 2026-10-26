@@ -47,14 +47,14 @@ jobs:
         env:
           RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
         with:
-          node-version-file: .agents/skills/initialize-project/package.json
+          node-version-file: .agents/skills/initialization-execution/package.json
           package-manager-cache: false
       - name: Verify portable discovery specification skill
         run: npm --prefix .agents/skills/discovery-specification run verify
-      - name: Verify portable initialization package and public documentation
+      - name: Verify both initialization skills and public documentation
         run: |
-          package=.agents/skills/initialize-project
-          package_manager=$(node -p 'require("./.agents/skills/initialize-project/package.json").packageManager')
+          package=.agents/skills/initialization-execution
+          package_manager=$(node -p 'require("./.agents/skills/initialization-execution/package.json").packageManager')
           [[ "$package_manager" =~ ^npm@[0-9]+\.[0-9]+\.[0-9]+$ ]]
           npm install --global --prefix "$RUNNER_TEMP/npm" "$package_manager"
           export PATH="$RUNNER_TEMP/npm/bin:$PATH"
@@ -142,21 +142,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Verify formatting, lint, architecture and all TypeScript projects
-        run: npm run test:generators && npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
-        if: needs.changes.outputs.backend == 'true'
-        env:
-          RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
-        with:
-          distribution: temurin
-          java-version: "21"
-      - name: Compile and exercise isolated generated frontend output
-        working-directory: .
-        run: npm run verify:generated -- --frontend
-      - name: Compile and exercise isolated generated backend output for shared changes
-        if: needs.changes.outputs.backend == 'true'
-        working-directory: .
-        run: npm run verify:generated -- --backend
+        run: npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck
 
   frontend-tests:
     name: Frontend tests (${{ matrix.shard }}/3)

@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, matchRoutes, RouterProvider } from "react-router";
 import { patternCategoryDefinitions } from "@/app/router/patternCategories";
 import { createAppRouteObjects } from "@/app/router/routeHierarchy";
 import { LegacyDevelopmentGuideRedirect } from "@/app/router/components/LegacyDevelopmentGuideRedirect";
@@ -67,6 +67,15 @@ describe("application routes", () => {
     expect(appRouteRegistry).not.toHaveProperty("documents");
     expect(appRouteRegistry).toHaveProperty("contacts");
   });
+
+  it.each(["/dev-guide/frontend/generated", "/dev-guide/frontend/generated/form/user-profile--user-profile"])(
+    "resolves retired generated example URL %s through Not Found",
+    path => {
+      const matches = matchRoutes(createAppRoutes(), path);
+
+      expect(matches?.at(-1)?.route.path).toBe("*");
+    },
+  );
 
   it("keeps primary navigation focused on the starter application", () => {
     expect(appNavigationItems.map(({ labelKey }) => labelKey)).toEqual(["navigation.home"]);
@@ -310,7 +319,6 @@ describe("application routes", () => {
           labelKey: "handbook.categories.frontend-workflows.title",
           to: "/dev-guide/frontend/workflow-patterns",
         },
-        { labelKey: "generatedExamples.title", to: "/dev-guide/frontend/generated" },
         { labelKey: "navigation.architecture", to: "/dev-guide/frontend/architecture" },
       ]);
     });

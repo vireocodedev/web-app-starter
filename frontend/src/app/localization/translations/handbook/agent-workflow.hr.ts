@@ -43,7 +43,7 @@ export const croatianAgentWorkflowHandbookTranslations = {
     "agent-workflow-implementation-initialization-to-business-acceptance": {
       title: "Odvoji setup spremnost od prihvaćenog poslovnog V1",
       description:
-        "Prati neovisnu pripremu, locked scope, spec, implementaciju i exact-pair prihvat bez preskakanja faza.",
+        "Odvoji nastavljivi inicijalizacijski upitnik, uvjetovano izvršavanje postavljanja te kasniji poslovni opseg, implementaciju i prihvat istog para slika.",
     },
   },
 } satisfies StringLeaves<typeof englishAgentWorkflowHandbookTranslations>;

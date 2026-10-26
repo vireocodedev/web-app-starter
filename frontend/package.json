@@ -18,9 +18,6 @@
     }
   },
   "scripts": {
-    "generate": "node ../tools/generators/cli.mjs",
-    "generate:samples": "node ../tools/generators/samples.mjs",
-    "test:generators": "node --test --test-concurrency=1 ../tools/generators/tests/*.test.mjs",
     "dev": "vite",
     "preview": "vite preview",
     "build": "tsc -b && vite build",
@@ -37,7 +34,7 @@
     "typecheck": "tsc -b",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "verify": "npm run test:generators && npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck && npm run test && npm run build && npm run build-storybook"
+    "verify": "npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck && npm run test && npm run build && npm run build-storybook"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -67,7 +64,6 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@eslint/js": "^10.0.1",
-    "@inquirer/core": "12.0.3",
     "@playwright/test": "^1.63.0",
     "@preact/signals-react-transform": "^0.8.0",
     "@rolldown/plugin-babel": "^0.2.0",
@@ -89,7 +85,6 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.4",
     "eslint-plugin-storybook": "^10.6.0",
-    "fast-string-width": "3.0.2",
     "globals": "^17.11.0",
     "jsdom": "^30.0.1",
     "msw": "^2.15.0",

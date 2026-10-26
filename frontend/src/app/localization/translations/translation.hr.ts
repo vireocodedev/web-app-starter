@@ -1,8 +1,6 @@
 import type { TranslationShape } from "../types/TranslationShape";
-import { generatedCroatianTranslations } from "./generated";
 
 export const croatianTranslations = {
-  generated: generatedCroatianTranslations,
   authentication: {
     account: "Račun",
     openAccountMenu: "Otvori izbornik korisničke navigacije",

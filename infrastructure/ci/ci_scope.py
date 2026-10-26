@@ -7,16 +7,15 @@ import subprocess
 
 
 def scope(paths, force=False):
-    generators = any(path.startswith('tools/generators/') or path in
-                     ('package.json', 'generator-policy.json') for path in paths)
-    shared = force or any(path.startswith(('.github/', '.agents/skills/initialize-project/',
+    shared = force or any(path.startswith(('.github/', '.agents/skills/initialization-intake/',
+                                          '.agents/skills/initialization-execution/',
                                           '.vscode/', 'infrastructure/release/'))
                           or path in ('infrastructure/ci/ci_scope.py', 'infrastructure/ci/test_shards.py',
                                       'infrastructure/ci/test-timings.json',
                                       'infrastructure/ci/tests/test_ci_shards.py') for path in paths)
     return {
-        'backend': shared or generators or any(path.startswith('backend/') for path in paths),
-        'frontend': shared or generators or any(path.startswith('frontend/') for path in paths),
+        'backend': shared or any(path.startswith('backend/') for path in paths),
+        'frontend': shared or any(path.startswith('frontend/') for path in paths),
         'foundation': shared or any(path.startswith('infrastructure/') for path in paths),
     }
 

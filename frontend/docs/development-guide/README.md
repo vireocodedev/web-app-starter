@@ -322,8 +322,6 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 #### Template and package evolution
 
-- [Generate first, customize through the owning boundary](en/developer-workflow/template-evolution/generator-first-workflow.md) · [Hrvatski](hr/developer-workflow/template-evolution/generator-first-workflow.md)
-
 - [Identify the installed stack before applying a platform recipe](en/developer-workflow/template-evolution/identify-the-installed-stack-profile.md) · [Hrvatski](hr/developer-workflow/template-evolution/identify-the-installed-stack-profile.md)
 - [Keep application policy outside reusable library mechanics](en/developer-workflow/template-evolution/application-and-library-responsibility.md) · [Hrvatski](hr/developer-workflow/template-evolution/application-and-library-responsibility.md)
 - [Distinguish published dependencies from local candidate overrides](en/developer-workflow/template-evolution/published-artifacts-and-local-overrides.md) · [Hrvatski](hr/developer-workflow/template-evolution/published-artifacts-and-local-overrides.md)

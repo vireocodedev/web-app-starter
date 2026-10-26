@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="description" content="Offline project documentation and evidence-based initialization status.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>Project · Project status &amp; documentation</title><style>
+:root{color-scheme:light;--paper:#f4f6f8;--card:#fff;--ink:#192738;--muted:#526478;--line:#dbe3ea;--accent:#086e68;--soft:#e6f3ef;--amber:#805008;--amber-bg:#fff3db}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #448cff;outline-offset:4px}button,input,select{font:inherit}button,select,summary{cursor:pointer}button{border:1px solid var(--line);border-radius:9px;padding:8px 14px;background:var(--card);color:var(--ink)}[hidden]{display:none!important}
+.skip{position:absolute;top:-100px;left:20px;background:#fff;padding:12px;z-index:3}.skip:focus{top:12px}.layout{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100vh}.sidebar{background:#122536;color:#dce7ef;padding:32px 22px;position:sticky;top:0;height:100vh;overflow:auto}.brand{font-size:22px;font-weight:750;letter-spacing:-.6px;color:#fff}.eyebrow{font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:1.8px}.sidebar .eyebrow{color:#8ebbb8;margin-top:36px}.sidebar a{display:block;color:#dce7ef;text-decoration:none;font-size:13px;padding:8px 10px;border-radius:7px;margin:2px 0}.sidebar a:hover{background:#213b50;color:white}.sidebar .intro{font-size:13px;color:#a6bacb}.sidebar .home{margin-top:24px;background:#254455;color:#b9f3df}.main{max-width:1300px;width:100%;padding:44px 48px 72px;min-width:0}.topline{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.topline .eyebrow{color:var(--accent)}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:30px;padding:4px 11px;font-size:12px;font-weight:700;background:#e9edf2;color:#405267}.pill.partial,.pill.blocked,.pill.pending,.pill.in_progress{background:var(--amber-bg);color:var(--amber)}.pill.passed{background:var(--soft);color:#075d48}h1{font-size:clamp(32px,4.5vw,48px);line-height:1.15;letter-spacing:-1.8px;margin:18px 0 12px}h2{font-size:24px;letter-spacing:-.6px;margin:0 0 12px}h3{font-size:20px}h4{font-size:17px}h5,h6{font-size:15px}h3,h4,h5,h6{line-height:1.4;scroll-margin-top:24px}.lede{max-width:780px;font-size:17px;color:var(--muted);margin:0}.hero{margin-bottom:28px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:28px 0}.stat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px}.stat strong{display:block;font-size:27px;line-height:1.3;letter-spacing:-.8px}.stat span{color:var(--muted);font-size:12px}.panel{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:26px 28px;margin-bottom:22px;box-shadow:0 4px 18px #132d4510;min-width:0;scroll-margin-top:24px}.panel-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap}.source-path{font:11px/1.6 ui-monospace,monospace;color:var(--muted);overflow-wrap:anywhere}.notice{padding:15px 18px;border-left:3px solid #ce9a37;background:var(--amber-bg);border-radius:0 9px 9px 0;color:#67440d;margin:18px 0}.notice p{margin:0}.phase-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;list-style:none;padding:0}.phase{padding:14px;border:1px solid var(--line);border-radius:11px;display:flex;align-items:center;justify-content:space-between;gap:8px}.phase-name{font-size:13px;font-weight:650;text-transform:capitalize}.progress{height:6px;border-radius:8px;background:#e4eaf0;overflow:hidden;margin:20px 0}.progress span{display:block;background:#218b72;height:100%}.section-heading{margin:34px 0 16px}.toolbar{position:sticky;top:0;z-index:1;display:flex;gap:12px;flex-wrap:wrap;background:#f4f6f8f5;padding:16px 0;backdrop-filter:blur(10px)}.field{display:grid;gap:5px;font-size:12px;color:var(--muted);flex:1;min-width:200px}.field input,.field select{width:100%;padding:11px 13px;border-radius:10px;border:1px solid #bac8d4;background:white;color:var(--ink);min-height:46px}.filter{max-width:240px}.search-status{font-size:12px;color:var(--muted);margin:0 0 18px}.record h3:first-child{margin-top:0}.markdown p,.markdown li{overflow-wrap:anywhere}.markdown img{max-width:100%}.markdown blockquote{margin:18px 0;border-left:3px solid #7eaca7;padding:4px 18px;color:var(--muted)}.markdown pre,.raw pre{padding:17px;border-radius:10px;background:#122536;color:#deebf4;overflow:auto;max-width:100%;font-size:12px;line-height:1.7}code{font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#edf2f5;border-radius:4px;padding:2px 4px;overflow-wrap:anywhere}pre code{background:none;padding:0;color:inherit}.table-scroll{overflow:auto;margin:20px 0;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#eff4f6;font-weight:700}tr:last-child td{border-bottom:0}.data-tree{margin:0}.data-row{border-top:1px solid var(--line);padding:12px 0}.data-row:first-child{border-top:0}.data-row dt{font-size:12px;color:var(--muted);font-weight:700;text-transform:capitalize}.data-row dd{margin:5px 0 0;overflow-wrap:anywhere}.data-row .data-tree{border-left:2px solid #dce9e5;padding-left:16px;margin:10px 0}.data-list{padding-left:23px;margin:5px 0}.data-list>li{padding:4px 0}.boolean,.number{font-variant-numeric:tabular-nums;font-weight:650}.muted{color:var(--muted)}details{border-top:1px solid var(--line);padding:14px 0}summary{font-weight:650;text-transform:capitalize}details[open]>summary{margin-bottom:14px}.digest{font-size:10px;color:var(--muted);overflow-wrap:anywhere;margin-top:20px}.empty{text-align:center;padding:36px}.footer{font-size:12px;color:var(--muted);margin-top:36px}
+.data-row{overflow-wrap:anywhere}
+[tabindex="0"]:focus-visible{outline:3px solid #448cff;outline-offset:4px}
+@media(max-width:1050px){.main{padding:30px 26px}.layout{grid-template-columns:225px minmax(0,1fr)}.sidebar{padding:26px 16px}.phase-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.layout{display:block}.sidebar{position:static;height:auto;padding:22px}.sidebar nav{display:flex;gap:5px;flex-wrap:wrap}.sidebar nav a{font-size:12px;padding:6px 9px;background:#213b50}.sidebar .eyebrow{margin:20px 0 8px}.sidebar .intro{margin:4px 0}.sidebar .home{display:inline-block;margin-top:12px}.main{padding:26px 16px 48px}.panel{padding:20px 18px}.phase-grid{grid-template-columns:1fr}.toolbar{position:static}.filter{max-width:none}.stat{padding:15px}.topline{gap:8px}h1{letter-spacing:-1px}.data-row .data-tree{padding-left:10px}.stats{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.sidebar,.toolbar,.search-status,.skip{display:none}.layout{display:block}.main{padding:0;max-width:none}.panel{box-shadow:none;break-inside:avoid}.record[hidden]{display:block!important}details>summary{list-style:none}details>*{display:block}.footer{border-top:1px solid #ccc;padding-top:15px}}
+</style></head>
+<body><a class="skip" href="#main">Skip to project status</a><div class="layout">
+<aside class="sidebar"><div class="brand">Project<span aria-hidden="true"> /</span></div><p class="intro">Project field guide<br>Evidence, decisions &amp; next steps.</p><a class="home" href="#overview">Initialization overview</a>
+<p class="eyebrow">Acceptance evidence</p><nav aria-label="Acceptance evidence"></nav>
+<p class="eyebrow">Guides &amp; procedures</p><nav aria-label="Documentation"><a data-for="source-agentsskillsinitialization-executionreferencescontractmd" href="#source-agentsskillsinitialization-executionreferencescontractmd">Consumer initialization contract</a><a data-for="source-agentsskillsinitialization-executionreferencesrunbookmd" href="#source-agentsskillsinitialization-executionreferencesrunbookmd">Initialize a project from this template</a><a data-for="source-agentsskillsinitialization-intakereferencesstatemd" href="#source-agentsskillsinitialization-intakereferencesstatemd">Private state and helper API</a><a data-for="source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd" href="#source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd">Rehearsal lessons</a><a data-for="source-agentsskillsinitialization-intakereferencesquestionnairemd" href="#source-agentsskillsinitialization-intakereferencesquestionnairemd">Setup questionnaire</a></nav>
+<p class="eyebrow">Operator-owned</p><a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/ci/verification/host-acceptance.json">Shared host receipt ↗</a><p class="intro">Reference only. Infrastructure ownership and source-bound receipts stay separate.</p></aside>
+<main class="main" id="main"><header class="hero" id="overview"><div class="topline"><span class="eyebrow">Initialization workspace</span><span class="pill partial">Not ready · acceptance incomplete</span></div><h1>Your project, at a glance.</h1>
+<p class="lede">Bundled template reference only. This page contains no consumer acceptance or private preparation. Repository-file links open canonical template source, not this consumer.</p>
+<p class="source-path">Consumer repository not recorded</p></header>
+<div class="stats"><div class="stat"><strong>0 / 9</strong><span>Acceptance phases passed</span></div><div class="stat"><strong>5</strong><span>Source documents</span></div><div class="stat"><strong>0</strong><span>Acceptance records</span></div><div class="stat"><strong>Offline</strong><span>One file · no external assets</span></div></div>
+<section class="panel" aria-labelledby="phase-heading"><div class="panel-heading"><div><span class="eyebrow">Current consumer only</span><h2 id="phase-heading">The path to ready</h2></div><span class="pill partial">Unrecorded</span></div>
+<div class="progress" role="progressbar" aria-label="Acceptance phases passed" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0"><span style="width:0%"></span></div>
+<ol class="phase-grid"><li class="phase"><span class="phase-name">intake</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">identity</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">local</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">ci</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">environments</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">staging</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">production</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">recovery</span><span class="pill ">unrecorded</span></li><li class="phase"><span class="phase-name">handoff</span><span class="pill ">unrecorded</span></li></ol><p class="notice">No consumer phases recorded. All acceptance gates remain unverified.</p><div class="notice">A configured workflow, a historical receipt, or a successful image build is not deployment acceptance. This page is a snapshot of committed documentation, not a live monitor.</div>
+<h3>What remains</h3><ol class="data-list"><li><span>No consumer acceptance record exists. Readiness has not been established.</span></li></ol>
+</section>
+<h2 class="section-heading">Explore the evidence &amp; playbook</h2>
+<div class="toolbar"><label class="field">Search all source content<input id="search" type="search" placeholder="Try backups, CI gate, credentials…" autocomplete="off"></label><label class="field filter">Source type<select id="kind"><option value="all">All sources</option><option value="consumer">Consumer evidence</option><option value="reference">Upstream / reference</option><option value="procedure">Guides &amp; procedures</option></select></label><button id="reset" type="button">Reset</button></div>
+<p class="search-status" id="results" role="status" aria-live="polite">Showing all 5 sources</p><div class="panel empty" id="empty" hidden><h2>No matching sources</h2><p>Try a broader search or reset the source filter.</p></div>
+<section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-executionreferencescontractmd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-execution/references/contract.md</div><h2>Consumer initialization contract</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-executionreferencescontractmd--consumer-initialization-contract">Consumer initialization contract</h3>
+<p>The <a href="https://github.com/vireocodedev/web-app-starter/blob/main/.agents/skills/initialization-execution/SKILL.md">execution skill</a> owns running setup. The sibling
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/.agents/skills/initialization-intake/SKILL.md">intake skill</a> owns the complete upfront
+questionnaire, saved answers and completed handoff. The
+<a href="#source-agentsskillsinitialization-executionreferencesrunbookmd">runbook</a> owns exact application edits and links to operator procedures.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--supported-scope-and-target">Supported scope and target</h4>
+<p>Initialize one existing private GitHub consumer with one Git worktree containing
+<code>frontend/</code> and <code>backend/</code>. Preserve the template stack, session authentication,
+examples, shared Hetzner CI and paired staging/production release workflows.
+Reuse the approved operator, shared App/pool, deployment host and supported
+backup destination. Creating a new foundation, changing privileged shared code,
+rebuilding a host, replacing data and implementing business features are separate
+tasks. Canonical <code>vireocodedev/web-app-starter</code> cannot initialize itself.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--intake-handoff-and-authority">Intake handoff and authority</h4>
+<p>Execution&#x27;s first operation is the intake <code>require-complete</code> gate. Missing,
+partial, invalid, changed or repository-mismatched intake stops execution with
+an explicit instruction to finish <code>$initialization-intake</code> first. A legacy
+workbook or old execution state is not a completed new intake.</p>
+<p>Read the <a href="#source-agentsskillsinitialization-intakereferencesstatemd">state contract</a>.
+The helper derives readiness from valid applicable answers and prerequisites,
+and binds confirmation to their exact content and repository. A mutable
+<code>complete: true</code> flag alone is insufficient. Record the returned intake revision
+and digest in execution state; recheck them on resume and before phase writes.
+Answer changes require refreshed intake confirmation, while preserving already
+verified execution evidence and existing resources.</p>
+<p>All setup choices, scope authorization and foreseeable human prerequisites are
+collected during intake. Use only actual user answers/consent; the agent can
+record their words but cannot approve for them. The current execution request
+and the completed confirmed scope must agree. A saved file grants no standing
+authority for unrelated resources or new actions. Credentials stay in protected
+stores; intake/state contain references only. No Client Discovery service,
+project UUID, export, app review or external workbook is required.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--operator-profile">Operator profile</h4>
+<p>The intake&#x27;s protected external operator reference identifies the existing
+operator. Resolve it as data, not commands. Keep the JSON file outside Git,
+owner-only (<code>0600</code> in private directories). It contains references, never token,
+password or private-key values:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Field</th><th>Required contents</th></tr></thead><tbody><tr><td><code>version</code>, <code>name</code></td><td>Format <code>1</code> and recognizable name.</td></tr><tr><td><code>github</code></td><td>Host, authorized account and allowed repository owner.</td></tr><tr><td><code>ssh</code></td><td>Target, identity/agent reference, approved host-key fingerprint, root or noninteractive sudo mode.</td></tr><tr><td><code>ci</code></td><td>Existing pool label, reviewed canonical operator source/revision, protected configuration and App metadata/key references.</td></tr><tr><td><code>dns</code></td><td>Provider, exact zone/project and protected credential/tool reference.</td></tr><tr><td><code>deployment</code></td><td>Approved host, per-project namespace, free-port range and authorized maintainers.</td></tr><tr><td><code>backup</code></td><td>Supported destination and proposed schedule; consumer risk/schedule choices remain explicit intake answers.</td></tr><tr><td><code>bounds</code></td><td>Prerequisite policy, resource ceilings and exclusions.</td></tr></tbody></table></div>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--live-readiness-gate">Live readiness gate</h4>
+<p>After intake passes, verify actual checkout and resource ownership, intended
+GitHub actor/admin/plan/Actions support, selected-repository App access, strict
+SSH host trust, reviewed operator source/configuration/current-boot receipt,
+DNS zone authority/conflicts, available ports/capacity, supported backup adapter,
+and local tools including an unattended path for both saved IDE launches.
+Use the existing operator interfaces; unreviewed host repair is a blocker.</p>
+<p>Write a nonsecret resolved plan and results to
+<code>.template-initialization/readiness.md</code>. Readiness-only requests stop here.
+Runtime/IDE/browser, deployed CI and initialized recovery evidence are collected
+after personalization, not inferred from preflight checkboxes. Missing access or
+changed scope produces a precise blocker and an intake update where needed.
+Continue only matching authorized independent work. Mandatory tool/provider
+approvals remain in force.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--execution-and-resume">Execution and resume</h4>
+<p>Keep ignored <code>.template-initialization/state.json</code> under owner-only permissions
+with atomic writes. Record version, exact repository/root, initial commit,
+intake revision/digest/scope, phase states, source/run/image/resource identities,
+protected credential references and redacted failures/recovery transaction IDs.
+Never execute values as commands. Reconcile actual state before retries and
+preserve volumes/passwords. Existing completed consumers retain their evidence;
+read-only reconciliation never recreates their setup. A missing new intake only
+blocks new execution, not the validity of historical acceptance.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Phase</th><th>Evidence required before <code>passed</code></th></tr></thead><tbody><tr><td><code>intake</code></td><td>Completed confirmed intake, current matching request and live readiness.</td></tr><tr><td><code>identity</code></td><td>Application values, packages and launches agree; residual template references classified.</td></tr><tr><td><code>local</code></td><td>Required checks/builds, native API/browser login-refresh-logout and actual saved IDE launches.</td></tr><tr><td><code>ci</code></td><td>Exact shared-pool registration, current isolation receipt, genuine workflows and failing/green branch-gate proof.</td></tr><tr><td><code>environments</code></td><td>DNS/TLS/ports, isolated DBs/volumes/credentials, approved controller and certificate variable.</td></tr><tr><td><code>staging</code></td><td>Successful workflow with tested consumer commit and private immutable image pair.</td></tr><tr><td><code>production</code></td><td>Same successful staging pair promoted without rebuild behind a fresh production backup.</td></tr><tr><td><code>recovery</code></td><td>Explicit user provisioning, HTTPS/browser flows, initialized dump retrieval/checksum/isolated restore, then production timer.</td></tr><tr><td><code>handoff</code></td><td>Consumer-specific acceptance, operating docs and protected references.</td></tr></tbody></table></div>
+<p>Local-only execution completes <code>intake</code>, <code>identity</code>, <code>local</code> and the bounded
+handoff; remote phases remain out of scope, not passed. It does not authorize
+publication, registration or deployments. No phase can borrow copied template
+receipts. Follow the <a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/ci/README.md">CI</a> and
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/release/README.md">release</a> owners for actual commands.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--completion-and-rehearsal">Completion and rehearsal</h4>
+<p>Full setup is ready only when all phases pass for this consumer&#x27;s exact source
+and deployed pair. Store sanitized
+<code>docs/acceptance/initialization-acceptance.json</code> and operating instructions with
+run/source/digest identities, actual commands and recovery results. Other
+documentation acceptance records belong in <code>docs/acceptance/</code>; infrastructure
+receipts retain their owner locations. Keep private state out of docs inputs.</p>
+<p>Regenerate <code>docs/project.html</code> and the bundled offline view using the
+<a href="#source-agentsskillsinitialization-executionreferencesrunbookmd--project-documentation-dashboard">dashboard procedure</a>. Report actual
+checks, missing evidence, deferred artwork and any human intervention after
+intake. Configuration alone does not prove runtime or live setup. A clean
+fresh-consumer rehearsal is still required to prove the unattended experience.
+Business requirements/specification are a later separately defined workflow.</p></div><div class="digest">Source SHA-256 · fcecd59505476b2b5ff17d9c07ebd4f29e5b6557301b01016dcbb31447b9cbc4</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-executionreferencesrunbookmd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-execution/references/runbook.md</div><h2>Initialize a project from this template</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-executionreferencesrunbookmd--initialize-a-project-from-this-template">Initialize a project from this template</h3>
+<p>This is the authoritative application identity replacement map and setup-owner
+guide. The <a href="https://github.com/vireocodedev/web-app-starter/blob/main/.agents/skills/initialization-execution/SKILL.md">execution skill</a> runs the approved phases; the
+<a href="#source-agentsskillsinitialization-executionreferencescontractmd">contract</a> owns readiness, scope, resume and acceptance. Complete
+the sibling <a href="https://github.com/vireocodedev/web-app-starter/blob/main/.agents/skills/initialization-intake/SKILL.md">intake skill</a> first.
+Its private answers and confirmed scope replace external preparation workbooks.</p>
+<p>Full setup includes local development, shared CI/main protection, DNS, private
+images, two paired deployments and verified recovery. Local-only scope remains
+local. Keep existing infrastructure and application owners; new foundation
+installation, privileged upgrades and data replacement are separate work.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--1-confirm-the-target-and-identity">1. Confirm the target and identity</h4>
+<p>Before any initialization/readiness work, run:</p>
+<pre tabindex="0"><code class="language-sh">node .agents/skills/initialization-intake/scripts/intake.mjs require-complete
+</code></pre>
+<p>A failed or unavailable gate means <strong>STOP</strong> and tell the user to finish
+<code>$initialization-intake</code> before <code>$initialization-execution</code>. Do not substitute
+legacy state or collect missing answers during execution. Read the passed
+private state and record its revision/digest; recheck on resume and before writes.</p>
+<p>Read root/scoped guides, inspect the actual Git worktree and preserve unrelated
+changes. Confirm this is the intended private consumer rather than the canonical
+template. Resolve approved operator/account references and recheck readiness
+against live resources. Intake completion does not prove post-personalization
+runtime acceptance. Keep execution reports in <code>.template-initialization/</code>.</p>
+<p>Validate the completed intake identity answers against these constraints:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Input</th><th>Example</th><th>Rule</th></tr></thead><tbody><tr><td>Project slug</td><td><code>inventory-portal</code></td><td>3-40 lowercase ASCII letters/digits separated by single hyphens; start with a letter. This satisfies both application names and deployed project paths.</td></tr><tr><td>Display name</td><td><code>Inventory Portal</code></td><td>Nonempty human-readable product name. Keep it the same across locales unless localized names are supplied.</td></tr><tr><td>Java base package</td><td><code>com.acme.inventory</code></td><td>Explicit dotted namespace of lowercase ASCII Java identifiers; each segment starts with a letter; exclude Java keywords. This is the application&#x27;s package, not just its organization prefix.</td></tr><tr><td>PWA short name</td><td><code>Inventory</code></td><td>Use the display name if it is at most 12 characters; otherwise obtain an approved short name.</td></tr></tbody></table></div>
+<p>Derive these values consistently:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Setting</th><th>Derivation</th><th>Example</th></tr></thead><tbody><tr><td>Frontend package</td><td><code>&lt;slug&gt;-frontend</code></td><td><code>inventory-portal-frontend</code></td></tr><tr><td>Gradle root project and Spring application</td><td><code>&lt;slug&gt;-backend</code></td><td><code>inventory-portal-backend</code></td></tr><tr><td>Gradle group</td><td>Java base package</td><td><code>com.acme.inventory</code></td></tr><tr><td>Local Compose project</td><td><code>&lt;slug&gt;-local</code></td><td><code>inventory-portal-local</code></td></tr><tr><td>Default local database and database user</td><td>Slug with hyphens replaced by underscores</td><td><code>inventory_portal</code></td></tr><tr><td>Java source directory suffix</td><td>Java base package with dots replaced by <code>/</code></td><td><code>com/acme/inventory</code></td></tr><tr><td>Java main class</td><td><code>&lt;java-base-package&gt;.BackendApplication</code></td><td><code>com.acme.inventory.BackendApplication</code></td></tr></tbody></table></div>
+<p>Escape supplied display names for each destination&#x27;s JSON, HTML, TypeScript,
+Groovy, or Markdown syntax rather than interpolating unescaped text.</p>
+<p><strong>Done when:</strong> the completed intake authorizes the validated identity, the live target
+is this private consumer rather than the canonical template, and current
+confirmed scope/readiness covers the resolved plan.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--2-establish-the-data-and-resume-boundary">2. Establish the data and resume boundary</h4>
+<p>Check whether the consumer already has an identity recorded in its README or
+configured in the application. If requested values already match, verify them
+instead of rewriting. For an incomplete initialization with that same identity,
+finish only the missing changes. A different existing consumer identity is a
+later rename: report the boundary and require separately authorized scope.
+Completed consumers retain their accepted setup; a missing new preparation
+file does not authorize reinitialization or invalidate existing acceptance.</p>
+<p>Check for existing local environment files and Docker resources using names and
+labels, without printing environment values. Changing the Compose project name
+changes its generated volume/network names; it does not rename or migrate a
+database. New database/user settings also do not change an initialized PostgreSQL
+volume.</p>
+<p>For a fresh clone, update the committed environment example before generating
+local credentials or starting PostgreSQL. If a local database or an existing
+environment file uses the old identity, report the mismatch and require a
+explicit user decision recorded in intake before changing identity or starting another database. Preserve
+existing passwords, volumes, and data. Data migration, volume deletion, and
+password resets are outside this runbook.
+Resolve known mismatches during preparation/readiness. A newly discovered mismatch
+during execution blocks the affected phase until safely reconciled within the
+approved scope; it is not permission to reset data.</p>
+<p><strong>Done when:</strong> initialization can proceed without replacing an existing identity
+or hiding an existing database behind newly generated resource names.</p>
+<p>Inspect both repository-derived GHCR package names before authorizing writes.
+An existing package owned by another repository is a preserve/block boundary,
+not an implicit takeover. Preserve conflicting packages and stop; registry replacement is separate
+explicitly authorized work, not a normal initialization action. Preserve repositories, credentials and data.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--3-replace-application-owned-values">3. Replace application-owned values</h4>
+<p>The following is the current replacement map. Read each field before editing;
+if the layout differs, locate its owner and report the difference. Use exact
+fields and package-prefix changes, not a global replacement of <code>RGO</code>, <code>backend</code>,
+or <code>vireocode</code>.</p>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--backend-and-local-infrastructure">Backend and local infrastructure</h5>
+<p>Paths in this table are relative to the workspace root.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>File or surface</th><th>Template value</th><th>Consumer change</th></tr></thead><tbody><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/settings.gradle">backend/settings.gradle</a></td><td><code>rootProject.name = &#x27;backend&#x27;</code></td><td>Set <code>&lt;slug&gt;-backend</code>. Keep the physical <code>backend/</code> folder.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/build.gradle">backend/build.gradle</a></td><td><code>group = &#x27;com.vireocode&#x27;</code>; description <code>VireoCode Web App Starter backend</code></td><td>Set group to the approved Java base package and description to <code>&lt;display name&gt; backend</code>. Preserve versions, plugins, and dependencies.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/src/main/resources/application.yaml">backend/src/main/resources/application.yaml</a></td><td><code>spring.application.name: vireocode-backend</code></td><td>Set <code>&lt;slug&gt;-backend</code>. Preserve <code>/api</code>, profiles, datasource placeholders, session/security settings, and Hibernate validation.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/compose.yaml">backend/compose.yaml</a></td><td><code>name: vireocode-web-app-starter-local</code></td><td>Set <code>&lt;slug&gt;-local</code>. Keep the <code>postgres</code> service and <code>postgres-data</code> volume key; Compose scopes their resources by project.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/.env.example">backend/.env.example</a></td><td><code>COMPOSE_PROJECT_NAME=vireocode-web-app-starter-local</code>; <code>POSTGRES_DB=vireocode</code>; <code>POSTGRES_USER=vireocode</code></td><td>Set the Compose project to <code>&lt;slug&gt;-local</code> and database/user to the underscore-form slug. Keep passwords empty and retain initial-user defaults unless requested otherwise.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/scripts/start-local.mjs">backend/scripts/start-local.mjs</a></td><td>Fallback <code>COMPOSE_PROJECT_NAME</code>: <code>vireocode-web-app-starter-local</code></td><td>Set the fallback to the same <code>&lt;slug&gt;-local</code> as <code>compose.yaml</code> and <code>.env.example</code>, including when preserving an existing <code>.env</code> without that key.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/src/main/java">backend/src/main/java/</a> and <a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/src/test/java">backend/src/test/java/</a>, each with the template suffix <code>com/vireocode/backend/</code></td><td>Package prefix <code>com.vireocode.backend</code></td><td>Move all owned Java files into the approved package&#x27;s directory under each source root; update package declarations, imports, and qualified references. Retain relative <code>auth</code> and <code>user</code> subpackages and the <code>BackendApplication</code> class name.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/.vscode/launch.json"><code>.vscode/launch.json</code></a></td><td><code>mainClass: com.vireocode.backend.BackendApplication</code></td><td>Set the qualified main class. Omit the optional <code>projectName</code> for this single backend: the IDE import name can differ from Gradle&#x27;s root name. Preserve both configurations, tasks, working directories and <code>local</code> profile.</td></tr></tbody></table></div>
+<p>Keep the physical <code>frontend/</code> and <code>backend/</code> folders, Flyway migration filenames
+and SQL schema, database table names, and authentication endpoint/DTO contracts
+unchanged. Delete only empty old Java package directories after all their owned
+files have moved.</p>
+<p>Preserve local ports unless there is a confirmed collision. If a port change is
+needed, keep its launch/task/proxy and documented references consistent.</p>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--frontend-identity">Frontend identity</h5>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>File or surface</th><th>Template value</th><th>Consumer change</th></tr></thead><tbody><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/package.json">frontend/package.json</a></td><td><code>name: rgo-frontend-template</code></td><td>Set <code>&lt;slug&gt;-frontend</code>; retain dependency names and versions.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/package-lock.json">frontend/package-lock.json</a></td><td>Top-level <code>name</code> and <code>packages[&quot;&quot;].name</code> are <code>rgo-frontend-template</code></td><td>Align both with the frontend package name. Keep the dependency graph and integrity data unchanged; if using npm to refresh the lockfile, inspect and discard unrelated task-generated churn.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/index.html">frontend/index.html</a></td><td><code>&lt;title&gt;RGO application&lt;/title&gt;</code></td><td>Set the display name; retain the app entry point and asset references.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/public/manifest.json">frontend/public/manifest.json</a></td><td><code>name: RGO application</code>; <code>short_name: RGO</code></td><td>Set the display and approved short names. Preserve <code>id</code>, <code>start_url</code>, <code>scope</code>, and icon entries; naming is not a routing change.</td></tr><tr><td><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/src/app/localization/translations/translation.en.ts">translation.en.ts</a>, <a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/src/app/localization/translations/translation.hr.ts">translation.hr.ts</a>, <a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/src/app/localization/translations/development-guide.en.ts">development-guide.en.ts</a>, <a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/src/app/localization/translations/development-guide.hr.ts">development-guide.hr.ts</a></td><td><code>navigation.shellTitle</code> contains <code>RGO application</code> or <code>RGO aplikacija</code></td><td>Set the approved display name in all four catalogs. Keep translation keys and localized page labels.</td></tr></tbody></table></div>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--brand-assets">Brand assets</h5>
+<p>The header&#x27;s <code>Brand</code> in
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/src/app/shell/components/AppShell.tsx">AppShell.tsx</a> uses <code>alt=&quot;RGO&quot;</code>
+and the bundled RGO symbol assets. The favicon and PWA icons also contain template
+branding. A new display name alone does not provide new artwork.</p>
+<p>If replacement artwork is supplied, update its accessible name, header symbols,
+favicon, and both installed-app icons together, retaining light/dark readability
+and valid asset references. If it is not supplied, retain the existing artwork
+and its accurate alternative text and report branding as deferred. Preserve
+framework attribution and license notices in either case.</p>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--tests-and-documentation">Tests and documentation</h5>
+<p>Update only identity-dependent expectations in:</p>
+<ul>
+<li><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/tests/integration/auth/components/AppAuthFlow.test.tsx">AppAuthFlow.test.tsx</a>:
+document-title suffix.</li>
+<li><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/tests/browser/application.spec.ts">application.spec.ts</a>:
+document-title suffix.</li>
+<li><a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/tests/browser/documentation.development.spec.ts">documentation.development.spec.ts</a>:
+English and Croatian document-title suffixes; retain localized page titles.</li>
+</ul>
+<p>Search the remaining owned tests for additional identity-dependent expectations.
+Keep mock identities and demo credentials unchanged: they are authentication
+fixtures, not project branding.</p>
+<p>Update the <a href="https://github.com/vireocodedev/web-app-starter/blob/main/README.md">root README</a> title and introduction for the consumer.
+Add a compact <strong>Project identity</strong> section recording the approved slug, display
+name, Java base package, and PWA short name. Update the
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/frontend/README.md">frontend README</a> application heading and any
+consumer-specific build/JAR examples to match the new Gradle artifact name.
+Keep working setup and verification instructions and retain a link to this
+runbook. This runbook&#x27;s template values and example consumer remain reference
+material; they are not leftovers to replace.</p>
+<p><strong>Done when:</strong> every mapped surface matches the approved identity or has a
+specifically reported deferral, and source directories, Java declarations,
+Gradle identity, launch configuration, and tests agree.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--4-verify-the-consumer">4. Verify the consumer</h4>
+<p>Use existing tooling and the repository&#x27;s configured checks. Run commands from
+the indicated directories; Docker must be available for backend tests.</p>
+<p>From <code>backend/</code>:</p>
+<pre tabindex="0"><code class="language-sh">./gradlew test bootJar
+</code></pre>
+<p>From <code>frontend/</code>:</p>
+<pre tabindex="0"><code class="language-sh">npm run verify
+npm run test:browser -- tests/browser/application.spec.ts --grep &#x27;supports keyboard navigation|offers the account menu&#x27; --reporter=list
+npm run test:browser:development -- tests/browser/documentation.development.spec.ts --reporter=list
+</code></pre>
+<p>Restore dependencies only when a chosen check reports them missing. Use <code>npm ci</code>
+for the existing lockfile; keep dependency upgrades outside initialization.</p>
+<p>On Linux, inspect available inotify capacity during local readiness. If Vite
+exits before startup with an <code>ENOSPC</code> file-watcher error, retry that exact check
+with <code>CHOKIDAR_USEPOLLING=true</code>. After verifying the retry, carry polling into the
+consumer&#x27;s frontend launch environment and local command when needed. Preserve
+other projects and host limits; record the failed check and verified workaround
+in private run evidence.</p>
+<p>Search tracked/owned application files for the old Java package, package name,
+Spring/Compose names, and application-title strings. Exclude dependencies,
+generated build/test output, environment secrets, and Git internals. Classify
+every residual match: retained runbook examples, framework references,
+attribution, mock fixtures, or deferred artwork are legitimate. Unexplained
+application-identity leftovers are incomplete work.</p>
+<p>Validate that the Java launch configuration points to the new main class and
+owned source; keep the frontend launch configuration usable. With VS Code Java
+tools available, launch through them after project import. If they are unavailable,
+report the IDE launch check as unverified rather than claiming JSON inspection
+proves it.</p>
+<p>For a fresh local setup, follow the root README&#x27;s existing credential/database
+steps. The local credential helper is unrelated to renaming and stays unchanged.
+Check that the frontend runs in HTTP mode against <code>/api</code>; an existing
+<code>.env.local</code> may still select mocks. Exercise initial login, refresh, and logout
+through the real backend, and confirm the visible document/installed-app names.
+Handle credentials through local files or secret interfaces, not committed
+documents or the final report. Stop only processes started for verification and
+retain the local database volume.</p>
+<p><strong>Done when:</strong> builds/tests pass, the replacement audit has no unexplained
+leftovers, and local runtime/IDE results are recorded. Missing prerequisites or
+failed checks are explicit blockers, not successful verification.</p>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--local-backend-debugger">Local backend debugger</h5>
+<p>The backend tasks in <a href="https://github.com/vireocodedev/web-app-starter/blob/main/.vscode/tasks.json"><code>.vscode/tasks.json</code></a> use
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/backend/scripts/with-local-node.sh"><code>with-local-node.sh</code></a> before
+credential preparation and database startup. Keep Bash and the Node major from
+<code>frontend/.nvmrc</code> installed. The launcher uses a matching Node on PATH or loads
+an existing <code>${NVM_DIR:-$HOME/.nvm}/nvm.sh</code> to select that installed version. It
+installs nothing and leaves the nvm default unchanged. A desktop-launched VS Code
+may inherit an old system Node even when an interactive terminal uses nvm;
+<code>Unexpected reserved word</code> at <code>setup-local.mjs</code>&#x27;s top-level <code>await</code> indicates that
+runtime mismatch. Retry <strong>Backend: local dev</strong> after installing the required Node.</p>
+<p>The tasks preserve <code>backend/.env</code>, start only its configured Compose project,
+and verify PostgreSQL password authentication before Java launches. Container
+health alone can pass for a reused volume with different credentials. Restore
+matching credentials or use a separate <code>COMPOSE_PROJECT_NAME</code> and free
+<code>POSTGRES_PORT</code>; preserve the existing volume. Keep the Compose identity aligned
+across the files in the replacement map above, and use the same <code>.env</code> for
+manual stop/start commands.</p>
+<p>Verify runtime selection with
+<code>python3 -B -m unittest discover -s infrastructure/ci/tests -p test_local_node.py -v</code>
+and shell syntax with <code>bash -n backend/scripts/with-local-node.sh</code>. With Docker
+available, run
+<code>bash backend/scripts/with-local-node.sh --test --test-concurrency=1 backend/scripts/start-local.test.mjs</code>.
+The persistent-volume regression creates a unique test project, rejects a
+changed password despite healthy PostgreSQL, restores the original credentials
+and checks that stored data survives. Cleanup removes only that test&#x27;s resources.
+Actual VS Code debugger acceptance still requires the imported Java project.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--5-configure-shared-ci-access">5. Configure shared CI access</h4>
+<p>GitHub&#x27;s template creation copies repository files, not runner access, variables,
+secrets, branch protections, or environment settings. Obtain the consumer&#x27;s exact
+GitHub <code>owner/repository</code>, approved project slug, and selected shared CI operator.
+For the organization maintained here, the permanent foundation source belongs to
+<code>vireocodedev/web-app-starter</code>; experimental repositories are not dependencies.</p>
+<p>The detailed install-once and registration procedures live in the
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/ci/README.md">shared CI operator guide</a>. Read it before any
+runner operation. Consumers inherit its source files but <strong>register for the
+existing pool</strong>, rather than reinstall it or create an app-specific permanent
+runner.</p>
+<p>Give the operator this nonsecret registration input, substituting the consumer&#x27;s
+values:</p>
+<pre tabindex="0"><code class="language-json">{
+  &quot;slug&quot;: &quot;inventory-portal&quot;,
+  &quot;repository&quot;: &quot;your-org/inventory-portal&quot;
+}
+</code></pre>
+<p>If the shared host does not yet exist, the operator follows
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/docs/hetzner-provider-access.md">Hetzner provider access</a> to establish a protected
+project API credential, verified server/image/SSH identity, and exact rebuild
+scope. This is an install-once bootstrap prerequisite, not a cloud credential
+requirement for every consumer. Apply those instructions to the selected host;
+the current template host identifiers in that guide must not be reused blindly.</p>
+<p>The operator must verify private repository identity, extend the protected
+GitHub App installation&#x27;s selected-repository access, register while the
+controller is stopped/disabled/idle, and establish a fresh current-boot isolation
+receipt before an approved activation. The single-repository format is
+intentional: separate <code>frontend</code>/<code>backend</code> repository fields are not supported.
+Keep the credential on the controller host, never in the consumer checkout or
+workflow secrets. Do not request its value in chat.
+The operator&#x27;s installed source must already satisfy the reviewed transport,
+isolation and activation prerequisites. A missing repair or privileged-source
+upgrade blocks consumer readiness and belongs to a separately approved operator
+change. Preserve certificate verification, memory limits, isolated Python imports
+and the worker trust boundary. Historical template receipts do not establish
+current source/configuration/boot-bound consumer readiness.
+Follow <a href="https://github.com/vireocodedev/web-app-starter/blob/main/docs/github-ci-app.md">GitHub CI App setup</a> for the organization-owned App,
+minimal permissions, protected PEM/metadata, automatic token renewal, and guarded
+credential-free adapter preparation. Do not substitute a personal token into
+the permanent controller interface.
+If credential rotation removes repository access, preserve any registration/job
+recovery evidence; an authorization-related <code>404</code> does not prove a runner was
+removed. Follow the operator guide&#x27;s interrupted-job recovery procedure.</p>
+<p>Workflows route to <code>[self-hosted, Linux, X64, web-app-ci]</code>, with read-only PR token
+permissions and no production/registry-write credentials. Labels select jobs;
+the protected allowlist and repository-scoped JIT runners authorize repository
+access. An empty GitHub runner inventory while idle is expected for this
+disposable pool; verify a genuine job instead of installing a permanent runner
+just to make that page nonempty.</p>
+<p>Keep this app&#x27;s Java 21 toolchain. The immutable worker baseline also contains
+Node/npm and a validation JDK; select Java 21 inside the backend job using the
+job-local tool cache described in the operator guide. Backend commands must run
+from <code>backend/</code>, frontend commands from <code>frontend/</code>. Only root
+<code>.github/workflows/</code> files execute in this monorepo; nested frontend workflow
+examples do not establish active CI.</p>
+<p>Verify the operator&#x27;s current boot/source/configuration receipt, register this
+consumer and repeat required validation. Record actual consumer workflow/check
+names, run URLs and GitHub settings in its setup documentation rather than
+treating configured labels or historical template acceptance as working CI.</p>
+<p><strong>Done when:</strong> the consumer&#x27;s runner access is registered and current host
+acceptance plus genuine repository CI are verified, or the precise pending
+operator/workflow prerequisites are reported. Do not rebuild a host, enable
+services, publish, or deploy as a side effect of identity personalization.
+Full-mode registration/activation and deployments follow their explicit
+approved contract and operator gates instead.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--6-configure-github-ci-and-main-protection">6. Configure GitHub CI and main protection</h4>
+<p>Follow <a href="https://github.com/vireocodedev/web-app-starter/blob/main/docs/github-ci.md">Monorepo CI and main protection</a> for root workflow paths,
+change-selection rules, exact required-check naming, and the settings that
+GitHub does not copy from a template. Keep the shared Hetzner runner selection;
+changing a custom label also requires its operator registration and the
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/.github/actionlint.yaml">actionlint label configuration</a>.</p>
+<p>Verify actual consumer backend-only, frontend-only, both-owner, and unrelated
+PR results before claiming CI is working. Protect the selected integration
+branch after the real <code>CI gate</code> check succeeds: require PRs with zero approving
+reviews, bind the required check to GitHub Actions, require up-to-date branches,
+enforce for administrators, and block force pushes/deletion. Record observed
+run URLs, runner identity, effective policy, and a blocked/green mergeability
+test. Keep publication/deployment credentials separate from PR jobs.
+Omit unused reviewer and wait-timer fields when creating the default GitHub
+environments; an explicit empty reviewer list can request unsupported private-plan
+protection. Verify the resulting empty rules without an implicit paid upgrade.</p>
+<p><strong>Done when:</strong> the correct checks run on the consumer&#x27;s authorized Hetzner pool
+and the effective main policy is verified, or a concrete access/plan/run blocker
+is reported. Copied workflow files alone are not activation evidence.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--7-establish-environment-dns-access">7. Establish environment DNS access</h4>
+<p>Obtain the consumer&#x27;s exact production and staging hostnames and inspect their
+authoritative nameservers and existing A/AAAA/CNAME records. Keep one HTTPS
+origin per environment and the backend at <code>/api</code>. Consumers supply their own
+names and selected host addresses; template hostnames are not defaults.</p>
+<p>Follow <a href="https://github.com/vireocodedev/web-app-starter/blob/main/docs/hetzner-provider-access.md#dns-project-access-for-staging-and-production">DNS project access</a>
+for the exact existing zone, provider credential boundary, guarded record writes,
+and authoritative/recursive checks. A Cloud server token is not automatically
+authorized for a zone in another project. Obtain the correct protected
+credential rather than creating a duplicate zone or changing delegation.</p>
+<p><strong>Current gate:</strong> both template A records were created and verified against all
+authoritative nameservers and two public recursive resolvers using the correct
+DNS-project credential. <a href="https://github.com/vireocodedev/web-app-starter/blob/main/docs/acceptance/dns-acceptance.json">DNS acceptance</a> records the exact
+changes. Local recursive <code>NXDOMAIN</code> was still observed at inspection time;
+resolver/cache readiness is separate from successful authoritative writes.
+The template&#x27;s later container, routing, public TLS and backup activation is
+recorded separately in <a href="https://github.com/vireocodedev/web-app-starter/blob/main/docs/acceptance/release-acceptance.json">release acceptance</a>; DNS alone
+did not certify those outcomes.</p>
+<p><strong>Done when:</strong> the intended records are verified at the selected existing
+authoritative zone, with conflicts resolved and access/negative-cache blockers
+reported. DNS success alone does not certify HTTPS or a deployed application.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--8-prepare-whole-app-release-images">8. Prepare whole-app release images</h4>
+<p>Follow <a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/release/README.md">paired release setup</a>. Keep separate
+frontend/backend image boundaries but one matched release from the selected
+tested commit. Supply the actual repository URL/source SHA, build both pinned
+Dockerfiles, and run the restricted image smoke tests before publication.
+Preserve the frontend&#x27;s same-origin <code>/api</code> build configuration so staging and
+production can use the same immutable image pair. Environment hostnames, DB
+credentials, and production users belong in protected deployment provisioning,
+not Docker contexts/images.</p>
+<p>The current CI builds/smoke-tests each selected owner image independently.
+The two manual entrypoints are
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/.github/workflows/deploy-staging.yaml">Deploy staging</a> and
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/.github/workflows/deploy-production.yaml">Deploy production</a>, without a
+component dropdown. Staging verifies/builds/publishes the pair; production
+promotes the exact successful staging pair without rebuilding and requires
+the same selected source SHA. Follow
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/release/README.md#operator-installation-and-activation">operator installation and activation</a>
+for all affected host files, workflow IDs, maintainer allowlist, public
+<code>DEPLOY_CONTROLLER_CERT</code> variable, protected App/DB/account credentials,
+port allocation, Caddy, backup schedule, source pins and recovery safeguards.
+Do not place server credentials in PR CI or widen its host/private-network
+access. Root execution validates actual manual run identity, not runner labels.</p>
+<p>Before installation, reject collisions at every generated systemd unit path
+and loaded unit name, including the deployment service, backup service and
+backup timer. Check all containers, including stopped ones, for exact generated
+names, as well as networks, volumes, ports and project directories. Compare the
+shared App signer and release helpers with the approved operator source pin.
+After preparation, verify exact configuration identities, unit bytes/hardening,
+running database image/mount/isolation and protected account fields; retain
+configuration, unit and proxy hashes before independent activation review.</p>
+<p>For initial deployed accounts, follow
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/release/README.md#one-time-deployed-user-provisioning">one-time operator provisioning</a>.
+Use the intake&#x27;s deliberate consumer account decision and separately generated
+protected credentials rather than automatically seeding deployed users.
+Use the current backend digest,
+existing DB network, separate <code>PROVISION_USER_*</code> settings and explicit
+<code>--provision-user</code> command under the environment lock; verify termination,
+repeat safety and real HTTPS login. Keep provisioning credentials out of normal
+app containers and preserve conflicts rather than resetting users.</p>
+<p>Resolve the active digest under the environment lock and hold that lock through
+the fresh production backup, provisioning, matching-repeat and postchecks.
+Avoid nested locks; an operator transaction using the reviewed backup helper
+must preserve its root, protected-path and <code>umask 0077</code> safeguards. Persist
+exact task container names and ownership labels before creation, and reconcile
+uncertain Docker responses before releasing the lock or retrying. Recovery
+cleanup must inspect the exact owned scratch name even after a lost creation
+response; retain its intent and stop on uncertain ownership.</p>
+<p>Use the consumer&#x27;s explicit backup destination/risk decision and daily
+time/timezone rather than inheriting a template exception or schedule.
+Retention stays 30 days and staging remains unscheduled. Deployment, public
+TLS, account installation, and initialized backup restoration require the
+linked operator steps and actual acceptance; source implementation is not proof
+that the corresponding host/remote settings exist.</p>
+<p><strong>Done when:</strong> the exact committed image pair passes real restricted runtime
+checks and its immutable provenance is known, or the precise build/platform
+blocker is reported. Working containers alone are not GHCR/deployment evidence.</p>
+<p>Follow
+<a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/release/README.md#deploy-an-initialized-project">deployment operation</a>
+and <a href="https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/release/README.md#rehearse-recovery-without-touching-a-live-database">recovery rehearsal</a>
+for ongoing actions. Accounts, protected secret files, public certificate
+variables, remote settings, host registration and backup evidence are specific
+to each consumer, not inherited from historical template receipts.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--9-report-the-result">9. Report the result</h4>
+<p>Business requirements and specification are subsequent work. The former
+Client Discovery integration is not part of these initialization skills.
+Do not require its account, project ID or exports to complete setup.</p>
+<p>Return the approved identity, changed surfaces, commands and outcomes, and any
+blocked checks or deferred artwork. Point to local setup instructions without
+revealing credentials. For personalization-only scope, leave changes uncommitted
+unless a commit is requested; publication/deployment need separate approval.
+For full <code>/initialization-execution</code> scope, perform the approved commits/PRs and remote
+actions, and require every acceptance phase in the
+<a href="#source-agentsskillsinitialization-executionreferencescontractmd--completion-and-rehearsal">contract</a> before reporting
+ready. Record consumer-specific evidence, not copied template receipts.
+Include the shared CI registration/verification state without treating a
+template copy as inherited GitHub access.</p>
+<p><strong>Done when:</strong> the consumer can distinguish completed personalization, verified
+full initialization, and blocked/remaining work without relying on a generic
+&quot;setup complete&quot; claim. Unverified required checks cannot be waived by reporting.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--codex-skill-registration">Codex skill registration</h4>
+<p>Both complete sibling packages ship under <code>.agents/skills/</code>:
+<code>initialization-intake/</code> and <code>initialization-execution/</code>. Their <code>agents/openai.yaml</code>
+files provide picker labels and preserve explicit invocation. No personal/global
+skill or external app account is required.</p>
+<p>In the trusted consumer workspace, use <code>$initialization-intake</code> to select intake,
+resume, status or explanation. A concrete intake request proceeds directly.
+Once complete, explicitly use <code>$initialization-execution</code> to select execution,
+resume or readiness; it must check the intake gate before any setup work.
+Agents with skill slash commands use the same names with <code>/</code>.</p>
+<p>If the picker is stale, reload the editor window and start a fresh chat. When
+adopting elsewhere, copy both entire packages, excluding <code>node_modules</code>, intake
+<code>state/</code> and execution evidence. Reconcile existing consumer evidence deliberately.
+Never copy another consumer&#x27;s answers or completion into a new project.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--project-documentation-dashboard">Project documentation dashboard</h4>
+<p>Public references live in each skill&#x27;s <code>references/</code> directory. Consumer setup
+belongs in <code>docs/template-initialization.md</code> and sanitized acceptance records
+under <code>docs/acceptance/</code>. Private intake is stored only in
+<code>.agents/skills/initialization-intake/state/</code>; private execution evidence stays
+in <code>.template-initialization/</code>. Neither is a dashboard input.</p>
+<p>The execution package owns documentation dependencies and lockfile:</p>
+<pre tabindex="0"><code class="language-sh">npm --prefix .agents/skills/initialization-execution ci
+npm --prefix .agents/skills/initialization-execution run browser:install
+npm --prefix .agents/skills/initialization-execution run docs:build
+npm --prefix .agents/skills/initialization-execution run verify
+npm --prefix .agents/skills/initialization-execution run test:portable-install
+</code></pre>
+<p>The intake helper uses Node core only and can resume without application
+dependencies. The execution package&#x27;s verification runs its sibling intake
+behavior tests, public documentation/contract checks and offline Chromium
+desktop/mobile checks sequentially. The portable check installs both packages
+in an isolated Git consumer without frontend/backend or another skill.</p>
+<p>After changing public docs or either skill&#x27;s public references, regenerate
+and commit <code>docs/project.html</code> and <code>web/reference.html</code>, then run <code>docs:check</code>.
+The source loader selects only top-level <code>docs/*.md</code>, documentation acceptance
+JSON and explicitly listed public reference directories, excluding all private
+state and nested client artifacts. The bundled view contains references only;
+the project view separates current consumer acceptance from historical receipts.
+These offline pages are derived documentation, not live status or authority.</p>
+<p>Automated checks prove the local state/gate and documentation contracts. Only
+an authorized fresh consumer run can establish real local/CI/deployment/recovery
+acceptance and a no-follow-up initialization experience.</p></div><div class="digest">Source SHA-256 · 8aba57dc6fcfbafbf73ae19b76a4afabb8986f7f6d3bf939e716be4865eecc1a</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-intakereferencesstatemd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-intake/references/state.md</div><h2>Private state and helper API</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-intakereferencesstatemd--private-state-and-helper-api">Private state and helper API</h3>
+<p>Run Node 24 from the consumer root (use its local Node launcher when needed):</p>
+<pre tabindex="0"><code class="language-sh">node .agents/skills/initialization-intake/scripts/intake.mjs init --root /absolute/consumer
+node .agents/skills/initialization-intake/scripts/intake.mjs status --root /absolute/consumer
+node .agents/skills/initialization-intake/scripts/intake.mjs save --root /absolute/consumer --input /private/patch.json
+node .agents/skills/initialization-intake/scripts/intake.mjs complete --root /absolute/consumer --input /private/confirmation.json
+node .agents/skills/initialization-intake/scripts/intake.mjs require-complete --root /absolute/consumer
+</code></pre>
+<p><code>--input -</code> reads JSON from stdin, avoiding scratch files. File inputs must be
+user-owned regular 0600 files. The helper uses Node core and local Git only;
+status and execution gating create no files and make no API requests. A helper
+invoked from elsewhere still writes inside the selected consumer, never beside
+its source helper. Use matching installed helper bytes for that consumer.</p>
+<p><code>init</code> creates missing private state and preserves existing state. <code>status</code>
+returns completion, revision, missing/invalid IDs, proposed/answered IDs and
+blocked prerequisites, without printing answers/evidence. Missing fields are
+unanswered; proposed and unknown values remain incomplete. Inspect the private
+file to resume actual answers; never copy it to public artifacts.</p>
+<p><code>save</code> shallow-merges field entries, increments the revision and clears any
+completion. Every patch supplies the revision just read; a conflict requires
+reloading and merging rather than overwriting another session. Example:</p>
+<pre tabindex="0"><code class="language-json">{
+  &quot;expectedRevision&quot;: 0,
+  &quot;answers&quot;: {
+    &quot;display_name&quot;: { &quot;status&quot;: &quot;answered&quot;, &quot;value&quot;: &quot;Inventory&quot; },
+    &quot;backup_timezone&quot;: { &quot;status&quot;: &quot;proposed&quot;, &quot;value&quot;: &quot;Europe/Zagreb&quot; },
+    &quot;initial_email&quot;: { &quot;status&quot;: &quot;unknown&quot; }
+  },
+  &quot;prerequisites&quot;: {
+    &quot;app_consent&quot;: {
+      &quot;status&quot;: &quot;blocked&quot;,
+      &quot;evidence&quot;: &quot;Owner still needs to select this repository.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Answer statuses are <code>answered</code>, <code>proposed</code>, <code>unknown</code>. Preserve the user&#x27;s value,
+including invalid answers, and clarify them; the gate rejects invalid required
+answers rather than silently normalizing them. Prerequisites are <code>ready</code>,
+<code>blocked</code>, <code>unknown</code>; <code>ready</code> requires nonempty nonsecret evidence. Unknown fields
+and top-level <code>approved</code>/<code>complete</code> flags are rejected. All IDs and value contracts
+come from <a href="https://github.com/vireocodedev/web-app-starter/blob/main/.agents/skills/initialization-intake/scripts/schema.mjs">the catalog</a>.</p>
+<p>After all required questions and prerequisites are satisfied, show the full
+resolved plan and action list. Supply the actual user response:</p>
+<pre tabindex="0"><code class="language-json">{
+  &quot;expectedRevision&quot;: 4,
+  &quot;confirmation&quot;: {
+    &quot;response&quot;: &quot;Use those targets and proceed with the listed setup actions.&quot;
+  }
+}
+</code></pre>
+<p><code>complete</code> validates the current answers and evidence, increments the revision,
+and records the response and timestamp with a SHA-256 binding to all inputs,
+repository/worktree, revision and installed helper/schema bytes. It cannot prove
+that a response came from a human; the agent must preserve the real chat response
+and its meaning. This is an accidental-drift gate, not a cryptographic signature
+or standing execution authority. The explicit execution request remains required.</p>
+<p><code>require-complete</code> succeeds only for valid completed state matching this exact
+consumer. It returns <code>complete</code>, <code>statePath</code>, <code>revision</code>, <code>repository</code>, <code>scope</code>
+and <code>digest</code> (plus progress IDs); execution reads answers from <code>statePath</code> and
+retains the digest with its own <code>.template-initialization</code> phase evidence. Missing,
+partial, malformed, edited, stale or mismatched state exits nonzero and explicitly
+directs the user to finish <code>$initialization-intake</code> before execution.</p>
+<p>The ignored <code>state/</code> directory is 0700; JSON/temp/lock files are 0600. Writes are
+atomic with an exclusive writer lock and revision check; symlinked state/helper
+paths and hard-linked state files are rejected. If a process crashes with a lock,
+inspect active writers and the unchanged JSON before removing only that stale
+lock. Never delete the JSON as a retry shortcut.</p>
+<p>Changed helpers/schema make old completion stale. Inspect the saved answers
+against the current catalog and use <code>save</code> with the old revision to reconcile
+any answers/prerequisites, adopting the current schema and clearing completion;
+review and complete again. A changed repository/worktree requires explicit
+identity reconciliation: preserve the old file privately, verify actual origin,
+then initialize the new target and re-confirm applicable answers. Never silently
+rebind completed state or replace another project&#x27;s intake.</p>
+<p>This folder&#x27;s <code>.gitignore</code> and the repository ignore protect normal publication.
+Before committing, verify <code>state/intake.json</code> is ignored and absent from staged
+files; never force-add it. Secret-pattern checks catch common mistakes but cannot
+determine whether arbitrary text is a credential: record references only.</p></div><div class="digest">Source SHA-256 · fc13728942689664318293fb6752d56b36680452806e873c3f393e2287bb259a</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-execution/references/rehearsal-lessons.md</div><h2>Rehearsal lessons</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd--rehearsal-lessons">Rehearsal lessons</h3>
+<p>These are generic prevention rules from an earlier consumer rehearsal, not
+acceptance evidence for this template or another consumer. A clean
+fresh-consumer run is still required to prove the complete no-follow-up
+initialization experience.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Observed bottleneck</th><th>Required prevention</th></tr></thead><tbody><tr><td>CLI identity differed from the repository owner</td><td>Select the protected account/profile before invocation; verify access and prefer scoped authentication.</td></tr><tr><td>Existing application/database identity was ambiguous</td><td>Record fresh versus same-identity resume and preserve existing resources.</td></tr><tr><td>Identity, artwork, accounts and backup risk needed human decisions</td><td>Collect explicit intake answers before bulk changes.</td></tr><tr><td>Operator/profile discovery happened late</td><td>Arrange the existing operator reference and verify current source, trust, receipt and capacity upfront.</td></tr><tr><td>Selected-repository App access needed owner browser consent</td><td>Complete the existing App&#x27;s saved repository selection beforehand; repository administration alone is not proof.</td></tr><tr><td>Old image namespaces belonged to different repositories</td><td>Inspect package ownership, preserve by default and stop for separately authorized replacement.</td></tr><tr><td>Port defaults collided with another application</td><td>Verify ownership and allocate only approved unused ports; update all dependent surfaces.</td></tr><tr><td>IDE import name differed from Gradle identity</td><td>Omit the optional single-backend <code>projectName</code>; verify the actual saved launch after personalization.</td></tr><tr><td>Generic Java launch did not prove saved IDE launches</td><td>Verify an unattended tool path for both configurations during readiness, then test real launches.</td></tr><tr><td>Empty reviewer settings invoked unavailable private-plan features</td><td>Omit unused protection fields and verify actual readback; do not upgrade plans implicitly.</td></tr><tr><td>A Python isolation flag hid an installed CLI&#x27;s sibling modules</td><td>Use the operator-documented interpreter/entrypoint; verify <code>--help</code> and real backup behavior.</td></tr><tr><td>A transient container startup failed CI</td><td>Keep the failing required check; diagnose/retry within scope without weakening isolation.</td></tr></tbody></table></div>
+<p>Human login/2FA, App consent, credential entry, identity/risk choices and execution
+consent remain human tasks. The agent records those answers during intake; only live
+verification can establish runtime, CI, deployment and initialized recovery
+acceptance. Unexpected post-intake assistance is a preparation defect to record,
+not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · 9bcc7a5556def2719a8a92dcd40b65dd114cbfecfbff831204c5bc558a92e6b9</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-intakereferencesquestionnairemd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-intake/references/questionnaire.md</div><h2>Setup questionnaire</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-intakereferencesquestionnairemd--setup-questionnaire">Setup questionnaire</h3>
+<p>The executable catalog in <a href="https://github.com/vireocodedev/web-app-starter/blob/main/.agents/skills/initialization-intake/scripts/schema.mjs">schema.mjs</a> owns field IDs,
+validation and required prerequisites. Read the full catalog before presenting
+questions. Ask all applicable questions upfront, including actions the user must
+perform outside chat. Group them as below; do not turn setup into a business
+requirements interview. The supported stack, theme, 30-day retention and existing
+operator procedures remain constraints, not invitations to redesign them.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Group</th><th>Settle before execution</th></tr></thead><tbody><tr><td>Outcome and target</td><td><code>execution_scope</code> (<code>full</code> or explicitly <code>local-only</code>), exact detected <code>repository</code>, fresh/resume boundary and preserved resources.</td></tr><tr><td>Identity</td><td>Slug, display name, Java application namespace, PWA short name, exact localization policy, retained artwork or supplied asset reference, retained theme.</td></tr><tr><td>Local development</td><td>Port allocation, dependency-install bounds, current data ownership, available runtimes/Docker/browser tooling, IDE trust/extensions/import and private credential destination.</td></tr><tr><td>Accounts</td><td>Initial username, display name and email; separate credentials are generated by execution into protected storage. A username such as <code>admin</code> adds no role.</td></tr><tr><td>GitHub and CI (full)</td><td>Intended account, scoped login versus explicitly allowed global switch, maintainer allowlist, private repository/admin/Actions support, selected-repository consent for the existing App.</td></tr><tr><td>Existing operator (full)</td><td>Protected profile reference with actual host identity, canonical reviewed CI source/receipt, host trust, capacity, project path namespace and allowed loopback port range. Reuse existing shared CI/App/host.</td></tr><tr><td>DNS and registry (full)</td><td>Distinct owned staging/production FQDNs, exact zone/project access through the profile, existing records versus missing-record creation, absent packages versus same-repository resume, real push/pull access.</td></tr><tr><td>Backup and recovery (full)</td><td>Supported destination reference or same-server, explicit host-loss acceptance for same-server, supported daily time/IANA zone, 30-day retention, unscheduled staging, isolated scratch restore target.</td></tr><tr><td>Authority and bounds</td><td>Zero new paid resources, all existing unrelated resources preserved, exact <code>action_scope</code>, actual user confirmation after the complete resolved summary.</td></tr></tbody></table></div>
+<p>For each topic, include detected facts, proposed defaults, questions, foreseeable
+human actions and the evidence needed. Resolve reusable-profile facts by reading
+the selected protected profile and verifying access; a profile default cannot
+accept the consumer&#x27;s risk. Record exact selected targets and evidence without
+credential contents. Unsupported provider adapters, replacing registry packages,
+new foundations, host repairs/upgrades, different-identity renames, existing DB
+replacement, password resets and live restores need separately scoped work.</p>
+<p>The existing operator profile is an external protected JSON document, version 1,
+with <code>name</code>, <code>github</code> (host/account/allowed owner), <code>ssh</code> (target, identity reference,
+verified host key, privilege mode), <code>ci</code> (existing pool, canonical source/revision,
+installed configuration and App metadata/key <strong>paths</strong>), <code>dns</code> (provider/zone/
+project/credential reference), <code>deployment</code> (host/project namespace/ports/
+maintainers), <code>backup</code> (supported adapter/schedule) and <code>bounds</code>. It contains
+references rather than credential values. A missing profile is prepared by the
+operator before execution; it is not permission to bootstrap another shared pool.</p>
+<p>Readiness evidence records what was verified and where, distinguishing actual
+read-only checks from user attestations. Recheck volatile access/ownership before
+writes during execution; a later outage blocks the affected phase without
+repeating already answered configuration questions.</p>
+<p>For local-only scope, full-only questions/prerequisites are inapplicable; explain
+that CI, hosting, deployment and recovery acceptance remain outside that scope.
+Use only local actions. Full scope requires every full prerequisite and action;
+partial answers cannot masquerade as a completed full initialization intake.</p></div><div class="digest">Source SHA-256 · 09fb91c35e9afe1c584c7154814610cc2090494e8bbeb2488a66d26908c61ff9</div></section>
+<footer class="footer">Generated from bundled skill references only. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialization-execution run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · a770c4fd8ff380b6433be006083725a28a06141717acdee7747fb08f9345d3b1</p></footer>
+</main></div><script>
+const records = [...document.querySelectorAll(".record")];
+const search = document.querySelector("#search");
+const filter = document.querySelector("#kind");
+const cached = records.map(record => ({ record, text: record.textContent.toLowerCase() }));
+function update() {
+  const query = search.value.trim().toLowerCase();
+  let count = 0;
+  for (const item of cached) {
+    const visible = (!query || item.text.includes(query)) && (filter.value === "all" || item.record.dataset.kind === filter.value);
+    item.record.hidden = !visible;
+    document.querySelectorAll("[data-for]").forEach(link => {
+      if (link.dataset.for === item.record.id) link.hidden = !visible;
+    });
+    if (visible) count++;
+  }
+  document.querySelector("#results").textContent = "Showing " + count + " of " + records.length + " sources";
+  document.querySelector("#empty").hidden = count !== 0;
+}
+search.addEventListener("input", update);
+filter.addEventListener("change", update);
+document.querySelector("#reset").addEventListener("click", () => { search.value = ""; filter.value = "all"; update(); search.focus(); });
+function revealTarget() {
+  const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  const record = target?.closest(".record");
+  if (record?.hidden) { search.value = ""; filter.value = "all"; update(); }
+  for (let parent = target?.parentElement; parent; parent = parent.parentElement) {
+    if (parent.tagName === "DETAILS") parent.open = true;
+  }
+}
+addEventListener("hashchange", revealTarget);
+revealTarget();
+update();
+</script></body></html>

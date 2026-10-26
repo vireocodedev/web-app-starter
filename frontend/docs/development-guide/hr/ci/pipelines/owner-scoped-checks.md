@@ -36,22 +36,16 @@ Dijagram objašnjava ugovor; nije zamjenski workflow koji treba kopirati.
 
 ## Stvarni odabir provjera
 
-`tools/generators/**`, korijenski `package.json` i `generator-policy.json` odabiru
-oba aplikacijska skupa. Statička frontend provjera izvršava testove generatora i
-serijaliziranu provjeru izoliranog izlaza uz postojeću infrastrukturu aplikacije.
-Generirani TypeScript provjerava se uvijek, a Java ondje samo kad su odabrana oba
-aplikacijska vlasnika. Promjena samo frontenda zadržava frontend opseg.
-
-| Promjena                                                               | Odabrani poslovi                                                      |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `backend/**`                                                           | Backend slika, smoke provjera i testni shardovi                       |
-| `frontend/**`                                                          | Statičke provjere, Storybook, slika, smoke provjera i testni shardovi |
-| Ostali `infrastructure/ci/**`                                          | Foundation provjere                                                   |
-| `.github/**`, `.vscode/**`, `infrastructure/release/**`                | Svi vlasnici                                                          |
-| Definirani CI routing/shard helperi, njihove težine i određeni testovi | Svi vlasnici                                                          |
-| `.agents/skills/initialize-project/**`                                 | Svi vlasnici                                                          |
-| Dokumentacija izvan aplikacijskih direktorija                          | Portable i završni status                                             |
-| Ručno pokretanje ili početni push s nulama kao bazom                   | Svi vlasnici                                                          |
+| Promjena                                                                                | Odabrani poslovi                                                      |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `backend/**`                                                                            | Backend slika, smoke provjera i testni shardovi                       |
+| `frontend/**`                                                                           | Statičke provjere, Storybook, slika, smoke provjera i testni shardovi |
+| Ostali `infrastructure/ci/**`                                                           | Foundation provjere                                                   |
+| `.github/**`, `.vscode/**`, `infrastructure/release/**`                                 | Svi vlasnici                                                          |
+| Definirani CI routing/shard helperi, njihove težine i određeni testovi                  | Svi vlasnici                                                          |
+| `.agents/skills/initialization-intake/**`, `.agents/skills/initialization-execution/**` | Svi vlasnici                                                          |
+| Dokumentacija izvan aplikacijskih direktorija                                           | Portable i završni status                                             |
+| Ručno pokretanje ili početni push s nulama kao bazom                                    | Svi vlasnici                                                          |
 
 Portable je obvezan u svakom retku. Točan popis posebnih helper putanja nalazi se u funkciji `scope()`. Članak pod `frontend/` odabire frontend jer njegova aplikacijska pripadnost uključuje izgradnju i izvođenje.
 

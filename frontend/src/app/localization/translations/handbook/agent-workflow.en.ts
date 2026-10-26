@@ -40,7 +40,7 @@ export const englishAgentWorkflowHandbookTranslations = {
     "agent-workflow-implementation-initialization-to-business-acceptance": {
       title: "Separate setup readiness from accepted business V1",
       description:
-        "Track independent preparation, locked business scope, specification, implementation and exact-pair acceptance without inferring completion across stages.",
+        "Separate resumable initialization intake, gated setup execution and later business scope, implementation and exact-pair acceptance.",
     },
   },
 } as const;

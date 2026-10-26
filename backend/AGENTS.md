@@ -4,10 +4,6 @@ For every task, follow the root
 [mandatory development-guide workflow](../AGENTS.md#mandatory-development-guide-workflow),
 including its pattern-reuse and approval gate.
 
-Before creating source, follow the mandatory
-[Generator-first workflow](../docs/generators.md#generator-first-agent-policy),
-including compatibility evaluation and meaningful composite generation.
-
 Before changing Java code, placing new feature files or adding a dependency, read
 [package organization, ownership and dependency directions](../frontend/docs/development-guide/en/backend/foundation/http-service-persistence-boundaries.md).
 That article owns feature-package placement, role naming, the current class map,
