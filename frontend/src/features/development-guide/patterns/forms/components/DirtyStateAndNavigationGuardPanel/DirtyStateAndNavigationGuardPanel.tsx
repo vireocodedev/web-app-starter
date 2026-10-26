@@ -51,7 +51,7 @@ React.useEffect(() => {
 const navigationActionCode = `const navigate = useNavigate()
 
 <Button
-  onClick={() => navigate('/dev-guide/patterns/forms/dependent-fields')}
+  onClick={() => navigate('/dev-guide/frontend/patterns/forms/dependent-fields')}
   type="button"
 >
   Open dependent fields

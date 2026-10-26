@@ -127,7 +127,10 @@ describe("ContactsDashboard", () => {
         name: "Your contact directory is ready",
       }),
     ).toBeVisible();
-    expect(screen.getByRole("link", { name: "Add the first contact" })).toHaveAttribute("href", "/dev-guide/contacts");
+    expect(screen.getByRole("link", { name: "Add the first contact" })).toHaveAttribute(
+      "href",
+      "/dev-guide/frontend/example-pages/contacts-crud",
+    );
   });
 
   it("retries a failed contact query", async () => {

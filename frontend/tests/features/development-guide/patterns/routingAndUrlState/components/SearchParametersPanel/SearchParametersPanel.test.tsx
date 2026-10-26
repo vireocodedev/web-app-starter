@@ -87,16 +87,16 @@ describe("Routing and URL state patterns", () => {
 
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(
-        "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/summit",
+        "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/summit",
       ),
     );
   });
 
   it("renders nested child content and changes descendants", async () => {
     const router = renderRoute(
-      "/dev-guide/patterns/routing-and-url-state/nested-routes/workspace/overview",
+      "/dev-guide/frontend/patterns/routing-and-url-state/nested-routes/workspace/overview",
       NestedRoutesPanel,
-      "/dev-guide/patterns/routing-and-url-state/nested-routes/*",
+      "/dev-guide/frontend/patterns/routing-and-url-state/nested-routes/*",
     );
 
     expect(screen.getByText("routingExamples.nested.preview.overviewDescription")).not.toBeNull();
@@ -108,7 +108,7 @@ describe("Routing and URL state patterns", () => {
 
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(
-        "/dev-guide/patterns/routing-and-url-state/nested-routes/workspace/activity",
+        "/dev-guide/frontend/patterns/routing-and-url-state/nested-routes/workspace/activity",
       ),
     );
   });
@@ -116,9 +116,9 @@ describe("Routing and URL state patterns", () => {
   it("contains a child route failure and recovers to the safe route", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const router = renderRoute(
-      "/dev-guide/patterns/routing-and-url-state/route-level-recovery/summary",
+      "/dev-guide/frontend/patterns/routing-and-url-state/route-level-recovery/summary",
       RouteRecoveryPanel,
-      "/dev-guide/patterns/routing-and-url-state/route-level-recovery/*",
+      "/dev-guide/frontend/patterns/routing-and-url-state/route-level-recovery/*",
       RouteRecoveryBoundary,
     );
 
@@ -136,7 +136,7 @@ describe("Routing and URL state patterns", () => {
     );
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(
-        "/dev-guide/patterns/routing-and-url-state/route-level-recovery/summary",
+        "/dev-guide/frontend/patterns/routing-and-url-state/route-level-recovery/summary",
       ),
     );
   });

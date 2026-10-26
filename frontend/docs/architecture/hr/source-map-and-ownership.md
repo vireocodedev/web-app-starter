@@ -43,14 +43,19 @@ pripada samo usidrenim panelima.
 Uklonjive razvojne upute grupirane su bez spajanja njihovih vlasnika:
 
 ```text
-src/features/development-guide/{architecture,contacts,patterns/<category>}
-src/pages/development-guide/{architecture,contacts,patterns}
+src/features/development-guide/{architecture,contacts,handbook,patterns/<category>}
+src/pages/development-guide/{architecture,contacts,handbook,patterns}
 tests/features/development-guide/{architecture,contacts,patterns/<category>}
 ```
 
-Architecture, Contacts i svaka Patterns kategorija i dalje imaju odvojena javna
+Architecture, Contacts, Handbook i svaka Patterns kategorija i dalje imaju odvojena javna
 sučelja i granice ovisnosti. `development-guide` je fizičko grupiranje koda koji
 se izostavlja iz produkcije, a ne jedna široka granica značajke.
+
+Katalog Handbook posjeduje dvojezične fullstack članke u
+`docs/development-guide/`. Router sastavlja njegov javni manifest u rute
+kategorija, tema i članaka. Zajednički prikaz Markdowna i navigacija stranice
+pripadaju `app/shell/documentation`; ne uvoze kataloge članaka.
 
 ## Vlasnici paketa, testova i mockova
 
@@ -67,7 +72,7 @@ granicu i determinističke auth pripreme. Ni jedno ne pripada u produkcijski
 ## Neobvezni primjeri i stabilna infrastruktura
 
 Neki isporučeni primjeri nisu obvezni. Contacts je cjelovit primjer značajke,
-Settings je prezentacija aplikacijskih postavki, a Patterns i Architecture su
+Settings je prezentacija aplikacijskih postavki, a Patterns, Architecture i Handbook su
 razvojne upute. Pri uklanjanju primjera uklonite njegovu značajku, stranice,
 testove, rute, prijevode i registracije. Stabilni vlasnici kao `src/app/data`,
 `src/app/router` i ljuska ostaju dok ih aplikacija treba.

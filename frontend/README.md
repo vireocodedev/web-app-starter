@@ -71,8 +71,14 @@ inputs bundled at build time, so changing one requires rebuilding the app.
 
 ## Architecture and contribution guide
 
+Start with the [fullstack development guide](docs/development-guide/README.md)
+for focused frontend, backend, CI, delivery and agent-workflow patterns. Paired
+English/Croatian Markdown remains readable by agents without a browser. The
+development-only UI exposes the same articles through category and topic indexes;
+source-backed recipes are labeled separately from installed template behavior.
+
 The canonical source-structure guide is available in the authenticated,
-development-only **Development guide** menu under **Architecture**. Its same
+development-only **Development guide → Frontend → Architecture**. Its same
 Markdown sources are readable in the repository:
 
 - [English architecture guide](docs/architecture/en/source-map-and-ownership.md)
@@ -118,9 +124,21 @@ caching. Browser install prompts vary and may depend on user engagement.
 ## Shell and navigation
 
 The first header row contains the main menu button, RGO brand,
-top-level route context, quick actions, and account access. The development
-guide demonstrates an optional second row for its immediate sections and a
-separate page sidebar for deeper navigation. Deep pages retain local
+top-level route context, quick actions, and account access. `/dev-guide` lists
+the fullstack guide categories without section tabs. Frontend keeps Example pages,
+interactive Patterns, Workflow patterns and Architecture under `/dev-guide/frontend`.
+Example pages lists Contacts dashboard and Contacts CRUD; Patterns uses the shared
+Settings-style navigation for its examples. Backend, Quality and verification, CI, delivery and workflow
+categories expose source-backed handbook articles. **Find articles** at `/dev-guide/find`
+searches handbook metadata and source references with shareable category/type/size
+filters; Ctrl/Cmd+K remains title-and-context page navigation. See the
+[guide index](docs/development-guide/README.md) for scope and source ownership. Category pages show
+**Development guide → Frontend** or **Development guide → Backend** in the header,
+with a link back to the category list. Previous guide URLs redirect to Frontend
+and retain their query parameters and fragments. The entire guide stays out of
+production builds. Guide pages share an `xl` content container, including their
+local breadcrumbs. Frontend demonstrates an optional second row for its immediate
+sections and a separate page sidebar for deeper navigation. Deep pages retain local
 breadcrumbs. On narrow screens, the second row keeps the active section visible and offers a More sections sheet, while
 page navigation uses a separate “On this page” menu. Mobile theme and language controls
 are available in Settings instead of a More button. App-provided `headerActions`

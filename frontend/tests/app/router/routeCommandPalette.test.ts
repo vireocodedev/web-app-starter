@@ -42,6 +42,28 @@ describe("command palette route entries", () => {
     ).toBe(true);
   });
 
+  it("includes the category landing and Backend content with Frontend context for existing pages", () => {
+    const entries = createAppCommandPaletteEntries(appRouteRegistry, translations(), true);
+    expect(entries).toContainEqual({
+      id: "developmentGuideIndex",
+      label: "Development guide",
+      context: "Development guide",
+      to: "/dev-guide",
+    });
+    expect(entries).toContainEqual({
+      id: "developmentGuideBackend",
+      label: "Backend",
+      context: "Development guide",
+      to: "/dev-guide/backend",
+    });
+    expect(entries.find(entry => entry.id === "contacts")).toMatchObject({
+      context: "Development guide / Frontend / Example pages",
+      label: "Contacts CRUD",
+      to: "/dev-guide/frontend/example-pages/contacts-crud",
+    });
+    expect(entries.some(entry => entry.id.startsWith("legacy"))).toBe(false);
+  });
+
   it("requires explicit membership, excludes public pages, and inherits development availability", () => {
     const registry: AppRouteRegistry = {
       parent: page({ developmentOnly: true, path: "/dev" }),

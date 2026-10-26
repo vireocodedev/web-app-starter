@@ -15,8 +15,11 @@ export function ContactsPage() {
 
 Stranice značajki koriste `src/pages/<feature>/`. Male aplikacijske granice kao
 Home, Login i Not Found mogu ostati jedna datoteka. Patterns stranice grupirane
-su po kategoriji; Architecture stranice prilagođavaju ID članka i lokalitet
-javnom rendereru. Stranice ne uvoze unutrašnjost značajke, ne stvaraju runtime,
+su po kategoriji. Architecture i Handbook stranice prilagođavaju ID članka i
+povezana odredišta dobivena od routera javnom sučelju sadržaja; lokalitet bira
+adapter značajke. Handbook indeksi i teme primaju ključeve prijevoda i popise
+od kompozicije routera, bez čitanja registra ili kataloga značajke. Stranice ne
+uvoze unutrašnjost značajke, ne stvaraju runtime,
 ne ponavljaju upite i ne posjeduju poslovno ponašanje.
 
 ## Pravila ruta pripadaju registru

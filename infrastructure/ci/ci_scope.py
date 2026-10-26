@@ -7,7 +7,8 @@ import subprocess
 
 
 def scope(paths, force=False):
-    shared = force or any(path.startswith(('.github/', '.agents/skills/initialize-project/',
+    shared = force or any(path.startswith(('.github/', '.agents/skills/initialization-intake/',
+                                          '.agents/skills/initialization-execution/',
                                           '.vscode/', 'infrastructure/release/'))
                           or path in ('infrastructure/ci/ci_scope.py', 'infrastructure/ci/test_shards.py',
                                       'infrastructure/ci/test-timings.json',

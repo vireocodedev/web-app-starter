@@ -1,5 +1,9 @@
 # Application agent guide
 
+For every task, follow the root
+[mandatory development-guide workflow](../AGENTS.md#mandatory-development-guide-workflow),
+including its pattern-reuse and approval gate.
+
 For route and page lifecycle changes, use [app-route-pages](.agents/skills/app-route-pages/SKILL.md). For drawer, section, header, breadcrumb, and page-sidebar navigation, use [app-shell-navigation](.agents/skills/app-shell-navigation/SKILL.md). For shell appearance and preferences, use [app-shell-preferences](.agents/skills/app-shell-preferences/SKILL.md). Load the related skill when one request crosses these owners.
 
 When creating or updating a skill under `.agents/skills/`, use Start → Workflow → Finish. A bare `$skill-name` asks one short action menu with free-text input and waits; a prompt with a concrete task proceeds directly.

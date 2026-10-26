@@ -106,6 +106,36 @@ function renderRegistry(registry: AppRouteRegistry, initialEntry: string) {
 }
 
 describe("application route hierarchy", () => {
+  it("exposes only explicit header breadcrumb metadata on each matched route handle", () => {
+    const registry = {
+      workspace: {
+        Component: WorkspaceLayout,
+        access: "authenticated",
+        path: "/workspace",
+        title: () => "Workspace",
+      },
+      activity: {
+        Component: ActivityLayout,
+        access: "authenticated",
+        headerBreadcrumb: true,
+        parentId: "workspace",
+        path: "/workspace/activity",
+        title: () => "Activity",
+      },
+      details: {
+        Component: ActivityDetailsPage,
+        access: "authenticated",
+        parentId: "activity",
+        path: "/workspace/activity/details",
+        title: () => "Details",
+      },
+    } as const satisfies AppRouteRegistry;
+    const workspace = createAppRouteObjects(registry, "authenticated")[0];
+    expect(workspace?.handle?.headerBreadcrumb).toBeUndefined();
+    expect(workspace?.children?.[0]?.handle?.headerBreadcrumb).toBe(true);
+    expect(workspace?.children?.[0]?.children?.[0]?.handle?.headerBreadcrumb).toBeUndefined();
+  });
+
   it("passes each route's mobile presentation choices to its own handle", () => {
     const registry = {
       workspace: {
@@ -244,29 +274,38 @@ describe("application route hierarchy", () => {
     expect(router.state.historyAction).toBe("REPLACE");
   });
 
-  it("supports an explicit nested index without redirecting away from the parent URL", async () => {
-    const registry = {
-      workspace: {
-        Component: WorkspaceLayout,
-        access: "authenticated",
-        path: "/workspace",
-        title: () => "Workspace",
-      },
-      workspaceIndex: {
-        Component: OverviewPage,
-        access: "authenticated",
-        index: true,
-        parentId: "workspace",
-        title: () => "Overview",
-      },
-    } as const satisfies AppRouteRegistry;
+  it.each(["Workspace", "Overview"])(
+    "supports a nested %s index and deduplicates only identical parent titles",
+    async indexTitle => {
+      const registry = {
+        workspace: {
+          Component: WorkspaceLayout,
+          access: "authenticated",
+          path: "/workspace",
+          title: () => "Workspace",
+        },
+        workspaceIndex: {
+          Component: OverviewPage,
+          access: "authenticated",
+          index: true,
+          parentId: "workspace",
+          title: () => indexTitle,
+        },
+      } as const satisfies AppRouteRegistry;
 
-    const router = renderRegistry(registry, "/workspace");
+      const router = renderRegistry(registry, "/workspace");
 
-    expect(await screen.findByText("Overview page")).toBeVisible();
-    expect(router.state.location.pathname).toBe("/workspace");
-    expect(routeDestinationFromRegistry(registry, "workspaceIndex")).toBe("/workspace");
-  });
+      expect(await screen.findByText("Overview page")).toBeVisible();
+      expect(router.state.location.pathname).toBe("/workspace");
+      expect(routeDestinationFromRegistry(registry, "workspaceIndex")).toBe("/workspace");
+      const index = createAppRouteObjects(registry, "authenticated")[0]?.children?.find(route => route.index);
+      expect(index?.handle?.resolveBreadcrumbs(translations, {})).toEqual(
+        indexTitle === "Workspace"
+          ? [{ label: "Workspace" }]
+          : [{ label: "Workspace", to: "/workspace" }, { label: "Overview" }],
+      );
+    },
+  );
 
   it("leaves a parent layout at its own URL when no default is configured", async () => {
     const registry = {
@@ -698,19 +737,21 @@ describe("application route hierarchy", () => {
       examples: {
         Component: EmptyPage,
         access: "authenticated",
-        path: "/dev-guide/patterns",
+        path: "/dev-guide/frontend/patterns",
         title: () => "Patterns",
       },
       firstPattern: {
         Component: EmptyPage,
         access: "authenticated",
         parentId: "examples",
-        path: "/dev-guide/patterns/first",
+        path: "/dev-guide/frontend/patterns/first",
         title: () => "First pattern",
       },
     } as const satisfies AppRouteRegistry;
 
-    expect(directChildRouteIdForDestination(registry, "examples", "/dev-guide/patterns/first")).toBe("firstPattern");
+    expect(directChildRouteIdForDestination(registry, "examples", "/dev-guide/frontend/patterns/first")).toBe(
+      "firstPattern",
+    );
     expect(() => routeDestinationFromRegistry(registry, "cyclicFirst")).toThrow(
       'Route "cyclicFirst" forms a destination parent cycle: cyclicFirst -> cyclicSecond -> cyclicFirst',
     );

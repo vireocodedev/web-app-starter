@@ -2,7 +2,7 @@ import { Button, Paper, Stack, Typography } from "@mui/material";
 import { Link as RouterLink, Navigate, Outlet, Route, Routes, useLocation } from "react-router";
 import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 
-const routeBase = "/dev-guide/patterns/routing-and-url-state/nested-routes/workspace";
+const routeBase = "/dev-guide/frontend/patterns/routing-and-url-state/nested-routes/workspace";
 
 function WorkspaceLayout() {
   const { t } = useDevelopmentGuideTranslation();

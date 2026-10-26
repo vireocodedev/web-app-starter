@@ -5,6 +5,7 @@ import { Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Tooltip, Typo
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
+import { appHttpErrorMessageKey, decodeAppHttpError, type AppHttpError } from "@/app/data/http/appHttpError";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
 import { useAppAuth } from "../hooks/useAppAuth";
 import { avatarInitials } from "../utils/userAvatarIdentity";
@@ -28,6 +29,7 @@ export function AppAuthActions({ developmentGuidePath }: Readonly<{ developmentG
   const completingRef = useRef(false);
   const [menu, setMenu] = useState<AccountMenuState>({ anchor: null, pathname, phase: "closed", restoreFocus: true });
   const [logoutFailed, setLogoutFailed] = useState(false);
+  const [logoutError, setLogoutError] = useState<AppHttpError | null>(null);
   const userName = user?.displayName ?? "";
   const initials = avatarInitials(userName);
 
@@ -54,8 +56,10 @@ export function AppAuthActions({ developmentGuidePath }: Readonly<{ developmentG
   async function handleLogout() {
     try {
       setLogoutFailed(false);
+      setLogoutError(null);
       await logout();
-    } catch {
+    } catch (error) {
+      setLogoutError(decodeAppHttpError(error));
       setLogoutFailed(true);
     }
   }
@@ -175,7 +179,7 @@ export function AppAuthActions({ developmentGuidePath }: Readonly<{ developmentG
           </MenuItem>
           {logoutFailed ? (
             <Typography component="li" color="error" role="alert" sx={{ px: 2, py: 1 }} variant="body2">
-              {t("authentication.signOutFailed")}
+              {t(appHttpErrorMessageKey(logoutError) ?? "authentication.signOutFailed")}
             </Typography>
           ) : null}
         </Menu>

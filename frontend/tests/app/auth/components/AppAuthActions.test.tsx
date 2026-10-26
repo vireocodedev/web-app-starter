@@ -19,7 +19,7 @@ function AccountHarness() {
   }, [location.pathname]);
   return (
     <>
-      <AppAuthActions developmentGuidePath="/dev-guide/home" />
+      <AppAuthActions developmentGuidePath="/dev-guide" />
       <main ref={mainRef} tabIndex={-1}>
         {location.pathname}
         {location.search}

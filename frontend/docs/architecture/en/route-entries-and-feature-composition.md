@@ -15,8 +15,11 @@ export function ContactsPage() {
 
 Feature pages use `src/pages/<feature>/`. Small application boundaries such as
 Home, Login, and Not Found may remain one flat file. Pattern pages are grouped
-by category; Architecture pages adapt article IDs and locale to its public
-renderer. Pages must not import feature internals, construct feature runtimes,
+by category. Architecture and Handbook pages adapt article IDs and
+route-supplied related destinations to their public content interfaces; locale
+selection remains in the feature adapter. Handbook index and topic pages receive
+translated-key/list props from router composition and do not read its registry or
+feature catalog. Pages must not import feature internals, construct feature runtimes,
 duplicate queries, or own business behavior.
 
 ## Route policy belongs to the registry

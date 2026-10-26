@@ -106,7 +106,7 @@ function DashboardHero() {
           component={RouterLink}
           endIcon={<ArrowForwardOutlinedIcon />}
           size="large"
-          to="/dev-guide/contacts"
+          to="/dev-guide/frontend/example-pages/contacts-crud"
           variant="contained"
         >
           {t("contacts.dashboard.open")}
@@ -334,7 +334,7 @@ export function ContactsDashboard() {
               {t("contacts.dashboard.empty.title")}
             </Typography>
             <Typography color="text.secondary">{t("contacts.dashboard.empty.description")}</Typography>
-            <Button component={RouterLink} to="/dev-guide/contacts" variant="contained">
+            <Button component={RouterLink} to="/dev-guide/frontend/example-pages/contacts-crud" variant="contained">
               {t("contacts.dashboard.empty.action")}
             </Button>
           </Stack>

@@ -35,6 +35,10 @@ not replace, the manual checklist in `docs/manual-accessibility-checklist.md`.
 
 ## Automated checks and review judgment
 
+Use [Architecture invariants and checks](/dev-guide/quality/test-design/architecture-invariants-and-checks)
+for the complete installed frontend/backend guard-to-check map, proof owners,
+commands and explicit automation limits.
+
 `npm run verify:architecture` enforces mechanical rules including allowed source
 roots, test placement, owner-crossing imports, feature public interfaces,
 private contexts, runtime-hook wrappers, declared cross-feature hook edges,

@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/browser",
-  testIgnore: "documentation.development.spec.ts",
+  testIgnore: ["documentation.development.spec.ts"],
   grepInvert: /Contacts|creates the first contact/,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

@@ -1,47 +1,54 @@
 # Initialize a project from this template
 
-For the journey through business V1 acceptance and production delivery, use
-[From a cloned template to a production V1](v1-workflow.md). Initialization and
-client scope collection can proceed independently; this page owns setup.
+For later business implementation and acceptance, use the
+[V1 stage overview](v1-workflow.md). This page owns the setup entry point;
+requirements collection is a separate workflow.
 
-The authoritative reusable setup procedure is bundled with the
-[initialize-project skill](../.agents/skills/initialize-project/SKILL.md):
+Initialization has two skills:
 
-- [Preparation and blank workbook](../.agents/skills/initialize-project/references/preparation.md):
-  required human inputs, protected references, login/App consent, safeguards
-  and reviewed Client Discovery preparation or an existing manual workbook.
-- [Project status](../.agents/skills/initialize-project/references/project-status.md):
-  current preparation, recorded setup, scope approvals/lock and the next action.
-- [Contract](../.agents/skills/initialize-project/references/contract.md):
-  written authority, live readiness, private resume state and acceptance.
-- [Runbook](../.agents/skills/initialize-project/references/runbook.md):
+1. [initialization-intake](../.agents/skills/initialization-intake/SKILL.md)
+   inspects the checkout, asks all setup questions upfront, resolves human
+   prerequisites and saves progress for another session. Start with
+   `$initialization-intake prepare initialization for this repository`;
+   resume with `$initialization-intake resume intake`.
+2. [initialization-execution](../.agents/skills/initialization-execution/SKILL.md)
+   initializes only after intake has completed. Use
+   `$initialization-execution initialize this repository`. Its first gate checks
+   completion, current answers and repository binding. Invalid or missing intake
+   stops execution with instructions to finish `$initialization-intake`.
+
+Intake state lives in the Git-ignored
+`.agents/skills/initialization-intake/state/intake.json`. It records answered,
+proposed and unknown inputs, prerequisite evidence and confirmation of the exact
+execution scope. Changed answers invalidate completion and need review again.
+Save nonsecret answers and protected storage references only. Neither skill
+requires a Client Discovery account, project UUID, API profile or exported workbook.
+A bare skill invocation offers a task menu and waits; a concrete task proceeds
+directly. See [registration](../.agents/skills/initialization-execution/references/runbook.md#codex-skill-registration)
+for agents that do not discover the bundled skills.
+
+The authoritative reusable detail remains with its owners:
+
+- [Intake skill](../.agents/skills/initialization-intake/SKILL.md): questionnaire,
+  private answer state, remaining questions and resumable completion.
+- [Questionnaire](../.agents/skills/initialization-intake/references/questionnaire.md):
+  setup decisions, service access, protected operator references and human prerequisites.
+- [Private state](../.agents/skills/initialization-intake/references/state.md):
+  answer status, save/resume, revision checks and completion binding.
+- [Contract](../.agents/skills/initialization-execution/references/contract.md):
+  intake completion, confirmed authority, live readiness, resume and acceptance.
+- [Runbook](../.agents/skills/initialization-execution/references/runbook.md):
   affected identity/configuration files, setup actions, owners and verification.
-- [Rehearsal lessons](../.agents/skills/initialize-project/references/rehearsal-lessons.md):
-  generic prevention rules, not a consumer execution receipt.
-
-Invoke `$initialize-project` in the trusted consumer workspace to see the current
-phase and next action. Supply the production project ID once; the skill remembers
-its local association and checks preparation and scope independently. It reports
-which approvals are missing and whether a locked baseline is eligible for export,
-then offers setup, readiness, specification generation or refreshed status.
-
-To explicitly initialize after completing and reviewing developer preparation:
-
-```text
-$initialize-project initialize this consumer from production project PROJECT_UUID
-```
-
-The skill automatically captures the reviewed workbook using the protected
-user-local administrator profile. Keep `/.template-initialization/` Git-ignored;
-workbook, provenance and readiness reports remain private. Differing input needs
-an explicit refresh request; accepted setup is preserved. Existing manual
-workbooks and legacy resumes remain supported. Agents with skill slash commands
-can use `/initialize-project`. See [registration and verification](../.agents/skills/initialize-project/references/runbook.md#codex-skill-registration).
+- [Rehearsal lessons](../.agents/skills/initialization-execution/references/rehearsal-lessons.md):
+  prevention rules rather than consumer execution receipts.
 
 Full initialization preserves the stack and existing resources and uses the
-existing approved operator. It verifies local development, real CI, both paired
-deployments and initialized recovery; local-only personalization remains a
-separate explicit scope. The canonical template cannot initialize itself.
+approved existing operator. It verifies local development, real CI, both paired
+deployments and initialized recovery. Explicit local-only scope completes only
+that bounded task. Known configuration questions and human preparation finish in
+intake; unexpected failures or a changed scope can still block execution. The
+canonical template cannot initialize itself. This documentation change performs
+no consumer initialization or deployment.
 
 ## Consumer-specific setup
 
@@ -72,7 +79,7 @@ validation before changing isolation or lifecycle settings.
 ## Documentation verification
 
 Follow the bundled
-[dashboard procedure](../.agents/skills/initialize-project/references/runbook.md#project-documentation-dashboard).
+[dashboard procedure](../.agents/skills/initialization-execution/references/runbook.md#project-documentation-dashboard).
 The skill owns its documentation dependencies and lockfile; the public
 [project dashboard](project.html) combines project documents and bundled
 references, while its bundled reference page never includes consumer evidence.

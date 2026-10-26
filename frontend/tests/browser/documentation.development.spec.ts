@@ -80,16 +80,29 @@ test.beforeEach(async ({ page }) => {
   await signIn(page);
 });
 
-test("links from the replaceable Home starter to the development guide", async ({ page }) => {
+test("links from the replaceable Home starter to the development guide categories", async ({ page }) => {
   const home = page.locator("#main-content");
   const guide = home.getByRole("link", { name: "Development guide" });
-  await expect(guide).toHaveAttribute("href", "/dev-guide/home");
+  await expect(guide).toHaveAttribute("href", "/dev-guide");
   await guide.click();
-  await expect(page).toHaveURL("/dev-guide/home");
+  await expect(page).toHaveURL("/dev-guide");
+  await expect(page).toHaveTitle("Development guide · RGO application");
   await expect(page.locator("[data-rgo-header-context]")).toHaveText("Development guide");
+  await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  const categories = page.getByRole("navigation", { name: "Development guide categories" });
+  await expect(categories.getByRole("link")).toHaveCount(7);
+  await expect(categories.getByRole("link", { name: "Frontend", exact: true })).toHaveAttribute(
+    "href",
+    "/dev-guide/frontend",
+  );
+  await expect(categories.getByRole("link", { name: "Backend", exact: true })).toHaveAttribute(
+    "href",
+    "/dev-guide/backend",
+  );
+  await expectNoAxeViolations(page);
 });
 
-test("opens the guide from the account menu and switches its immediate sections", async ({ page }) => {
+test("opens the guide from the account menu and switches its Frontend sections", async ({ page }) => {
   await expect(page.locator("[data-rgo-navigation-panel]")).toHaveCount(0);
   await page.getByRole("button", { name: "Open navigation" }).click();
   const drawer = page.locator('[data-rgo-navigation-presentation="drawer"]');
@@ -104,23 +117,103 @@ test("opens the guide from the account menu and switches its immediate sections"
   const settings = accountMenu.getByRole("menuitem", { name: "Settings" });
   const guide = accountMenu.getByRole("menuitem", { name: "Development guide" });
   await expect(settings).toHaveAttribute("href", "/settings/appearance");
-  await expect(guide).toHaveAttribute("href", "/dev-guide/home");
+  await expect(guide).toHaveAttribute("href", "/dev-guide");
   const settingsBox = await settings.boundingBox();
   const guideBox = await guide.boundingBox();
   if (!settingsBox || !guideBox) throw new Error("Account links have no bounding box");
   expect(settingsBox.y).toBeLessThan(guideBox.y);
   await guide.click();
   await expect(accountMenu).toHaveCount(0);
-  await expect(page).toHaveURL("/dev-guide/home");
+  await expect(page).toHaveURL("/dev-guide");
+  await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  await page.getByRole("link", { name: "Frontend", exact: true }).click();
+  await expect(page).toHaveURL("/dev-guide/frontend/example-pages");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Development guide.*Frontend/);
   const sections = page.locator("[data-rgo-section-navigation]");
-  await expect(sections.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
-  await sections.getByRole("link", { name: "Contacts" }).click();
-  await expect(page).toHaveURL("/dev-guide/contacts");
-  await sections.getByRole("link", { name: "Patterns" }).click();
-  await expect(page).toHaveURL(/\/dev-guide\/patterns\/.+$/);
-  await expect(page.locator("[data-documentation-rail]")).toBeVisible();
+  await expect(sections.getByRole("link")).toHaveText([
+    "Example pages",
+    "Patterns",
+    "Workflow patterns",
+    "Architecture",
+  ]);
+  await expect(sections.getByRole("link", { name: "Example pages" })).toHaveAttribute("aria-current", "page");
+  await page.locator("#main-content").getByRole("link", { name: "Contacts CRUD", exact: true }).click();
+  await expect(page).toHaveURL("/dev-guide/frontend/example-pages/contacts-crud");
+  await sections.getByRole("link", { name: "Patterns", exact: true }).click();
+  await expect(page).toHaveURL("/dev-guide/frontend/patterns");
+  await expect(page.getByRole("navigation", { name: "Pattern categories" })).toBeVisible();
   await sections.getByRole("link", { name: "Architecture" }).click();
-  await expect(page).toHaveURL(/\/dev-guide\/architecture\/source-map-and-ownership$/);
+  await expect(page).toHaveURL(/\/dev-guide\/frontend\/architecture\/source-map-and-ownership$/);
+});
+
+test("retired generated example URLs render Not Found in development", async ({ page }) => {
+  for (const path of [
+    "/dev-guide/frontend/generated",
+    "/dev-guide/frontend/generated/form/user-profile--user-profile",
+  ]) {
+    await page.goto(path);
+    await expect(page).toHaveTitle("Page not found · RGO application");
+    await expect(page.locator("#main-content").getByRole("alert")).toHaveText("Page not found");
+    await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  }
+});
+
+test("opens Backend without tabs and returns through the category header breadcrumb", async ({ page }) => {
+  await page.goto("/dev-guide");
+  const backend = page.getByRole("link", { name: "Backend", exact: true });
+  await backend.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL("/dev-guide/backend");
+  await expect(page).toHaveTitle("Backend · RGO application");
+  await expect(page.locator("#main-content").getByRole("heading", { name: "Backend", exact: true })).toBeVisible();
+  await expect(page.locator("#main-content").getByRole("link", { name: "Security", exact: true })).toBeVisible();
+  await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  const header = page.locator("[data-rgo-header-context]");
+  await expect(header).toHaveText(/Development guide.*Backend/);
+  const guide = header.getByRole("link", { name: "Development guide", exact: true });
+  await expect(guide).toHaveAttribute("href", "/dev-guide");
+  await expectNoAxeViolations(page);
+  await guide.click();
+  await expect(page).toHaveURL("/dev-guide");
+  await expect(page.getByRole("navigation", { name: "Development guide categories" })).toBeVisible();
+  await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+});
+
+test("keeps guide categories and breadcrumbs usable in Croatian on a narrow screen", async ({ page }) => {
+  await page.goto("/settings/appearance");
+  await page.getByRole("group", { name: "Language" }).getByRole("button", { name: "HR" }).click();
+  await page.setViewportSize({ height: 800, width: 320 });
+  await page.goto("/dev-guide");
+  await expect(page.getByRole("heading", { name: "Kategorije", exact: true })).toBeVisible();
+  await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  await expectNoAxeViolations(page);
+  await page.getByRole("link", { name: "Backend", exact: true }).click();
+  await expect(page.locator("#main-content").getByRole("heading", { name: "Backend", exact: true })).toBeVisible();
+  await expect(page.locator("#main-content").getByRole("link", { name: "Sigurnost", exact: true })).toBeVisible();
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Vodič za razvoj.*Backend/);
+  await expectNoAxeViolations(page);
+  await page.locator("[data-rgo-header-context]").getByRole("link", { name: "Vodič za razvoj", exact: true }).click();
+  await page.getByRole("link", { name: "Frontend", exact: true }).click();
+  await expect(page).toHaveURL("/dev-guide/frontend/example-pages");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Vodič za razvoj.*Frontend/);
+  await expect(page.locator("[data-rgo-section-navigation]")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expectNoAxeViolations(page);
+});
+
+test("redirects legacy guide links while preserving their query and fragment", async ({ page }) => {
+  await page.goto("/dev-guide/architecture/source-map-and-ownership?example=legacy#source-roots");
+  await expect(page).toHaveURL("/dev-guide/frontend/architecture/source-map-and-ownership?example=legacy#source-roots");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Development guide.*Frontend/);
+  await page.goto(
+    "/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas?example=legacy#routing-route-parameters-and-breadcrumbs",
+  );
+  await expect(page).toHaveURL(
+    "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas?example=legacy#routing-route-parameters-and-breadcrumbs",
+  );
+  const header = page.locator("[data-rgo-header-context]");
+  await expect(header).toContainText("Frontend");
+  await expect(header.getByRole("button", { name: "atlas" })).toBeVisible();
 });
 
 test("keeps top-level mobile context and the dashboard shortcut distinct", async ({ page }) => {
@@ -130,14 +223,14 @@ test("keeps top-level mobile context and the dashboard shortcut distinct", async
   const bottom = page.getByRole("navigation", { name: "Bottom navigation" });
   const dashboard = bottom.getByRole("link", { name: "Contacts dashboard" });
   await dashboard.click();
-  await expect(page).toHaveURL("/dev-guide/home");
+  await expect(page).toHaveURL("/dev-guide/frontend/example-pages/contacts-dashboard");
   await expect(page).toHaveTitle("Contacts dashboard · RGO application");
-  await expect(page.locator("[data-rgo-header-context]")).toHaveText("Development guide");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Development guide.*Frontend/);
   await expect(dashboard).toHaveAttribute("aria-current", "page");
   const sections = page.locator("[data-rgo-section-navigation]");
-  await expect(sections.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+  await expect(sections.getByRole("link", { name: "Example pages" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("banner").getByRole("button", { name: "More navigation" })).toHaveCount(0);
-  await page.goto("/dev-guide/architecture/tests-mocks-stories-and-architecture-checks");
+  await page.goto("/dev-guide/frontend/architecture/tests-mocks-stories-and-architecture-checks");
   await expect(dashboard).not.toHaveAttribute("aria-current", "page");
   await bottom.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("group", { name: "Language" }).getByRole("button", { name: "HR" }).click();
@@ -147,14 +240,14 @@ test("keeps top-level mobile context and the dashboard shortcut distinct", async
     .getByRole("link", { name: "Nadzorna ploča kontakata" });
   await localizedDashboard.click();
   await expect(page).toHaveTitle("Nadzorna ploča kontakata · RGO aplikacija");
-  await expect(page.locator("[data-rgo-header-context]")).toHaveText("Vodič za razvoj");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Vodič za razvoj.*Frontend/);
   await expect(localizedDashboard).toHaveAttribute("aria-current", "page");
 });
 
 test("names the populated Contacts create action in both locales on a narrow view", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 390 });
-  await page.goto("/dev-guide/contacts");
-  await expect(page.locator("[data-rgo-header-context]")).toHaveText("Development guide");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Development guide.*Frontend/);
   await expect(page.getByRole("button", { name: "Add contact" })).toBeVisible();
   await expectNoAxeViolations(page);
 
@@ -168,7 +261,7 @@ test("names the populated Contacts create action in both locales on a narrow vie
 
 test("uses a flush Contacts workspace on mobile and restores its desktop frame", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 320 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   const main = page.locator("#main-content");
   const surface = page.locator('[data-rgo-page-surface="contacts"]');
   const bottom = page.getByRole("navigation", { name: "Bottom navigation" });
@@ -203,13 +296,13 @@ test("uses a flush Contacts workspace on mobile and restores its desktop frame",
 
 test("gives the desktop Contacts workspace a contrast outline", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 1280 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   const surface = page.locator('[data-rgo-page-surface="contacts"]');
   await expect(surface).toHaveCSS("border-top-width", "1px");
   const normalBorder = await surface.evaluate(element => getComputedStyle(element).borderTopColor);
   await page.goto("/settings/appearance");
   await page.getByRole("group", { name: "Increased contrast" }).getByRole("button", { name: "Yes" }).click();
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   await expect(surface).toBeVisible();
   await expect(surface).toHaveCSS("border-top-width", "1px");
   const colors = await surface.evaluate(element => {
@@ -229,12 +322,12 @@ test("underlines content links on Patterns and Architecture when Always is selec
   await page.goto("/settings/accessibility");
   await page.getByRole("group", { name: "Link underlines" }).getByRole("button", { name: "Always" }).click();
 
-  await page.goto("/dev-guide/architecture/dependency-boundaries-and-imports");
+  await page.goto("/dev-guide/frontend/architecture/dependency-boundaries-and-imports");
   const articleLink = page.locator("main article p a.MuiLink-root").first();
   await expect(articleLink).toBeVisible();
   await expect(articleLink).toHaveCSS("text-decoration-line", "underline");
 
-  await page.goto("/dev-guide/architecture/runtime-providers-and-lifetimes");
+  await page.goto("/dev-guide/frontend/architecture/runtime-providers-and-lifetimes");
   const relatedLink = page.locator("main article nav a.MuiLink-root").first();
   await expect(relatedLink).toBeVisible();
   await expect(relatedLink).toHaveCSS("text-decoration-line", "underline");
@@ -242,7 +335,7 @@ test("underlines content links on Patterns and Architecture when Always is selec
   await expect(pageNavigation).toBeVisible();
   await expect(pageNavigation).toHaveCSS("text-decoration-line", "none");
 
-  await page.goto("/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas");
+  await page.goto("/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas");
   const patternLink = page.locator('main a.MuiLink-root[href="/projects"]').first();
   await expect(patternLink).toBeVisible();
   await expect(patternLink).toHaveCSS("text-decoration-line", "underline");
@@ -250,7 +343,7 @@ test("underlines content links on Patterns and Architecture when Always is selec
 
 test("keeps the active guide tab visible when other tabs enter More", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 1024 });
-  await page.goto("/dev-guide/architecture/source-map-and-ownership");
+  await page.goto("/dev-guide/frontend/architecture/source-map-and-ownership");
   const sections = page.locator("[data-rgo-section-navigation]");
   await sections.evaluate(element => {
     element.style.maxWidth = "280px";
@@ -268,7 +361,7 @@ test("keeps the active guide tab visible when other tabs enter More", async ({ p
   await expect(more).toBeVisible();
   await more.click();
   const overflow = page.getByRole("menu", { name: "Sections" });
-  await expect(overflow.getByRole("menuitem", { name: "Contacts" })).toBeVisible();
+  await expect(overflow.getByRole("menuitem", { name: "Example pages" })).toBeVisible();
   await page.setViewportSize({ height: 800, width: 390 });
   await expect(overflow).toHaveCount(0);
   await expect(more).toHaveCount(0);
@@ -279,14 +372,16 @@ test("keeps the active guide tab visible when other tabs enter More", async ({ p
 });
 
 test("shows route-owned project context and switches projects", async ({ page }) => {
-  await page.goto("/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas");
+  await page.goto("/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/atlas");
   const header = page.locator("[data-rgo-header-context]");
   await expect(header).toContainText("Development guide");
   const selector = header.getByRole("button", { name: "atlas" });
   await expect(selector).toHaveClass(/MuiButton-text/);
   await selector.click();
   await page.getByRole("menuitem", { name: "orion" }).click();
-  await expect(page).toHaveURL("/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/orion");
+  await expect(page).toHaveURL(
+    "/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/orion",
+  );
   await expect(header.getByRole("button", { name: "orion" })).toBeVisible();
   await expect(
     page.locator("#main-content").getByRole("navigation", { name: "Breadcrumbs", exact: true }),
@@ -295,7 +390,7 @@ test("shows route-owned project context and switches projects", async ({ page })
 
 test("applies desktop sticky preferences while keeping only mobile row one sticky", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 1280 });
-  await page.goto("/dev-guide/architecture/source-map-and-ownership");
+  await page.goto("/dev-guide/frontend/architecture/source-map-and-ownership");
   const first = page.getByRole("banner");
   const second = page.locator("[data-rgo-header-second-row]");
   await expect(first).toHaveCSS("position", "sticky");
@@ -367,7 +462,7 @@ for (const width of [1280, 390]) {
 
     for (const mode of ["light", "dark"]) {
       await page.evaluate(value => localStorage.setItem("rgo.app.color-mode", JSON.stringify(value)), mode);
-      await page.goto("/dev-guide/architecture/source-map-and-ownership");
+      await page.goto("/dev-guide/frontend/architecture/source-map-and-ownership");
       await page.reload();
       await expect(page.locator("html")).toHaveAttribute(`data-${mode}`, "");
       await expect(first).toHaveCSS("position", "sticky");
@@ -384,27 +479,42 @@ for (const width of [1280, 390]) {
   });
 }
 
-test("opens both documentation trees with independent deep links", async ({ page }) => {
-  await page.goto("/dev-guide/patterns");
-  await expect(page).toHaveURL(/\/dev-guide\/patterns\/.+$/);
-  await expect(page.locator("[data-documentation-rail]")).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Patterns" })).toBeVisible();
+test("opens Pattern categories and Architecture with independent deep links", async ({ page }) => {
+  await page.goto("/dev-guide/frontend/patterns");
+  await expect(page).toHaveURL("/dev-guide/frontend/patterns");
+  const categories = page.getByRole("navigation", { name: "Pattern categories" });
+  await expect(categories.getByRole("link")).toHaveText([
+    "i18n",
+    "Signals",
+    "Server data",
+    "Routing and URLs",
+    "Overlays",
+    "Tables and collections",
+    "Forms",
+    "Feedback",
+  ]);
+  await categories.getByRole("link", { name: "i18n", exact: true }).click();
+  await expect(page).toHaveURL(/\/patterns\/localization-and-formatting\/.+$/);
+  await expect(page.locator("[data-rgo-page-navigation]")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "i18n", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Reload example" }).first()).toBeVisible();
-  await expectNoAxeViolations(page, "[data-documentation-rail]");
+  await expectNoAxeViolations(page, "[data-rgo-page-navigation]");
 
-  await page.goto("/dev-guide/architecture/source-map-and-ownership");
+  await page.goto("/dev-guide/frontend/architecture/source-map-and-ownership");
   await expect(page.locator("[data-documentation-rail]")).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Architecture", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Source map and ownership" }).last()).toBeVisible();
   await expect(page).toHaveTitle("Source map and ownership · RGO application");
   await expectNoAxeViolations(page);
 
-  await page.goto("/dev-guide/architecture");
-  await expect(page).toHaveURL(/\/dev-guide\/architecture\/source-map-and-ownership$/);
+  await page.goto("/dev-guide/frontend/architecture");
+  await expect(page).toHaveURL(/\/dev-guide\/frontend\/architecture\/source-map-and-ownership$/);
 });
 
 test("restores query-entry positions while replace updates preserve focus and scroll", async ({ page }) => {
-  await page.goto("/dev-guide/patterns/routing-and-url-state/search-parameters#routing-search-parameters-filters");
+  await page.goto(
+    "/dev-guide/frontend/patterns/routing-and-url-state/search-parameters#routing-search-parameters-filters",
+  );
   const query = page.getByRole("textbox", { name: "Search projects" });
   await expect(query).toBeVisible();
   await query.focus();
@@ -430,7 +540,7 @@ test("restores query-entry positions while replace updates preserve focus and sc
 });
 
 test("restores distinct long-page visits and gives recorded positions priority over fragments", async ({ page }) => {
-  await page.goto("/dev-guide/architecture/source-map-and-ownership#source-roots");
+  await page.goto("/dev-guide/frontend/architecture/source-map-and-ownership#source-roots");
   const sourceRoots = page.locator("#source-roots");
   await expect(sourceRoots).toBeVisible();
   await expect
@@ -447,7 +557,7 @@ test("restores distinct long-page visits and gives recorded positions priority o
       name: "From entry point to rendered application",
     })
     .evaluate((element: HTMLAnchorElement) => element.click());
-  await expect(page).toHaveURL("/dev-guide/architecture/entry-point-to-rendered-application");
+  await expect(page).toHaveURL("/dev-guide/frontend/architecture/entry-point-to-rendered-application");
   await expect(
     page
       .getByRole("heading", {
@@ -461,7 +571,7 @@ test("restores distinct long-page visits and gives recorded positions priority o
   await architectureNavigation
     .getByRole("link", { name: "Source map and ownership" })
     .evaluate((element: HTMLAnchorElement) => element.click());
-  await expect(page).toHaveURL("/dev-guide/architecture/source-map-and-ownership");
+  await expect(page).toHaveURL("/dev-guide/frontend/architecture/source-map-and-ownership");
   await expect(page.getByRole("heading", { name: "Source map and ownership" }).last()).toBeVisible();
   await expectScrollNear(page, 0);
   const repeatedPathPosition = await scrollToPosition(page, 550);
@@ -497,19 +607,21 @@ test("returns from login to a fragment after protected content is ready", async 
   await page.getByRole("menuitem", { name: "Sign out" }).click();
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 
-  await page.goto("/dev-guide/architecture/router-and-shell-responsibilities#window-scroll-policy");
+  await page.goto("/dev-guide/frontend/architecture/router-and-shell-responsibilities#window-scroll-policy");
   await page.getByLabel("Username").fill("demo");
   await page.getByLabel("Password").fill("demo-password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
-  await expect(page).toHaveURL("/dev-guide/architecture/router-and-shell-responsibilities#window-scroll-policy");
+  await expect(page).toHaveURL(
+    "/dev-guide/frontend/architecture/router-and-shell-responsibilities#window-scroll-policy",
+  );
   const target = page.locator("#window-scroll-policy");
   await expect(target).toBeVisible();
   await expectFragmentTargetNearTop(page);
 });
 
 test("navigates a router-managed same-page fragment after route commit", async ({ page }) => {
-  await page.goto("/dev-guide/architecture/router-and-shell-responsibilities");
+  await page.goto("/dev-guide/frontend/architecture/router-and-shell-responsibilities");
   const policyLink = page.getByRole("link", {
     exact: true,
     name: "window scroll policy",
@@ -524,16 +636,10 @@ test("navigates a router-managed same-page fragment after route commit", async (
 test("keeps selected styling after navigating through truncated labels", async ({ page }) => {
   const cases = [
     {
-      from: "/dev-guide/patterns/server-data/query-states",
-      label: "Optimistic updates and rollback",
-      navigation: "Patterns",
-      to: "/dev-guide/patterns/server-data/optimistic-updates-and-rollback",
-    },
-    {
-      from: "/dev-guide/architecture/source-map-and-ownership",
+      from: "/dev-guide/frontend/architecture/source-map-and-ownership",
       label: "From entry point to rendered application",
       navigation: "Architecture",
-      to: "/dev-guide/architecture/entry-point-to-rendered-application",
+      to: "/dev-guide/frontend/architecture/entry-point-to-rendered-application",
     },
   ] as const;
 
@@ -566,9 +672,9 @@ test("keeps selected styling after navigating through truncated labels", async (
 
 test("keeps mobile sections accessible through a sheet, separate from the page menu", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 390 });
-  await page.goto("/dev-guide/architecture/tests-mocks-stories-and-architecture-checks");
+  await page.goto("/dev-guide/frontend/architecture/tests-mocks-stories-and-architecture-checks");
   await expect(page).toHaveTitle("Tests, mocks, stories, and architecture checks · RGO application");
-  await expect(page.locator("[data-rgo-header-context]")).toHaveText("Development guide");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Development guide.*Frontend/);
   await expect(
     page.getByRole("navigation", { name: "Breadcrumbs" }).getByText("Tests, mocks, stories, and architecture checks"),
   ).toBeVisible();
@@ -579,14 +685,13 @@ test("keeps mobile sections accessible through a sheet, separate from the page m
   await expect(more).toBeVisible();
   await more.click();
   const sheet = page.getByRole("dialog", { name: "Sections" });
-  await expect(sheet.getByRole("link", { name: "Home" })).toBeVisible();
-  await expect(sheet.getByRole("link", { name: "Contacts" })).toBeVisible();
-  await expect(sheet.getByRole("link", { name: "Patterns" })).toBeVisible();
+  await expect(sheet.getByRole("link", { name: "Example pages" })).toBeVisible();
+  await expect(sheet.getByRole("link", { name: "Patterns", exact: true })).toBeVisible();
   await expect(sheet.getByRole("link", { name: "Architecture" })).toHaveAttribute("aria-current", "page");
-  await sheet.getByRole("link", { name: "Contacts" }).click();
-  await expect(page).toHaveURL("/dev-guide/contacts");
+  await sheet.getByRole("link", { name: "Example pages" }).click();
+  await expect(page).toHaveURL("/dev-guide/frontend/example-pages");
   await expect(sheet).toHaveCount(0);
-  await expect(sections.getByRole("link", { name: "Contacts" })).toHaveAttribute("aria-current", "page");
+  await expect(sections.getByRole("link", { name: "Example pages" })).toHaveAttribute("aria-current", "page");
   await page.goBack();
   await expect(sections.getByRole("link", { name: "Architecture" })).toHaveAttribute("aria-current", "page");
   await page.setViewportSize({ height: 800, width: 320 });
@@ -623,10 +728,12 @@ test("keeps mobile sections accessible through a sheet, separate from the page m
   await page.setViewportSize({ height: 800, width: 320 });
   await page.goBack();
   await expect(page).toHaveTitle("Testovi, mockovi, priče i arhitekturne provjere · RGO aplikacija");
-  await expect(page.locator("[data-rgo-header-context]")).toHaveText("Vodič za razvoj");
+  await expect(page.locator("[data-rgo-header-context]")).toHaveText(/Vodič za razvoj.*Frontend/);
   await expect(sections.getByRole("link", { name: "Arhitektura" })).toHaveAttribute("aria-current", "page");
   await page.getByRole("button", { name: "Više sekcija" }).click();
-  await expect(page.getByRole("dialog", { name: "Odjeljci" }).getByRole("link", { name: "Obrasci" })).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "Odjeljci" }).getByRole("link", { name: "Obrasci", exact: true }),
+  ).toBeVisible();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Na ovoj stranici" }).click();
   await expect(page.getByRole("navigation", { name: "Arhitektura", exact: true })).toBeVisible();
@@ -712,20 +819,20 @@ test("dismisses Settings and header section drawers from their grab handles", as
   await expect(selector).toBeFocused();
   await expect(page).toHaveURL("/settings/appearance");
 
-  await page.goto("/dev-guide/home");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-dashboard");
   const more = page.getByRole("button", { name: "More sections" });
   await more.click();
   const sections = page.getByRole("dialog", { name: "Sections" });
   await dragTouch(page, sections.locator("[data-rgo-bottom-drawer-handle]"), 120);
   await expect(sections).toHaveCount(0);
   await expect(more).toBeFocused();
-  await expect(page).toHaveURL("/dev-guide/home");
+  await expect(page).toHaveURL("/dev-guide/frontend/example-pages/contacts-dashboard");
 });
 
 test("keeps form scrolling native and guards swipe dismissal of a Contacts drawer", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ height: 520, width: 390 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   const opener = page.getByRole("button", { name: "Add contact" });
   await opener.click();
   const drawer = await expectBottomOverlay(page, "New contact");
@@ -773,7 +880,7 @@ for (const editorPresentation of ["dialog", "docked-panel", "overlay-panel"] as 
     await page.evaluate(presentation => {
       localStorage.setItem("rgo.app.editor-presentation", JSON.stringify(presentation));
     }, editorPresentation);
-    await page.goto("/dev-guide/contacts");
+    await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
 
     await page.getByRole("button", { name: "Add contact" }).click();
     const editor = await expectBottomOverlay(page, "New contact");
@@ -801,7 +908,7 @@ test("keeps an unsaved Contacts editor mounted across the mobile breakpoint", as
   await page.evaluate(() => {
     localStorage.setItem("rgo.app.editor-presentation", '"docked-panel"');
   });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   await page.getByRole("button", { name: "Add contact" }).click();
   const editor = await expectBottomOverlay(page, "New contact");
   await editor.getByRole("textbox", { name: "Name", exact: false }).fill("Unsaved mobile draft");
@@ -824,7 +931,7 @@ test("keeps an unsaved Contacts editor mounted across the mobile breakpoint", as
 
 test("opens Contacts filters and details as bottom drawers at the mobile breakpoint", async ({ page }) => {
   await page.setViewportSize({ height: 760, width: 1023 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   await page.getByRole("button", { name: "Filters" }).click();
   const filters = await expectBottomOverlay(page, "Filters");
   await filters.getByRole("button", { name: "Close contact panel" }).click();
@@ -836,7 +943,7 @@ test("opens Contacts filters and details as bottom drawers at the mobile breakpo
 
 test("opens each Development Guide overlay presentation as a mobile bottom drawer", async ({ page }) => {
   await page.setViewportSize({ height: 760, width: 390 });
-  await page.goto("/dev-guide/patterns/overlays/presentations");
+  await page.goto("/dev-guide/frontend/patterns/overlays/presentations");
 
   for (const [action, title] of [
     ["Open dialog", "Review changes"],
@@ -853,7 +960,7 @@ test("opens each Development Guide overlay presentation as a mobile bottom drawe
 
 test("stacks nested Development Guide bottom drawers and returns the child result", async ({ page }) => {
   await page.setViewportSize({ height: 760, width: 390 });
-  await page.goto("/dev-guide/patterns/overlays/results-and-composition");
+  await page.goto("/dev-guide/frontend/patterns/overlays/results-and-composition");
   await page.getByRole("button", { name: "Open project editor" }).click();
   const parent = await expectBottomOverlay(page, "Edit project");
   await parent.getByRole("button", { name: "Choose customer" }).click();
@@ -874,7 +981,7 @@ test("stacks nested Development Guide bottom drawers and returns the child resul
 test("honors guarded Escape and backdrop dismissal for a mobile Contacts drawer", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ height: 760, width: 390 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   const opener = page.getByRole("button", { name: "Add contact" });
   await opener.click();
   const drawer = await expectBottomOverlay(page, "New contact");
@@ -901,7 +1008,7 @@ test("honors guarded Escape and backdrop dismissal for a mobile Contacts drawer"
 
 test("keeps the mobile Contacts drawer body and footer reachable at short viewport height", async ({ page }) => {
   await page.setViewportSize({ height: 400, width: 320 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   await page.getByRole("button", { name: "Add contact" }).click();
   const editor = await expectBottomOverlay(page, "New contact");
   const create = editor.getByRole("button", { name: "Create contact" });
@@ -946,7 +1053,7 @@ test("keeps audited architecture articles within phone viewports", async ({ page
   for (const width of [320, 390]) {
     await page.setViewportSize({ height: 844, width });
     for (const articleId of articleIds) {
-      await page.goto(`/dev-guide/architecture/${articleId}`);
+      await page.goto(`/dev-guide/frontend/architecture/${articleId}`);
       await expect(page.locator("#main-content article")).toBeVisible();
       await expect
         .poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth))
@@ -969,7 +1076,7 @@ for (const locale of ["en", "hr"] as const) {
       await page.getByRole("group", { name: fontGroup }).getByRole("button", { name, exact: true }).click();
       const rootSize = [16, 18, 20][index];
       await expect(page.locator("html")).toHaveCSS("font-size", `${rootSize}px`);
-      await page.goto("/dev-guide/home");
+      await page.goto("/dev-guide/frontend/example-pages/contacts-dashboard");
       const bottom = page.locator("[data-rgo-bottom-navigation]");
       await expect(bottom.getByRole("link").last()).toHaveAttribute("aria-current", "page");
       for (const width of [320, 390, 768, 1023, 320]) {
@@ -1109,7 +1216,7 @@ test("keeps all Settings sections usable with mobile page spacing", async ({ pag
 
 test("keeps deep mobile breadcrumbs together without orphan separators", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 320 });
-  await page.goto("/dev-guide/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/alpha");
+  await page.goto("/dev-guide/frontend/patterns/routing-and-url-state/route-parameters-and-breadcrumbs/alpha");
   const trail = page.locator('#main-content [aria-label="Breadcrumbs"]');
   await expect(trail).toBeVisible();
   const alignment = await trail.evaluate(element => {
@@ -1138,7 +1245,7 @@ test("keeps deep mobile breadcrumbs together without orphan separators", async (
 
 test("keeps Contacts actions and paging reachable beside the mobile table", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 320 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   const table = page.getByRole("table", { name: "Contacts", exact: true });
   const actions = table.getByRole("button", { name: /^More actions for / }).first();
   await expect(actions).toBeVisible();
@@ -1174,7 +1281,7 @@ test("page search finds guide articles and concrete parameterized examples", asy
   await launcher.click();
   await search.fill("source map");
   await palette.getByRole("option", { name: /^Source map and ownership/ }).click();
-  await expect(page).toHaveURL(/\/dev-guide\/architecture\/source-map-and-ownership$/);
+  await expect(page).toHaveURL(/\/dev-guide\/frontend\/architecture\/source-map-and-ownership$/);
   await expect(palette).toHaveCount(0);
 });
 
@@ -1191,7 +1298,7 @@ for (const theme of ["Light", "Dark", "Soft dark"]) {
     await launcher.click();
     await search.pressSequentially("source map");
     await palette.getByRole("option", { name: /^Source map and ownership/ }).click();
-    await expect(page).toHaveURL(/\/dev-guide\/architecture\/source-map-and-ownership$/);
+    await expect(page).toHaveURL(/\/dev-guide\/frontend\/architecture\/source-map-and-ownership$/);
     await expect(palette).toHaveCount(0);
     await expect(main).toBeFocused();
     await expect(main).toHaveCSS("outline-style", "none");
@@ -1199,7 +1306,7 @@ for (const theme of ["Light", "Dark", "Soft dark"]) {
     await page.keyboard.press("Control+k");
     await search.fill("dependency boundaries");
     await search.press("Enter");
-    await expect(page).toHaveURL(/\/dev-guide\/architecture\/dependency-boundaries-and-imports$/);
+    await expect(page).toHaveURL(/\/dev-guide\/frontend\/architecture\/dependency-boundaries-and-imports$/);
     await expect(palette).toHaveCount(0);
     await expect(main).toBeFocused();
     await expect(main).toHaveCSS("outline-style", "none");
@@ -1259,7 +1366,7 @@ for (const viewport of [
 }
 
 test("page search hands navigation to the existing dirty-form confirmation", async ({ page }) => {
-  await page.goto("/dev-guide/patterns/forms/dirty-state-reset-or-navigation-guard");
+  await page.goto("/dev-guide/frontend/patterns/forms/dirty-state-reset-or-navigation-guard");
   const draft = page.locator("#forms-navigation-guard").getByLabel("Draft title");
   await draft.fill("Unsaved browser draft");
   await page.keyboard.press("Control+k");
@@ -1291,7 +1398,7 @@ test("page search hands navigation to the existing dirty-form confirmation", asy
 
 test("keeps Email bounded and the docked resize gutter clear", async ({ page }) => {
   await page.setViewportSize({ height: 900, width: 2473 });
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   await page.getByRole("button", { name: "Edit Ana Horvat", exact: true }).click();
   const editor = page.getByRole("complementary", { name: "Edit contact" });
   await editor.getByRole("textbox", { name: "Organization" }).fill("RGO Communications");

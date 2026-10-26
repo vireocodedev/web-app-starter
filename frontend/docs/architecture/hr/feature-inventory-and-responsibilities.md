@@ -1,16 +1,17 @@
 # Popis značajki i odgovornosti
 
-Predložak isporučuje četiri oblika vlasnika značajki. Oni pokazuju različite
+Predložak isporučuje pet oblika vlasnika značajki. Oni pokazuju različite
 strukture; nisu zahtjev svakoj aplikaciji.
 
 ## Isporučeni oblici značajki
 
-| Značajka     | Odgovornost                                                              | Runtime tvornica? | Neobvezni primjer?                 |
-| ------------ | ------------------------------------------------------------------------ | ----------------- | ---------------------------------- |
-| Contacts     | UI kontakata, domenski model, Query opcije, mutacije i asinkrona pohrana | Da                | Da                                 |
-| Settings     | Prikaz postavki u vlasništvu lokalizacije, teme i ljuske                 | Ne                | Obično ostaje, ali je prilagodljiv |
-| Patterns     | Razvojni interaktivni recepti grupirani po sposobnosti                   | Ne                | Da, po kategoriji ili kao cjelina  |
-| Architecture | Razvojni vodič izvornog koda iz ovih Markdown članaka                    | Ne                | Da                                 |
+| Značajka     | Odgovornost                                                                  | Runtime tvornica? | Neobvezni primjer?                 |
+| ------------ | ---------------------------------------------------------------------------- | ----------------- | ---------------------------------- |
+| Contacts     | UI kontakata, domenski model, Query opcije, mutacije i asinkrona pohrana     | Da                | Da                                 |
+| Settings     | Prikaz postavki u vlasništvu lokalizacije, teme i ljuske                     | Ne                | Obično ostaje, ali je prilagodljiv |
+| Patterns     | Razvojni interaktivni recepti grupirani po sposobnosti                       | Ne                | Da, po kategoriji ili kao cjelina  |
+| Architecture | Razvojni vodič izvornog koda iz ovih Markdown članaka                        | Ne                | Da                                 |
+| Handbook     | Razvojni fullstack obrasci, dvojezični katalog članaka i prilagodba sadržaja | Ne                | Da                                 |
 
 ## Konstruirane i prezentacijske značajke
 
@@ -21,10 +22,15 @@ svaka značajka treba te datoteke.
 
 Settings je prezentacija i kompozicija. Kategorije Patternsa sadrže neovisne
 primjere, a `src/features/development-guide/patterns/gallery` zajedničku
-prezentaciju. Architecture posjeduje prikaz članaka pod
-`src/features/development-guide/architecture`, a Contacts je pod
-`src/features/development-guide/contacts`. Zajednički okvir dokumentacije
-pripada ljusci. Upute ne uvoze uklonjive primjere samo da bi ih opisale.
+prezentaciju. Architecture posjeduje katalog izvornih članaka i adapter
+lokaliteta/sadržaja pod `src/features/development-guide/architecture`. Handbook
+posjeduje fullstack manifest, dohvat uparenog Markdowna i adapter sadržaja pod
+`src/features/development-guide/handbook`, a Contacts je pod
+`src/features/development-guide/contacts`. Zajednički prikaz Markdowna, izdvajanje
+naslova, sadržaj članka i okvir stranice pripadaju `app/shell/documentation` te
+primaju podatke umjesto uvoza kataloga. Router pretvara javni Handbook manifest
+u konkretna odredišta i povezane članke. Vlasnici uputa ne uvoze uklonjive
+primjere samo da bi ih opisali.
 
 ## Patterns kategorije
 

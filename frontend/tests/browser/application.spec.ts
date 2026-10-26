@@ -87,9 +87,41 @@ async function signIn(page: Page) {
   await expect(page).toHaveTitle("Home · RGO application");
 }
 
+test("retains a rejected login draft and recovers from a localized server field error", async ({ page }) => {
+  await page.route("https://api.example.invalid/auth/login", async route => {
+    const body: unknown = route.request().postDataJSON();
+    if (typeof body === "object" && body !== null && "username" in body && body.username === "x".repeat(101)) {
+      await route.fulfill({
+        status: 400,
+        json: {
+          code: "VALIDATION_FAILED",
+          message: "private server diagnostic",
+          fieldErrors: [{ field: "username", code: "TOO_LONG" }],
+        },
+      });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.goto("/");
+  const username = page.getByLabel("Username");
+  const password = page.getByLabel("Password");
+  await username.fill("x".repeat(101));
+  await password.fill(mockLoginCredentials.password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(username).toHaveAccessibleDescription("This value is too long.");
+  await expect(username).toHaveValue("x".repeat(101));
+  await expect(password).toHaveValue(mockLoginCredentials.password);
+  await expect(page.getByText("private server diagnostic")).toHaveCount(0);
+  await username.fill(mockLoginCredentials.username);
+  await expect(page.getByText("This value is too long.")).toHaveCount(0);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveTitle("Home · RGO application");
+});
+
 async function openPrimaryDestination(page: Page, name: string) {
   if (name === "Contacts") {
-    await page.goto("/dev-guide/contacts");
+    await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
     return;
   }
   if (name === "Settings") {
@@ -735,16 +767,27 @@ test("does not expose development-only documentation in production", async ({ pa
   await expect(page.getByText("Patterns", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Architecture", { exact: true })).toHaveCount(0);
 
-  await page.goto("/dev-guide/patterns/feedback/toast-notifications");
+  await page.goto("/dev-guide/frontend/patterns/feedback/toast-notifications");
   await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
   await expect(page.locator("[data-examples-rail]")).toHaveCount(0);
 
-  await page.goto("/dev-guide/architecture/source-map-and-ownership");
+  await page.goto("/dev-guide/frontend/architecture/source-map-and-ownership");
   await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
   await expect(page.locator("[data-documentation-rail]")).toHaveCount(0);
 
-  await page.goto("/dev-guide/contacts");
+  await page.goto("/dev-guide/frontend/example-pages/contacts-crud");
   await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
+  for (const path of [
+    "/dev-guide",
+    "/dev-guide/frontend",
+    "/dev-guide/backend",
+    "/dev-guide/contacts",
+    "/dev-guide/patterns/feedback/toast-notifications",
+  ]) {
+    await page.goto(path);
+    await expect(page.locator("#main-content").getByRole("alert")).toContainText("Page not found");
+    await expect(page.locator("[data-rgo-header-second-row]")).toHaveCount(0);
+  }
 });
 
 test("keeps the Contacts dock and sticky table edges aligned", async ({ page }) => {

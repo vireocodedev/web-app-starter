@@ -1,9 +1,10 @@
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import { TextField } from "@mui/material";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, Outlet, RouterProvider, useSearchParams } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import type { AppNavigationLink } from "@/app/router/types/AppRoute";
 import { AppShell } from "@/app/shell/components/AppShell";
 import { AppThemeProvider } from "@/app/theme/components/AppThemeProvider";
 import { noFixedAppSettings } from "@/app/bootstrap/config/fixedSettings";
@@ -70,6 +71,13 @@ describe("AppShell", () => {
       [
         {
           element: <AppShell navigationItems={[]} />,
+          children: [
+            {
+              element: <p>Appearance content</p>,
+              handle: { resolveBreadcrumbs: () => [], resolveTitle: () => "Appearance" },
+              path: "appearance",
+            },
+          ],
           handle: {
             resolveBreadcrumbs: () => [{ label: "Unresolved project" }, { label: "Settings" }],
             resolveTitle: () => "Settings",
@@ -78,7 +86,7 @@ describe("AppShell", () => {
           path: "/projects/settings",
         },
       ],
-      { initialEntries: ["/projects/settings"] },
+      { initialEntries: ["/projects/settings/appearance"] },
     );
 
     render(
@@ -91,6 +99,170 @@ describe("AppShell", () => {
     expect(document.querySelector("[data-rgo-header-context]")).toHaveTextContent("Settings");
     expect(screen.getByRole("banner").querySelector("h1")).toHaveTextContent("Settings");
     expect(document.querySelector("#main-content h1")).toBeNull();
+    expect(within(screen.getByRole("banner")).queryByRole("link", { name: "Settings" })).toBeNull();
+  });
+
+  it("adds declared categories to the header and links back through their matched ancestry", async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          element: <AppShell navigationItems={[]} />,
+          children: [
+            {
+              Component: Outlet,
+              handle: { resolveBreadcrumbs: () => [], resolveTitle: () => "Development guide" },
+              path: "/guide",
+              children: [
+                { element: <p>Choose a category</p>, index: true },
+                {
+                  Component: Outlet,
+                  handle: { headerBreadcrumb: true, resolveBreadcrumbs: () => [], resolveTitle: () => "Frontend" },
+                  path: "frontend",
+                  children: [{ element: <p>Frontend home</p>, path: "home" }],
+                },
+                {
+                  element: <p>Hello world!</p>,
+                  handle: { headerBreadcrumb: true, resolveBreadcrumbs: () => [], resolveTitle: () => "Backend" },
+                  path: "backend",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      { initialEntries: ["/guide/frontend/home"] },
+    );
+    render(
+      <AppThemeProvider>
+        <RouterProvider router={router} />
+      </AppThemeProvider>,
+    );
+    const header = () => within(screen.getByRole("banner"));
+    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent("Development guide");
+    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent("Frontend");
+    expect(header().getByRole("link", { name: "Development guide" })).toHaveAttribute("href", "/guide");
+    expect(header().getByRole("link", { name: "Frontend" })).toHaveAttribute("href", "/guide/frontend");
+
+    await act(() => router.navigate("/guide/backend"));
+    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent("Backend");
+    expect(header().queryByRole("link", { name: "Backend" })).toBeNull();
+    expect(header().queryByText("Frontend")).toBeNull();
+
+    fireEvent.click(header().getByRole("link", { name: "Development guide" }));
+    expect(await screen.findByText("Choose a category")).toBeVisible();
+    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent(/^Development guide$/);
+    expect(header().queryByRole("link", { name: "Development guide" })).toBeNull();
+  });
+
+  it("uses the nearest nonempty section group for deep pages and inherits the outer group elsewhere", async () => {
+    const outerSections: readonly AppNavigationLink[] = [
+      { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.home", to: "/guide/overview" },
+    ];
+    const workspaceSections: readonly AppNavigationLink[] = [
+      { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.settings", to: "/guide/workspace/settings" },
+    ];
+    const router = createMemoryRouter(
+      [
+        {
+          element: <AppShell navigationItems={[]} />,
+          path: "/guide",
+          handle: { sectionNavigation: outerSections },
+          children: [
+            { element: <p>Guide overview</p>, path: "overview" },
+            {
+              Component: Outlet,
+              path: "workspace",
+              handle: { sectionNavigation: workspaceSections },
+              children: [
+                {
+                  Component: Outlet,
+                  path: "settings",
+                  children: [
+                    {
+                      element: <p>Workspace setting details</p>,
+                      path: "details",
+                      handle: { sectionNavigation: [] },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      { initialEntries: ["/guide/workspace/settings/details"] },
+    );
+    render(
+      <AppThemeProvider>
+        <RouterProvider router={router} />
+      </AppThemeProvider>,
+    );
+    const sections = () => within(screen.getByRole("navigation", { name: "navigation.sections" }));
+    expect(screen.getByText("Workspace setting details")).toBeVisible();
+    expect(sections().getByRole("link", { name: "navigation.settings" })).toHaveAttribute(
+      "href",
+      "/guide/workspace/settings",
+    );
+    expect(sections().getByRole("link", { name: "navigation.settings" })).toHaveAttribute("aria-current", "page");
+    expect(sections().queryByRole("link", { name: "navigation.home" })).toBeNull();
+
+    await act(() => router.navigate("/guide/overview"));
+    expect(screen.getByText("Guide overview")).toBeVisible();
+    expect(sections().getByRole("link", { name: "navigation.home" })).toHaveAttribute("href", "/guide/overview");
+    expect(sections().getByRole("link", { name: "navigation.home" })).toHaveAttribute("aria-current", "page");
+    expect(sections().queryByRole("link", { name: "navigation.settings" })).toBeNull();
+  });
+
+  it("retains the deepest dynamic header context after category breadcrumbs", () => {
+    const router = createMemoryRouter(
+      [
+        {
+          element: <AppShell navigationItems={[]} />,
+          children: [
+            {
+              Component: Outlet,
+              handle: {
+                HeaderContext: () => <span>Parent context</span>,
+                resolveBreadcrumbs: () => [],
+                resolveTitle: () => "Guide",
+              },
+              path: "/workspace",
+              children: [
+                {
+                  Component: Outlet,
+                  handle: { headerBreadcrumb: true, resolveBreadcrumbs: () => [], resolveTitle: () => "Frontend" },
+                  path: "frontend",
+                  children: [
+                    {
+                      element: <p>Project content</p>,
+                      handle: {
+                        HeaderContext: ({ params }: { params: Readonly<{ projectId?: string }> }) => (
+                          <span>{params.projectId}</span>
+                        ),
+                        resolveBreadcrumbs: () => [],
+                        resolveTitle: () => "Project page",
+                      },
+                      path: ":projectId",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      { initialEntries: ["/workspace/frontend/orion"] },
+    );
+    render(
+      <AppThemeProvider>
+        <RouterProvider router={router} />
+      </AppThemeProvider>,
+    );
+    const headerContext = document.querySelector("[data-rgo-header-context]");
+    expect(headerContext).toHaveTextContent("Guide");
+    expect(headerContext).toHaveTextContent(/Frontend\s*\/\s*orion/);
+    expect(headerContext).not.toHaveTextContent("Parent context");
+    expect(screen.getByRole("banner").querySelector("h1")).not.toHaveTextContent("Project page");
   });
 
   it("uses the deepest route to show or hide mobile bottom navigation", async () => {

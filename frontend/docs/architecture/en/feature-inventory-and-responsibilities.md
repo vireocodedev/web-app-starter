@@ -1,6 +1,6 @@
 # Feature inventory and responsibilities
 
-The template ships four kinds of feature owners. They demonstrate different
+The template ships five kinds of feature owners. They demonstrate different
 shapes; they are not requirements for every application.
 
 ## Shipped feature shapes
@@ -11,6 +11,7 @@ shapes; they are not requirements for every application.
 | Settings     | Presents preferences owned by app localization, theme, and shell                             | No               | Usually retained, but adaptable  |
 | Patterns     | Development-only interactive recipes grouped by capability                                   | No               | Yes, by category or as a section |
 | Architecture | Development-only source guide rendered from these Markdown articles                          | No               | Yes                              |
+| Handbook     | Development-only fullstack patterns, bilingual article catalog and content adaptation        | No               | Yes                              |
 
 ## Constructed and presentation features
 
@@ -22,11 +23,15 @@ It is not evidence that every feature needs those files.
 Settings is presentation and composition. Patterns categories contain
 independent teaching implementations, while
 `src/features/development-guide/patterns/gallery` owns the shared
-preview/navigation presentation. Architecture owns the article renderer under
-`src/features/development-guide/architecture`; Contacts lives under
-`src/features/development-guide/contacts`. Shared documentation framing belongs
-to the application shell documentation capability. Neither guidance section
-should import a removable example implementation merely to describe it.
+preview/navigation presentation. Architecture owns its source-article catalog and
+locale/content adapter under `src/features/development-guide/architecture`.
+Handbook owns its fullstack manifest, paired Markdown lookup and content adapter
+under `src/features/development-guide/handbook`; Contacts lives under
+`src/features/development-guide/contacts`. Shared Markdown rendering, heading
+extraction, contents and page framing belong to `app/shell/documentation` and
+receive data rather than importing either catalog. The router turns the public
+Handbook manifest into concrete destinations and related links. Guidance owners
+do not import a removable example implementation merely to describe it.
 
 ## Patterns categories
 

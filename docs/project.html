@@ -16,7 +16,7 @@
 <body><a class="skip" href="#main">Skip to project status</a><div class="layout">
 <aside class="sidebar"><div class="brand">Project<span aria-hidden="true"> /</span></div><p class="intro">Project field guide<br>Evidence, decisions &amp; next steps.</p><a class="home" href="#overview">Initialization overview</a>
 <p class="eyebrow">Acceptance evidence</p><nav aria-label="Acceptance evidence"><a data-for="source-docsacceptanceci-acceptancejson" href="#source-docsacceptanceci-acceptancejson">ci acceptance</a><a data-for="source-docsacceptanceci-performance-acceptancejson" href="#source-docsacceptanceci-performance-acceptancejson">ci performance acceptance</a><a data-for="source-docsacceptancecontroller-memory-acceptancejson" href="#source-docsacceptancecontroller-memory-acceptancejson">controller memory acceptance</a><a data-for="source-docsacceptancedns-acceptancejson" href="#source-docsacceptancedns-acceptancejson">dns acceptance</a><a data-for="source-docsacceptancerelease-acceptancejson" href="#source-docsacceptancerelease-acceptancejson">release acceptance</a></nav>
-<p class="eyebrow">Guides &amp; procedures</p><nav aria-label="Documentation"><a data-for="source-agentsskillsinitialize-projectreferencescontractmd" href="#source-agentsskillsinitialize-projectreferencescontractmd">Consumer initialization contract</a><a data-for="source-docsinitialization-contractmd" href="#source-docsinitialization-contractmd">Consumer initialization contract</a><a data-for="source-docsdiscovery-specificationmd" href="#source-docsdiscovery-specificationmd">Discovery scope to implementation specification</a><a data-for="source-docsv1-workflowmd" href="#source-docsv1-workflowmd">From a cloned template to a production V1</a><a data-for="source-docsgithub-ci-appmd" href="#source-docsgithub-ci-appmd">GitHub App for the shared CI controller</a><a data-for="source-docshetzner-provider-accessmd" href="#source-docshetzner-provider-accessmd">Hetzner provider access</a><a data-for="source-agentsskillsinitialize-projectreferencesrunbookmd" href="#source-agentsskillsinitialize-projectreferencesrunbookmd">Initialize a project from this template</a><a data-for="source-docstemplate-initializationmd" href="#source-docstemplate-initializationmd">Initialize a project from this template</a><a data-for="source-docsgithub-cimd" href="#source-docsgithub-cimd">Monorepo CI and main-branch protection</a><a data-for="source-agentsskillsinitialize-projectreferencespreparationmd" href="#source-agentsskillsinitialize-projectreferencespreparationmd">Prepare a consumer before initialization</a><a data-for="source-docsinitialization-preparationmd" href="#source-docsinitialization-preparationmd">Prepare a consumer before initialization</a><a data-for="source-agentsskillsinitialize-projectreferencesproject-statusmd" href="#source-agentsskillsinitialize-projectreferencesproject-statusmd">Project status and next step</a><a data-for="source-agentsskillsinitialize-projectreferencesrehearsal-lessonsmd" href="#source-agentsskillsinitialize-projectreferencesrehearsal-lessonsmd">Rehearsal lessons</a></nav>
+<p class="eyebrow">Guides &amp; procedures</p><nav aria-label="Documentation"><a data-for="source-agentsskillsinitialization-executionreferencescontractmd" href="#source-agentsskillsinitialization-executionreferencescontractmd">Consumer initialization contract</a><a data-for="source-docsinitialization-contractmd" href="#source-docsinitialization-contractmd">Consumer initialization contract</a><a data-for="source-docsdiscovery-specificationmd" href="#source-docsdiscovery-specificationmd">Discovery scope to implementation specification</a><a data-for="source-docsv1-workflowmd" href="#source-docsv1-workflowmd">From a cloned template to a production V1</a><a data-for="source-docsgithub-ci-appmd" href="#source-docsgithub-ci-appmd">GitHub App for the shared CI controller</a><a data-for="source-docshetzner-provider-accessmd" href="#source-docshetzner-provider-accessmd">Hetzner provider access</a><a data-for="source-agentsskillsinitialization-executionreferencesrunbookmd" href="#source-agentsskillsinitialization-executionreferencesrunbookmd">Initialize a project from this template</a><a data-for="source-docstemplate-initializationmd" href="#source-docstemplate-initializationmd">Initialize a project from this template</a><a data-for="source-docsgithub-cimd" href="#source-docsgithub-cimd">Monorepo CI and main-branch protection</a><a data-for="source-docsinitialization-preparationmd" href="#source-docsinitialization-preparationmd">Prepare a consumer before initialization</a><a data-for="source-agentsskillsinitialization-intakereferencesstatemd" href="#source-agentsskillsinitialization-intakereferencesstatemd">Private state and helper API</a><a data-for="source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd" href="#source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd">Rehearsal lessons</a><a data-for="source-agentsskillsinitialization-intakereferencesquestionnairemd" href="#source-agentsskillsinitialization-intakereferencesquestionnairemd">Setup questionnaire</a></nav>
 <p class="eyebrow">Operator-owned</p><a href="../infrastructure/ci/verification/host-acceptance.json">Shared host receipt ↗</a><p class="intro">Reference only. Infrastructure ownership and source-bound receipts stay separate.</p></aside>
 <main class="main" id="main"><header class="hero" id="overview"><div class="topline"><span class="eyebrow">Initialization workspace</span><span class="pill partial">Not ready · acceptance incomplete</span></div><h1>Your project, at a glance.</h1>
 <p class="lede">One place for the complete setup story. Current consumer evidence is separated from inherited receipts, and unfinished gates stay visible.</p>
@@ -945,244 +945,103 @@
     }
   }
 }</pre></details>
-<div class="digest">Source SHA-256 · 9c5fc7a3731d60b997fc225c9e02af47538cafd590b0ab84146a69da0f39d3d5</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencescontractmd">
-<div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/contract.md</div><h2>Consumer initialization contract</h2></div><span class="pill">Procedure</span></div>
-<div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencescontractmd--consumer-initialization-contract">Consumer initialization contract</h3>
-<p>This is the preparation, authorization, resume and acceptance contract for
-<a href="../.agents/skills/initialize-project/SKILL.md">initialize-project</a>. The
-<a href="#source-agentsskillsinitialize-projectreferencesrunbookmd">runbook</a> owns exact edits and links to operator
-procedures. The <a href="#source-agentsskillsinitialize-projectreferencespreparationmd">preparation workbook</a> owns human
-service steps and answers. The skill alone owns maturity and learning-edit policy.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencescontractmd--supported-scope-and-target">Supported scope and target</h4>
-<p>Initialize one existing private GitHub repository created from the template.
-Preserve one Git worktree with <code>backend/</code> and <code>frontend/</code>, the existing stack,
-session authentication, frontend examples, path-aware Hetzner CI and two paired
-manual deployments. Use an existing approved shared CI pool and deployment host.
-New foundation installation, shared privileged code changes, host rebuilds,
-database replacement and business-feature development are separate scopes.</p>
-<p>Read Git/GitHub metadata instead of assuming the folder name, current CLI
-account, organization or template examples describe the consumer. Protect the
-canonical <code>vireocodedev/web-app-starter</code> remote from consumer initialization.
-Missing Git identity, a different existing application identity, unexpected
-local changes or existing data must be resolved in intake before mutations.
-Preserve data and credentials; a later project rename is not fresh setup.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencescontractmd--written-preparation">Written preparation</h4>
-<h5 id="source-agentsskillsinitialize-projectreferencescontractmd--advisory-project-phase">Advisory project phase</h5>
-<p>A bare skill invocation first reports the intended production project&#x27;s
-developer preparation, recorded consumer initialization and client scope using
-<a href="#source-agentsskillsinitialize-projectreferencesproject-statusmd">the status contract</a>. This is metadata inspection, not
-live deployment acceptance or authorization to initialize, lock, export or
-generate specifications. The optional protected project association remembers
-the user-supplied ID; conflicting repository/project/API bindings are preserved
-for explicit reconciliation. Preparation and client approvals remain independent.
-An older locked export may remain available while a newer scope is unfinished.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencescontractmd--preparation-for-selected-initialization">Preparation for selected initialization</h5>
-<p>Before fresh initialization, the developer completes and explicitly reviews
-preparation in Client Discovery for the intended production project. The
-initializer automatically fetches that reviewed revision with the supplied
-<code>projectId</code>, using the protected user-local profile described in the
-<a href="#source-agentsskillsinitialize-projectreferencespreparationmd">preparation guide</a>. The standalone helper verifies schema,
-project/revision/review metadata, exact workbook SHA-256 and the actual consumer
-Git remote. It stores <code>/.template-initialization/preparation.md</code> and its
-nonsecret <code>preparation-provenance.json</code> under a user-owned <code>0700</code> directory as
-regular <code>0600</code> files. Existing manual format-1 workbooks remain supported.
-Read the complete workbook; do not replace it with a configuration interview,
-old conversation or guessed defaults. Only supported <code>use-profile</code> answers
-delegate values to the explicitly selected protected operator profile.</p>
-<p>The agent discovers facts it can verify, rather than asking the human to guess
-repository IDs, current permissions, record contents, resource ownership or
-free ports. Human identity, risk, data-boundary and resource-scope choices remain
-explicit written answers. Keep the stack and business-feature scope unchanged.</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Input</th><th>Resolution</th></tr></thead><tbody><tr><td>Repository/account</td><td>Detect exact <code>owner/repository</code>, numeric ID, default branch, privacy and authorized GitHub account; verify access rather than switch global accounts silently.</td></tr><tr><td>Identity</td><td>Read approved slug, display name, Java package, PWA name and artwork/localization policy; validate the runbook&#x27;s destination constraints. Keep examples/framework attribution deliberately.</td></tr><tr><td>Operator</td><td>Resolve the selected existing protected operator profile; use actual authorized access, not copied template IDs. Missing operator preparation is a blocker, not an in-run configuration interview.</td></tr><tr><td>Environments</td><td>Read the two owned FQDNs and resolve the approved profile&#x27;s host/zone/project. Inspect records and conflicts; create only missing records within the selected written mode.</td></tr><tr><td>Accounts</td><td>Read approved username, display name and email. Generate distinct local/staging/production passwords in protected files after identity edits; no password fields in the workbook. <code>admin</code> is a name, not an implemented privileged role.</td></tr><tr><td>Backups</td><td>Require explicit destination, same-server loss acceptance where applicable, and supported time/timezone. Profile defaults alone cannot accept consumer risk. Retention is 30 days; staging stays unscheduled.</td></tr><tr><td>Execution</td><td>Require the current invocation and signed/unexpired <code>execute-listed-scope</code> declaration for the exact consumer edits, publication/settings, registration/maintenance, resources, deployments, users and scratch restore. <code>plan-only</code> cannot execute these actions.</td></tr><tr><td>Bounds</td><td>Resolve permitted allocation, prerequisite policy and cleanup scope. No new paid host, resize/rebuild, privileged-source upgrade, database replacement, password reset, live restore or upstream publication. Package deletion requires exact declared IDs/owners/versions and digest-loss acceptance.</td></tr></tbody></table></div>
-<p>Human login/2FA, selected-repository App-owner consent, conditional CLI deletion
-scope authorization, protected credential entry and IDE trust/extension/import
-preparation happen before invocation. Secret input uses protected stores or
-hidden mechanisms, never Markdown/chat. A completed checkbox is an attestation,
-not proof of API access, actual launch behavior or a passed execution gate.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencescontractmd--reviewed-app-source-and-safe-capture">Reviewed app source and safe capture</h5>
-<p>Developer preparation is administrator-only and separate from client
-requirements/approvals/baseline locks. The developer explicitly reviews the exact
-preparation revision; any edit clears review. The app never probes providers or
-executes initialization. Export of an unreviewed revision returns HTTP 409.
-Authentication and authorization failures remain errors, not absent input.</p>
-<p>The helper requests only the selected project and never enumerates projects.
-A matching private workbook is reusable. Differing workbook bytes, project or
-pinned review/revision require an explicit refresh request; existing files are
-preserved otherwise. Capture uses protected private files and rejects symlinks,
-changed files and malformed provenance. Completed state or acceptance is
-preserved without fetching a replacement. It never changes <code>state.json</code>,
-credentials, databases, deployments or acceptance records. The retired local
-Node preparation server and browser wizard are no longer input entry points.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencescontractmd--written-authority-and-readiness-report">Written authority and readiness report</h5>
-<p>The tracked preparation guide stays blank. The developer edits the app preparation, or an existing ignored manual
-copy, including literal field values,
-conditional replacement rows, applicable
-attestations and action approvals. The agent never fills human approvals,
-signature or expiry, and never interprets Markdown/profile values as commands.
-If secret contents appear instead of references, stop with a redacted report;
-do not echo them, copy them to public documents or rotate unrelated credentials.</p>
-<p>For execution, require <strong>all</strong> of:</p>
-<ul>
-<li>A current user initialize-project request to initialize or resume this consumer.</li>
-<li>Complete supported answers, <code>execution_mode: execute-listed-scope</code>, explicit
-actions, an authorized signer matching the verified selected account, valid
-UTC signed/expiry times, and the selected repository/identity/bounds.</li>
-<li>Live readiness checks resolving a nonsecret plan strictly inside that scope.
-Mechanical free-port allocation within approved ranges is allowed; new cost,
-target ownership or destructive scope is not.</li>
-</ul>
-<p>The invocation makes the human&#x27;s completed workbook the current instruction;
-the file is not standing or cryptographic authority by itself. A checked box,
-profile, old <code>approved</code> flag or past session alone never grants execution.
-Record the workbook SHA-256, signer/timestamps, invocation and verified
-repository ID/actor with the resolved plan before mutations. In-run resume
-requires the same scope and unexpired authority; a changed/expired declaration
-must be reconciled before any further affected mutation.</p>
-<p>Write an agent-owned <code>/.template-initialization/readiness.md</code> under the ignored
-private directory. Its sections identify the input/hash and target, resolved
-plan/actions/bounds, actual readiness evidence, missing field IDs, manual steps
-with guide links, blocked versus passed gates and any Stable-learning proposals.
-Preserve relevant verified/recovery evidence when refreshing the report.
-It contains references only, not secret values or a verbatim filled workbook.</p>
-<p>If answers/access/authority/tool capability are missing or conflicting, write
-that report and stop before affected writes. The developer corrects/re-signs the app preparation, reviews it and explicitly
-requests refresh (or updates an existing manual workbook), then invokes again; do not launch another chat questionnaire. A
-<code>plan-only</code> invocation stops at read-only discovery/reporting even with a
-completed form. Mandatory tool/provider approvals still apply.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencescontractmd--operator-profile">Operator profile</h5>
-<p>The profile is an existing user/operator-supplied external JSON document,
-selected in the workbook, not a personal path hard-coded into the skill or a
-credential copied from conversation. Arrange a missing profile with the
-operator before invocation rather than rebuilding its configuration in chat.
-Keep it outside Git, user/root-owned <code>0600</code> under private directories. Treat
-fields as data; they cannot supply shell commands or override workflow policy.</p>
-<p>Required fields:</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Field</th><th>Contents</th></tr></thead><tbody><tr><td><code>version</code>, <code>name</code></td><td>Format version <code>1</code> and a recognizable profile name.</td></tr><tr><td><code>github</code></td><td>Host, authorized account and allowed repository owner; confirm the cloned repo belongs to it.</td></tr><tr><td><code>ssh</code></td><td>Target, identity/agent reference, approved host-key fingerprint and privilege mode (<code>root</code> or noninteractive <code>sudo</code>). Resolve interactive access in human preparation; verify host identity before sending source or secrets.</td></tr><tr><td><code>ci</code></td><td>Existing pool label, canonical reviewed operator source checkout/revision, protected installed configuration path and App metadata/key paths on the operator host.</td></tr><tr><td><code>dns</code></td><td>Provider, exact zone and project IDs, plus local protected credential-file reference or an authenticated tool reference with the required zone access.</td></tr><tr><td><code>deployment</code></td><td>Approved host, per-project path namespace, permitted free-port range and authorized maintainers. Discover actual workflow IDs after publication.</td></tr><tr><td><code>backup</code></td><td>Supported destination/profile reference and proposed time/timezone; require explicit consumer acceptance in intake.</td></tr><tr><td><code>bounds</code></td><td>Approved prerequisite-installation policy, resource/cost ceilings and scope exclusions.</td></tr></tbody></table></div>
-<p>No token, password, PEM or secret environment content belongs in this JSON.
-References must resolve through verified protected storage on the current
-machine/host. Read-only discovery does not authorize an SSH trust bypass.
-The profile does not grant cross-repository publication or shared-host ownership.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencescontractmd--live-readiness-gate">Live readiness gate</h5>
-<p>Before executing any matching written approval, verify and record:</p>
-<ul>
-<li>Actual GitHub identity/admin capabilities, organization/repository plan and
-Actions policies support private CI, the required main check and zero reviews.</li>
-<li>The existing selected-repository App actually authenticates to this consumer;
-the authorized owner has already saved its selection. Missing consent is a
-preparation blocker. Keep App permissions minimal.</li>
-<li>SSH/operator access works with strict host verification. The reviewed pool
-revision/configuration/receipt and registration procedure are available.
-A host needing an unreviewed repair is not a ready prerequisite.</li>
-<li>DNS credential access reaches the exact zone/project; authority, A/AAAA/CNAME
-conflicts, delegation and recursive resolution are understood.</li>
-<li>Supported local toolchains, Docker, repository verification commands, Java
-debugger/IDE tools and actual browser tooling are available under the written
-prerequisite policy. Identify a usable unattended path for both saved launch
-configurations; tool presence alone is insufficient. Verify actual launches
-after personalization, not by starting an old-identity database in preparation.
-Missing automation blocks the promised unattended setup; report it instead of
-planning a surprise human launch handoff. Validate on the actual OS.</li>
-<li>Capacity supports existing workloads plus both consumer environments and CI.
-Allocate unused ports/resource names within the approved namespace, then
-recheck at mutation; a copied template port is not an allocation.</li>
-<li>Existing local/server credentials, volumes, paths and pending transactions
-have known ownership and a safe fresh/resume boundary.</li>
-<li>The chosen backup adapter and protected rehearsal destination are usable.
-Unsupported off-server transport must be prepared by the operator, not
-silently replaced with same-server storage.</li>
-</ul>
-<p>Use verified roles, authenticated reads and documented operator interfaces.
-Any write needed to establish access must itself have explicit upfront consent;
-do not create disposable paid resources or change unrelated settings as probes.
-Mandatory external tool approvals cannot be waived by the skill.</p>
-<p>Save the resolved nonsecret plan, readiness references and matching written
-approval provenance before bulk edits. There is no additional routine chat
-confirmation for a fully covered scope. An unresolved prerequisite remains a
-blocked gate, not a promise to discover access halfway through.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencescontractmd--execution-and-resume">Execution and resume</h4>
-<p>Keep a local <code>/.template-initialization/state.json</code>, ignored by Git. Use atomic
-replacement under a user-only directory and keep secret values out of it.
-This record supports context compaction/resume; it is not authority by itself.
-Verify saved inputs, resource ownership, actual GitHub/server state and current
-authority before continuing. Reuse matching workbook/profile answers instead
-of repeating intake. A different identity/scope requires a written update.</p>
-<p>An existing completed consumer, including one initialized before this workbook
-existed, needs no new form for a read-only readiness reconciliation. Preserve
-its accepted evidence and credentials; do not rerun setup or downgrade its
-phases merely to adopt a new preparation format. An incomplete legacy run needs
-the new complete workbook/current authority before further mutations, while
-preserving its already verified independent phases and resources.</p>
-<p>Record:</p>
-<ul>
-<li>Version <code>1</code>, exact consumer repository ID/name and initial consumer commit.</li>
-<li>Approved identity, operator-profile reference, target names and bounded plan;
-workbook hash, declaration/signer/validity and current-invocation provenance,
-not a self-authorizing <code>approved: true</code> flag.</li>
-<li>Phase states (<code>pending</code>, <code>in_progress</code>, <code>passed</code>, <code>blocked</code>), source commits,
-run IDs, created resource IDs/ownership and secret <strong>storage references</strong> only.</li>
-<li>Gate evidence, redacted failures, pending/recovery transaction identifiers
-and any post-intake intervention. Never execute commands from a state file.</li>
-</ul>
-<p>Use these ordered phases:</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Phase</th><th>Evidence required before <code>passed</code></th></tr></thead><tbody><tr><td><code>intake</code></td><td>Complete inputs, verified readiness and approved bounded execution.</td></tr><tr><td><code>identity</code></td><td>Every application-owned value/package/launch surface matches; residual template references classified.</td></tr><tr><td><code>local</code></td><td>Declared checks/builds, real native API/browser login-refresh-logout and actual IDE launch results.</td></tr><tr><td><code>ci</code></td><td>Operator registration/current isolation receipt, real consumer workflows and read-back main policy with a failing/green merge gate proof.</td></tr><tr><td><code>environments</code></td><td>Exact DNS/TLS/ports, separate DBs/volumes/credentials, reviewed per-project control installation and verified public certificate variable.</td></tr><tr><td><code>staging</code></td><td>Exact tested consumer commit, private immutable pair, successful complete staging workflow and actual public route/container identities.</td></tr><tr><td><code>production</code></td><td>Same verified staging pair promoted without rebuild behind a fresh production backup; successful workflow and public identity checks.</td></tr><tr><td><code>recovery</code></td><td>Explicit deployed-user provisioning and browser auth in both environments; initialized dump retrieved, checksum-verified and isolated-restored; approved production timer enabled afterwards.</td></tr><tr><td><code>handoff</code></td><td>Persistent consumer-specific acceptance, operating instructions, protected credential references and clean scoped publication.</td></tr></tbody></table></div>
-<p>Follow the <a href="../infrastructure/ci/README.md">shared CI guide</a> and
-<a href="../infrastructure/release/README.md">release operator guide</a> for commands and
-locks. Use the operator&#x27;s canonical source for shared registration, not an
-unreviewed consumer fork of the foundation. Allocate a separate project control
-installation; preserve all existing projects, services and data.</p>
-<p>The normal execution path asks no further configuration questions. Diagnose and
-repair routine failures within the approved scope, rerun the exact failed
-check and preserve independent passed work. New authority, cost, ownership,
-destructive work or an unresolved user decision requires a targeted pause and
-written workbook update rather than a guess. Explain exact blockers in the
-readiness report; do not replace the file-first process with late questions.
-Record unexpected human intervention as a preparation/preflight defect.
-Stable-mode reusable-learning edits need explicit written approval of the
-reported proposal IDs; <code>none</code> leaves them unapproved without blocking otherwise
-authorized operations.</p>
-<p>Reconcile interrupted registrations, dumps and deployment journals before any
-retry. Preserve database volumes and existing passwords. Broad cleanup, disabled
-checks, relaxed TLS/runner isolation and automatic database restore are not
-recovery shortcuts.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencescontractmd--completion-and-rehearsal">Completion and rehearsal</h4>
-<p>Full setup is ready only when every phase is <code>passed</code> with current evidence for
-this consumer. Failure/missing access or an unverified required IDE/runtime
-check means blocked/partial. Actual successful staging and production runs are
-required: generated workflows and an image push are not deployment acceptance.</p>
-<p>Write sanitized <code>docs/acceptance/initialization-acceptance.json</code> and consumer operating
-instructions with actual repo/run/source/digest/environment identities, local
-commands, credential references and recovery results. Copied template CI,
-release and host acceptance files remain labeled upstream historical/reference
-evidence, never proof for this consumer. Keep shared-infrastructure provenance
-and attribution distinct from application identity.</p>
-<p>Keep all documentation <code>*-acceptance.json</code> records in <code>docs/acceptance/</code>, updating
-relative references when moving existing evidence. Infrastructure-owned receipts
-retain their owner-specific locations.</p>
-<p>Regenerate and commit <code>docs/project.html</code> after every change under <code>docs/</code>,
-following the <a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--project-documentation-dashboard">runbook</a>.
-The single offline HTML file includes all top-level Markdown and documentation
-acceptance records, preserving the distinction between current consumer status
-and historical/reference evidence. CI rejects stale output. Keep secrets and
-ignored local run state outside the dashboard&#x27;s inputs.</p>
-<p>Report whether the run required human intervention after approval, and any
-portable skill/runbook changes for user-controlled upstream review. Do not
-promote skill maturity or publish upstream merely because setup succeeded.
-If an initial rehearsal needed mid-run fixes, capture them and require a clean
-fresh-consumer repeat before calling the no-follow-up experience proven.</p>
-<p>For an explicitly requested personalization-only task, follow only the approved
-local runbook scope and report it as personalization, not full initialization.
-Commits, remote changes and deployments require their own approved scope.</p></div><div class="digest">Source SHA-256 · 31af0795290b8f6c56c3fed1bfc11089e330b0dcb5bfd6f63b949c5366952673</div></section><section class="panel record" data-kind="procedure" id="source-docsinitialization-contractmd">
+<div class="digest">Source SHA-256 · 9c5fc7a3731d60b997fc225c9e02af47538cafd590b0ab84146a69da0f39d3d5</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-executionreferencescontractmd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-execution/references/contract.md</div><h2>Consumer initialization contract</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-executionreferencescontractmd--consumer-initialization-contract">Consumer initialization contract</h3>
+<p>The <a href="../.agents/skills/initialization-execution/SKILL.md">execution skill</a> owns running setup. The sibling
+<a href="../.agents/skills/initialization-intake/SKILL.md">intake skill</a> owns the complete upfront
+questionnaire, saved answers and completed handoff. The
+<a href="#source-agentsskillsinitialization-executionreferencesrunbookmd">runbook</a> owns exact application edits and links to operator procedures.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--supported-scope-and-target">Supported scope and target</h4>
+<p>Initialize one existing private GitHub consumer with one Git worktree containing
+<code>frontend/</code> and <code>backend/</code>. Preserve the template stack, session authentication,
+examples, shared Hetzner CI and paired staging/production release workflows.
+Reuse the approved operator, shared App/pool, deployment host and supported
+backup destination. Creating a new foundation, changing privileged shared code,
+rebuilding a host, replacing data and implementing business features are separate
+tasks. Canonical <code>vireocodedev/web-app-starter</code> cannot initialize itself.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--intake-handoff-and-authority">Intake handoff and authority</h4>
+<p>Execution&#x27;s first operation is the intake <code>require-complete</code> gate. Missing,
+partial, invalid, changed or repository-mismatched intake stops execution with
+an explicit instruction to finish <code>$initialization-intake</code> first. A legacy
+workbook or old execution state is not a completed new intake.</p>
+<p>Read the <a href="#source-agentsskillsinitialization-intakereferencesstatemd">state contract</a>.
+The helper derives readiness from valid applicable answers and prerequisites,
+and binds confirmation to their exact content and repository. A mutable
+<code>complete: true</code> flag alone is insufficient. Record the returned intake revision
+and digest in execution state; recheck them on resume and before phase writes.
+Answer changes require refreshed intake confirmation, while preserving already
+verified execution evidence and existing resources.</p>
+<p>All setup choices, scope authorization and foreseeable human prerequisites are
+collected during intake. Use only actual user answers/consent; the agent can
+record their words but cannot approve for them. The current execution request
+and the completed confirmed scope must agree. A saved file grants no standing
+authority for unrelated resources or new actions. Credentials stay in protected
+stores; intake/state contain references only. No Client Discovery service,
+project UUID, export, app review or external workbook is required.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--operator-profile">Operator profile</h4>
+<p>The intake&#x27;s protected external operator reference identifies the existing
+operator. Resolve it as data, not commands. Keep the JSON file outside Git,
+owner-only (<code>0600</code> in private directories). It contains references, never token,
+password or private-key values:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Field</th><th>Required contents</th></tr></thead><tbody><tr><td><code>version</code>, <code>name</code></td><td>Format <code>1</code> and recognizable name.</td></tr><tr><td><code>github</code></td><td>Host, authorized account and allowed repository owner.</td></tr><tr><td><code>ssh</code></td><td>Target, identity/agent reference, approved host-key fingerprint, root or noninteractive sudo mode.</td></tr><tr><td><code>ci</code></td><td>Existing pool label, reviewed canonical operator source/revision, protected configuration and App metadata/key references.</td></tr><tr><td><code>dns</code></td><td>Provider, exact zone/project and protected credential/tool reference.</td></tr><tr><td><code>deployment</code></td><td>Approved host, per-project namespace, free-port range and authorized maintainers.</td></tr><tr><td><code>backup</code></td><td>Supported destination and proposed schedule; consumer risk/schedule choices remain explicit intake answers.</td></tr><tr><td><code>bounds</code></td><td>Prerequisite policy, resource ceilings and exclusions.</td></tr></tbody></table></div>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--live-readiness-gate">Live readiness gate</h4>
+<p>After intake passes, verify actual checkout and resource ownership, intended
+GitHub actor/admin/plan/Actions support, selected-repository App access, strict
+SSH host trust, reviewed operator source/configuration/current-boot receipt,
+DNS zone authority/conflicts, available ports/capacity, supported backup adapter,
+and local tools including an unattended path for both saved IDE launches.
+Use the existing operator interfaces; unreviewed host repair is a blocker.</p>
+<p>Write a nonsecret resolved plan and results to
+<code>.template-initialization/readiness.md</code>. Readiness-only requests stop here.
+Runtime/IDE/browser, deployed CI and initialized recovery evidence are collected
+after personalization, not inferred from preflight checkboxes. Missing access or
+changed scope produces a precise blocker and an intake update where needed.
+Continue only matching authorized independent work. Mandatory tool/provider
+approvals remain in force.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--execution-and-resume">Execution and resume</h4>
+<p>Keep ignored <code>.template-initialization/state.json</code> under owner-only permissions
+with atomic writes. Record version, exact repository/root, initial commit,
+intake revision/digest/scope, phase states, source/run/image/resource identities,
+protected credential references and redacted failures/recovery transaction IDs.
+Never execute values as commands. Reconcile actual state before retries and
+preserve volumes/passwords. Existing completed consumers retain their evidence;
+read-only reconciliation never recreates their setup. A missing new intake only
+blocks new execution, not the validity of historical acceptance.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Phase</th><th>Evidence required before <code>passed</code></th></tr></thead><tbody><tr><td><code>intake</code></td><td>Completed confirmed intake, current matching request and live readiness.</td></tr><tr><td><code>identity</code></td><td>Application values, packages and launches agree; residual template references classified.</td></tr><tr><td><code>local</code></td><td>Required checks/builds, native API/browser login-refresh-logout and actual saved IDE launches.</td></tr><tr><td><code>ci</code></td><td>Exact shared-pool registration, current isolation receipt, genuine workflows and failing/green branch-gate proof.</td></tr><tr><td><code>environments</code></td><td>DNS/TLS/ports, isolated DBs/volumes/credentials, approved controller and certificate variable.</td></tr><tr><td><code>staging</code></td><td>Successful workflow with tested consumer commit and private immutable image pair.</td></tr><tr><td><code>production</code></td><td>Same successful staging pair promoted without rebuild behind a fresh production backup.</td></tr><tr><td><code>recovery</code></td><td>Explicit user provisioning, HTTPS/browser flows, initialized dump retrieval/checksum/isolated restore, then production timer.</td></tr><tr><td><code>handoff</code></td><td>Consumer-specific acceptance, operating docs and protected references.</td></tr></tbody></table></div>
+<p>Local-only execution completes <code>intake</code>, <code>identity</code>, <code>local</code> and the bounded
+handoff; remote phases remain out of scope, not passed. It does not authorize
+publication, registration or deployments. No phase can borrow copied template
+receipts. Follow the <a href="../infrastructure/ci/README.md">CI</a> and
+<a href="../infrastructure/release/README.md">release</a> owners for actual commands.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencescontractmd--completion-and-rehearsal">Completion and rehearsal</h4>
+<p>Full setup is ready only when all phases pass for this consumer&#x27;s exact source
+and deployed pair. Store sanitized
+<code>docs/acceptance/initialization-acceptance.json</code> and operating instructions with
+run/source/digest identities, actual commands and recovery results. Other
+documentation acceptance records belong in <code>docs/acceptance/</code>; infrastructure
+receipts retain their owner locations. Keep private state out of docs inputs.</p>
+<p>Regenerate <code>docs/project.html</code> and the bundled offline view using the
+<a href="#source-agentsskillsinitialization-executionreferencesrunbookmd--project-documentation-dashboard">dashboard procedure</a>. Report actual
+checks, missing evidence, deferred artwork and any human intervention after
+intake. Configuration alone does not prove runtime or live setup. A clean
+fresh-consumer rehearsal is still required to prove the unattended experience.
+Business requirements/specification are a later separately defined workflow.</p></div><div class="digest">Source SHA-256 · fcecd59505476b2b5ff17d9c07ebd4f29e5b6557301b01016dcbb31447b9cbc4</div></section><section class="panel record" data-kind="procedure" id="source-docsinitialization-contractmd">
 <div class="panel-heading"><div><div class="source-path">docs/initialization-contract.md</div><h2>Consumer initialization contract</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsinitialization-contractmd--consumer-initialization-contract">Consumer initialization contract</h3>
-<p>The authoritative reusable contract ships inside the
-<a href="#source-agentsskillsinitialize-projectreferencescontractmd">initialize-project skill</a>.
-It owns preparation, current written authority, readiness, resume and acceptance.</p>
-<p>Before a fresh invocation, use the
-<a href="#source-agentsskillsinitialize-projectreferencespreparationmd">preparation guide</a>
-to save the private workbook. See the
-<a href="#source-docstemplate-initializationmd">setup runbook</a> for the procedure and consumer-specific
-setup decisions. Existing completed consumers retain their evidence; a new form
-does not authorize reinitialization.</p></div><div class="digest">Source SHA-256 · 62fb09dd668276f315ef9e6838aaf7efd67133c138a6819d40c93acb1e0781ff</div></section><section class="panel record" data-kind="procedure" id="source-docsdiscovery-specificationmd">
+<p>The <a href="../.agents/skills/initialization-intake/SKILL.md">intake skill</a> owns the
+upfront questionnaire and resumable private answers. The authoritative
+<a href="#source-agentsskillsinitialization-executionreferencescontractmd">execution contract</a>
+owns the completion gate, confirmed scope, live readiness, execution resume and
+acceptance.</p>
+<p>Execution checks intake first. Missing, partial, changed or repository-mismatched
+intake explicitly stops with instructions to finish <code>$initialization-intake</code>.
+Completing intake records the user&#x27;s confirmation of the resolved scope; it is
+not proof that initialization, CI or deployments have succeeded.</p>
+<p>See the <a href="#source-docstemplate-initializationmd">setup entry point</a> for invocation and
+consumer-specific setup decisions. Preserve existing credentials, data and
+completed evidence when adopting the new skills; an incomplete legacy run needs
+completed intake before execution resumes. No Client Discovery service is needed.</p></div><div class="digest">Source SHA-256 · 0be804f9b930ee6317cdae960e47649f58ce6e932e9da58ec82ed0035a353641</div></section><section class="panel record" data-kind="procedure" id="source-docsdiscovery-specificationmd">
 <div class="panel-heading"><div><div class="source-path">docs/discovery-specification.md</div><h2>Discovery scope to implementation specification</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsdiscovery-specificationmd--discovery-scope-to-implementation-specification">Discovery scope to implementation specification</h3>
 <p>For the preceding Client Discovery checklist and the later issue, implementation
@@ -1220,146 +1079,73 @@ They require neither production credentials nor live issue publication. CI runs
 this check alongside the portable initialization/documentation checks.</p></div><div class="digest">Source SHA-256 · 4e5cd8eaf7837249a1a61cab88f140a244cf15fdc19a8434b79f4a75a3c2c16a</div></section><section class="panel record" data-kind="procedure" id="source-docsv1-workflowmd">
 <div class="panel-heading"><div><div class="source-path">docs/v1-workflow.md</div><h2>From a cloned template to a production V1</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsv1-workflowmd--from-a-cloned-template-to-a-production-v1">From a cloned template to a production V1</h3>
-<p>Use this guide to coordinate a new consumer from its first clone to an accepted,
-deployed business V1. Each linked owner supplies its detailed procedure and
-authority; this overview adds no execution or publishing permission. The skills
-assist separate tasks. They do not automate the entire journey in one invocation.</p>
+<p>Use this overview to keep setup, business requirements, implementation and
+acceptance separate. Each owner supplies its detailed procedure and authority;
+this page adds no execution, publication or deployment permission.</p>
 <h4 id="source-docsv1-workflowmd--stage-map">Stage map</h4>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Stage</th><th>Completion evidence</th><th>Procedure owner</th></tr></thead><tbody><tr><td>1. Clone and check capabilities</td><td>Intended consumer checkout and complete compatible workflow packages</td><td><a href="#source-docstemplate-initializationmd">Template initialization</a></td></tr><tr><td>2. Prepare developer setup</td><td>Saved, explicitly reviewed preparation valid for the selected planning/execution task</td><td><a href="#source-agentsskillsinitialize-projectreferencespreparationmd">Preparation guide</a></td></tr><tr><td>3. Initialize the consumer</td><td>Consumer-specific local, CI, deployment and recovery acceptance for the authorized setup scope</td><td><a href="#source-agentsskillsinitialize-projectreferencescontractmd">Initialization contract</a></td></tr><tr><td>4. Agree business V1</td><td>Administrator and designated-client approvals of the same hash, then explicit <code>LOCKED</code> version</td><td>Client Discovery <strong>Scope approvals</strong></td></tr><tr><td>5. Generate and review specification</td><td>Pinned source receipt, traceability, decisions, acceptance scenarios and validated local issue package</td><td><a href="#source-docsdiscovery-specificationmd">Discovery specification</a></td></tr><tr><td>6. Publish the approved issue handoff</td><td>Explicit target, actual imported issues and retained import mapping</td><td><a href="../.agents/skills/discovery-specification/references/specification-contract.md#validation-and-later-publication">Specification package contract</a></td></tr><tr><td>7. Implement bounded issues</td><td>Linked PRs, relevant passing checks/CI and issue completion evidence</td><td>Generated <code>IMPLEMENTATION-WORKFLOW.md</code> and repository guides</td></tr><tr><td>8. Accept V1 on staging</td><td>Tested image pair, business acceptance results and resolved release blockers</td><td>Generated <code>ACCEPTANCE.md</code> and <a href="../infrastructure/release/README.md">release owner</a></td></tr><tr><td>9. Promote and hand over</td><td>Exact accepted image pair in production, smoke/recovery evidence and current operating docs</td><td><a href="../infrastructure/release/README.md">Release owner</a></td></tr></tbody></table></div>
-<p>Developer preparation/initialization and client discovery can proceed in parallel.
-Specification generation needs both the initialized consumer context and the
-intended locked business baseline. A deployed production skeleton completes
-setup; the business V1 is complete only after implementation and acceptance.</p>
-<h4 id="source-docsv1-workflowmd--1-clone-and-check-the-workflow-capabilities">1. Clone and check the workflow capabilities</h4>
-<p>Create a consumer using GitHub <strong>Use this template</strong>, clone it and open its trusted
-workspace. Confirm its Git origin and existing work before requesting changes.
-Keep any already completed initialization and consumer evidence intact.</p>
-<p>Check the checkout&#x27;s actual packages and documentation before using these examples.
-Older clones may lack the specification skill, project-status helper or reviewed
-preparation capture. Adopt the complete compatible packages, including scripts,
-references, metadata and tests, with their corresponding project documentation.
-This journey uses both <code>.agents/skills/initialize-project/</code> and
-<code>.agents/skills/discovery-specification/</code>; an initializer-only copy is insufficient.
-Follow <a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--codex-skill-registration">skill registration</a>
-when the packaged skills are not discoverable. Reconcile adoption with local edits.</p>
-<p>Use the intended <strong>production Client Discovery project UUID</strong>, not a project name
-or a UUID copied from an example. Configure the protected user-local Discovery
-administrator profile through the <a href="#source-agentsskillsinitialize-projectreferencespreparationmd--0-prepare-and-review-in-client-discovery">preparation guide</a>.
-Forms and committed documents contain protected credential references, never
-passwords, tokens, private keys or recovery codes. Application login credentials
-and Discovery export credentials serve separate systems.</p>
-<h4 id="source-docsv1-workflowmd--23-prepare-and-initialize-independently-of-business-scope">2–3. Prepare and initialize independently of business scope</h4>
-<p>In that production project&#x27;s <strong>Developer preparation</strong>, complete applicable setup
-topics: repository and application identity, existing operator, access, domains,
-initial account, backups and permitted actions. Save the preparation, review the
-exact saved revision and explicitly record that review. A reviewed planning
-request supports planning; execution needs its required checks, bounded actions,
-signer and valid authorization window. Changes require saving and review again.</p>
-<p>Preparation has its own revision. Business approval/locking neither completes it
-nor grants infrastructure authority; it remains editable independently. The agent
-still verifies the actual checkout, resources and live readiness before execution.</p>
-<p>In the consumer workspace, use these skill invocations (replace <code>PROJECT_UUID</code>):</p>
-<pre tabindex="0"><code class="language-text">$initialize-project
-$initialize-project initialize this consumer from production project PROJECT_UUID
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Stage</th><th>Completion evidence</th><th>Procedure owner</th></tr></thead><tbody><tr><td>Clone and inspect</td><td>Intended consumer checkout, preserved work and compatible bundled skills</td><td><a href="#source-docstemplate-initializationmd">Setup entry point</a></td></tr><tr><td>Complete initialization intake</td><td>All applicable answers, ready prerequisites and confirmed execution scope for this checkout</td><td><a href="../.agents/skills/initialization-intake/SKILL.md">Intake skill</a></td></tr><tr><td>Execute initialization</td><td>Actual local, CI, deployment and recovery evidence within the confirmed scope</td><td><a href="../.agents/skills/initialization-execution/SKILL.md">Execution skill</a></td></tr><tr><td>Agree requirements and specification</td><td>Reviewed business scope, decisions and observable acceptance criteria</td><td>Replacement workflow to be defined separately</td></tr><tr><td>Implement bounded outcomes</td><td>Reviewed changes, relevant passing checks and actual delivery evidence</td><td>Repository agent and development guides</td></tr><tr><td>Accept business V1 on staging</td><td>Agreed journeys, roles, integrations and failures accepted on the exact candidate</td><td>Product/client owners and <a href="../infrastructure/release/README.md">release procedure</a></td></tr><tr><td>Promote and hand over</td><td>Exact accepted image pair in production, smoke/recovery evidence and operating instructions</td><td><a href="../infrastructure/release/README.md">Release owner</a></td></tr></tbody></table></div>
+<p>A deployed skeleton completes setup, not business V1. Intake completion establishes
+setup decisions and scope, not successful execution or business approval.</p>
+<h4 id="source-docsv1-workflowmd--clone-complete-intake-then-execute">Clone, complete intake, then execute</h4>
+<p>Create a repository with GitHub <strong>Use this template</strong>, clone it and open the
+trusted workspace. Inspect actual Git origin and local changes. Preserve existing
+credentials, data and completed evidence. Older clones must adopt both complete
+compatible skill packages, including references, helpers and tests; reconcile
+with local edits. See <a href="#source-agentsskillsinitialization-executionreferencesrunbookmd--codex-skill-registration">skill registration</a>
+when discovery needs configuration.</p>
+<pre tabindex="0"><code class="language-text">$initialization-intake prepare initialization for this repository
+$initialization-execution initialize this repository
 </code></pre>
-<p>The bare invocation shows three independent states: developer preparation,
-recorded consumer initialization, and current business scope/available locked
-export. Supply the UUID when first requested; the successful association is saved
-privately. It then offers the existing task menu. It does not inspect issue or
-implementation progress, capture an export, or start setup. Unknown/access errors
-remain unknown. See <a href="#source-agentsskillsinitialize-projectreferencesproject-statusmd">status meanings</a>.</p>
-<p>The concrete initialization request captures the reviewed preparation privately,
-checks written authority/readiness and follows the <a href="#source-agentsskillsinitialize-projectreferencesrunbookmd">runbook</a>.
-Keep capture, readiness and resume state under ignored <code>.template-initialization/</code>.
-Full setup needs actual consumer evidence for local development, CI/protection,
-staging, production and initialized recovery. Explicit local-only scope completes
-only that bounded task. Use current receipts and live results where required;
-template receipts and manually checked boxes do not prove consumer completion.</p>
-<h4 id="source-docsv1-workflowmd--4-client-discovery-checklist-for-the-business-v1">4. Client Discovery checklist for the business V1</h4>
-<p>In Client Discovery, open <strong>Account → User manual → From template to production V1</strong> for exact controls and recovery instructions.
-Save business-scope changes before review; preparation uses its separate save.
-Use the following checklist to establish scope, not to claim delivered code works:</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Section</th><th>What to settle or explicitly leave unresolved</th></tr></thead><tbody><tr><td><strong>People &amp; access</strong></td><td>Invite the client account and have them accept membership. An account invitation supports review/approval; a buyer answer link only collects questionnaire answers without an account. Send generated links yourself and keep them private.</td></tr><tr><td><strong>Discovery</strong></td><td>Work through every applicable category: goals, users, journeys, permissions, integrations, quality and operating constraints as presented by the captured catalog. Answer required questions; record real uncertainty or delegation explicitly.</td></tr><tr><td><strong>Features</strong></td><td>Describe each V1 capability, user, delivery priority, observable acceptance criteria, dependencies and constraints. Record exclusions and later scope. A feature is a capability, independent of how many screens display it.</td></tr><tr><td><strong>Pages &amp; screens</strong></td><td>Add useful screen purpose, route, audience, access and feature links where known. Pages and their optional details are not mandatory placeholders for every feature.</td></tr><tr><td><strong>Data &amp; relationships</strong></td><td>Identify stored records, fields/types, required values, relationships, access rules and lifecycle where the project needs them.</td></tr><tr><td><strong>Custom requirements</strong></td><td>Add needs missing from the questionnaire with status, priority, acceptance criteria and references. Adjust custom categories/question settings only where needed.</td></tr><tr><td><strong>Links &amp; references / Files</strong></td><td>Supply relevant examples, links, designs and materials. Arrange separate delivery/access for uploaded file bytes; those bytes are outside the locked scope export/hash.</td></tr><tr><td><strong>Commercial terms</strong></td><td>Record shared delivery commitments and applicable terms. Private expense types, expenses and supplier invoices remain outside shared scope and export.</td></tr><tr><td><strong>Review &amp; decisions</strong></td><td>Review the saved draft, missing required answers, clarification items and warnings. Record questions, assumptions, agreed outcomes and owners, including real unresolved business inputs.</td></tr><tr><td><strong>Scope approvals</strong></td><td>Select the designated client, submit the saved candidate, obtain both independent same-hash approvals and explicitly lock it as described below.</td></tr></tbody></table></div>
-<p>Optional fields need useful content only when applicable. An absent answer is
-unanswered; <code>NOT_APPLICABLE</code>, tentative, undecided and developer-delegated answers
-have distinct meanings. Expert/owner filters and conditional visibility can hide
-questions from the current view; Review still checks applicable required inputs.
-Progress at 100% is neither complete agreement nor V1 acceptance.</p>
-<p>Give each acceptance criterion an observable outcome, including relevant failure
-and permission behavior. Preserve genuine unresolved business gaps with an owner
-and affected scope. Developer-delegated technical details may be resolved later
-within developer authority with a recorded choice and rationale.</p>
-<p>After saving, address required-answer blockers in <strong>Review &amp; decisions</strong>. If open
-decisions remain, discuss them and explicitly acknowledge them when submitting.
-They remain unresolved in the snapshot even if the scope is approved.</p>
-<p>Submit a titled version in <strong>Scope approvals</strong>, choosing <strong>Client whose approval
-is required</strong>. The administrator and that designated client sign in separately,
-read the complete exact snapshot and each approve its same content hash. Then the
-administrator explicitly selects <strong>Lock approved scope</strong>. Both approvals without
-this action mean awaiting lock. A valid <code>LOCKED</code> baseline is exportable; approval
-of an individual answer or another client&#x27;s account cannot replace these steps.</p>
-<p>For corrections before lock, reopen and submit a new candidate for fresh approvals.
-After lock, use a change request/new version and approval cycle. Preserve the old
-baseline and implementation history. New draft content does not alter the old hash.</p>
-<h4 id="source-docsv1-workflowmd--5-generate-and-review-the-pinned-specification">5. Generate and review the pinned specification</h4>
-<p>Once initialization and the intended lock are available, invoke the separate skill:</p>
-<pre tabindex="0"><code class="language-text">$discovery-specification Generate the specification for production project PROJECT_UUID in ./docs/specifications/v1
-</code></pre>
-<p>The <a href="../.agents/skills/discovery-specification/references/export-contract.md">source contract</a>
-selects the highest-version <code>LOCKED</code> baseline, independently of a newer draft.
-Check that this is the intended V1 source. The package retains original export
-bytes, project/baseline UUID and version, server <code>contentHash</code>, independent
-approval/lock identity and a separate whole-file SHA-256 in <code>source/receipt.json</code>.
-That receipt establishes provenance; it does not establish implementation progress.
-Supporting assets need their own authorized retrieval and receipts outside it.</p>
-<p>Review <code>SPECIFICATION.md</code>, <code>ACCEPTANCE.md</code>, traceability and the issue graph against
-the source. <code>DECISIONS.md</code>/<code>decisions.json</code> distinguish reasoned
-<code>RESOLVED_TECHNICAL</code> choices, <code>PROPOSED</code> assumptions and owned <code>REQUIRES_INPUT</code>
-requests. Genuine consequential gaps block affected work; unrelated ready scope
-can proceed. Generated proposals are not approved client facts.</p>
-<p>Keep client artifacts in the explicit nested folder or another protected output.
-Root <code>docs/*.md</code> and <code>docs/acceptance/</code> feed the public project dashboard. Generation
-does not authorize committing or publishing client material. A valid local package
-still needs semantic review before coding/publication. Resume preserves its pinned
-source; a newer baseline requires an explicit refresh/new-output request and review
-of changes while retaining existing issue/PR history.</p>
-<h4 id="source-docsv1-workflowmd--6-validate-locally-then-publish-only-to-the-approved-target">6. Validate locally, then publish only to the approved target</h4>
-<p>The following are examples to run in the consumer after generation. Both commands
-are local and credential-free; the second produces an offline import plan:</p>
-<pre tabindex="0"><code class="language-sh">node ./docs/specifications/v1/tools/validate-package.mjs --package ./docs/specifications/v1
-node ./docs/specifications/v1/tools/import-issues.mjs --package ./docs/specifications/v1
-</code></pre>
-<p>Review the package, blockers and import plan. Resolve an explicit authorized
-<code>OWNER/REPO</code> destination before separately requesting publication. Only then use:</p>
-<pre tabindex="0"><code class="language-sh">node ./docs/specifications/v1/tools/import-issues.mjs --package ./docs/specifications/v1 --repo OWNER/REPO --apply
-</code></pre>
-<p>Follow the <a href="../.agents/skills/discovery-specification/references/specification-contract.md#validation-and-later-publication">import contract</a>
-for account/access checks, relationships, partial failures and <code>.import-state/</code>.
-Retain stable keys and mappings; publication creates execution records, not code.</p>
-<h4 id="source-docsv1-workflowmd--79-implement-accept-and-promote-the-v1">7–9. Implement, accept and promote the V1</h4>
-<p>Claim a ready bounded leaf issue using the generated <code>IMPLEMENTATION-WORKFLOW.md</code>.
-Confirm its source, dependencies, decision blockers, ownership and acceptance;
-implement within that boundary, run relevant repository checks and deliver a linked
-PR with actual CI evidence. Close work only against its acceptance evidence.
-Use issues/PRs for execution progress rather than inferring it from initial setup
-status or editing checkmarks. Repeat for the accepted V1 scope and its integration.</p>
-<p>Deploy the candidate through <strong>Deploy staging</strong> following the <a href="../infrastructure/release/README.md#deploy-an-initialized-project">release procedure</a>.
-Test real journeys, roles, integrations, failure cases and agreed quality criteria
-from <code>ACCEPTANCE.md</code>. Record client acceptance and unresolved release blockers
-against the exact candidate. Initial scope approval agrees what to build; it does
-not accept delivered code. Required V1 behavior must be implemented and verified.</p>
-<p>Promote the exact verified and accepted staging frontend/backend image pair through
-<strong>Deploy production</strong>, preserving its source SHA and successful staging run identity.
-Follow the release owner for authorized migrations, pre-migration backups,
-environment/account provisioning, smoke checks and recovery; follow the <a href="../infrastructure/ci/README.md">CI owner</a>
-for shared infrastructure. Check current capabilities, workflows and evidence,
-rather than assuming a template&#x27;s past deployment/PR status applies here.</p>
-<p>Finish with production health and business smoke evidence, current access/operating
-documentation, backup retrieval and isolated restore evidence, approved backup
-scheduling, known limitations and the accepted V1 issue/requirement coverage.
-Record consumer setup changes in <a href="#source-docstemplate-initializationmd--consumer-specific-setup">its runbook entry point</a>.
-Production V1 completion rests on these results and client acceptance, not merely
-successful image publication, a deployed skeleton or a generated specification.</p></div><div class="digest">Source SHA-256 · 3719c8cd00ebeefcc6295d1fc77940a7d50f30c5494670edccaba4a1977e11da</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-ci-appmd">
+<p>Run the second task after completing the first. Intake presents all known setup
+questions upfront and records each answer and prerequisite in the ignored
+<code>.agents/skills/initialization-intake/state/intake.json</code>. It resolves application
+identity, local development, GitHub/CI, hosting/DNS, accounts, backups, protected
+access references and permitted actions before execution. Resume in a separate
+agent session with <code>$initialization-intake resume intake</code>; resolved answers remain
+available and missing inputs stay visible. Credentials remain in protected stores.</p>
+<p>Execution&#x27;s first gate verifies completed intake for the actual checkout and its
+current answers. Missing, partial, stale or mismatched intake produces an explicit
+stop directing the user to <code>$initialization-intake</code>, before provider readiness
+checks or initialization actions. Answer changes require renewed completion.</p>
+<p>After that gate, execution verifies live readiness and follows the
+<a href="#source-agentsskillsinitialization-executionreferencescontractmd">contract</a> and
+<a href="#source-agentsskillsinitialization-executionreferencesrunbookmd">runbook</a>. Full setup
+requires real consumer evidence for local development, CI/protection, staging,
+production and initialized recovery. Explicit local-only scope completes only
+local setup. Unexpected failures and actions outside confirmed scope remain
+visible blockers. Historical template receipts do not certify a consumer.</p>
+<p>No Client Discovery account, project UUID, API connection or workbook export is
+part of this setup path.</p>
+<h4 id="source-docsv1-workflowmd--requirements-and-specification-remain-a-separate-design-task">Requirements and specification remain a separate design task</h4>
+<p>The replacement requirements/specification workflow is outside this initialization
+change. No new automated specification or issue-generation workflow is supplied.
+The existing <a href="#source-docsdiscovery-specificationmd">Discovery specification package</a> is a
+legacy integration with the experimental app; it is not part of the current
+journey and does not consume local initialization intake.</p>
+<p>Before implementation, agree useful scope, exclusions, users, permissions,
+journeys, data rules, integrations, dependencies and observable acceptance
+criteria. Keep unresolved product decisions explicit with an owner and affected
+work. Setup answers cannot fill these business decisions. Technical choices may
+be resolved within existing architecture and delegated authority.</p>
+<h4 id="source-docsv1-workflowmd--implement-accept-and-promote">Implement, accept and promote</h4>
+<p>For each authorized outcome, establish its source, boundaries, dependencies and
+acceptance. Use repository guidance, independent review where required and checks
+for the changed owners. Report implemented behavior, local verification, remote
+CI and delivery separately. Issue/PR records describe actual execution; intake or
+initialization status does not describe business-feature progress. Publishing
+issues or code requires the task&#x27;s actual authorization.</p>
+<p>Deploy through <strong>Deploy staging</strong> following the <a href="../infrastructure/release/README.md#deploy-an-initialized-project">release procedure</a>.
+Test agreed business journeys, roles, integrations, failure cases and quality
+criteria on the exact candidate. Record product/client acceptance and release
+blockers. Agreement on requirements is distinct from acceptance of delivered code.</p>
+<p>Promote the exact accepted staging frontend/backend pair through <strong>Deploy
+production</strong>, preserving its source SHA and staging run identity. Use the release
+owner for migrations, pre-migration backups, account provisioning, smoke and
+recovery, and the <a href="../infrastructure/ci/README.md">CI owner</a> for shared infrastructure.</p>
+<p>Finish with accepted requirement coverage, production health and business smoke,
+current access/operating documentation, backup retrieval and isolated restore,
+approved backup scheduling and known limitations. Record consumer setup changes
+in <a href="#source-docstemplate-initializationmd--consumer-specific-setup">its setup entry point</a>.</p></div><div class="digest">Source SHA-256 · f5321741485d4f415f6add617cdfaf66a82b62f3d25406d5b06f1fd2ee2cb497</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-ci-appmd">
 <div class="panel-heading"><div><div class="source-path">docs/github-ci-app.md</div><h2>GitHub App for the shared CI controller</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsgithub-ci-appmd--github-app-for-the-shared-ci-controller">GitHub App for the shared CI controller</h3>
 <p>The template&#x27;s current App is <code>5319558</code>, installation <code>171464279</code>, owned by
@@ -1555,60 +1341,41 @@ inputs to replace for a consumer, not automatically inherited deployment names.<
 needed and remove its local file deliberately. Keep any longer-lived provider
 credential under separately agreed operator ownership and record only its
 location/purpose in documentation.</p>
-<p>Source: <a href="https://docs.hetzner.com/cloud/api/getting-started/generating-api-token/">Hetzner&#x27;s token-generation guide</a>.</p></div><div class="digest">Source SHA-256 · 053dabb1111469f45ffb0fea7570f99dbc5b5531c07fc8803a80cd48acfe9bb8</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencesrunbookmd">
-<div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/runbook.md</div><h2>Initialize a project from this template</h2></div><span class="pill">Procedure</span></div>
-<div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencesrunbookmd--initialize-a-project-from-this-template">Initialize a project from this template</h3>
-<p>This is the authoritative map of application identity edits and setup owners.
-The repository-local
-<a href="../.agents/skills/initialize-project/SKILL.md">initialize-project skill</a> owns
-execution and maturity/learning behavior. Its
-<a href="#source-agentsskillsinitialize-projectreferencescontractmd">initialization contract</a> owns written preparation,
-protected operator inputs, readiness, approval, local resume state and full
-acceptance. Before fresh initialization, use the
-<a href="#source-agentsskillsinitialize-projectreferencespreparationmd">preparation guide</a> to complete and review developer preparation
-in Client Discovery. Supply the production project ID to the skill; it captures
-the reviewed private workbook automatically. Existing manual workbooks remain
-valid. Browser drafts are not authority; the skill reads the reviewed workbook.</p>
+<p>Source: <a href="https://docs.hetzner.com/cloud/api/getting-started/generating-api-token/">Hetzner&#x27;s token-generation guide</a>.</p></div><div class="digest">Source SHA-256 · 053dabb1111469f45ffb0fea7570f99dbc5b5531c07fc8803a80cd48acfe9bb8</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-executionreferencesrunbookmd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-execution/references/runbook.md</div><h2>Initialize a project from this template</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-executionreferencesrunbookmd--initialize-a-project-from-this-template">Initialize a project from this template</h3>
+<p>This is the authoritative application identity replacement map and setup-owner
+guide. The <a href="../.agents/skills/initialization-execution/SKILL.md">execution skill</a> runs the approved phases; the
+<a href="#source-agentsskillsinitialization-executionreferencescontractmd">contract</a> owns readiness, scope, resume and acceptance. Complete
+the sibling <a href="../.agents/skills/initialization-intake/SKILL.md">intake skill</a> first.
+Its private answers and confirmed scope replace external preparation workbooks.</p>
 <p>Full setup includes local development, shared CI/main protection, DNS, private
-images, two real paired deployments and verified recovery under one approved
-consumer scope. An explicitly requested personalization-only task stays local.
-Make scoped edits directly; no renaming generator or runtime identity framework
-is required. Shared host rebuilds, foundation installation/upgrades and data
-replacement remain separately approved operator work, not initialization effects.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--1-confirm-the-target-and-identity">1. Confirm the target and identity</h4>
-<h5 id="source-agentsskillsinitialize-projectreferencesrunbookmd--advisory-phase-inspection">Advisory phase inspection</h5>
-<p>Before a task is selected on a bare skill invocation, run the standalone
-<code>scripts/project-status.mjs</code> from this package. The
-<a href="#source-agentsskillsinitialize-projectreferencesproject-statusmd">status contract</a> owns its production profile, remembered
-project association, preparation and scope classifications, and next-action
-report. No provider probes or project mutations run during inspection.
-<code>--remember</code> records only the explicitly supplied project/source/repository in
-ignored <code>.template-initialization/discovery-project.json</code> (0700 directory,
-0600 file), preserving prior captures and setup evidence. Missing credentials,
-API/schema incompatibility and identity conflicts are distinct unknown/error
-states. Verify with the package&#x27;s preparation and contract tests, portable
-installation, then dashboard generation/freshness. Consumer initialization below
-starts only after that task has been selected.</p>
-<p>Read the root and scoped agent guides. Inspect the actual files listed below,
-the working tree, and the consumer&#x27;s Git remote. GitHub copies template files
-unchanged; the new repository name is only a suggested slug, not approval to
-rename the project. Missing Git metadata or an unverified repository blocks
-readiness; report it instead of guessing the target. Preserve unrelated changes.</p>
-<p>Read the complete private preparation workbook and resolve the account/operator
-references from its selected protected profile. Verify identity, permissions,
-credentials and current operator source/receipt. Missing answers or access
-produce a private readiness report, not a configuration interview. Prefer scoped
-authentication so another project&#x27;s global CLI account stays unchanged.</p>
-<p>Validate the written identity answers against these constraints:</p>
+images, two paired deployments and verified recovery. Local-only scope remains
+local. Keep existing infrastructure and application owners; new foundation
+installation, privileged upgrades and data replacement are separate work.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--1-confirm-the-target-and-identity">1. Confirm the target and identity</h4>
+<p>Before any initialization/readiness work, run:</p>
+<pre tabindex="0"><code class="language-sh">node .agents/skills/initialization-intake/scripts/intake.mjs require-complete
+</code></pre>
+<p>A failed or unavailable gate means <strong>STOP</strong> and tell the user to finish
+<code>$initialization-intake</code> before <code>$initialization-execution</code>. Do not substitute
+legacy state or collect missing answers during execution. Read the passed
+private state and record its revision/digest; recheck on resume and before writes.</p>
+<p>Read root/scoped guides, inspect the actual Git worktree and preserve unrelated
+changes. Confirm this is the intended private consumer rather than the canonical
+template. Resolve approved operator/account references and recheck readiness
+against live resources. Intake completion does not prove post-personalization
+runtime acceptance. Keep execution reports in <code>.template-initialization/</code>.</p>
+<p>Validate the completed intake identity answers against these constraints:</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Input</th><th>Example</th><th>Rule</th></tr></thead><tbody><tr><td>Project slug</td><td><code>inventory-portal</code></td><td>3-40 lowercase ASCII letters/digits separated by single hyphens; start with a letter. This satisfies both application names and deployed project paths.</td></tr><tr><td>Display name</td><td><code>Inventory Portal</code></td><td>Nonempty human-readable product name. Keep it the same across locales unless localized names are supplied.</td></tr><tr><td>Java base package</td><td><code>com.acme.inventory</code></td><td>Explicit dotted namespace of lowercase ASCII Java identifiers; each segment starts with a letter; exclude Java keywords. This is the application&#x27;s package, not just its organization prefix.</td></tr><tr><td>PWA short name</td><td><code>Inventory</code></td><td>Use the display name if it is at most 12 characters; otherwise obtain an approved short name.</td></tr></tbody></table></div>
 <p>Derive these values consistently:</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Setting</th><th>Derivation</th><th>Example</th></tr></thead><tbody><tr><td>Frontend package</td><td><code>&lt;slug&gt;-frontend</code></td><td><code>inventory-portal-frontend</code></td></tr><tr><td>Gradle root project and Spring application</td><td><code>&lt;slug&gt;-backend</code></td><td><code>inventory-portal-backend</code></td></tr><tr><td>Gradle group</td><td>Java base package</td><td><code>com.acme.inventory</code></td></tr><tr><td>Local Compose project</td><td><code>&lt;slug&gt;-local</code></td><td><code>inventory-portal-local</code></td></tr><tr><td>Default local database and database user</td><td>Slug with hyphens replaced by underscores</td><td><code>inventory_portal</code></td></tr><tr><td>Java source directory suffix</td><td>Java base package with dots replaced by <code>/</code></td><td><code>com/acme/inventory</code></td></tr><tr><td>Java main class</td><td><code>&lt;java-base-package&gt;.BackendApplication</code></td><td><code>com.acme.inventory.BackendApplication</code></td></tr></tbody></table></div>
 <p>Escape supplied display names for each destination&#x27;s JSON, HTML, TypeScript,
 Groovy, or Markdown syntax rather than interpolating unescaped text.</p>
-<p><strong>Done when:</strong> the workbook authorizes the validated identity, the live target
+<p><strong>Done when:</strong> the completed intake authorizes the validated identity, the live target
 is this private consumer rather than the canonical template, and current
-written authority/readiness covers the resolved plan.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--2-establish-the-data-and-resume-boundary">2. Establish the data and resume boundary</h4>
+confirmed scope/readiness covers the resolved plan.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--2-establish-the-data-and-resume-boundary">2. Establish the data and resume boundary</h4>
 <p>Check whether the consumer already has an identity recorded in its README or
 configured in the application. If requested values already match, verify them
 instead of rewriting. For an incomplete initialization with that same identity,
@@ -1624,7 +1391,7 @@ volume.</p>
 <p>For a fresh clone, update the committed environment example before generating
 local credentials or starting PostgreSQL. If a local database or an existing
 environment file uses the old identity, report the mismatch and require a
-written decision before changing identity or starting another database. Preserve
+explicit user decision recorded in intake before changing identity or starting another database. Preserve
 existing passwords, volumes, and data. Data migration, volume deletion, and
 password resets are outside this runbook.
 Resolve known mismatches during preparation/readiness. A newly discovered mismatch
@@ -1634,26 +1401,25 @@ approved scope; it is not permission to reset data.</p>
 or hiding an existing database behind newly generated resource names.</p>
 <p>Inspect both repository-derived GHCR package names before authorizing writes.
 An existing package owned by another repository is a preserve/block boundary,
-not an implicit takeover. Follow the preparation guide&#x27;s exact replacement rows,
-version counts, digest-loss acknowledgement and conditional CLI authorization
-before any approved deletion. Preserve repositories, credentials and data.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--3-replace-application-owned-values">3. Replace application-owned values</h4>
+not an implicit takeover. Preserve conflicting packages and stop; registry replacement is separate
+explicitly authorized work, not a normal initialization action. Preserve repositories, credentials and data.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--3-replace-application-owned-values">3. Replace application-owned values</h4>
 <p>The following is the current replacement map. Read each field before editing;
 if the layout differs, locate its owner and report the difference. Use exact
 fields and package-prefix changes, not a global replacement of <code>RGO</code>, <code>backend</code>,
 or <code>vireocode</code>.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencesrunbookmd--backend-and-local-infrastructure">Backend and local infrastructure</h5>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--backend-and-local-infrastructure">Backend and local infrastructure</h5>
 <p>Paths in this table are relative to the workspace root.</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>File or surface</th><th>Template value</th><th>Consumer change</th></tr></thead><tbody><tr><td><a href="../backend/settings.gradle">backend/settings.gradle</a></td><td><code>rootProject.name = &#x27;backend&#x27;</code></td><td>Set <code>&lt;slug&gt;-backend</code>. Keep the physical <code>backend/</code> folder.</td></tr><tr><td><a href="../backend/build.gradle">backend/build.gradle</a></td><td><code>group = &#x27;com.vireocode&#x27;</code>; description <code>VireoCode Web App Starter backend</code></td><td>Set group to the approved Java base package and description to <code>&lt;display name&gt; backend</code>. Preserve versions, plugins, and dependencies.</td></tr><tr><td><a href="../backend/src/main/resources/application.yaml">backend/src/main/resources/application.yaml</a></td><td><code>spring.application.name: vireocode-backend</code></td><td>Set <code>&lt;slug&gt;-backend</code>. Preserve <code>/api</code>, profiles, datasource placeholders, session/security settings, and Hibernate validation.</td></tr><tr><td><a href="../backend/compose.yaml">backend/compose.yaml</a></td><td><code>name: vireocode-web-app-starter-local</code></td><td>Set <code>&lt;slug&gt;-local</code>. Keep the <code>postgres</code> service and <code>postgres-data</code> volume key; Compose scopes their resources by project.</td></tr><tr><td><a href="../backend/.env.example">backend/.env.example</a></td><td><code>POSTGRES_DB=vireocode</code>; <code>POSTGRES_USER=vireocode</code></td><td>Set both to the underscore-form slug. Keep passwords empty and retain the initial-user defaults unless the user requests different local account details.</td></tr><tr><td><a href="../backend/src/main/java">backend/src/main/java/</a> and <a href="../backend/src/test/java">backend/src/test/java/</a>, each with the template suffix <code>com/vireocode/backend/</code></td><td>Package prefix <code>com.vireocode.backend</code></td><td>Move all owned Java files into the approved package&#x27;s directory under each source root; update package declarations, imports, and qualified references. Retain relative <code>auth</code> and <code>user</code> subpackages and the <code>BackendApplication</code> class name.</td></tr><tr><td><a href="../.vscode/launch.json"><code>.vscode/launch.json</code></a></td><td><code>mainClass: com.vireocode.backend.BackendApplication</code></td><td>Set the qualified main class. Omit the optional <code>projectName</code> for this single backend: the IDE import name can differ from Gradle&#x27;s root name. Preserve both configurations, tasks, working directories and <code>local</code> profile.</td></tr></tbody></table></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>File or surface</th><th>Template value</th><th>Consumer change</th></tr></thead><tbody><tr><td><a href="../backend/settings.gradle">backend/settings.gradle</a></td><td><code>rootProject.name = &#x27;backend&#x27;</code></td><td>Set <code>&lt;slug&gt;-backend</code>. Keep the physical <code>backend/</code> folder.</td></tr><tr><td><a href="../backend/build.gradle">backend/build.gradle</a></td><td><code>group = &#x27;com.vireocode&#x27;</code>; description <code>VireoCode Web App Starter backend</code></td><td>Set group to the approved Java base package and description to <code>&lt;display name&gt; backend</code>. Preserve versions, plugins, and dependencies.</td></tr><tr><td><a href="../backend/src/main/resources/application.yaml">backend/src/main/resources/application.yaml</a></td><td><code>spring.application.name: vireocode-backend</code></td><td>Set <code>&lt;slug&gt;-backend</code>. Preserve <code>/api</code>, profiles, datasource placeholders, session/security settings, and Hibernate validation.</td></tr><tr><td><a href="../backend/compose.yaml">backend/compose.yaml</a></td><td><code>name: vireocode-web-app-starter-local</code></td><td>Set <code>&lt;slug&gt;-local</code>. Keep the <code>postgres</code> service and <code>postgres-data</code> volume key; Compose scopes their resources by project.</td></tr><tr><td><a href="../backend/.env.example">backend/.env.example</a></td><td><code>COMPOSE_PROJECT_NAME=vireocode-web-app-starter-local</code>; <code>POSTGRES_DB=vireocode</code>; <code>POSTGRES_USER=vireocode</code></td><td>Set the Compose project to <code>&lt;slug&gt;-local</code> and database/user to the underscore-form slug. Keep passwords empty and retain initial-user defaults unless requested otherwise.</td></tr><tr><td><a href="../backend/scripts/start-local.mjs">backend/scripts/start-local.mjs</a></td><td>Fallback <code>COMPOSE_PROJECT_NAME</code>: <code>vireocode-web-app-starter-local</code></td><td>Set the fallback to the same <code>&lt;slug&gt;-local</code> as <code>compose.yaml</code> and <code>.env.example</code>, including when preserving an existing <code>.env</code> without that key.</td></tr><tr><td><a href="../backend/src/main/java">backend/src/main/java/</a> and <a href="../backend/src/test/java">backend/src/test/java/</a>, each with the template suffix <code>com/vireocode/backend/</code></td><td>Package prefix <code>com.vireocode.backend</code></td><td>Move all owned Java files into the approved package&#x27;s directory under each source root; update package declarations, imports, and qualified references. Retain relative <code>auth</code> and <code>user</code> subpackages and the <code>BackendApplication</code> class name.</td></tr><tr><td><a href="../.vscode/launch.json"><code>.vscode/launch.json</code></a></td><td><code>mainClass: com.vireocode.backend.BackendApplication</code></td><td>Set the qualified main class. Omit the optional <code>projectName</code> for this single backend: the IDE import name can differ from Gradle&#x27;s root name. Preserve both configurations, tasks, working directories and <code>local</code> profile.</td></tr></tbody></table></div>
 <p>Keep the physical <code>frontend/</code> and <code>backend/</code> folders, Flyway migration filenames
 and SQL schema, database table names, and authentication endpoint/DTO contracts
 unchanged. Delete only empty old Java package directories after all their owned
 files have moved.</p>
 <p>Preserve local ports unless there is a confirmed collision. If a port change is
 needed, keep its launch/task/proxy and documented references consistent.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencesrunbookmd--frontend-identity">Frontend identity</h5>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--frontend-identity">Frontend identity</h5>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>File or surface</th><th>Template value</th><th>Consumer change</th></tr></thead><tbody><tr><td><a href="../frontend/package.json">frontend/package.json</a></td><td><code>name: rgo-frontend-template</code></td><td>Set <code>&lt;slug&gt;-frontend</code>; retain dependency names and versions.</td></tr><tr><td><a href="../frontend/package-lock.json">frontend/package-lock.json</a></td><td>Top-level <code>name</code> and <code>packages[&quot;&quot;].name</code> are <code>rgo-frontend-template</code></td><td>Align both with the frontend package name. Keep the dependency graph and integrity data unchanged; if using npm to refresh the lockfile, inspect and discard unrelated task-generated churn.</td></tr><tr><td><a href="../frontend/index.html">frontend/index.html</a></td><td><code>&lt;title&gt;RGO application&lt;/title&gt;</code></td><td>Set the display name; retain the app entry point and asset references.</td></tr><tr><td><a href="../frontend/public/manifest.json">frontend/public/manifest.json</a></td><td><code>name: RGO application</code>; <code>short_name: RGO</code></td><td>Set the display and approved short names. Preserve <code>id</code>, <code>start_url</code>, <code>scope</code>, and icon entries; naming is not a routing change.</td></tr><tr><td><a href="../frontend/src/app/localization/translations/translation.en.ts">translation.en.ts</a>, <a href="../frontend/src/app/localization/translations/translation.hr.ts">translation.hr.ts</a>, <a href="../frontend/src/app/localization/translations/development-guide.en.ts">development-guide.en.ts</a>, <a href="../frontend/src/app/localization/translations/development-guide.hr.ts">development-guide.hr.ts</a></td><td><code>navigation.shellTitle</code> contains <code>RGO application</code> or <code>RGO aplikacija</code></td><td>Set the approved display name in all four catalogs. Keep translation keys and localized page labels.</td></tr></tbody></table></div>
-<h5 id="source-agentsskillsinitialize-projectreferencesrunbookmd--brand-assets">Brand assets</h5>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--brand-assets">Brand assets</h5>
 <p>The header&#x27;s <code>Brand</code> in
 <a href="../frontend/src/app/shell/components/AppShell.tsx">AppShell.tsx</a> uses <code>alt=&quot;RGO&quot;</code>
 and the bundled RGO symbol assets. The favicon and PWA icons also contain template
@@ -1663,7 +1429,7 @@ favicon, and both installed-app icons together, retaining light/dark readability
 and valid asset references. If it is not supplied, retain the existing artwork
 and its accurate alternative text and report branding as deferred. Preserve
 framework attribution and license notices in either case.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencesrunbookmd--tests-and-documentation">Tests and documentation</h5>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--tests-and-documentation">Tests and documentation</h5>
 <p>Update only identity-dependent expectations in:</p>
 <ul>
 <li><a href="../frontend/tests/integration/auth/components/AppAuthFlow.test.tsx">AppAuthFlow.test.tsx</a>:
@@ -1687,7 +1453,7 @@ material; they are not leftovers to replace.</p>
 <p><strong>Done when:</strong> every mapped surface matches the approved identity or has a
 specifically reported deferral, and source directories, Java declarations,
 Gradle identity, launch configuration, and tests agree.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--4-verify-the-consumer">4. Verify the consumer</h4>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--4-verify-the-consumer">4. Verify the consumer</h4>
 <p>Use existing tooling and the repository&#x27;s configured checks. Run commands from
 the indicated directories; Docker must be available for backend tests.</p>
 <p>From <code>backend/</code>:</p>
@@ -1728,7 +1494,33 @@ retain the local database volume.</p>
 <p><strong>Done when:</strong> builds/tests pass, the replacement audit has no unexplained
 leftovers, and local runtime/IDE results are recorded. Missing prerequisites or
 failed checks are explicit blockers, not successful verification.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--5-configure-shared-ci-access">5. Configure shared CI access</h4>
+<h5 id="source-agentsskillsinitialization-executionreferencesrunbookmd--local-backend-debugger">Local backend debugger</h5>
+<p>The backend tasks in <a href="../.vscode/tasks.json"><code>.vscode/tasks.json</code></a> use
+<a href="../backend/scripts/with-local-node.sh"><code>with-local-node.sh</code></a> before
+credential preparation and database startup. Keep Bash and the Node major from
+<code>frontend/.nvmrc</code> installed. The launcher uses a matching Node on PATH or loads
+an existing <code>${NVM_DIR:-$HOME/.nvm}/nvm.sh</code> to select that installed version. It
+installs nothing and leaves the nvm default unchanged. A desktop-launched VS Code
+may inherit an old system Node even when an interactive terminal uses nvm;
+<code>Unexpected reserved word</code> at <code>setup-local.mjs</code>&#x27;s top-level <code>await</code> indicates that
+runtime mismatch. Retry <strong>Backend: local dev</strong> after installing the required Node.</p>
+<p>The tasks preserve <code>backend/.env</code>, start only its configured Compose project,
+and verify PostgreSQL password authentication before Java launches. Container
+health alone can pass for a reused volume with different credentials. Restore
+matching credentials or use a separate <code>COMPOSE_PROJECT_NAME</code> and free
+<code>POSTGRES_PORT</code>; preserve the existing volume. Keep the Compose identity aligned
+across the files in the replacement map above, and use the same <code>.env</code> for
+manual stop/start commands.</p>
+<p>Verify runtime selection with
+<code>python3 -B -m unittest discover -s infrastructure/ci/tests -p test_local_node.py -v</code>
+and shell syntax with <code>bash -n backend/scripts/with-local-node.sh</code>. With Docker
+available, run
+<code>bash backend/scripts/with-local-node.sh --test --test-concurrency=1 backend/scripts/start-local.test.mjs</code>.
+The persistent-volume regression creates a unique test project, rejects a
+changed password despite healthy PostgreSQL, restores the original credentials
+and checks that stored data survives. Cleanup removes only that test&#x27;s resources.
+Actual VS Code debugger acceptance still requires the imported Java project.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--5-configure-shared-ci-access">5. Configure shared CI access</h4>
 <p>GitHub&#x27;s template creation copies repository files, not runner access, variables,
 secrets, branch protections, or environment settings. Obtain the consumer&#x27;s exact
 GitHub <code>owner/repository</code>, approved project slug, and selected shared CI operator.
@@ -1794,7 +1586,7 @@ operator/workflow prerequisites are reported. Do not rebuild a host, enable
 services, publish, or deploy as a side effect of identity personalization.
 Full-mode registration/activation and deployments follow their explicit
 approved contract and operator gates instead.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--6-configure-github-ci-and-main-protection">6. Configure GitHub CI and main protection</h4>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--6-configure-github-ci-and-main-protection">6. Configure GitHub CI and main protection</h4>
 <p>Follow <a href="#source-docsgithub-cimd">Monorepo CI and main protection</a> for root workflow paths,
 change-selection rules, exact required-check naming, and the settings that
 GitHub does not copy from a template. Keep the shared Hetzner runner selection;
@@ -1813,7 +1605,7 @@ protection. Verify the resulting empty rules without an implicit paid upgrade.</
 <p><strong>Done when:</strong> the correct checks run on the consumer&#x27;s authorized Hetzner pool
 and the effective main policy is verified, or a concrete access/plan/run blocker
 is reported. Copied workflow files alone are not activation evidence.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--7-establish-environment-dns-access">7. Establish environment DNS access</h4>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--7-establish-environment-dns-access">7. Establish environment DNS access</h4>
 <p>Obtain the consumer&#x27;s exact production and staging hostnames and inspect their
 authoritative nameservers and existing A/AAAA/CNAME records. Keep one HTTPS
 origin per environment and the backend at <code>/api</code>. Consumers supply their own
@@ -1834,7 +1626,7 @@ did not certify those outcomes.</p>
 <p><strong>Done when:</strong> the intended records are verified at the selected existing
 authoritative zone, with conflicts resolved and access/negative-cache blockers
 reported. DNS success alone does not certify HTTPS or a deployed application.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--8-prepare-whole-app-release-images">8. Prepare whole-app release images</h4>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--8-prepare-whole-app-release-images">8. Prepare whole-app release images</h4>
 <p>Follow <a href="../infrastructure/release/README.md">paired release setup</a>. Keep separate
 frontend/backend image boundaries but one matched release from the selected
 tested commit. Supply the actual repository URL/source SHA, build both pinned
@@ -1866,7 +1658,7 @@ running database image/mount/isolation and protected account fields; retain
 configuration, unit and proxy hashes before independent activation review.</p>
 <p>For initial deployed accounts, follow
 <a href="../infrastructure/release/README.md#one-time-deployed-user-provisioning">one-time operator provisioning</a>.
-Use the workbook&#x27;s deliberate consumer account decision and separately generated
+Use the intake&#x27;s deliberate consumer account decision and separately generated
 protected credentials rather than automatically seeding deployed users.
 Use the current backend digest,
 existing DB network, separate <code>PROVISION_USER_*</code> settings and explicit
@@ -1896,132 +1688,114 @@ and <a href="../infrastructure/release/README.md#rehearse-recovery-without-touch
 for ongoing actions. Accounts, protected secret files, public certificate
 variables, remote settings, host registration and backup evidence are specific
 to each consumer, not inherited from historical template receipts.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--9-report-the-result">9. Report the result</h4>
-<p>After initialization, a consumer with locked Client Discovery scope can use
-<a href="#source-docsdiscovery-specificationmd">the specification handoff</a>.
-Its package owns the source profile, output contract and verification procedure;
-credentials are developer-local and independent of this consumer&#x27;s admin account.
-Keep generated client data outside the public dashboard&#x27;s source directories.
-This optional next step does not add requirements to completed initialization.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--9-report-the-result">9. Report the result</h4>
+<p>Business requirements and specification are subsequent work. The former
+Client Discovery integration is not part of these initialization skills.
+Do not require its account, project ID or exports to complete setup.</p>
 <p>Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without
 revealing credentials. For personalization-only scope, leave changes uncommitted
 unless a commit is requested; publication/deployment need separate approval.
-For full <code>/initialize-project</code> scope, perform the approved commits/PRs and remote
+For full <code>/initialization-execution</code> scope, perform the approved commits/PRs and remote
 actions, and require every acceptance phase in the
-<a href="#source-agentsskillsinitialize-projectreferencescontractmd--completion-and-rehearsal">contract</a> before reporting
+<a href="#source-agentsskillsinitialization-executionreferencescontractmd--completion-and-rehearsal">contract</a> before reporting
 ready. Record consumer-specific evidence, not copied template receipts.
 Include the shared CI registration/verification state without treating a
 template copy as inherited GitHub access.</p>
 <p><strong>Done when:</strong> the consumer can distinguish completed personalization, verified
 full initialization, and blocked/remaining work without relying on a generic
 &quot;setup complete&quot; claim. Unverified required checks cannot be waived by reporting.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--codex-skill-registration">Codex skill registration</h4>
-<p>Codex in VS Code discovers the complete <a href="../.agents/skills/initialize-project/SKILL.md">project skill</a> under
-<code>.agents/skills/initialize-project/</code>. Its <code>agents/openai.yaml</code> provides the picker
-label and explicit invocation policy. The workflow, references, capture helper and tests
-all live in this one package; no global skill installation or credentials are
-required for discovery.</p>
-<p>Open this repository as the VS Code workspace and type <code>$initialize-project</code> in
-Codex chat. A bare invocation reports the associated project&#x27;s phase and offers
-initialization/resume, readiness, specification generation or refreshed status.
-It asks for a production project ID when no association is known. Including a
-concrete task proceeds directly. <code>/initialize-project</code> applies to agents with
-skill slash commands and uses the same status and task selection.
-If Codex&#x27;s skill picker is stale, run <strong>Developer: Reload Window</strong> and start a
-new Codex chat. Verify that typing <code>$initialize</code> offers <strong>Initialize project</strong>,
-and that selecting it refers to this repository&#x27;s
-<code>.agents/skills/initialize-project/SKILL.md</code>. A readiness-only request follows
-the preparation checks and reports missing inputs without initializing the
-consumer.</p>
-<p>When installing elsewhere, copy this entire package, including <code>agents/</code>, into
-<code>.agents/skills/initialize-project/</code>, excluding <code>node_modules</code>. Verify bare
-invocation reports status before waiting for task selection, a concrete
-initialization request reaches the saved-workbook gate, and readiness only stops
-after the private report. A status request creates no workbook or readiness
-report and makes no scope-export request.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesrunbookmd--project-documentation-dashboard">Project documentation dashboard</h4>
-<p>The skill owns the generic preparation, contract, runbook and
-<a href="#source-agentsskillsinitialize-projectreferencesrehearsal-lessonsmd">rehearsal lessons</a>. Keep consumer identity, operating
-instructions and sanitized acceptance under <code>docs/</code>; keep private inputs and
-readiness reports under ignored <code>.template-initialization/</code>. The short
-<code>docs/template-initialization.md</code> entry point links here instead of duplicating
-the generic procedure. Add consumer-specific setup decisions there when needed.</p>
-<p>Documentation generation has its own dependency graph and lockfile:</p>
-<pre tabindex="0"><code class="language-sh">npm --prefix .agents/skills/initialize-project ci
-npm --prefix .agents/skills/initialize-project run browser:install
-npm --prefix .agents/skills/initialize-project run docs:build
-npm --prefix .agents/skills/initialize-project run verify
-npm --prefix .agents/skills/initialize-project run test:portable-install
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--codex-skill-registration">Codex skill registration</h4>
+<p>Both complete sibling packages ship under <code>.agents/skills/</code>:
+<code>initialization-intake/</code> and <code>initialization-execution/</code>. Their <code>agents/openai.yaml</code>
+files provide picker labels and preserve explicit invocation. No personal/global
+skill or external app account is required.</p>
+<p>In the trusted consumer workspace, use <code>$initialization-intake</code> to select intake,
+resume, status or explanation. A concrete intake request proceeds directly.
+Once complete, explicitly use <code>$initialization-execution</code> to select execution,
+resume or readiness; it must check the intake gate before any setup work.
+Agents with skill slash commands use the same names with <code>/</code>.</p>
+<p>If the picker is stale, reload the editor window and start a fresh chat. When
+adopting elsewhere, copy both entire packages, excluding <code>node_modules</code>, intake
+<code>state/</code> and execution evidence. Reconcile existing consumer evidence deliberately.
+Never copy another consumer&#x27;s answers or completion into a new project.</p>
+<h4 id="source-agentsskillsinitialization-executionreferencesrunbookmd--project-documentation-dashboard">Project documentation dashboard</h4>
+<p>Public references live in each skill&#x27;s <code>references/</code> directory. Consumer setup
+belongs in <code>docs/template-initialization.md</code> and sanitized acceptance records
+under <code>docs/acceptance/</code>. Private intake is stored only in
+<code>.agents/skills/initialization-intake/state/</code>; private execution evidence stays
+in <code>.template-initialization/</code>. Neither is a dashboard input.</p>
+<p>The execution package owns documentation dependencies and lockfile:</p>
+<pre tabindex="0"><code class="language-sh">npm --prefix .agents/skills/initialization-execution ci
+npm --prefix .agents/skills/initialization-execution run browser:install
+npm --prefix .agents/skills/initialization-execution run docs:build
+npm --prefix .agents/skills/initialization-execution run verify
+npm --prefix .agents/skills/initialization-execution run test:portable-install
 </code></pre>
-<p>Browser tests use the skill&#x27;s pinned Playwright and Chromium for the offline
-reference dashboard, including navigation, filters, mobile and accessibility.
-Browser installation is a test prerequisite only; capture itself needs neither Playwright nor npm.
-CI installs the browser under its disposable runner temporary directory.
-The portable-install check copies only the skill into a temporary Git worktree,
-installs its own lockfile and verifies generated docs and browser flows.
-Template-only application/CI/receipt/pointer tests are explicitly inapplicable
-there; the full template verification still requires them.</p>
-<p>After editing any bundled reference, top-level <code>docs/*.md</code> or
-<code>docs/acceptance/*-acceptance.json</code>, regenerate and commit both derived pages:
-<code>docs/project.html</code> combines public consumer sources and skill references;
-<code>web/reference.html</code> in the skill includes only bundled references. Neither
-loads private state or remote assets. The reference page remains unrecorded/not
-ready, even when a consumer&#x27;s dashboard reports completion.</p>
-<p>The capture helper needs no npm dependencies. A portable installation copies
-only this skill directory (excluding <code>node_modules</code>) into <code>.agents/skills/</code> of
-a consumer and ignores <code>/.template-initialization/</code>. Its affected files are
-<code>scripts/fetch-preparation.mjs</code>, <code>scripts/preparation/model.mjs</code>, the pinned
-<code>references/preparation-contract.json</code> and blank <code>references/preparation.md</code>.
-Required inputs are the production project ID, protected administrator profile,
-reviewed revision and verified consumer Git remote. The agent captures the
-workbook and provenance automatically before readiness; explicit refresh is
-required for changed pinned input, and initialized acceptance is preserved.
-Verify with synthetic HTTP/profile/private-file tests and the complete/plan
-render/hash fixtures mirrored in Client Discovery&#x27;s backend. Runtime capture
-never depends on the sibling Discovery specification package. Full initialization
-still requires the template application, infrastructure and operator prerequisites.</p>
-<p><strong>Done when:</strong> isolated skill tests and documentation freshness checks pass;
-private inputs are excluded, reference links work, and consumer status comes
-only from that consumer&#x27;s acceptance evidence.</p></div><div class="digest">Source SHA-256 · 9a6dd2224e7b7a5859475ba20ca954fd6e4eddf83662c5c8108787ebbe92ddc7</div></section><section class="panel record" data-kind="procedure" id="source-docstemplate-initializationmd">
+<p>The intake helper uses Node core only and can resume without application
+dependencies. The execution package&#x27;s verification runs its sibling intake
+behavior tests, public documentation/contract checks and offline Chromium
+desktop/mobile checks sequentially. The portable check installs both packages
+in an isolated Git consumer without frontend/backend or another skill.</p>
+<p>After changing public docs or either skill&#x27;s public references, regenerate
+and commit <code>docs/project.html</code> and <code>web/reference.html</code>, then run <code>docs:check</code>.
+The source loader selects only top-level <code>docs/*.md</code>, documentation acceptance
+JSON and explicitly listed public reference directories, excluding all private
+state and nested client artifacts. The bundled view contains references only;
+the project view separates current consumer acceptance from historical receipts.
+These offline pages are derived documentation, not live status or authority.</p>
+<p>Automated checks prove the local state/gate and documentation contracts. Only
+an authorized fresh consumer run can establish real local/CI/deployment/recovery
+acceptance and a no-follow-up initialization experience.</p></div><div class="digest">Source SHA-256 · 8aba57dc6fcfbafbf73ae19b76a4afabb8986f7f6d3bf939e716be4865eecc1a</div></section><section class="panel record" data-kind="procedure" id="source-docstemplate-initializationmd">
 <div class="panel-heading"><div><div class="source-path">docs/template-initialization.md</div><h2>Initialize a project from this template</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docstemplate-initializationmd--initialize-a-project-from-this-template">Initialize a project from this template</h3>
-<p>For the journey through business V1 acceptance and production delivery, use
-<a href="#source-docsv1-workflowmd">From a cloned template to a production V1</a>. Initialization and
-client scope collection can proceed independently; this page owns setup.</p>
-<p>The authoritative reusable setup procedure is bundled with the
-<a href="../.agents/skills/initialize-project/SKILL.md">initialize-project skill</a>:</p>
+<p>For later business implementation and acceptance, use the
+<a href="#source-docsv1-workflowmd">V1 stage overview</a>. This page owns the setup entry point;
+requirements collection is a separate workflow.</p>
+<p>Initialization has two skills:</p>
+<ol>
+<li><a href="../.agents/skills/initialization-intake/SKILL.md">initialization-intake</a>
+inspects the checkout, asks all setup questions upfront, resolves human
+prerequisites and saves progress for another session. Start with
+<code>$initialization-intake prepare initialization for this repository</code>;
+resume with <code>$initialization-intake resume intake</code>.</li>
+<li><a href="../.agents/skills/initialization-execution/SKILL.md">initialization-execution</a>
+initializes only after intake has completed. Use
+<code>$initialization-execution initialize this repository</code>. Its first gate checks
+completion, current answers and repository binding. Invalid or missing intake
+stops execution with instructions to finish <code>$initialization-intake</code>.</li>
+</ol>
+<p>Intake state lives in the Git-ignored
+<code>.agents/skills/initialization-intake/state/intake.json</code>. It records answered,
+proposed and unknown inputs, prerequisite evidence and confirmation of the exact
+execution scope. Changed answers invalidate completion and need review again.
+Save nonsecret answers and protected storage references only. Neither skill
+requires a Client Discovery account, project UUID, API profile or exported workbook.
+A bare skill invocation offers a task menu and waits; a concrete task proceeds
+directly. See <a href="#source-agentsskillsinitialization-executionreferencesrunbookmd--codex-skill-registration">registration</a>
+for agents that do not discover the bundled skills.</p>
+<p>The authoritative reusable detail remains with its owners:</p>
 <ul>
-<li><a href="#source-agentsskillsinitialize-projectreferencespreparationmd">Preparation and blank workbook</a>:
-required human inputs, protected references, login/App consent, safeguards
-and reviewed Client Discovery preparation or an existing manual workbook.</li>
-<li><a href="#source-agentsskillsinitialize-projectreferencesproject-statusmd">Project status</a>:
-current preparation, recorded setup, scope approvals/lock and the next action.</li>
-<li><a href="#source-agentsskillsinitialize-projectreferencescontractmd">Contract</a>:
-written authority, live readiness, private resume state and acceptance.</li>
-<li><a href="#source-agentsskillsinitialize-projectreferencesrunbookmd">Runbook</a>:
+<li><a href="../.agents/skills/initialization-intake/SKILL.md">Intake skill</a>: questionnaire,
+private answer state, remaining questions and resumable completion.</li>
+<li><a href="#source-agentsskillsinitialization-intakereferencesquestionnairemd">Questionnaire</a>:
+setup decisions, service access, protected operator references and human prerequisites.</li>
+<li><a href="#source-agentsskillsinitialization-intakereferencesstatemd">Private state</a>:
+answer status, save/resume, revision checks and completion binding.</li>
+<li><a href="#source-agentsskillsinitialization-executionreferencescontractmd">Contract</a>:
+intake completion, confirmed authority, live readiness, resume and acceptance.</li>
+<li><a href="#source-agentsskillsinitialization-executionreferencesrunbookmd">Runbook</a>:
 affected identity/configuration files, setup actions, owners and verification.</li>
-<li><a href="#source-agentsskillsinitialize-projectreferencesrehearsal-lessonsmd">Rehearsal lessons</a>:
-generic prevention rules, not a consumer execution receipt.</li>
+<li><a href="#source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd">Rehearsal lessons</a>:
+prevention rules rather than consumer execution receipts.</li>
 </ul>
-<p>Invoke <code>$initialize-project</code> in the trusted consumer workspace to see the current
-phase and next action. Supply the production project ID once; the skill remembers
-its local association and checks preparation and scope independently. It reports
-which approvals are missing and whether a locked baseline is eligible for export,
-then offers setup, readiness, specification generation or refreshed status.</p>
-<p>To explicitly initialize after completing and reviewing developer preparation:</p>
-<pre tabindex="0"><code class="language-text">$initialize-project initialize this consumer from production project PROJECT_UUID
-</code></pre>
-<p>The skill automatically captures the reviewed workbook using the protected
-user-local administrator profile. Keep <code>/.template-initialization/</code> Git-ignored;
-workbook, provenance and readiness reports remain private. Differing input needs
-an explicit refresh request; accepted setup is preserved. Existing manual
-workbooks and legacy resumes remain supported. Agents with skill slash commands
-can use <code>/initialize-project</code>. See <a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--codex-skill-registration">registration and verification</a>.</p>
 <p>Full initialization preserves the stack and existing resources and uses the
-existing approved operator. It verifies local development, real CI, both paired
-deployments and initialized recovery; local-only personalization remains a
-separate explicit scope. The canonical template cannot initialize itself.</p>
+approved existing operator. It verifies local development, real CI, both paired
+deployments and initialized recovery. Explicit local-only scope completes only
+that bounded task. Known configuration questions and human preparation finish in
+intake; unexpected failures or a changed scope can still block execution. The
+canonical template cannot initialize itself. This documentation change performs
+no consumer initialization or deployment.</p>
 <h4 id="source-docstemplate-initializationmd--consumer-specific-setup">Consumer-specific setup</h4>
 <p>This template records no consumer-specific setup or acceptance. During
 personalization, record application-specific values, prerequisites, affected
@@ -2046,10 +1820,10 @@ and <a href="../infrastructure/ci/README.md#versioned-pool-dispatch-repair-and-r
 validation before changing isolation or lifecycle settings.</p>
 <h4 id="source-docstemplate-initializationmd--documentation-verification">Documentation verification</h4>
 <p>Follow the bundled
-<a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--project-documentation-dashboard">dashboard procedure</a>.
+<a href="#source-agentsskillsinitialization-executionreferencesrunbookmd--project-documentation-dashboard">dashboard procedure</a>.
 The skill owns its documentation dependencies and lockfile; the public
 <a href="project.html">project dashboard</a> combines project documents and bundled
-references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · f6922160281b180a768cccf72c465f9244d7b5739ac44b86c0b0385a2a5ef372</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
+references, while its bundled reference page never includes consumer evidence.</p></div><div class="digest">Source SHA-256 · 580a01aeaa16e15b77f8ce0318370d925154a6bc4a8e75f477a548065e32353f</div></section><section class="panel record" data-kind="procedure" id="source-docsgithub-cimd">
 <div class="panel-heading"><div><div class="source-path">docs/github-ci.md</div><h2>Monorepo CI and main-branch protection</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsgithub-cimd--monorepo-ci-and-main-branch-protection">Monorepo CI and main-branch protection</h3>
 <p>GitHub runs <a href="../.github/workflows/ci.yml">.github/workflows/ci.yml</a> on pull
@@ -2059,17 +1833,20 @@ The shared App installation and protected host registration are prerequisites,
 not settings inherited by <strong>Use this template</strong>.</p>
 <h4 id="source-docsgithub-cimd--verification-selection">Verification selection</h4>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Changed paths</th><th>Jobs selected</th></tr></thead><tbody><tr><td><code>backend/**</code></td><td>Backend image/smoke lane and three backend test shards</td></tr><tr><td><code>frontend/**</code></td><td>Frontend static, Storybook/image/smoke and three frontend test shards</td></tr><tr><td>Both app folders</td><td>All application lanes</td></tr><tr><td>Other <code>infrastructure/ci/**</code></td><td>Foundation verification</td></tr><tr><td><code>infrastructure/release/**</code>, <code>.github/**</code>, <code>.vscode/**</code>, routing or shard helper/config/tests</td><td>All lanes</td></tr><tr><td>Documentation outside the app folders</td><td>Portable initialization/docs and aggregate gate</td></tr><tr><td>Manual dispatch or the first branch push</td><td>All lanes</td></tr></tbody></table></div>
-<p>The template also treats <code>.agents/skills/initialize-project/**</code> as shared setup
-changes. The change job only detects owners; it does not install Node, browsers
-or application dependencies. It compares the prospective PR merge commit with
+<p>The template also treats <code>.agents/skills/initialization-intake/**</code> and
+<code>.agents/skills/initialization-execution/**</code> as shared setup changes. The change
+job only detects owners; it does not install Node, browsers or application
+dependencies. It compares the prospective PR merge commit with
 the event&#x27;s base, or a main push with its preceding commit. Renames select both
 owners. Keep the workflow itself unfiltered so required checks always report.</p>
 <p>The independent <strong>Portable initialization and documentation</strong> lane always runs,
-including for documentation-only changes. It selects the skill&#x27;s pinned Node/npm,
-installs that package&#x27;s lockfile, verifies preparation/contract/documentation and
-Chromium desktop/mobile flows, checks generated pages and repeats verification
-in an isolated skill-only consumer. Browser binaries and dependencies remain in
-the disposable job. Template-only assertions remain required in a real checkout.</p>
+including for documentation-only changes. It selects the execution package&#x27;s
+pinned Node/npm,
+installs the execution package&#x27;s lockfile, verifies the intake state/completion
+contract and execution documentation, and runs Chromium desktop/mobile flows.
+It checks generated pages and repeats verification in an isolated consumer
+containing both skills. Browser binaries and dependencies remain in the
+disposable job. Template-only assertions remain required in a real checkout.</p>
 <p>Selected frontend work has separate static, build and test lanes. Static checks
 retain formatting, lint, architecture and every TypeScript project. The build
 lane retains Storybook and the real pinned Dockerfile&#x27;s production build and
@@ -2188,351 +1965,152 @@ This documents the template repository, not inherited settings for a consumer.
 The historical documentation-only run also passed with all app/foundation jobs
 skipped and <code>CI gate</code> reported successfully; it predates the always-run package
 checks described above. Current shared-pool controls and measured latency are
-recorded in <a href="#source-docsacceptanceci-performance-acceptancejson">performance acceptance</a>.</p></div><div class="digest">Source SHA-256 · b6965bed921057cfe4d91921ec6f449026fd944a22f41ca8cda0af3dfc6e2d15</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencespreparationmd">
-<div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/preparation.md</div><h2>Prepare a consumer before initialization</h2></div><span class="pill">Procedure</span></div>
-<div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencespreparationmd--prepare-a-consumer-before-initialization">Prepare a consumer before initialization</h3>
-<p>Prepare and review initialization in <strong>Client Discovery</strong>, on the production
-project&#x27;s <strong>Developer preparation</strong> page. The developer completes the identity,
-operator references, prerequisites, bounded action scope and signature there.
-Clients do not see or approve developer preparation. Its revision and review
-are independent of the client requirements baseline.</p>
-<p>The <a href="#source-agentsskillsinitialize-projectreferencescontractmd">contract</a> owns verification and authority; the
-<a href="#source-agentsskillsinitialize-projectreferencesrunbookmd">runbook</a> owns application edits and operator procedures. This is
-the blank format-1 template, not preparation evidence or execution authority.
-An accepted consumer retains its completion evidence.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--0-prepare-and-review-in-client-discovery">0. Prepare and review in Client Discovery</h4>
-<p>Open the intended project in production Client Discovery as an administrator.
-Complete the short preparation topics using protected file references rather
-than credentials. Review the exact answers and explicitly save the review.
-Any subsequent edit clears review until the developer reviews that revision
-again. Plan-only preparation may contain unresolved answers; execution requires
-complete prerequisites, the applicable action consents and unexpired signature.</p>
-<p>Configure the administrator&#x27;s owner-only Discovery profile once at
-<code>~/.config/client-discovery/production.env</code> (mode <code>0600</code>):</p>
-<pre tabindex="0"><code class="language-dotenv">DISCOVERY_API_URL=https://clientdiscovery.vireocode.com/api
-DISCOVERY_USERNAME=your-administrator-login
-DISCOVERY_PASSWORD=your-protected-password
-</code></pre>
-<p>Store credential values only in that protected file, never in preparation,
-Git, public documentation or chat. Environment variables with the same names
-can supply the profile values. This is a user-local configuration shared with
-the Discovery specification workflow; the portable initializer is standalone.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--1-let-the-initializer-capture-the-reviewed-workbook">1. Let the initializer capture the reviewed workbook</h4>
-<p>Invoke the repository-local skill with the production project ID:</p>
-<pre tabindex="0"><code class="language-text">$initialize-project initialize this consumer from production project PROJECT_UUID
-</code></pre>
-<p>The agent automatically fetches the exact reviewed Markdown export and records
-its project, revision, reviewer, review time and SHA-256 in ignored
-<code>.template-initialization/preparation-provenance.json</code>. It saves the private
-<code>.template-initialization/preparation.md</code> with mode <code>0600</code> in a user-owned
-<code>0700</code> directory, then verifies the actual checkout and live readiness.
-No download command, Markdown editing or extra routine approval is needed.
-An unreviewed revision blocks capture. Authentication/authorization failures
-are reported as errors, never interpreted as missing preparation.</p>
-<p>An existing identical workbook can be reused. A differing private workbook,
-a changed pinned revision or accepted initialization is preserved. Explicitly
-request a refresh from the chosen production project before replacing a prior
-capture; refresh cannot alter accepted initialization evidence. Existing manual
-format-1 workbooks and incomplete legacy runs remain supported without a
-project ID. Keep their answers and reconcile them deliberately when adopting
-the app source.</p>
-<p>The remaining sections explain the exact fields and consents. The tracked
-answer table stays blank. For an existing manual workbook, use table escaping
-for literal pipes, retain <code>use-profile</code> only where offered, and keep credentials
-in protected stores. Plan-only unresolved answers grant no execution authority.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--2-prepare-github-access-and-app-consent">2. Prepare GitHub access and App consent</h4>
-<ol>
-<li>At <a href="https://github.com/vireocodedev/web-app-starter">https://github.com/vireocodedev/web-app-starter</a>, choose <strong>Use this
-template</strong>, select the intended owner and create a <strong>private</strong> consumer
-repository. Clone it; keep the monorepo and template stack.</li>
-<li>In your own terminal, run <code>gh auth status</code>. Log in through
-<code>gh auth login --hostname github.com --web</code> if necessary. With multiple
-existing logins, select the intended account yourself using
-<code>gh auth switch --hostname github.com --user YOUR_ACCOUNT</code>.
-The agent will verify identity and access, preferably without changing the
-global account. A signed-in browser and CLI are separate sessions.</li>
-<li>Open <code>https://github.com/OWNER/REPOSITORY/settings/actions</code>. Under <strong>Actions
--&gt; General</strong>, ensure the repository can run the template&#x27;s pinned Actions.
-Confirm you can administer this private repository and its main policy.
-Required checks/PRs with zero approving reviews need plan support; making
-the repository public is not a workaround.</li>
-<li>Ask the existing operator for its protected profile and the exact shared
-App installation. Open
-<code>https://github.com/organizations/OWNER/settings/installations</code>, choose that
-existing App&#x27;s <strong>Configure</strong>, select <strong>Only select repositories</strong>, add this
-consumer and <strong>Save</strong>, preserving all prior selections.</li>
-<li>If your organization restricts that action, have its authorized owner finish
-it now. Repository-admin CLI access alone did not establish this permission
-in the rehearsal. Keep the reviewed permissions: <strong>Actions: read</strong>,
-<strong>Administration: write</strong>, and <strong>Metadata: read</strong>. Do not choose all
-repositories, expand permissions or create another App for this consumer.</li>
-</ol>
-<p>The agent still proves actual selected-repository App authentication and
-registration permissions. A checked box or a CLI repository read is not proof.
-It will configure main protection <strong>after observing the genuine <code>CI gate</code></strong>,
-not require you to invent a check before the first CI run. It also creates
-default staging/production GitHub environments without unnecessary paid
-reviewer/wait-timer features.</p>
-<p>See <a href="#source-docsgithub-ci-appmd--register-and-verify-a-consumer">CI App access</a> and
-<a href="#source-docsgithub-cimd--configure-a-consumer">main protection</a>.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--3-resolve-existing-package-names-before-authorizing-changes">3. Resolve existing package names before authorizing changes</h4>
-<p>The package names derive from the <strong>repository</strong>, not the application slug:
-<code>ghcr.io/owner/repository-frontend</code> and <code>-backend</code>.</p>
-<ol>
-<li>
-<p>Open <code>https://github.com/orgs/OWNER/packages</code> and inspect both derived names.
-You can read exact IDs, owners and version counts without exposing tokens:</p>
-<pre tabindex="0"><code class="language-sh">gh api orgs/OWNER/packages/container/REPOSITORY-frontend
-gh api orgs/OWNER/packages/container/REPOSITORY-backend
-</code></pre>
-</li>
-<li>
-<p>If absent, select <code>require-absent</code> below. If already owned by this same
-consumer during a resume, select <code>same-repository-resume</code> and preserve them.</p>
-</li>
-<li>
-<p>For another repository&#x27;s packages, stop and choose a different consumer
-repository name, reconcile ownership separately, or explicitly list the
-exact replacement scope below. An old application/database is not permission
-to take over its packages. The normal default preserves and blocks.</p>
-</li>
-<li>
-<p><strong>Only if you approve listed deletion</strong>, authorize the active CLI account
-through GitHub&#x27;s own browser flow:</p>
-<pre tabindex="0"><code class="language-sh">gh auth refresh --hostname github.com --scopes delete:packages
-</code></pre>
-<p>Do not send the token to the agent or place it in the workbook. This scope
-is unnecessary for a fresh namespace. The agent rechecks package IDs,
-repository ownership, privacy, version counts and authority before deleting.</p>
-</li>
-</ol>
-<p>Deleting old versions makes their image digests unavailable to other
-deployments. Repository deletion, database deletion and password resets are
-never implied. No deletion is performed merely because this guide is opened.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--4-prepare-the-existing-operator-and-dns-access">4. Prepare the existing operator and DNS access</h4>
-<p>Obtain an <strong>existing</strong> protected operator profile from the authorized operator.
-Reuse verified credential references instead of setting up the host again.
-The <a href="#source-agentsskillsinitialize-projectreferencescontractmd--operator-profile">profile contract</a>
-defines its fields, ownership and <code>0600</code>/private-directory requirements.</p>
-<p>The operator must already have a reviewed shared pool, a source/config/boot-bound
-validation receipt, strictly verified SSH access, an approved deployment host,
-DNS access to the correct zone/project, and a supported backup destination.
-Interactive SSH recovery, unknown host keys, an unsupported backup transport or
-an unreviewed host repair must be resolved by the operator <strong>before</strong> invocation.
-This workbook does not authorize a host rebuild, pool install or privileged
-upgrade.</p>
-<p>For Hetzner DNS:</p>
-<ol>
-<li>Open <a href="https://console.hetzner.com/">https://console.hetzner.com/</a> and select the <strong>existing project that
-owns the DNS zone</strong>, then its DNS zone/records page. A server-project token
-is not automatically authorized for a zone in a different project.</li>
-<li>Confirm ownership/delegation of the zone and choose two distinct hostnames.
-Inspect A, AAAA and CNAME records and wildcard effects. Preserve matching
-records. Resolve conflicting ownership with the operator rather than create
-another zone, change delegation or overwrite unrelated records.</li>
-<li>For <code>user-prepared</code>, create only the two intended records pointing at the
-operator-approved host and let DNS propagate. For <code>agent-create-missing</code>,
-leave creation to the agent under the exact written scope below; your manual
-prerequisite is usable authority/credential references, not doing its work.</li>
-<li>If a suitable credential does not exist, the zone owner uses that project&#x27;s
-<strong>Security -&gt; API tokens</strong> to create the necessary scoped credential and
-stores it through protected input. Supply only its profile/file reference.
-Reuse a suitable existing credential; do not replace the server credential.</li>
-</ol>
-<p>The <a href="#source-docshetzner-provider-accessmd--dns-project-access-for-staging-and-production">provider handoff</a>
-contains operator details. Its template host/zone IDs and hostnames are
-historical examples, not values to copy. The agent verifies provider identity,
-all authoritative/recursive answers, record conflicts and current capacity.
-You do not have to create DB volumes, install controllers, publish certificates
-or run deployments manually.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--5-prepare-the-local-workspace-not-an-old-identity-database">5. Prepare the local workspace, not an old-identity database</h4>
-<p>Install the <a href="../README.md#local-development">README prerequisites</a>: JDK 21,
-Node 24/npm 12, Docker/Compose and the recommended Java/Gradle debugger
-extensions. Open the consumer as a <strong>trusted</strong> VS Code workspace, complete any
-extension consent and allow the Gradle import to finish.</p>
-<p>Do not generate old-template credentials, start its database or mark the
-future personalized application as tested. Identity edits must precede fresh
-credentials/data creation. The agent preserves existing files/volumes and
-checks port ownership before allocating any approved free port.</p>
-<p>Actual IDE acceptance happens <strong>after personalization</strong>. Before bulk work the
-agent must identify a usable unattended tool path for both saved configurations,
-including the frontend&#x27;s <code>node-terminal</code> launch. Merely seeing Java tools is
-insufficient. If that path is unavailable, it reports a preparation blocker;
-it does not promise a no-follow-up run or silently substitute a shell-only test.
-Unexpected runtime failures still block their gate and are diagnosed within
-scope; paperwork cannot pre-verify a program that has not been personalized.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--6-fill-the-answers">6. Fill the answers</h4>
-<p>The field IDs are stable input labels. Enter literal values or the choices
-shown, never shell commands. Read the
-<a href="#source-agentsskillsinitialize-projectreferencesrunbookmd--1-confirm-the-target-and-identity">identity constraints</a>
-before selecting names.</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Field</th><th>Your answer</th><th>Meaning</th></tr></thead><tbody><tr><td><code>form_version</code></td><td>1</td><td>Workbook format, not permission.</td></tr><tr><td><code>repository</code></td><td>REQUIRED</td><td>Exact private <code>owner/repository</code>; the agent discovers/verifies numeric ID.</td></tr><tr><td><code>github_account</code></td><td>use-profile</td><td>Existing protected CLI login, or exact account.</td></tr><tr><td><code>operator_profile</code></td><td>REQUIRED</td><td>Protected external JSON path/reference; no secret values.</td></tr><tr><td><code>reuse_existing_operator</code></td><td>REQUIRED</td><td><code>yes</code>; another foundation/bootstrap is separate work.</td></tr><tr><td><code>allow_global_cli_switch</code></td><td>no</td><td>Prefer scoped authentication; change only if explicitly <code>yes</code>.</td></tr><tr><td><code>project_slug</code></td><td>REQUIRED</td><td>Approved lowercase/hyphen identity.</td></tr><tr><td><code>display_name</code></td><td>REQUIRED</td><td>Product name.</td></tr><tr><td><code>java_base_package</code></td><td>REQUIRED</td><td>Explicit dotted application namespace.</td></tr><tr><td><code>pwa_short_name</code></td><td>REQUIRED</td><td>At most 12 characters.</td></tr><tr><td><code>localization_policy</code></td><td>same-name-across-locales</td><td>Or list exact approved names per locale.</td></tr><tr><td><code>artwork_source</code></td><td>retain-template</td><td>Or an exact supplied image directory/reference; report deferred branding if retained.</td></tr><tr><td><code>theme_policy</code></td><td>retain</td><td>Keep the template theme unless a separate change is explicitly requested.</td></tr><tr><td><code>data_boundary</code></td><td>REQUIRED</td><td><code>fresh-isolated</code> or <code>resume-same-identity</code>; a different identity/DB migration is separate work.</td></tr><tr><td><code>preserve_resources</code></td><td>all-existing</td><td>Add known unrelated names/paths/volumes; never secret contents.</td></tr><tr><td><code>production_hostname</code></td><td>REQUIRED</td><td>Owned production FQDN.</td></tr><tr><td><code>staging_hostname</code></td><td>REQUIRED</td><td>Different owned staging FQDN.</td></tr><tr><td><code>dns_mode</code></td><td>REQUIRED</td><td><code>user-prepared</code> or <code>agent-create-missing</code>; conflicts always preserve and block.</td></tr><tr><td><code>authorized_maintainers</code></td><td>use-profile</td><td>Explicit GitHub login allowlist, not all repository writers.</td></tr><tr><td><code>initial_username</code></td><td>REQUIRED</td><td>A name such as <code>admin</code> does not add an administrator role.</td></tr><tr><td><code>initial_display_name</code></td><td>REQUIRED</td><td>Initial account display name.</td></tr><tr><td><code>initial_email</code></td><td>REQUIRED</td><td>Approved initial account email.</td></tr><tr><td><code>backup_destination</code></td><td>REQUIRED</td><td><code>same-server</code> or an already supported operator destination reference.</td></tr><tr><td><code>same_server_loss_acknowledged</code></td><td>REQUIRED</td><td><code>yes</code> for same-server; otherwise <code>not-required</code>. Do not inherit acceptance from the profile.</td></tr><tr><td><code>backup_time</code></td><td>REQUIRED</td><td>Daily local time, e.g. <code>03:00</code>; must match the supported operator schedule.</td></tr><tr><td><code>backup_timezone</code></td><td>REQUIRED</td><td>Explicit IANA zone, e.g. <code>Europe/Zagreb</code>.</td></tr><tr><td><code>backup_retention_days</code></td><td>30</td><td>Fixed supported policy; staging scheduling remains disabled.</td></tr><tr><td><code>deployment_port_range</code></td><td>use-profile</td><td>Unused loopback ports within the operator-approved range.</td></tr><tr><td><code>local_port_policy</code></td><td>REQUIRED</td><td><code>allocate-free-loopback</code> or <code>preserve-defaults-and-block</code>; update all related configuration consistently.</td></tr><tr><td><code>prerequisite_policy</code></td><td>locked-project-dependencies-only</td><td>Or <code>none</code>; no system install or dependency upgrade is implied.</td></tr><tr><td><code>new_paid_resource_ceiling</code></td><td>0</td><td>No host/subscription/resize/rebuild in this workflow.</td></tr><tr><td><code>registry_policy</code></td><td>require-absent</td><td>Or <code>same-repository-resume</code> / <code>replace-listed-only</code>.</td></tr><tr><td><code>registry_delete_auth</code></td><td>not-required</td><td>Set <code>completed</code> only for approved replacement after the conditional CLI authorization.</td></tr><tr><td><code>old_image_loss_acknowledged</code></td><td>not-required</td><td>Required <code>yes</code> for listed replacement; old digests will no longer be pullable.</td></tr><tr><td><code>execution_mode</code></td><td>REQUIRED</td><td><code>plan-only</code> or <code>execute-listed-scope</code>.</td></tr><tr><td><code>approval_signer</code></td><td>REQUIRED</td><td>Your authorized GitHub account, matching the selected actor.</td></tr><tr><td><code>approval_signed_at</code></td><td>REQUIRED</td><td>ISO-8601 UTC timestamp.</td></tr><tr><td><code>approval_expires_at</code></td><td>REQUIRED</td><td>Later ISO-8601 UTC expiry; stale/expired authority blocks writes.</td></tr><tr><td><code>stable_learning_proposals</code></td><td>none</td><td>Only explicit proposal IDs from the readiness report if Stable-mode guidance edits are later approved.</td></tr></tbody></table></div>
-<p>Passwords are intentionally absent from the form. The agent generates distinct
-local/staging/production credentials into protected files <strong>after</strong> identity
-personalization, and provisions deployed users explicitly.
-Choose an authorization window covering the intended bounded run; expiry is
-not renewed automatically. If it expires, preserve completed work and renew
-the declaration before further mutations.</p>
-<h5 id="source-agentsskillsinitialize-projectreferencespreparationmd--exact-optional-registry-replacement">Exact optional registry replacement</h5>
-<p>Leave this table with no data rows unless <code>registry_policy</code> is
-<code>replace-listed-only</code>. In that case add <strong>each</strong> authorized package, numeric
-ID, current owner repository and complete version count. Unknown/new versions
-or changed ownership block deletion and require a written scope update.</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Exact package name</th><th>Numeric package ID</th><th>Current owner/repository</th><th>All versions to delete</th></tr></thead></table></div>
-<p>Even when replacement is approved, preserve old GitHub repositories, every
-database/volume, all other packages and every unrelated workload.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--7-mark-human-prerequisites-actually-completed">7. Mark human prerequisites actually completed</h4>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Private consumer created/cloned; exact repository and fresh/resume boundary entered."/> Private consumer created/cloned; exact repository and fresh/resume boundary entered.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Intended GitHub account is authenticated in the protected CLI store."/> Intended GitHub account is authenticated in the protected CLI store.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Repository administration, private Actions and required-check plan support confirmed."/> Repository administration, private Actions and required-check plan support confirmed.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Existing shared App has this selected repository; owner/browser consent saved."/> Existing shared App has this selected repository; owner/browser consent saved.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Existing protected operator profile is available; host trust/source/receipt and capacity are the operator&#x27;s responsibility."/> Existing protected operator profile is available; host trust/source/receipt and capacity are the operator&#x27;s responsibility.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Correct DNS zone/project authority is available; names/conflicts and chosen record-creation mode resolved."/> Correct DNS zone/project authority is available; names/conflicts and chosen record-creation mode resolved.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Package names inspected; no conflict, same-consumer resume, or exact replacement rows and digest-loss acknowledgement recorded."/> Package names inspected; no conflict, same-consumer resume, or exact replacement rows and digest-loss acknowledgement recorded.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Conditional delete:packages authorization completed, or registry_delete_auth is not-required because no deletion is requested."/> Conditional <code>delete:packages</code> authorization completed, <strong>or</strong> <code>registry_delete_auth</code> is <code>not-required</code> because no deletion is requested.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Local tools, Docker and trusted VS Code/Java import/extension consent prepared."/> Local tools, Docker and trusted VS Code/Java import/extension consent prepared.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Identity, artwork, account, backup destination/risk/schedule and allocation bounds answered."/> Identity, artwork, account, backup destination/risk/schedule and allocation bounds answered.</li>
-</ul>
-<p>These are human attestations for preflight, not substitutes for the agent&#x27;s
-authenticated checks or post-personalization/runtime/restore evidence.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--8-authorize-the-bounded-execution-in-writing">8. Authorize the bounded execution in writing</h4>
-<p>For <code>plan-only</code>, the agent performs read-only discovery and writes a readiness
-report; it does not execute the actions below.</p>
-<p>For <code>execute-listed-scope</code>, check every action you actually authorize. A missing
-required action blocks full initialization rather than creating a partial
-success. Fill signer/timestamps above yourself. By invoking <code>/initialize-project</code>
-after completing this workbook, you make the current request to execute <strong>only</strong>
-the listed scope if live preflight matches it:</p>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Personalize this consumer&#x27;s approved identity/assets and generate protected distinct credentials."/> Personalize this consumer&#x27;s approved identity/assets and generate protected distinct credentials.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Build/test, launch the real native/IDE/browser flows and allocate only approved unused local ports."/> Build/test, launch the real native/IDE/browser flows and allocate only approved unused local ports.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Register this exact repository through the existing reviewed operator at an idle maintenance point; validate before reactivation and preserve existing registrations."/> Register this exact repository through the existing reviewed operator at an idle maintenance point; validate before reactivation and preserve existing registrations.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Create scoped consumer commits/branches/PRs/pushes and configure main with the genuine CI gate, strict PRs, zero approving reviews and administrator enforcement."/> Create scoped consumer commits/branches/PRs/pushes and configure main with the genuine <code>CI gate</code>, strict PRs, zero approving reviews and administrator enforcement.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Use only the declared DNS names, existing host/namespace and permitted free ports; preserve matching records and block conflicts."/> Use only the declared DNS names, existing host/namespace and permitted free ports; preserve matching records and block conflicts.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Prepare isolated consumer databases/volumes/networks/controller/TLS and publish only the public controller certificate variable."/> Prepare isolated consumer databases/volumes/networks/controller/TLS and publish only the public controller certificate variable.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Run real Deploy staging and promote its exact successful immutable pair with Deploy production at the same selected source."/> Run real Deploy staging and promote its exact successful immutable pair with Deploy production at the same selected source.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Explicitly provision the approved users, verify both real HTTPS/browser flows, retrieve and isolated-restore an initialized production dump, then enable only the approved production schedule."/> Explicitly provision the approved users, verify both real HTTPS/browser flows, retrieve and isolated-restore an initialized production dump, then enable only the approved production schedule.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="Remove only exact task-owned scratch containers/temporary transfer or credential files; retain protected backups and all unrelated resources."/> Remove only exact task-owned scratch containers/temporary transfer or credential files; retain protected backups and all unrelated resources.</li>
-<li class="task-list-item"><input type="checkbox" disabled="" aria-label="If and only if exact replacement rows are present and approved above, replace only those packages/versions; otherwise no old image/package deletion."/> If and only if exact replacement rows are present and approved above, replace only those packages/versions; otherwise no old image/package deletion.</li>
-</ul>
-<p>The final replacement checkbox is conditional: leave it unchecked when there
-are no replacement rows and the deletion fields are <code>not-required</code>. That is not
-a missing mandatory approval and grants no deletion authority.</p>
-<p>Fixed exclusions: no upstream publication, new paid host, resize/rebuild,
-shared privileged-source upgrade, repository deletion, database replacement,
-password reset or live-database restore. A workbook cannot override these
-workflow boundaries or mandatory tool/provider approvals.</p>
-<p>The profile, checked boxes and old state are not standing permission. The
-current user invocation, complete signed/unexpired workbook, matching verified
-consumer and resolved in-scope plan must agree. The agent records the workbook
-SHA-256 and approval provenance before mutations and never fills your approval
-fields for you.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencespreparationmd--9-invoke-once-prepared">9. Invoke once prepared</h4>
-<p>Open a fresh agent chat in the trusted consumer workspace and invoke:</p>
-<pre tabindex="0"><code class="language-text">$initialize-project initialize this consumer from production project PROJECT_UUID
-</code></pre>
-<p>Other agents supporting skill slash commands use <code>/initialize-project</code>.
-The skill captures the reviewed workbook, verifies live readiness and writes
-<code>.template-initialization/readiness.md</code> with the resolved plan, provenance,
-checks and exact blockers. Within current signed bounds it proceeds without a
-configuration interview or another routine approval round.</p>
-<p>Correct missing, expired or conflicting preparation in Client Discovery,
-review the changed revision, then explicitly request a refresh and resume.
-The agent preserves completed work and accepted evidence. Existing manual
-workbooks can still be used directly. Stable-mode learning edits require the
-explicit proposal IDs; <code>none</code> grants no such edits. Explanation or maintenance
-and verification of completed consumers do not require a new workbook.</p>
-<p>Sources: <a href="https://docs.github.com/en/apps/using-github-apps/installing-a-github-app-from-a-third-party">GitHub App installation/access</a>
-and <a href="https://cli.github.com/manual/gh_auth_refresh">GitHub CLI scope refresh</a>.</p></div><div class="digest">Source SHA-256 · b244c570552a90d86b82e81a9bd62495346ac56e6b873f40fb433f7b511f65d2</div></section><section class="panel record" data-kind="procedure" id="source-docsinitialization-preparationmd">
+recorded in <a href="#source-docsacceptanceci-performance-acceptancejson">performance acceptance</a>.</p></div><div class="digest">Source SHA-256 · 44d35d61e6d3e3cf47f7594e1dcbea502def6d71684d4e493a1a3847307ce7f0</div></section><section class="panel record" data-kind="procedure" id="source-docsinitialization-preparationmd">
 <div class="panel-heading"><div><div class="source-path">docs/initialization-preparation.md</div><h2>Prepare a consumer before initialization</h2></div><span class="pill">Procedure</span></div>
 <div class="markdown"><h3 id="source-docsinitialization-preparationmd--prepare-a-consumer-before-initialization">Prepare a consumer before initialization</h3>
-<p>Use the authoritative <a href="#source-agentsskillsinitialize-projectreferencespreparationmd">preparation guide</a>
-to complete and review the production project&#x27;s developer preparation in Client
-Discovery. Invoke the initializer with its production project ID; the agent
-captures the exact reviewed workbook and provenance automatically. The guide
-owns the protected profile, refresh safeguards and legacy workbook support.</p>
-<p>The <a href="#source-docstemplate-initializationmd">setup runbook</a> records consumer-specific setup.
-Keep credentials and filled workbooks out of tracked documents.</p></div><div class="digest">Source SHA-256 · 797600f18d031e66e2831118ed83bd45fff00b33c7d4e9210da03749e183416e</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencesproject-statusmd">
-<div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/project-status.md</div><h2>Project status and next step</h2></div><span class="pill">Procedure</span></div>
-<div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencesproject-statusmd--project-status-and-next-step">Project status and next step</h3>
-<p>Use this advisory check when the developer invokes the skill without a task or
-asks where the project stands. It connects the consumer checkout to the intended
-production Client Discovery project without starting initialization.</p>
-<pre tabindex="0"><code class="language-sh">node .agents/skills/initialize-project/scripts/project-status.mjs PROJECT_UUID --remember
-node .agents/skills/initialize-project/scripts/project-status.mjs
+<p>Run <code>$initialization-intake prepare initialization for this repository</code> in the
+trusted consumer checkout. The <a href="../.agents/skills/initialization-intake/SKILL.md">intake skill</a>
+owns all setup questions, progress and remaining prerequisites. Resume in another
+agent session with <code>$initialization-intake resume intake</code>.</p>
+<p>Private state is saved under
+<code>.agents/skills/initialization-intake/state/intake.json</code> and ignored by Git.
+Record nonsecret answers and protected credential references. Review the resolved
+answers, finish human access/consent prerequisites and confirm the execution
+scope. Updating answers invalidates completion until reviewed again.</p>
+<p>Use the <a href="#source-agentsskillsinitialization-intakereferencesquestionnairemd">questionnaire</a>
+for service access and operator preparation, and the
+<a href="#source-agentsskillsinitialization-intakereferencesstatemd">state reference</a>
+for answer status, save/resume and completion rules. Once intake is complete, run
+<code>$initialization-execution initialize this repository</code>; execution stops explicitly
+if intake is incomplete or no longer matches this checkout.</p>
+<p>The <a href="#source-docstemplate-initializationmd">setup entry point</a> records consumer-specific
+setup. Neither credentials nor private intake state belong in tracked documents.
+Client Discovery and exported workbooks are not initialization prerequisites.</p></div><div class="digest">Source SHA-256 · d3414e7ef9db24e654217de466c4ad1a886ea2f45a2d3bb3aba6ae2b438ab350</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-intakereferencesstatemd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-intake/references/state.md</div><h2>Private state and helper API</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-intakereferencesstatemd--private-state-and-helper-api">Private state and helper API</h3>
+<p>Run Node 24 from the consumer root (use its local Node launcher when needed):</p>
+<pre tabindex="0"><code class="language-sh">node .agents/skills/initialization-intake/scripts/intake.mjs init --root /absolute/consumer
+node .agents/skills/initialization-intake/scripts/intake.mjs status --root /absolute/consumer
+node .agents/skills/initialization-intake/scripts/intake.mjs save --root /absolute/consumer --input /private/patch.json
+node .agents/skills/initialization-intake/scripts/intake.mjs complete --root /absolute/consumer --input /private/confirmation.json
+node .agents/skills/initialization-intake/scripts/intake.mjs require-complete --root /absolute/consumer
 </code></pre>
-<p>The first command remembers an explicitly supplied UUID after a successful
-authenticated lookup. Later invocations resolve that protected association, or
-an existing preparation capture&#x27;s provenance. With no association, ask for the
-project ID once. Do not enumerate the account&#x27;s other projects or infer identity
-from names, template examples or previous conversations.</p>
-<p>The helper uses the same Node-core authentication and owner-only production
-profile as preparation capture. See <a href="#source-agentsskillsinitialize-projectreferencespreparationmd--0-prepare-and-review-in-client-discovery">credential setup</a>.
-<code>--root PATH</code> selects another Git worktree; <code>--profile PATH</code> and <code>--api-url URL</code>
-support an explicitly selected source. Production is the default. Report the
-actual source, especially when it is overridden. The association records project
-ID, API base and repository under ignored
-<code>.template-initialization/discovery-project.json</code>, with directory mode <code>0700</code>
-and file mode <code>0600</code>. It contains no credentials or initialization authority.</p>
-<p>Status without <code>--remember</code> writes no files. Remembering preserves workbooks,
-provenance, resume records, acceptance and existing associations. Conflicting
-project, repository or source identities require deliberate reconciliation;
-changing the command-line ID does not silently replace a saved association.
-Authentication creates and closes only its own session. Project status calls
-use metadata GETs and never request the scope-export endpoint, which records an
-export in the project&#x27;s activity log. The actual export capture is a later task.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesproject-statusmd--read-the-three-states-separately">Read the three states separately</h4>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>State</th><th>Meaning and next step</th></tr></thead><tbody><tr><td>Preparation absent or incomplete</td><td>Complete the project&#x27;s Developer preparation topics and save. Report missing/invalid field IDs without printing private answers.</td></tr><tr><td>Preparation awaiting review</td><td>Explicitly review the current saved revision in the app. Saving alone is insufficient.</td></tr><tr><td>Reviewed plan</td><td>A planning handoff is available; execution remains unapproved. Complete execution answers and review when initialization should run.</td></tr><tr><td>Preparation expired or invalid</td><td>Correct/renew it in the app and review the updated revision. Never fill consents or signatures automatically.</td></tr><tr><td>Preparation ready for execution</td><td>Current revision, compatible contract, complete applicable checks, valid written authorization and review agree. Live provider readiness is still checked during the selected setup task.</td></tr><tr><td>Initialization not started or partial</td><td>Show the first pending/blocked contract phase and preserve independently passed work. Setup/resume uses the existing readiness and written-authority gates.</td></tr><tr><td>Initialization completion recorded</td><td>Consumer-matched acceptance records all required phases. This is recorded evidence, not a new inspection of live deployments. Preserve completed consumers even if preparation later changes or expires.</td></tr><tr><td>Scope draft</td><td>Continue client Discovery, then freeze a candidate for review. This does not prevent independent developer preparation.</td></tr><tr><td>Scope under review</td><td>Show whether the administrator and designated client approved the exact same hash. Missing approval and awaiting lock are separate states.</td></tr><tr><td>Approved, awaiting lock</td><td>Both independent approvals exist; an administrator must lock that candidate. Approval alone does not make it exportable.</td></tr><tr><td>Locked scope available</td><td>A valid LOCKED baseline with matching independent approvals is eligible for administrator export. Offer specification generation after initialization, asking for the output folder only when that task is chosen.</td></tr></tbody></table></div>
-<p>A new draft or review candidate can coexist with an older locked baseline.
-Report both the <strong>current scope</strong> and the <strong>latest available locked export</strong>, with
-their versions. Do not describe unapproved new changes as part of the old export.
-No <code>APPROVED</code> scope state exists: approval readiness is derived from the
-administrator and designated client&#x27;s independent same-hash approvals.</p>
-<p>Unavailable APIs, schema incompatibility, 401/403, project 404, malformed data and
-network errors are unknown/error states with distinct explanations. A missing
-preparation endpoint on an older deployed app is not proof of an empty form.
-Preserve independently observed status where possible; never manufacture a
-ready or incomplete result from an access failure.</p>
-<p>Local initialization status comes from the actual Git origin and consumer-matched
-resume/acceptance records. Copied template receipts, an arbitrary <code>ready</code> flag,
-file presence or configured deployment YAML cannot establish completion. The
-<a href="#source-agentsskillsinitialize-projectreferencescontractmd">initialization contract</a> owns the ordered setup phases and their
-evidence. If a record is malformed or belongs to another repository, report the
-discrepancy rather than treating it as a passed gate.</p>
-<h4 id="source-agentsskillsinitialize-projectreferencesproject-statusmd--present-an-actionable-report">Present an actionable report</h4>
-<p>Use a compact table with project/source, developer preparation, recorded setup,
-current scope, and latest locked export. Give one next action, together with any
-independent work that can already proceed. Prefer identity/access reconciliation
-first; for incomplete setup, preparation/review/renewal or the next setup phase;
-after setup, the current scope&#x27;s approval/lock step and specification handoff.
-Interpret the returned state fields: a successfully printed report can contain
-unavailable or blocked states and is not itself a readiness pass.</p>
-<p>For example, an observed initialized consumer with reviewed execution preparation
-and fully approved but unlocked scope should say:</p>
-<blockquote>
-<p>Setup completion is recorded. Developer preparation is reviewed and valid.
-Scope version 2 has both approvals and awaits administrator locking.
-Lock that version, then generate its specification into your chosen folder.</p>
-</blockquote>
-<p>After a bare invocation&#x27;s report, offer initialize/resume, live readiness,
-specification generation, or refresh status, with free-text input. Wait before
-starting the selected task. A concrete status request ends with the report.
-The baseline lock proves neither a completed specification nor issue publication
-or application implementation; those require their own artifacts and instructions.</p></div><div class="digest">Source SHA-256 · eecb4ee337e9df426951d57baa509d7b1dbef3406c5b58751b1261cc628f3766</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialize-projectreferencesrehearsal-lessonsmd">
-<div class="panel-heading"><div><div class="source-path">.agents/skills/initialize-project/references/rehearsal-lessons.md</div><h2>Rehearsal lessons</h2></div><span class="pill">Procedure</span></div>
-<div class="markdown"><h3 id="source-agentsskillsinitialize-projectreferencesrehearsal-lessonsmd--rehearsal-lessons">Rehearsal lessons</h3>
+<p><code>--input -</code> reads JSON from stdin, avoiding scratch files. File inputs must be
+user-owned regular 0600 files. The helper uses Node core and local Git only;
+status and execution gating create no files and make no API requests. A helper
+invoked from elsewhere still writes inside the selected consumer, never beside
+its source helper. Use matching installed helper bytes for that consumer.</p>
+<p><code>init</code> creates missing private state and preserves existing state. <code>status</code>
+returns completion, revision, missing/invalid IDs, proposed/answered IDs and
+blocked prerequisites, without printing answers/evidence. Missing fields are
+unanswered; proposed and unknown values remain incomplete. Inspect the private
+file to resume actual answers; never copy it to public artifacts.</p>
+<p><code>save</code> shallow-merges field entries, increments the revision and clears any
+completion. Every patch supplies the revision just read; a conflict requires
+reloading and merging rather than overwriting another session. Example:</p>
+<pre tabindex="0"><code class="language-json">{
+  &quot;expectedRevision&quot;: 0,
+  &quot;answers&quot;: {
+    &quot;display_name&quot;: { &quot;status&quot;: &quot;answered&quot;, &quot;value&quot;: &quot;Inventory&quot; },
+    &quot;backup_timezone&quot;: { &quot;status&quot;: &quot;proposed&quot;, &quot;value&quot;: &quot;Europe/Zagreb&quot; },
+    &quot;initial_email&quot;: { &quot;status&quot;: &quot;unknown&quot; }
+  },
+  &quot;prerequisites&quot;: {
+    &quot;app_consent&quot;: {
+      &quot;status&quot;: &quot;blocked&quot;,
+      &quot;evidence&quot;: &quot;Owner still needs to select this repository.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Answer statuses are <code>answered</code>, <code>proposed</code>, <code>unknown</code>. Preserve the user&#x27;s value,
+including invalid answers, and clarify them; the gate rejects invalid required
+answers rather than silently normalizing them. Prerequisites are <code>ready</code>,
+<code>blocked</code>, <code>unknown</code>; <code>ready</code> requires nonempty nonsecret evidence. Unknown fields
+and top-level <code>approved</code>/<code>complete</code> flags are rejected. All IDs and value contracts
+come from <a href="../.agents/skills/initialization-intake/scripts/schema.mjs">the catalog</a>.</p>
+<p>After all required questions and prerequisites are satisfied, show the full
+resolved plan and action list. Supply the actual user response:</p>
+<pre tabindex="0"><code class="language-json">{
+  &quot;expectedRevision&quot;: 4,
+  &quot;confirmation&quot;: {
+    &quot;response&quot;: &quot;Use those targets and proceed with the listed setup actions.&quot;
+  }
+}
+</code></pre>
+<p><code>complete</code> validates the current answers and evidence, increments the revision,
+and records the response and timestamp with a SHA-256 binding to all inputs,
+repository/worktree, revision and installed helper/schema bytes. It cannot prove
+that a response came from a human; the agent must preserve the real chat response
+and its meaning. This is an accidental-drift gate, not a cryptographic signature
+or standing execution authority. The explicit execution request remains required.</p>
+<p><code>require-complete</code> succeeds only for valid completed state matching this exact
+consumer. It returns <code>complete</code>, <code>statePath</code>, <code>revision</code>, <code>repository</code>, <code>scope</code>
+and <code>digest</code> (plus progress IDs); execution reads answers from <code>statePath</code> and
+retains the digest with its own <code>.template-initialization</code> phase evidence. Missing,
+partial, malformed, edited, stale or mismatched state exits nonzero and explicitly
+directs the user to finish <code>$initialization-intake</code> before execution.</p>
+<p>The ignored <code>state/</code> directory is 0700; JSON/temp/lock files are 0600. Writes are
+atomic with an exclusive writer lock and revision check; symlinked state/helper
+paths and hard-linked state files are rejected. If a process crashes with a lock,
+inspect active writers and the unchanged JSON before removing only that stale
+lock. Never delete the JSON as a retry shortcut.</p>
+<p>Changed helpers/schema make old completion stale. Inspect the saved answers
+against the current catalog and use <code>save</code> with the old revision to reconcile
+any answers/prerequisites, adopting the current schema and clearing completion;
+review and complete again. A changed repository/worktree requires explicit
+identity reconciliation: preserve the old file privately, verify actual origin,
+then initialize the new target and re-confirm applicable answers. Never silently
+rebind completed state or replace another project&#x27;s intake.</p>
+<p>This folder&#x27;s <code>.gitignore</code> and the repository ignore protect normal publication.
+Before committing, verify <code>state/intake.json</code> is ignored and absent from staged
+files; never force-add it. Secret-pattern checks catch common mistakes but cannot
+determine whether arbitrary text is a credential: record references only.</p></div><div class="digest">Source SHA-256 · fc13728942689664318293fb6752d56b36680452806e873c3f393e2287bb259a</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-execution/references/rehearsal-lessons.md</div><h2>Rehearsal lessons</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-executionreferencesrehearsal-lessonsmd--rehearsal-lessons">Rehearsal lessons</h3>
 <p>These are generic prevention rules from an earlier consumer rehearsal, not
 acceptance evidence for this template or another consumer. A clean
 fresh-consumer run is still required to prove the complete no-follow-up
 initialization experience.</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Observed bottleneck</th><th>Required prevention</th></tr></thead><tbody><tr><td>CLI identity differed from the repository owner</td><td>Select the protected account/profile before invocation; verify access and prefer scoped authentication.</td></tr><tr><td>Existing application/database identity was ambiguous</td><td>Record fresh versus same-identity resume and preserve existing resources.</td></tr><tr><td>Identity, artwork, accounts and backup risk needed human decisions</td><td>Collect explicit workbook answers before bulk changes.</td></tr><tr><td>Operator/profile discovery happened late</td><td>Arrange the existing operator reference and verify current source, trust, receipt and capacity upfront.</td></tr><tr><td>Selected-repository App access needed owner browser consent</td><td>Complete the existing App&#x27;s saved repository selection beforehand; repository administration alone is not proof.</td></tr><tr><td>Old image namespaces belonged to different repositories</td><td>Inspect package ownership, preserve by default and require exact deletion rows, version counts and digest-loss consent.</td></tr><tr><td>Approved package deletion lacked CLI scope</td><td>Complete GitHub&#x27;s conditional native authorization before invocation.</td></tr><tr><td>Port defaults collided with another application</td><td>Verify ownership and allocate only approved unused ports; update all dependent surfaces.</td></tr><tr><td>IDE import name differed from Gradle identity</td><td>Omit the optional single-backend <code>projectName</code>; verify the actual saved launch after personalization.</td></tr><tr><td>Generic Java launch did not prove saved IDE launches</td><td>Verify an unattended tool path for both configurations during readiness, then test real launches.</td></tr><tr><td>Empty reviewer settings invoked unavailable private-plan features</td><td>Omit unused protection fields and verify actual readback; do not upgrade plans implicitly.</td></tr><tr><td>A Python isolation flag hid an installed CLI&#x27;s sibling modules</td><td>Use the operator-documented interpreter/entrypoint; verify <code>--help</code> and real backup behavior.</td></tr><tr><td>A transient container startup failed CI</td><td>Keep the failing required check; diagnose/retry within scope without weakening isolation.</td></tr></tbody></table></div>
-<p>Human login/2FA, App consent, credential entry, identity/risk choices and written
-authority remain human tasks. Client Discovery collects preparation; only live
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Observed bottleneck</th><th>Required prevention</th></tr></thead><tbody><tr><td>CLI identity differed from the repository owner</td><td>Select the protected account/profile before invocation; verify access and prefer scoped authentication.</td></tr><tr><td>Existing application/database identity was ambiguous</td><td>Record fresh versus same-identity resume and preserve existing resources.</td></tr><tr><td>Identity, artwork, accounts and backup risk needed human decisions</td><td>Collect explicit intake answers before bulk changes.</td></tr><tr><td>Operator/profile discovery happened late</td><td>Arrange the existing operator reference and verify current source, trust, receipt and capacity upfront.</td></tr><tr><td>Selected-repository App access needed owner browser consent</td><td>Complete the existing App&#x27;s saved repository selection beforehand; repository administration alone is not proof.</td></tr><tr><td>Old image namespaces belonged to different repositories</td><td>Inspect package ownership, preserve by default and stop for separately authorized replacement.</td></tr><tr><td>Port defaults collided with another application</td><td>Verify ownership and allocate only approved unused ports; update all dependent surfaces.</td></tr><tr><td>IDE import name differed from Gradle identity</td><td>Omit the optional single-backend <code>projectName</code>; verify the actual saved launch after personalization.</td></tr><tr><td>Generic Java launch did not prove saved IDE launches</td><td>Verify an unattended tool path for both configurations during readiness, then test real launches.</td></tr><tr><td>Empty reviewer settings invoked unavailable private-plan features</td><td>Omit unused protection fields and verify actual readback; do not upgrade plans implicitly.</td></tr><tr><td>A Python isolation flag hid an installed CLI&#x27;s sibling modules</td><td>Use the operator-documented interpreter/entrypoint; verify <code>--help</code> and real backup behavior.</td></tr><tr><td>A transient container startup failed CI</td><td>Keep the failing required check; diagnose/retry within scope without weakening isolation.</td></tr></tbody></table></div>
+<p>Human login/2FA, App consent, credential entry, identity/risk choices and execution
+consent remain human tasks. The agent records those answers during intake; only live
 verification can establish runtime, CI, deployment and initialized recovery
 acceptance. Unexpected post-intake assistance is a preparation defect to record,
-not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · e2c96b5e68a2815894eac7877def221c7c3413e2b7ef9d6025950f3d581d828e</div></section>
-<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialize-project run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · a9b90c229a251a24699d52791a92b05e632b3ffa7b30d32bac0bd1131a1863d5</p></footer>
+not a reason to claim a no-follow-up success.</p></div><div class="digest">Source SHA-256 · 9bcc7a5556def2719a8a92dcd40b65dd114cbfecfbff831204c5bc558a92e6b9</div></section><section class="panel record" data-kind="procedure" id="source-agentsskillsinitialization-intakereferencesquestionnairemd">
+<div class="panel-heading"><div><div class="source-path">.agents/skills/initialization-intake/references/questionnaire.md</div><h2>Setup questionnaire</h2></div><span class="pill">Procedure</span></div>
+<div class="markdown"><h3 id="source-agentsskillsinitialization-intakereferencesquestionnairemd--setup-questionnaire">Setup questionnaire</h3>
+<p>The executable catalog in <a href="../.agents/skills/initialization-intake/scripts/schema.mjs">schema.mjs</a> owns field IDs,
+validation and required prerequisites. Read the full catalog before presenting
+questions. Ask all applicable questions upfront, including actions the user must
+perform outside chat. Group them as below; do not turn setup into a business
+requirements interview. The supported stack, theme, 30-day retention and existing
+operator procedures remain constraints, not invitations to redesign them.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th>Group</th><th>Settle before execution</th></tr></thead><tbody><tr><td>Outcome and target</td><td><code>execution_scope</code> (<code>full</code> or explicitly <code>local-only</code>), exact detected <code>repository</code>, fresh/resume boundary and preserved resources.</td></tr><tr><td>Identity</td><td>Slug, display name, Java application namespace, PWA short name, exact localization policy, retained artwork or supplied asset reference, retained theme.</td></tr><tr><td>Local development</td><td>Port allocation, dependency-install bounds, current data ownership, available runtimes/Docker/browser tooling, IDE trust/extensions/import and private credential destination.</td></tr><tr><td>Accounts</td><td>Initial username, display name and email; separate credentials are generated by execution into protected storage. A username such as <code>admin</code> adds no role.</td></tr><tr><td>GitHub and CI (full)</td><td>Intended account, scoped login versus explicitly allowed global switch, maintainer allowlist, private repository/admin/Actions support, selected-repository consent for the existing App.</td></tr><tr><td>Existing operator (full)</td><td>Protected profile reference with actual host identity, canonical reviewed CI source/receipt, host trust, capacity, project path namespace and allowed loopback port range. Reuse existing shared CI/App/host.</td></tr><tr><td>DNS and registry (full)</td><td>Distinct owned staging/production FQDNs, exact zone/project access through the profile, existing records versus missing-record creation, absent packages versus same-repository resume, real push/pull access.</td></tr><tr><td>Backup and recovery (full)</td><td>Supported destination reference or same-server, explicit host-loss acceptance for same-server, supported daily time/IANA zone, 30-day retention, unscheduled staging, isolated scratch restore target.</td></tr><tr><td>Authority and bounds</td><td>Zero new paid resources, all existing unrelated resources preserved, exact <code>action_scope</code>, actual user confirmation after the complete resolved summary.</td></tr></tbody></table></div>
+<p>For each topic, include detected facts, proposed defaults, questions, foreseeable
+human actions and the evidence needed. Resolve reusable-profile facts by reading
+the selected protected profile and verifying access; a profile default cannot
+accept the consumer&#x27;s risk. Record exact selected targets and evidence without
+credential contents. Unsupported provider adapters, replacing registry packages,
+new foundations, host repairs/upgrades, different-identity renames, existing DB
+replacement, password resets and live restores need separately scoped work.</p>
+<p>The existing operator profile is an external protected JSON document, version 1,
+with <code>name</code>, <code>github</code> (host/account/allowed owner), <code>ssh</code> (target, identity reference,
+verified host key, privilege mode), <code>ci</code> (existing pool, canonical source/revision,
+installed configuration and App metadata/key <strong>paths</strong>), <code>dns</code> (provider/zone/
+project/credential reference), <code>deployment</code> (host/project namespace/ports/
+maintainers), <code>backup</code> (supported adapter/schedule) and <code>bounds</code>. It contains
+references rather than credential values. A missing profile is prepared by the
+operator before execution; it is not permission to bootstrap another shared pool.</p>
+<p>Readiness evidence records what was verified and where, distinguishing actual
+read-only checks from user attestations. Recheck volatile access/ownership before
+writes during execution; a later outage blocks the affected phase without
+repeating already answered configuration questions.</p>
+<p>For local-only scope, full-only questions/prerequisites are inapplicable; explain
+that CI, hosting, deployment and recovery acceptance remain outside that scope.
+Use only local actions. Full scope requires every full prerequisite and action;
+partial answers cannot masquerade as a completed full initialization intake.</p></div><div class="digest">Source SHA-256 · 09fb91c35e9afe1c584c7154814610cc2090494e8bbeb2488a66d26908c61ff9</div></section>
+<footer class="footer">Generated from every docs/*.md, docs/acceptance/*-acceptance.json and bundled skill reference. Evidence keys and source lists are sorted; array order is preserved. Regenerate with <code>npm --prefix .agents/skills/initialization-execution run docs:build</code> after any documentation or skill-reference change.<p class="digest">Input fingerprint · 852ff3c2bd38f2caba2c79c30724d25dc8e9c2376ddd2f5fc53f6e9dca969314</p></footer>
 </main></div><script>
 const records = [...document.querySelectorAll(".record")];
 const search = document.querySelector("#search");

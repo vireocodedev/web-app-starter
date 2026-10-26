@@ -9,7 +9,11 @@ export function RouteTransitionPreview() {
       <Typography color="text.secondary" variant="body2">
         {t("applicationStateExamples.sharing.transition.hint")}
       </Typography>
-      <Button component={RouterLink} to="/dev-guide/patterns/application-state/persistent-state" variant="contained">
+      <Button
+        component={RouterLink}
+        to="/dev-guide/frontend/patterns/application-state/persistent-state"
+        variant="contained"
+      >
         {t("applicationStateExamples.sharing.transition.action")}
       </Button>
     </Stack>

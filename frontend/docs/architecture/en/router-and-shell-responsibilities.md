@@ -8,7 +8,9 @@ navigation and routed content are presented**.
 `src/app/router/routeRegistry.tsx` is the route authority. A route definition
 connects a path, access level, page component or lazy module, title,
 breadcrumbs, navigation metadata, optional documentation group, content layout,
-and scroll behavior. `routes.tsx` converts enabled records into React Router
+and scroll behavior. The router-owned `handbookRoutes.tsx` factory derives
+concrete records from the public content manifest and merges them into this
+registry; it does not introduce a second route matcher. `routes.tsx` converts enabled records into React Router
 objects and adds access gates and layouts. The router-owned hierarchy builder
 validates every declared record before environment and access filtering, then
 recursively composes nested records without a depth limit.
@@ -25,6 +27,25 @@ for development builds. Their navigation entries disappear in production and
 their URLs resolve through normal Not Found handling. Do not hide only the
 navigation item while leaving a production route registered.
 
+`/dev-guide` is a category landing page without section tabs. Frontend opens
+Example pages, Patterns, Workflow patterns, and Architecture under `/dev-guide/frontend`.
+Example pages lists Contacts dashboard and Contacts CRUD. Patterns lists i18n,
+Signals, Server data, Routing and URLs, Overlays, Tables and collections, Forms,
+and Feedback; each category opens its first example and supplies that category's
+page navigation. Workflow patterns mounts the Handbook collection under
+`/dev-guide/frontend/workflow-patterns` while its source files retain portable
+`frontend/<topic>/<article>.md` paths. Backend, Continuous integration, Delivery
+and operations, Developer workflow and AI-agent workflow each open real topic
+indexes; topics open article indexes and shared sidebar navigation. Nested
+Frontend workflows keep the first-row identity Development guide > Frontend.
+Previous Home/Contacts URLs redirect to the corresponding Example page, while
+old Patterns/Architecture URLs redirect beneath Frontend. Redirects preserve
+query parameters and fragments. The whole guide remains development-only.
+
+Guide routes inherit `contentMaxWidth: "xl"`. The shell places local breadcrumbs
+and routed content inside the same container. The deepest explicitly supplied
+width wins; descendants without an override retain their ancestor's width.
+
 ## Shell presentation receives navigation
 
 Router composition derives top-level destinations, route context, and optional
@@ -37,13 +58,22 @@ authentication implementation.
 A parent route opts into the second header row with
 `headerNavigation: true`. The router derives immediate-child tabs in
 `AppRouteHandle.sectionNavigation`; the active child remains selected on
-deeper descendants. The desktop row puts overflowing sections in a More menu
+deeper descendants. When nested route groups both declare header sections, the
+nearest matched group supplies the row; descendants without their own sections
+inherit the nearest ancestor's sections. The desktop row puts overflowing sections in a More menu
 while keeping the active section visible. The active indicator overlays the bottom edge of
 the shared divider and is twice its thickness. On mobile, the row keeps the active section visible and shows up to one more tab on wider mobile rows. A separate More sections button opens a bottom sheet containing every immediate section, so a growing route group does not require horizontal scrolling. The first row omits the More quick-action button. A deepest matched route may provide `HeaderContext`, a component that
 receives route params and extends the first-row identity with dynamic content.
 The existing project-parameter guide route demonstrates this. The first-row
 identity is the semantic heading for simple pages; deep guide pages retain
 local breadcrumbs and article titles.
+
+A matched route with `headerBreadcrumb: true` adds its localized title to the
+first-row trail after the top-level route. Category routes use this to show
+Development guide → Frontend or Development guide → Backend. Ancestors link to
+their matched paths, so the guide title returns to the category list. This
+explicit opt-in keeps individual tab and article titles out of that header trail;
+the deepest `HeaderContext` still extends it with dynamic route content.
 
 The starter main drawer lists Home; applications may add top-level destinations. It is a temporary overlay by default on
 desktop and always temporary below 1024px. Desktop users may choose a
@@ -70,7 +100,7 @@ ordinary route selection releases the menu before navigating. A fixed value remo
 the corresponding editable control from the header and Settings.
 
 A fixed bottom bar shows Home and Settings, plus Contacts dashboard in
-development builds. That shortcut opens `/dev-guide/home`; the complete
+development builds. That shortcut opens `/dev-guide/frontend/example-pages/contacts-dashboard`; the complete
 Development Guide is available from the account menu. A route may set
 `mobileBottomNavigation: false` to hide the bar. Omitted or `true` shows it;
 the deepest matched route decides. The shell reserves bottom space, including
@@ -165,17 +195,34 @@ Do not combine an index child with `defaultChildId`. A parent with neither
 configuration renders its own layout at its URL without redirecting. Nested
 route handles use the deepest match for title, layout, and scroll behavior;
 breadcrumbs contain every ancestor, explicit breadcrumb, and current title.
-Ancestor destinations resolve named parameters from the current match, encode
+An index with the same title as its immediate parent shows that label once;
+distinct parent and index titles remain separate. Ancestor destinations resolve named parameters from the current match, encode
 their values, omit absent optional segments, and preserve encoded splat path
 segments. An ancestor with a missing required parameter remains text instead of
 becoming a misleading link.
 
 ## Nested documentation and page adapters
 
+Settings and Patterns categories share `AppPageNavigation`, supplied with links
+and translated labels. It owns the selected sidebar item, the mobile page sheet,
+focus restoration, and deferred route changes. `SettingsPageNavigation` adapts
+Settings labels; `PatternCategoryLayout` supplies a single category's examples.
+Both use a 240px sidebar above a 900px content-container width and a page selector
+below it. Pattern contents appear beneath the page links in the sidebar or mobile
+sheet; fragment navigation waits until the sheet closes. The layout supplies a
+`DocumentationRailProvider`, and galleries send their contents to its active
+target rather than repeating them above the examples.
+
+The guide's category lists use `AppCategoryList`. Its ordered `items` accept plain
+links and named groups (`id`, `label`, optional `description`, and `items` of links)
+in any combination. Patterns groups Signals, Server data, and Routing and URLs
+under Application state; other categories remain individual links.
+
 Nested documentation sections each provide their own group ordering. Their
 default child is derived from the first retained item in that same ordered
-navigation. Previous/Next navigation stays within the active section; Patterns
-ordering must not select an Architecture redirect, or vice versa.
+navigation. Previous/Next navigation stays within the active Patterns category,
+Architecture section or Handbook topic. Explicit related reading can cross topic
+boundaries; pagination must not select an unrelated category or redirect.
 
 Pages remain thin adapters. They import public feature interfaces, supply
 route-specific composition, and do not reproduce feature behavior. Route
@@ -197,6 +244,8 @@ Back and Forward restore an exact recorded entry. Query-only push and replace
 updates preserve the viewport; a new pathname starts at the top; and an initial
 or newly selected fragment scrolls to its decoded element ID after route
 content is ready. A recorded history position takes priority over a fragment.
+
+A delayed route leaf can call `useRouteScrollReady(ready)` to hold its complete entry’s existing scroll action until content or a local error commits. Claims belong to one entry and owner; cleanup cannot release another claim. The branch default remains sufficient when no leaf claims exist. The scheduled frame rechecks current branch and leaf readiness before consuming the action, including native hash traversal. Settled actions do not replay for later retries or locale changes.
 
 Public routes signal readiness as soon as their branch commits. Authenticated
 routes signal only below `AppAuthGate`, after protected content is available;

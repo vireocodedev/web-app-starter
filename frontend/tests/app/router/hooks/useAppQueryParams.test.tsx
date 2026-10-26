@@ -38,8 +38,10 @@ function QueryControls() {
   );
 }
 
-function mount(initialEntries = ["/dev-guide/patterns?q=start&page=2&tag=a&tag=b"]) {
-  const router = createMemoryRouter([{ path: "/dev-guide/patterns", Component: QueryControls }], { initialEntries });
+function mount(initialEntries = ["/dev-guide/frontend/patterns?q=start&page=2&tag=a&tag=b"]) {
+  const router = createMemoryRouter([{ path: "/dev-guide/frontend/patterns", Component: QueryControls }], {
+    initialEntries,
+  });
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -71,7 +73,7 @@ describe("useAppQueryParams", () => {
   });
 
   it("does not rewrite malformed URLs on read and omits defaults on reset", async () => {
-    const router = mount(["/dev-guide/patterns?page=bad&q=first&q=second&tag=a&tag=b"]);
+    const router = mount(["/dev-guide/frontend/patterns?page=bad&q=first&q=second&tag=a&tag=b"]);
     expect(screen.getByLabelText("Query values")).toHaveTextContent("first:1");
     expect(router.state.location.search).toContain("page=bad");
     fireEvent.click(screen.getByRole("button", { name: "Reset query" }));

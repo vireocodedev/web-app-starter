@@ -42,14 +42,19 @@ docked panels.
 The removable development guidance is grouped without merging its owners:
 
 ```text
-src/features/development-guide/{architecture,contacts,patterns/<category>}
-src/pages/development-guide/{architecture,contacts,patterns}
+src/features/development-guide/{architecture,contacts,handbook,patterns/<category>}
+src/pages/development-guide/{architecture,contacts,handbook,patterns}
 tests/features/development-guide/{architecture,contacts,patterns/<category>}
 ```
 
-Architecture, Contacts, and every Patterns category still have separate public
+Architecture, Contacts, Handbook, and every Patterns category still have separate public
 interfaces and dependency boundaries. `development-guide` is a physical
 grouping for code omitted from production, not one broad feature boundary.
+
+The Handbook catalog owns bilingual fullstack articles under
+`docs/development-guide/`. The router composes its public manifest into category,
+topic, and article routes. Shared Markdown presentation and page navigation
+belong to `app/shell/documentation`; they do not import article catalogs.
 
 ## Package, test, and mock owners
 
@@ -66,8 +71,8 @@ production `src/`.
 ## Optional examples and stable infrastructure
 
 Some shipped examples are optional. Contacts is the complete feature example;
-Settings is an application-preference presentation feature; Patterns and
-Architecture are development guidance. Removing an example can remove its
+Settings is an application-preference presentation feature; Patterns,
+Architecture, and Handbook are development guidance. Removing an example can remove its
 feature, pages, tests, routes, translations, and registrations. Stable owners
 such as `src/app/data`, `src/app/router`, and the shell remain unless the
 application no longer needs that capability.

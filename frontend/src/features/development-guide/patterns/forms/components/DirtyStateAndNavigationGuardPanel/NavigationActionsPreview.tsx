@@ -23,7 +23,7 @@ export function NavigationActionsPreview() {
       <RgoContainerGrid size={1}>
         <Button
           fullWidth
-          onClick={() => navigate("/dev-guide/patterns/forms/dependent-fields")}
+          onClick={() => navigate("/dev-guide/frontend/patterns/forms/dependent-fields")}
           type="button"
           variant="contained"
         >

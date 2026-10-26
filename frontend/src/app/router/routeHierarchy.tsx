@@ -271,6 +271,7 @@ function createRouteObject(
       mobileBottomNavigation: definition.mobileBottomNavigation,
       mobileSurface: definition.mobileSurface,
       HeaderContext: definition.HeaderContext,
+      headerBreadcrumb: definition.headerBreadcrumb,
       ...(definition.headerNavigation
         ? {
             sectionNavigation: Object.entries(registry).flatMap(([childId, child]) => {
@@ -302,15 +303,25 @@ function createRouteObject(
         breadcrumbs === false
           ? () => []
           : (translations, params) => [
-              ...ancestors.map(ancestorId => {
+              ...ancestors.flatMap((ancestorId, index) => {
                 const ancestor = registry[ancestorId];
                 if (!ancestor) {
                   throw routeError(ancestorId, "is not registered");
                 }
-                return {
-                  label: resolveRouteTitle(ancestor, translations, params),
-                  to: routeDestinationWithParams(registry, ancestorId, params),
-                };
+                const label = resolveRouteTitle(ancestor, translations, params);
+                if (
+                  definition.index &&
+                  index === ancestors.length - 1 &&
+                  label === resolveRouteTitle(definition, translations, params)
+                ) {
+                  return [];
+                }
+                return [
+                  {
+                    label,
+                    to: routeDestinationWithParams(registry, ancestorId, params),
+                  },
+                ];
               }),
               ...(breadcrumbs ?? []).map(breadcrumb => ({
                 label:

@@ -6,10 +6,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Map;
 
 import com.vireocode.backend.user.AppUserRepository;
 import com.vireocode.backend.user.LocalUserInitializer;
+import httptestfixtures.HttpErrorTestConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,7 @@ import tools.jackson.databind.ObjectMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("local")
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, HttpErrorTestConfiguration.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "app.bootstrap-user.username=test-user",
         "app.bootstrap-user.password=test-user-password",
@@ -65,7 +67,7 @@ class AuthIntegrationTests {
 
     @Test
     void anonymousSessionIs401AndHealthIsPublic() throws Exception {
-        assertThat(get("/auth/session").statusCode()).isEqualTo(401);
+        assertError(get("/auth/session"), 401, "AUTHENTICATION_REQUIRED", "Authentication required");
         assertThat(get("/actuator/health").statusCode()).isEqualTo(200);
     }
 
@@ -105,23 +107,54 @@ class AuthIntegrationTests {
     @Test
     void invalidCredentialsAre401WithoutStartingAuthentication() throws Exception {
         var csrf = csrf();
-        assertThat(post("/auth/login", credentials("wrong-password"), csrf).statusCode()).isEqualTo(401);
-        assertThat(post("/auth/login", "{\"username\":\"unknown\",\"password\":\"wrong-password\"}", csrf)
-                .statusCode()).isEqualTo(401);
+        var wrongPassword = post("/auth/login", credentials("wrong-password"), csrf);
+        var unknownUser = post("/auth/login", "{\"username\":\"unknown\",\"password\":\"wrong-password\"}", csrf);
+        assertError(wrongPassword, 401, "AUTHENTICATION_FAILED", "Invalid credentials or expired session");
+        assertError(unknownUser, 401, "AUTHENTICATION_FAILED", "Invalid credentials or expired session");
+        assertThat(unknownUser.body()).isEqualTo(wrongPassword.body());
         assertThat(get("/auth/session").statusCode()).isEqualTo(401);
     }
 
     @Test
+    void authenticationServiceOutagesAreSafeServerErrorsInsteadOfInvalidCredentials() throws Exception {
+        var csrf = csrf();
+        for (var username : List.of("test-authentication-outage", "test-internal-authentication-outage")) {
+            assertError(post("/auth/login", json.writeValueAsString(Map.of(
+                    "username", username, "password", "private-submitted-password")), csrf),
+                    500, "INTERNAL_ERROR", "The request could not be completed");
+        }
+        assertError(get("/auth/session"), 401, "AUTHENTICATION_REQUIRED", "Authentication required");
+        assertError(post("/auth/login", credentials("wrong-password"), csrf),
+                401, "AUTHENTICATION_FAILED", "Invalid credentials or expired session");
+        assertError(post("/auth/login", json.writeValueAsString(Map.of(
+                "username", "unknown-user", "password", "wrong-password")), csrf),
+                401, "AUTHENTICATION_FAILED", "Invalid credentials or expired session");
+    }
+
+    @Test
+    void unavailableSessionUserUsesTheSameSafeAuthenticationFailure() throws Exception {
+        assertThat(post("/auth/login", credentials("test-user-password"), csrf()).statusCode()).isEqualTo(204);
+        jdbc.update("update app_user set enabled = false where username = ?", "test-user");
+        try {
+            assertError(get("/auth/session"), 401, "AUTHENTICATION_FAILED", "Invalid credentials or expired session");
+        } finally {
+            jdbc.update("update app_user set enabled = true where username = ?", "test-user");
+        }
+    }
+
+    @Test
     void loginAndLogoutRequireCsrfEvenForAnonymousRequests() throws Exception {
-        assertThat(post("/auth/login", credentials("test-user-password"), null).statusCode()).isEqualTo(403);
-        assertThat(post("/auth/logout", "", null).statusCode()).isEqualTo(403);
+        assertError(post("/auth/login", credentials("test-user-password"), null),
+                403, "CSRF_INVALID", "Request not permitted");
+        assertError(post("/auth/logout", "", null), 403, "CSRF_INVALID", "Request not permitted");
     }
 
     @Test
     void csrfTokenIsBoundToItsSession() throws Exception {
         var csrf = csrf();
         cookies.getCookieStore().removeAll();
-        assertThat(post("/auth/login", credentials("test-user-password"), csrf).statusCode()).isEqualTo(403);
+        assertError(post("/auth/login", credentials("test-user-password"), csrf),
+                403, "CSRF_INVALID", "Request not permitted");
     }
 
     @Test
@@ -129,7 +162,7 @@ class AuthIntegrationTests {
         var oldToken = csrf();
         assertThat(post("/auth/login", credentials("test-user-password"), oldToken).statusCode()).isEqualTo(204);
         var authenticatedSessionId = sessionId();
-        assertThat(post("/auth/logout", "", oldToken).statusCode()).isEqualTo(403);
+        assertError(post("/auth/logout", "", oldToken), 403, "CSRF_INVALID", "Request not permitted");
         assertThat(get("/auth/session").statusCode()).isEqualTo(200);
         assertThat(post("/auth/logout", "", csrf()).statusCode()).isEqualTo(204);
 
@@ -141,10 +174,86 @@ class AuthIntegrationTests {
     }
 
     @Test
-    void invalidJsonAndMissingFieldsAre400() throws Exception {
+    void loginValidationPublishesOnlyBoundedFieldCodes() throws Exception {
         var csrf = csrf();
-        assertThat(post("/auth/login", "{\"username\":\"test-user\"}", csrf).statusCode()).isEqualTo(400);
-        assertThat(post("/auth/login", "not-json", csrf).statusCode()).isEqualTo(400);
+        assertValidation(post("/auth/login", "{}", csrf), List.of(
+                Map.of("field", "username", "code", "REQUIRED"),
+                Map.of("field", "password", "code", "REQUIRED")));
+        assertValidation(post("/auth/login", "{\"username\":\"test-user\"}", csrf), List.of(
+                Map.of("field", "password", "code", "REQUIRED")));
+        assertValidation(post("/auth/login", json.writeValueAsString(Map.of(
+                "username", " ", "password", " ")), csrf), List.of(
+                Map.of("field", "username", "code", "REQUIRED"),
+                Map.of("field", "password", "code", "REQUIRED")));
+        assertValidation(post("/auth/login", json.writeValueAsString(Map.of(
+                "username", "private-username-".repeat(10), "password", "secret-password-".repeat(10))), csrf), List.of(
+                Map.of("field", "username", "code", "TOO_LONG"),
+                Map.of("field", "password", "code", "TOO_LONG")));
+        assertThat(get("/auth/session").statusCode()).isEqualTo(401);
+    }
+
+    @Test
+    void malformedAndAbsentBodiesHaveSafeInvalidRequestResponses() throws Exception {
+        var csrf = csrf();
+        for (var body : List.of("not-json secret-password", "", "null",
+                "{\"username\":{\"private\":\"secret-password\"},\"password\":\"secret-password\"}")) {
+            assertError(post("/auth/login", body, csrf), 400, "INVALID_REQUEST", "The request is not valid");
+        }
+    }
+
+    @Test
+    void frameworkErrorsPreserveStatusAndHeadersWithoutPublishingFrameworkBodies() throws Exception {
+        assertThat(post("/auth/login", credentials("test-user-password"), csrf()).statusCode()).isEqualTo(204);
+        var methodNotAllowed = get("/auth/login");
+        assertError(methodNotAllowed, 405, "REQUEST_REJECTED", "The request was rejected");
+        assertThat(methodNotAllowed.headers().firstValue("Allow").orElseThrow()).contains("POST");
+
+        var unsupportedType = client.send(HttpRequest.newBuilder(URI.create(baseUrl + "/auth/login"))
+                .header("Content-Type", "text/plain")
+                .header("X-CSRF-TOKEN", csrf().token())
+                .POST(HttpRequest.BodyPublishers.ofString("secret-password")).build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertError(unsupportedType, 415, "REQUEST_REJECTED", "The request was rejected");
+        assertError(get("/no-such-private-route?secret=private"), 404, "REQUEST_REJECTED", "The request was rejected");
+        var unavailable = get("/test-errors/unavailable");
+        assertError(unavailable, 503, "INTERNAL_ERROR", "The request could not be completed");
+        assertThat(unavailable.headers().firstValue("Retry-After")).contains("30");
+        assertError(get("/test-errors/forbidden"), 403, "FORBIDDEN", "Request not permitted");
+        assertError(get("/test-errors/authentication"), 401, "AUTHENTICATION_REQUIRED", "Authentication required");
+        assertError(get("/test-errors/authentication-service"), 500,
+                "INTERNAL_ERROR", "The request could not be completed");
+
+        var unsupportedAccept = client.send(HttpRequest.newBuilder(URI.create(baseUrl + "/auth/csrf"))
+                .header("Accept", "text/html").GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertError(unsupportedAccept, 406, "REQUEST_REJECTED", "The request was rejected");
+    }
+
+    @Test
+    void declaredExceptionStatusesSurviveSafeTranslationAndCyclicCausesTerminate() throws Exception {
+        assertThat(post("/auth/login", credentials("test-user-password"), csrf()).statusCode()).isEqualTo(204);
+        for (var path : List.of("declared-conflict", "inherited-conflict", "composed-conflict", "wrapped-conflict")) {
+            assertError(get("/test-errors/" + path), 409, "REQUEST_REJECTED", "The request was rejected");
+        }
+        assertError(get("/test-errors/cyclic-causes"), 500, "INTERNAL_ERROR", "The request could not be completed");
+    }
+
+    @Test
+    void unexpectedAndServletErrorsDoNotExposeSecretsEvenToHtmlClients() throws Exception {
+        assertThat(post("/auth/login", credentials("test-user-password"), csrf()).statusCode()).isEqualTo(204);
+        assertError(get("/test-errors/unexpected"), 500, "INTERNAL_ERROR", "The request could not be completed");
+        var servletError = client.send(HttpRequest.newBuilder(URI.create(baseUrl + "/test-errors/servlet"))
+                .header("Accept", "text/html").GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertError(servletError, 502, "INTERNAL_ERROR", "The request could not be completed");
+        assertError(get("/error?message=true&trace=true"), 500, "INTERNAL_ERROR", "The request could not be completed");
+    }
+
+    @Test
+    void methodValidationKeepsInputAndReturnValueFailuresDistinct() throws Exception {
+        assertThat(post("/auth/login", credentials("test-user-password"), csrf()).statusCode()).isEqualTo(204);
+        assertError(get("/test-errors/validation?name=private-name"), 400,
+                "VALIDATION_FAILED", "Some fields need attention");
+        assertError(get("/test-errors/return-validation"), 500,
+                "INTERNAL_ERROR", "The request could not be completed");
     }
 
     @Test
@@ -154,6 +263,22 @@ class AuthIntegrationTests {
                 .contains("HttpOnly", "SameSite=Lax", "Path=/api");
         assertThat(response.headers().firstValue("Cache-Control").orElseThrow()).contains("no-store");
         assertThat(response.headers().firstValue("Access-Control-Allow-Origin")).isEmpty();
+    }
+
+    private void assertError(HttpResponse<String> response, int status, String code, String message) throws Exception {
+        assertError(response, status, code, message, List.of());
+    }
+
+    private void assertValidation(HttpResponse<String> response, List<Map<String, String>> fields) throws Exception {
+        assertError(response, 400, "VALIDATION_FAILED", "Some fields need attention", fields);
+    }
+
+    private void assertError(HttpResponse<String> response, int status, String code, String message,
+            List<Map<String, String>> fields) throws Exception {
+        assertThat(response.statusCode()).isEqualTo(status);
+        assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/json");
+        assertThat(json.readTree(response.body())).isEqualTo(json.readTree(json.writeValueAsString(Map.of(
+                "code", code, "message", message, "fieldErrors", fields))));
     }
 
     private HttpResponse<String> get(String path) throws Exception {

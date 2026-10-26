@@ -24,7 +24,8 @@ const mobileLocalBreadcrumbTextStyle = {
 export function AppBreadcrumbs({
   latestOnly = false,
   local = false,
-}: Readonly<{ latestOnly?: boolean; local?: boolean }>) {
+  minimumLocalItems = 3,
+}: Readonly<{ latestOnly?: boolean; local?: boolean; minimumLocalItems?: number }>) {
   const { t } = useAppTranslation();
   const { t: guideT } = useDevelopmentGuideTranslation();
   const theme = useTheme();
@@ -37,7 +38,7 @@ export function AppBreadcrumbs({
   const handle = matchedRoute?.handle as AppRouteHandle | undefined;
   const breadcrumbs = handle?.resolveBreadcrumbs({ app: t, developmentGuide: guideT }, matchedRoute?.params ?? {});
 
-  if (!breadcrumbs?.length || (local && breadcrumbs.length < 3)) {
+  if (!breadcrumbs?.length || (local && breadcrumbs.length < minimumLocalItems)) {
     return null;
   }
   const visibleBreadcrumbs = latestOnly ? breadcrumbs.slice(-1) : breadcrumbs;

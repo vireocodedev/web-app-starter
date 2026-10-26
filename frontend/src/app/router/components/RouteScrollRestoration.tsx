@@ -1,17 +1,14 @@
-import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
-import { Outlet, useLocation, useNavigationType, type Location } from "react-router";
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
+import { Outlet, useLocation, useNavigationType } from "react-router";
+
+import {
+  currentWindowScrollEntry as windowEntry,
+  RouteScrollContext,
+  routeScrollEntry as routeEntry,
+  type RouteScrollEntry as RouteEntry,
+} from "../routeScrollReadiness";
 
 type ScrollPosition = Readonly<{ left: number; top: number }>;
-
-type RouteEntry = Readonly<{
-  hash: string;
-  key: string;
-  pathname: string;
-  routerKey: string;
-  search: string;
-  token: string;
-  url: string;
-}>;
 
 type PendingScroll = Readonly<{
   entry: RouteEntry;
@@ -24,37 +21,6 @@ type ProvisionalEntryAdvance = Readonly<{
   from: RouteEntry;
   to: RouteEntry;
 }>;
-
-type RouteScrollContextValue = Readonly<{
-  contentReady: (token: string) => void;
-}>;
-
-const RouteScrollContext = createContext<RouteScrollContextValue | null>(null);
-
-function routeEntry(location: Pick<Location, "hash" | "key" | "pathname" | "search">) {
-  const url = `${location.pathname}${location.search}${location.hash}`;
-  const routerKey = location.key || "default";
-  const browserKey = window.navigation?.currentEntry?.key;
-  const key = browserKey ? `${routerKey}\u0000${browserKey}` : routerKey;
-  return {
-    hash: location.hash,
-    key,
-    pathname: location.pathname,
-    routerKey,
-    search: location.search,
-    token: `${key}\u0000${url}`,
-    url,
-  } satisfies RouteEntry;
-}
-
-function windowEntry(current: RouteEntry): RouteEntry {
-  return routeEntry({
-    hash: window.location.hash,
-    key: current.routerKey,
-    pathname: window.location.pathname,
-    search: window.location.search,
-  });
-}
 
 function decodedFragment(hash: string): string | null {
   if (!hash || hash === "#") return null;
@@ -149,6 +115,7 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
   const currentEntry = useRef<RouteEntry | null>(null);
   const pending = useRef<PendingScroll | null>(null);
   const readyToken = useRef<string | null>(null);
+  const leafClaims = useRef(new Map<string, Map<object, Readonly<{ ready: boolean }>>>());
   const scheduled = useRef<Readonly<{ frame: number; token: string }> | null>(null);
   const frozenEntryToken = useRef<string | null>(null);
   const thawFrame = useRef<number | null>(null);
@@ -177,7 +144,8 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
 
   const savePosition = useCallback(
     (entry: RouteEntry | null) => {
-      if (!entry) return;
+      // Preserve the saved target while delayed content can clamp the placeholder viewport.
+      if (!entry || pending.current?.entry.token === entry.token) return;
       const position = {
         left: window.scrollX,
         top: window.scrollY,
@@ -211,21 +179,33 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
     });
   }, [savePosition]);
 
+  const entryReady = useCallback((token: string) => {
+    if (readyToken.current !== token) return false;
+    for (const claim of leafClaims.current.get(token)?.values() ?? []) {
+      if (!claim.ready) return false;
+    }
+    return true;
+  }, []);
+
   const applyPending = useCallback(
     (token: string) => {
       const action = pending.current;
-      if (!action || action.entry.token !== token) return;
-      pending.current = null;
+      if (!action || action.entry.token !== token || currentEntry.current?.token !== token || !entryReady(token))
+        return;
+      if (scheduled.current?.token === token) return;
       cancelScheduled();
       const frame = window.requestAnimationFrame(() => {
+        if (scheduled.current?.frame !== frame) return;
         scheduled.current = null;
-        if (currentEntry.current?.token === token && readyToken.current === token) {
+        if (pending.current === action && currentEntry.current?.token === token && entryReady(token)) {
+          // Consume only after both the current branch and all current leaf owners are still ready.
+          pending.current = null;
           applyScroll(action);
         }
       });
       scheduled.current = { frame, token };
     },
-    [cancelScheduled],
+    [cancelScheduled, entryReady],
   );
 
   const contentReady = useCallback(
@@ -236,7 +216,27 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
     [applyPending],
   );
 
+  const claimReady = useCallback(
+    (token: string, owner: object, ready: boolean) => {
+      const owners = leafClaims.current.get(token) ?? new Map<object, Readonly<{ ready: boolean }>>();
+      const claim = { ready };
+      owners.set(owner, claim);
+      leafClaims.current.set(token, owners);
+      if (!ready && scheduled.current?.token === token) cancelScheduled();
+      if (ready) applyPending(token);
+      return () => {
+        // A stale cleanup cannot release a newer claim by this owner or another entry/owner.
+        if (leafClaims.current.get(token)?.get(owner) !== claim) return;
+        owners.delete(owner);
+        if (!owners.size) leafClaims.current.delete(token);
+        applyPending(token);
+      };
+    },
+    [applyPending, cancelScheduled],
+  );
+
   useLayoutEffect(() => {
+    const entryClaims = leafClaims.current;
     const previousScrollRestoration = window.history.scrollRestoration;
     browserScrollRestoration.current = previousScrollRestoration;
     window.history.scrollRestoration = "manual";
@@ -271,8 +271,7 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
           position,
           topFallback: false,
         };
-        readyToken.current = next.token;
-        applyPending(next.token);
+        // The new native hash entry still needs its React branch and leaf claims to commit.
         return;
       }
       provisionalEntryAdvance.current = { from: previous, to: next };
@@ -327,6 +326,7 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
       thawFrame.current = null;
       frozenEntryToken.current = null;
       currentEntry.current = null;
+      entryClaims.clear();
       pending.current = null;
       readyToken.current = null;
       provisionalEntryAdvance.current = null;
@@ -358,14 +358,26 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
     currentEntry.current = committedDestination;
     frozenEntryToken.current = null;
     window.history.scrollRestoration = destinationIsUnambiguous ? "manual" : browserScrollRestoration.current;
-    pending.current = nativeHashNavigation
-      ? null
-      : pendingScroll(
-          policyPrevious,
-          committedDestination,
-          navigationType,
-          destinationIsUnambiguous ? positions.current.get(committedDestination.token) : undefined,
-        );
+    const existingAction = pending.current;
+    const retainedAction =
+      existingAction?.entry.token === committedDestination.token
+        ? existingAction
+        : existingAction &&
+            committedDestination.browserKey !== undefined &&
+            existingAction.entry.browserKey === committedDestination.browserKey &&
+            existingAction.entry.url === committedDestination.url
+          ? { ...existingAction, entry: committedDestination }
+          : null;
+    pending.current =
+      retainedAction ??
+      (nativeHashNavigation
+        ? null
+        : pendingScroll(
+            policyPrevious,
+            committedDestination,
+            navigationType,
+            destinationIsUnambiguous ? positions.current.get(committedDestination.token) : undefined,
+          ));
 
     if (
       !pending.current &&
@@ -386,7 +398,7 @@ export function RouteScrollRestoration({ children }: Readonly<{ children: ReactN
     };
   }, [applyPending, cancelScheduled, destination, navigationType, observeEntry, savePosition]);
 
-  const context = useMemo(() => ({ contentReady }), [contentReady]);
+  const context = useMemo(() => ({ contentReady, claimReady }), [contentReady, claimReady]);
   return <RouteScrollContext.Provider value={context}>{children}</RouteScrollContext.Provider>;
 }
 

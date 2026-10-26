@@ -18,6 +18,8 @@ class CIScopeTests(unittest.TestCase):
                 (['docs/template-initialization.md'], (False, False, False)),
                 (['infrastructure/ci/manage.py'], (False, False, True)),
                 (['.github/workflows/ci.yml'], (True, True, True)),
+                (['.agents/skills/initialization-intake/scripts/intake.mjs'], (True, True, True)),
+                (['.agents/skills/initialization-execution/SKILL.md'], (True, True, True)),
                 (['.vscode/launch.json'], (True, True, True)),
                 (['infrastructure/release/smoke_images.py'], (True, True, True)),
                 (['infrastructure/ci/ci_scope.py'], (True, True, True)),
