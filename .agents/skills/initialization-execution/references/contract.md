@@ -20,7 +20,9 @@ tasks. Canonical `vireocodedev/web-app-starter` cannot initialize itself.
 Execution's first operation is the intake `require-complete` gate. Missing,
 partial, invalid, changed or repository-mismatched intake stops execution with
 an explicit instruction to finish `$initialization-intake` first. A legacy
-workbook or old execution state is not a completed new intake.
+workbook or old execution state is not a completed new intake. Local
+[dry-run intake](../../initialization-intake/references/dry-run.md) is practice
+only: its separate state and `rehearsalComplete` cannot unlock execution.
 
 Read the [state contract](../../initialization-intake/references/state.md).
 The helper derives readiness from valid applicable answers and prerequisites,
@@ -116,4 +118,10 @@ Regenerate `docs/project.html` and the bundled offline view using the
 checks, missing evidence, deferred artwork and any human intervention after
 intake. Configuration alone does not prove runtime or live setup. A clean
 fresh-consumer rehearsal is still required to prove the unattended experience.
-Business requirements/specification are a later separately defined workflow.
+Business requirements/specification follow full initialization through
+`$specification-creator`. It requires the offline
+[completion receipt gate](completion.md); local-only completion is insufficient.
+Record actual observed full execution with that contract's producer and private
+binding. Older evidence remains historical acceptance but must be deliberately
+reconciled into the structured receipt before specification creation. Read-only
+reconciliation preserves existing setup and never fabricates missing observations.

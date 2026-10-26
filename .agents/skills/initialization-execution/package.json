@@ -17,8 +17,9 @@
     "browser:install": "playwright install chromium",
     "test:browser": "node --test --test-concurrency=1 tests/browser.test.mjs",
     "test:portable-install": "node tests/portable-install.mjs",
-    "test": "npm run test:intake && npm run test:docs && npm run test:contract && npm run test:browser",
-    "verify": "npm test && npm run docs:check"
+    "test": "npm run test:intake && npm run test:completion && npm run test:docs && npm run test:contract && npm run test:browser",
+    "verify": "npm test && npm run docs:check",
+    "test:completion": "node --test --test-concurrency=1 tests/completion.test.mjs"
   },
   "dependencies": {
     "react": "19.2.8",

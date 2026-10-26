@@ -1,0 +1,4 @@
+interface:
+  display_name: "Specification creator"
+  short_description: "Interview, resume and approve an app specification"
+  default_prompt: "Use $specification-creator to define or revise this initialized app's functional specification through an adaptive interview."

@@ -2,28 +2,36 @@
 
 Handoff treba reći što je implementirano, opaženo i nepoznato. Source provenance, lokalna provjera, CI i live prihvat različite su tvrdnje s različitim identitetima.
 
-**Dokumentirani workflow s receptom.** V1/source/spec i CI/release ugovori definiraju stvarne receipte. Predloženi handoff ne zamjenjuje njihove sheme.
+**Dokumentirani workflow s receptom.** Aktualni vlasnici inicijalizacije/specifikacije i CI/release ugovori definiraju receipte i granice stanja. Predloženi handoff ne zamjenjuje njihove sheme.
 
 ## Okidač, vlasnik i ugovor
 
-Koristi na kraju taska, pri nastavku tuđeg rada, prihvatu paketa ili release izvješću. Implementator bilježi source/provjere, operater live/recovery opažanja, a klijent poslovni prihvat.
+Koristi na kraju taska, pri nastavku tuđeg rada, pregledu specifikacije ili release izvješću. Implementator bilježi source/provjere, operater live/recovery opažanja, a klijent poslovni prihvat.
 
 Dokaz mora opisivati točan kandidat i stvarni sloj. Template receipt nije consumer prihvat. Specifikacija nije implementirani kod. Build nije svaki test ili live deployment.
 
 ## Različiti identiteti
 
-| Identitet                               | Svrha                            |
-| --------------------------------------- | -------------------------------- |
-| Commit/working-tree scope               | Implementirani/pregledani izvor. |
-| Project/baseline/version/content hash   | Odabrani dogovoreni scope.       |
-| Export SHA-256                          | Integritet preuzetih bajtova.    |
-| CI SHA/run/attempt                      | Izvršavanje provjere.            |
-| Frontend/backend digesti                | Release par.                     |
-| Staging receipt/environment transaction | Opaženi host prihvat/mutacija.   |
+| Identitet                               | Svrha                                                   |
+| --------------------------------------- | ------------------------------------------------------- |
+| Commit/working-tree scope               | Implementirani/pregledani izvor.                        |
+| Revizija specifikacije i veza odobrenja | Točan funkcionalni opseg koji je korisnik odobrio.      |
+| Referenca izvora i content digest       | Izvorni materijal korišten u intervjuu.                 |
+| Identitet paketa i source/body hashevi  | Koji odobreni snapshot i lokalni zadaci čine paket.     |
+| Cilj importa, markeri i povezivanja     | Koje stavke paketa odgovaraju stvarnim GitHub issueima. |
+| CI SHA/run/attempt                      | Izvršavanje provjere.                                   |
+| Frontend/backend digesti                | Release par.                                            |
+| Staging receipt/environment transaction | Opaženi host prihvat/mutacija.                          |
 
-Server `contentHash` odnosi se na canonical odabrani payload, ne cijeli envelope. `exportFileSha256` je whole-file checksum. Capture izričito ne rekomputira server canonical hash; ne spajaj ta polja kao isti dokaz.
+Checksum izvora identificira bajtove; ne dokazuje klijentovo odobrenje ni istinitost. Odobrenje specifikacije veže se uz točnu pregledanu reviziju i stvarni korisnikov odgovor prema specification creatoru (`.agents/skills/specification-creator/SKILL.md`). Sama validacija nacrta ne daje odobrenje.
 
-Resume offline provjerava pinned capture datoteke. Ne preuzima novu baseline i ne prepisuje autorske dokumente. Refresh treba review promjena uz očuvanje execution povijesti, ne prepisivanje značenja starog dokaza.
+Nastavak koristi spremljene odgovore, otvorene grane i reference izvora. Promjena izvornog materijala ne smije prešutno prepisati odobreni opseg. Revizija čuva prethodnu odobrenu baseline, identificira pogođene zahtjeve i ponovno otvara njihove grane; nepogođene odluke ostaju dostupne.
+
+Vlasnik initialization executiona (`.agents/skills/initialization-execution/SKILL.md`) definira provjeru dovršenog punog setupa. Lokalna provjera validira spremljeni dokaz za ovaj consumer; ne dokazuje trenutačno zdravlje udaljenih servisa.
+
+Lokalni paket issuea vodi specification-to-issues (`.agents/skills/specification-to-issues/SKILL.md`), a naknadnu objavu github-issues-import (`.agents/skills/github-issues-import/SKILL.md`). Hashevi paketa vežu kopirani odobreni izvor, dokaz odobrenja i tijela issuea; dokazuju integritet, ne novo produktno odobrenje ili spremnost za coding. Povezivanje importanog issuea identificira udaljeni zapis, ne napredak implementacije.
+
+Nastavi lokalno generiranje iz odobrenog izvora, a import iz točnog paketa/cilja i usklađenih udaljenih markera. Čuvaj ljudske izmjene i zatvorene issuee. Promijenjena specifikacija traži pregledanu novu reviziju paketa; ne pripisuj stare import dokaze promijenjenom sadržaju. Točno navedi native odnose ili fallback s izričitim referencama.
 
 ## Stanja umjesto jedne kvačice
 
@@ -51,20 +59,22 @@ Status zastarijeva nakon source promjene ili novog releasea. Veži izvješće uz
 
 ## Pogreške i odluke
 
-| Opažanje                                          | Odluka                                           |
-| ------------------------------------------------- | ------------------------------------------------ |
-| Log drugog checkouta/attempta                     | Nije dokaz kandidata.                            |
-| Novi source nakon builda                          | Procijeni pogođene provjere.                     |
-| Generation complete, implementation unimplemented | Sačuvaj oba stanja.                              |
-| Template produkcija prihvaćena                    | Consumer treba vlastite dokaze.                  |
-| Slika objavljena, host rezultat nepoznat          | Odvoji uspjeh objave i neizvjesnost deploymenta. |
-| Tentative/unanswered source                       | Ne pretvaraj u confirmed.                        |
+| Opažanje                                         | Odluka                                           |
+| ------------------------------------------------ | ------------------------------------------------ |
+| Log drugog checkouta/attempta                    | Nije dokaz kandidata.                            |
+| Novi source nakon builda                         | Procijeni pogođene provjere.                     |
+| Specifikacija odobrena, implementacija nedostaje | Sačuvaj oba stanja bez tvrdnje o dovršenom kodu. |
+| Template produkcija prihvaćena                   | Consumer treba vlastite dokaze.                  |
+| Slika objavljena, host rezultat nepoznat         | Odvoji uspjeh objave i neizvjesnost deploymenta. |
+| Tentative/unanswered source                      | Ne pretvaraj u confirmed.                        |
 
 ## Prihvat i inspekcija
 
-Primatelj treba pronaći source, razumjeti odluke, ponoviti dopuštene provjere i nastaviti bez nepotrebnog rada. Stable issue/PR keys i import mappings čuvaju execution identitet.
+Primatelj treba pronaći source, razumjeti odluke, ponoviti dopuštene provjere i nastaviti bez nepotrebnog rada. Odobrene revizije specifikacije, identiteti paketa, povezani kriteriji prihvata, stabilna import povezivanja i stvarni issue/PR linkovi čuvaju identitet zadatka. Privatno stanje intervjua i vjerodajnice ostaju izvan dijeljenih paketa i izvješća.
 
 Vlasnički postupci upravljaju objavom, provjerama, deployem i restoreom. Handoff ne daje ovlast. Članak ne stvara receipt ni mijenja progress.
+
+Aktualni vlasnici: V1 workflow (`docs/v1-workflow.md`), specification creator (`.agents/skills/specification-creator/SKILL.md`) i initialization execution (`.agents/skills/initialization-execution/SKILL.md`). Pinani izvori niže čuvaju povijesno podrijetlo, uključujući uklonjenu export/capture implementaciju. Njezini serverski hashevi i import mappings nisu aktualni preduvjeti specifikacije.
 
 ## Izvori
 

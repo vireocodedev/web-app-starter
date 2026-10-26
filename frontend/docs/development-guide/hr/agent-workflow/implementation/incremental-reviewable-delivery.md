@@ -2,11 +2,11 @@
 
 Odaberi pregledan task boundary, sačuvaj nepovezani rad i objavi samo zatražene radnje. Mali inkrement omogućuje razumijevanje ponašanja, dokaza i source identiteta zajedno.
 
-**Source-backed implementacijski recept.** V1/spec ugovor traži bounded issue, PR link i completion dokaz. Commit/checkpoint slijed primjenjuje to pravilo; nije Git automatizacija ni trajna push/merge/deploy dozvola.
+**Source-backed implementacijski recept.** V1 workflow i root agent guide traže ograničene zadatke, review i dokaz dovršetka. Commit/checkpoint slijed primjenjuje to pravilo; nije Git automatizacija ni trajna push/merge/deploy dozvola.
 
 ## Okidač, vlasnik i ugovor
 
-Koristi za leaf, guide proširenje ili zadatak s commit/push/PR uputom. Implementator priprema kandidat; koordinator upravlja integracijom i publication opsegom. Nakon objave issues/PRs su izvršni zapis. Setup/generation status nije coding progress.
+Koristi za leaf, guide proširenje ili zadatak s commit/push/PR uputom. Implementator priprema kandidat; koordinator upravlja integracijom i publication opsegom. Nakon objave issues/PRs su izvršni zapis. Status inicijalizacije/specifikacije nije coding progress.
 
 Ugovor je isti inkrement u sourceu, ponašanju, reviewu i dokazu. Commit ne dokazuje checks. Push ne dokazuje uspješan CI. WIP PR nije produkcijski prihvat.
 
@@ -51,7 +51,13 @@ Local-only ostaje lokalno. Push ne daje dozvolu za zaštitu grane, deployment di
 
 Commit/PR vodi konkretnim problemom i novim ponašanjem. Navedi kompatibilnost i stvarne provjere. Ažuriraj naslov/opis kad opseg evoluira, bez napuštenog prvog pristupa kao glavne priče.
 
-Poveži stable key i stvarni imported issue. Proposal ili ready-for-spec-review nije automatski coding target. Sačuvaj source/decision mapping kod djelomične implementacije capabilityja.
+Poveži stvarni issue ili zahtjev, odobrenu reviziju specifikacije i pogođene kriterije prihvata gdje su relevantni. Predloženi zahtjev ili nacrt specifikacije nije automatski odobren coding target. Sačuvaj source/decision mapping kod djelomične implementacije capabilityja.
+
+Specification creator (`.agents/skills/specification-creator/SKILL.md`) izrađuje funkcionalnu specifikaciju. Lokalni paket issuea vodi specification-to-issues (`.agents/skills/specification-to-issues/SKILL.md`), a naknadnu objavu github-issues-import (`.agents/skills/github-issues-import/SKILL.md`). Zahtjev za generiranje lokalnog paketa ne daje ovlast za GitHub upis. Offline validacija/dry-run pregledava paket bez API pristupa; stvarni import zahtijeva izričit zahtjev za import u točan ciljni repozitorij.
+
+Objavi blokere prije ovisnih zadataka. Koristi native blocking/sub-issue odnose gdje su dostupni, uz izričite povezane reference kao dokumentirani fallback. Grupiranje samo ne podrazumijeva blokiranje. Import pri nastavku usklađuje stabilne markere i spremljena povezivanja, čuva ljudske izmjene i zatvorene issuee te staje kod konflikta umjesto prešutnog prepisivanja postojećeg rada. U handoffu sačuvaj točan identitet importanog paketa.
+
+Zadana labela ostaje `needs-triage`. Funkcionalno odobrenje ne daje automatski `ready-for-agent`, a objava ne odobrava izmišljanje arhitekture, izmjene aplikacijskog sourcea ili implementaciju.
 
 ## Pogreške i odluke
 
@@ -69,6 +75,8 @@ Poveži stable key i stvarni imported issue. Proposal ili ready-for-spec-review 
 Navedi ponašanje, opseg, stvarni commit/branch/PR, provjere/izostanke, riješeni review i sljedeći task. Privatni klijentski podaci nisu javni artefakt bez zasebnog izbora.
 
 Vlasnički postupci ostaju autoritet. Članak ne izvršava Git, issue, PR ni deployment.
+
+Aktualni vlasnici: V1 workflow (`docs/v1-workflow.md`), agent guide (`AGENTS.md`) i specification creator (`.agents/skills/specification-creator/SKILL.md`). Pinane reference niže čuvaju povijesno podrijetlo, uključujući uklonjeni specifikacijski ugovor vezan uz aplikaciju. Aktualna dva skilla vode issue handoff; povijesni postupci ne zamjenjuju njihove ugovore.
 
 ## Izvori
 

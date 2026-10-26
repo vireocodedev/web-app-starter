@@ -1,5 +1,9 @@
 # Setup questionnaire
 
+For a [dry run](dry-run.md), present this same questionnaire for a hypothetical
+consumer and explicitly simulated prerequisites. Keep examples proposed until
+the user accepts them; practice never requires actual service login or access.
+
 The executable catalog in [schema.mjs](../scripts/schema.mjs) owns field IDs,
 validation and required prerequisites. Read the full catalog before presenting
 questions. Ask all applicable questions upfront, including actions the user must

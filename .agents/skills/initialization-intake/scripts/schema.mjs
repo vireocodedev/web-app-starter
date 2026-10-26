@@ -287,7 +287,7 @@ export const prerequisites = {
   },
 };
 export const schemaVersion = 1;
-export function assess(state) {
+export function assess(state, { dryRun = false } = {}) {
   const full =
     state.answers.execution_scope?.status === "answered" &&
     state.answers.execution_scope.value === "full";
@@ -299,7 +299,7 @@ export function assess(state) {
     if (answer?.status !== "answered") missing.push(id);
     else if (!f.validate(answer.value)) invalid.push(id);
   }
-  if (state.answers.repository?.value !== state.repository.name)
+  if (!dryRun && state.answers.repository?.value !== state.repository.name)
     invalid.push("repository");
   if (
     full &&

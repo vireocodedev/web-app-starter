@@ -5,9 +5,11 @@ faze drugom. Deployani skeleton dokazuje setup; poslovni proizvod zahtijeva
 implementirane i provjerene korisničke tokove.
 
 **Dokumentirani starter workflow.** `docs/v1-workflow.md` koordinira faze.
-Setup sada vode `.agents/skills/initialization-intake/SKILL.md` i
-`.agents/skills/initialization-execution/SKILL.md`; detaljni postupci ostaju uz te
-pakete i CI/release vlasnike. Članak ne daje ovlast za izvršavanje.
+Setup vode initialization intake (`.agents/skills/initialization-intake/SKILL.md`) i
+initialization execution (`.agents/skills/initialization-execution/SKILL.md`).
+Specification creator (`.agents/skills/specification-creator/SKILL.md`) vodi naknadno funkcionalno otkrivanje.
+Detaljni postupci ostaju uz te pakete i CI/release vlasnike. Članak ne daje ovlast
+za izvršavanje.
 
 ## Okidač, vlasnik i ugovor
 
@@ -21,10 +23,11 @@ stanja. Dovršetak jednog ne podrazumijeva ostala.
 
 ```text
 checkout -> sva intake pitanja -> potvrđeni, spremljeni odgovori
-                         -> provjera uvjeta -> provjeren setup
-
-dogovoreni poslovni zahtjevi -> implementacija -> staging prihvat
-                         -> isti image pair u produkciji + handoff
+         -> uvjetovana puna inicijalizacija -> provjeren setup
+         -> adaptivni specifikacijski intervju -> odobrena revizija specifikacije
+         -> lokalni paket issuea -> izričito zatražen GitHub import
+         -> zasebno planiranje arhitekture/spremnosti -> ograničena implementacija
+         -> staging poslovni prihvat -> isti image pair u produkciji + handoff
 ```
 
 ## Potvrdi consumer i dovrši intake
@@ -45,6 +48,16 @@ i reference na zaštićenu pohranu. Druga agentska sesija nastavlja s
 Dovršetak povezuje korisnikovu potvrdu s točnim opsegom i aktualnim stanjem;
 promjena odgovora poništava dovršetak.
 
+Za lokalnu probu u templateu koristi `$initialization-intake dry run` i
+`$initialization-intake resume dry run`. Isti upitnik i validacija koriste
+zamišljene ciljeve i izričito simulirane preduvjete servisa, bez otvaranja računa
+providera ili zaštićenih operator datoteka. Napredak se sprema odvojeno u
+`.agents/skills/initialization-intake/state/dry-runs/<session>/intake.json`;
+imenovane sesije čuvaju različite scenarije. Rezultat `rehearsalComplete` uvijek
+ostavlja `complete: false` i ne može otključati stvarno izvršavanje. Referenca
+`.agents/skills/initialization-intake/references/dry-run.md` vlasnik je ugovora za
+probu. U aktualnoj fazi samo intake podržava ovaj dry-run način rada.
+
 ## Izvršavanje zahtijeva dovršen intake
 
 `$initialization-execution initialize this repository` prvo provjerava dovršenost
@@ -59,31 +72,89 @@ razvoj, CI/protection, staging, produkciju i inicijalizirani oporavak. Izričiti
 local-only opseg dokazuje samo lokalni setup. Neočekivani kvar providera ili
 promjena opsega može zaustaviti rad; poznata pitanja pripadaju intakeu.
 
-Inicijalizacija ne zahtijeva Client Discovery servis, UUID projekta, export ni
+Inicijalizacija ne zahtijeva vanjski discovery servis, UUID projekta, export ni
 poslovno odobrenje. Pri adopciji sačuvaj dovršene stare dokaze; nedovršeno
 izvršavanje zahtijeva intake prije daljnjih mutacija.
 
-## Kasniji zahtjevi ostaju odvojeni
+## Specifikacija zahtijeva punu inicijalizaciju
 
-Zamjenski workflow za zahtjeve/specifikaciju nije dio ove promjene i tek ga treba
-definirati. Nije ugrađena nova automatizacija specifikacije. Postojeći
-`discovery-specification` ostaje stara integracija s aplikacijom, izvan novog
-setupa; lokalni intake nije njegov poslovni izvor.
+Pokreni `$specification-creator create a specification for this repository` tek
+nakon dovršenog punog initialization executiona. Skill prvo koristi executionovu
+lokalnu provjeru dovršenosti za ovaj consumer. Nedostajući, djelomičan, nedosljedan
+ili local-only rezultat zaustavlja skill uz uputu za `$initialization-execution`.
+Provjera validira spremljeni setup dokaz; nije provjera trenutačnog zdravlja
+udaljenih servisa i ne može koristiti template acceptance receipt.
 
-Prije pogođene implementacije poslovni opseg treba kriterije prihvata, izuzeća,
-ovlasti, tokove i vlasnike otvorenih odluka. Potvrda setupa ne odobrava te odluke.
-Stvarni issue/PR napredak prati se neovisno o stanju inicijalizacije.
+Specification creator (`.agents/skills/specification-creator/SKILL.md`) intervjuira product/client vlasnika u
+adaptivnim rundama. Čita dostavljene specifikacije i bilješke kao izvore, razdvaja
+potvrđene zahtjeve od tumačenja i prijedloga, propituje vrijednost featurea i
+izlaže proturječja. Postavi trenutačno odgovoriva pitanja uz brojeve i obrazložene
+preporuke; odgovori određuju sljedeću rundu, bez nagađanja ovisnih odgovora.
+
+Obuhvati problem, korisnike i ishode; V1, budući opseg i izuzeća; tokove, featuree,
+stranice i relevantna UI stanja; podatke, odnose i lifecycle; ovlasti, pravila te
+slučajeve pogrešaka i prihvata. Istraži primjenjive integracije, obavijesti,
+izvještaje, import/export, pristupačnost, lokalizaciju, performanse, privatnost i
+retenciju. Uključi vizualni/responsive smjer, reference, rokove, budžetska
+ograničenja, ovisnosti, odgovornosti i vlasnika prihvata. Neprimjenjive teme
+izričito označi umjesto prešutnog preskakanja.
+
+Nakon svake serije odgovora spremi odgovore, prijedloge, otvorena pitanja,
+reference izvora i napredak u Git-ignored `.agents/skills/specification-creator/state/`.
+Nova agentska sesija nastavlja otvorene grane bez prethodne konverzacije.
+Dokumenti za pregled žive u `docs/specification/`, s ulazom `SPECIFICATION.md`;
+povezani dokumenti prema potrebi pokrivaju featuree, stranice, podatke, odluke i
+prihvat. Root `CONTEXT.md` ostaje vlasnik poslovnog rječnika; arhitekturne odluke
+zadržavaju postojećeg vlasnika.
+
+Nacrt smije imati nepoznanice. Dovršetak traži obrađene sve primjenjive teme,
+riješene produktne nepoznanice koje blokiraju uključenu funkcionalnost, provjere
+dosljednosti i korisnikovo izričito odobrenje točne revizije specifikacije.
+Naknadna promjena čuva prethodnu odobrenu baseline, identificira pogođene zahtjeve
+i ponovno otvara njihove grane za odobrenje uz očuvanje nepogođenih odgovora.
+Validacija ne daje produktno odobrenje.
+
+Skill završava funkcionalnom specifikacijom. Planiranje arhitekture, kreiranje i
+objava issuea, mockupovi, prototipovi i kodiranje zasebni su zadaci. Stvarni
+issue/PR napredak prati se neovisno o inicijalizaciji i stanju specifikacije.
+
+## Generiraj lokalno, zatim izričito importaj
+
+Nakon odobrenja točne revizije specifikacije koristi specification-to-issues
+(`.agents/skills/specification-to-issues/SKILL.md`) za pripremu lokalnog paketa issuea.
+Skill validira odobrenje i čuva kopirani odobreni izvor/dokaz odobrenja, content
+hasheve, verzionirani manifest i Markdown tijela issuea. Zadaci zadržavaju reference
+izvora, kriterije prihvata, labele, ovisnosti i parent grupiranje. Nedostajuća
+poslovna pravila vraćaju se na reviziju specifikacije. Generiranje ne mijenja
+aplikacijski source, ne izmišlja arhitekturu i ne objavljuje ništa na GitHubu.
+
+Github-issues-import (`.agents/skills/github-issues-import/SKILL.md`) koristi se
+zasebno. Offline validacija/dry-run ne pristupa provideru niti piše u njega.
+Stvarni import traži izričit zahtjev s točnim ciljnim repozitorijem. Uskladi stabilne
+markere/povezivanja za nastavak bez duplikata, čuvaj ljudske izmjene i zatvorene
+issuee te stani kod konflikta. Objavi blokere prvo; dodaj native blocking i
+sub-issue odnose gdje su dostupni, inače koristi izričite povezane reference prema
+`docs/agents/issue-tracker.md`. Parent grupiranje samo ne određuje izvršni redoslijed.
+
+Novim zadacima zadano dodijeli `needs-triage` prema `docs/agents/triage-labels.md`.
+Odobrena funkcionalnost, valjan paket i uspješna objava različita su stanja od
+pregleda arhitekture i spremnosti za agentsku implementaciju. Handoff navodi
+identitet paketa, odobrenje izvora, stvarne linkove importanih issuea i granice;
+nijedna faza automatski ne pokreće coding.
 
 ## Ponašanje prije promocije
 
-| Rezultat                  | Granica                                                            |
-| ------------------------- | ------------------------------------------------------------------ |
-| Intake dovršen            | Potvrđeni ulazi, ne uspješan setup.                                |
-| Lokalni startup           | Lokalni setup, ne poslovni prihvat.                                |
-| CI/protection             | Delivery osnova, ne implementirani poslovni featurei.              |
-| Pregledana implementacija | Ograničen rezultat sa stvarnim provjerama; V1 može ostati otvoren. |
-| Zdrav staging             | Runtime readiness; zasebno provjeri journeys/roles/failures.       |
-| Isti par u produkciji     | Identitet i dalje traži smoke, operating i recovery dokaze.        |
+| Rezultat                  | Granica                                                                 |
+| ------------------------- | ----------------------------------------------------------------------- |
+| Intake dovršen            | Potvrđeni ulazi, ne uspješan setup.                                     |
+| Lokalni startup           | Lokalni setup, ne poslovni prihvat.                                     |
+| Puna inicijalizacija      | Setup preduvjet specifikacije, ne odobreni produktni opseg.             |
+| Specifikacija odobrena    | Točan funkcionalni dogovor, ne arhitektura ili implementirani featurei. |
+| Lokalni paket valjan      | Task handoff za pregled, ne remote objava ili coding spremnost.         |
+| GitHub issuei importani   | Tracker zapisi/odnosi, ne implementirano poslovno ponašanje.            |
+| Pregledana implementacija | Ograničen rezultat sa stvarnim provjerama; V1 može ostati otvoren.      |
+| Zdrav staging             | Runtime readiness; zasebno provjeri journeys/roles/failures.            |
+| Isti par u produkciji     | Identitet i dalje traži smoke, operating i recovery dokaze.             |
 
 Zabilježi poslovni prihvat i blokere za točan staging kandidat. Produkcija promiče
 isti prihvaćeni frontend/backend par bez rebuilda. Migracije, backup, računi i
@@ -91,14 +162,16 @@ oporavak slijede postojeće vlasnike. Sačuvaj source identitet i stvarne run/pa
 
 ## Pogreške i odluke
 
-| Opažanje                                      | Odluka                                            |
-| --------------------------------------------- | ------------------------------------------------- |
-| Intake nedostaje ili više ne vrijedi          | Zaustavi execution i nastavi intake.              |
-| Druga sesija već je odgovorila na pitanja     | Učitaj stanje i nastavi samo preostala pitanja.   |
-| Setup gotov, poslovni featurei nedostaju      | Nastavi implementaciju; poslovni V1 nije dovršen. |
-| Poslovna policy odluka otvorena               | Blokiraj pogođeni rad uz vlasnika odluke.         |
-| Infrastruktura zelena, journey pada           | Poslovni prihvat ostaje otvoren.                  |
-| Produkcijski par razlikuje se od staging para | Uskladi identitet prije tvrdnje o promociji.      |
+| Opažanje                                      | Odluka                                                |
+| --------------------------------------------- | ----------------------------------------------------- |
+| Intake nedostaje ili više ne vrijedi          | Zaustavi execution i nastavi intake.                  |
+| Druga sesija već je odgovorila na pitanja     | Učitaj stanje i nastavi samo preostala pitanja.       |
+| Setup nepotpun ili local-only                 | Zaustavi specifikaciju i dovrši punu inicijalizaciju. |
+| Odobreni zahtjevi se mijenjaju                | Sačuvaj baseline i otvori pogođene grane intervjua.   |
+| Setup gotov, poslovni featurei nedostaju      | Nastavi implementaciju; poslovni V1 nije dovršen.     |
+| Poslovna policy odluka otvorena               | Blokiraj pogođeni rad uz vlasnika odluke.             |
+| Infrastruktura zelena, journey pada           | Poslovni prihvat ostaje otvoren.                      |
+| Produkcijski par razlikuje se od staging para | Uskladi identitet prije tvrdnje o promociji.          |
 
 ## Prihvat i handoff
 
@@ -109,7 +182,8 @@ consumer prihvat. Prije tvrdnje da novi setup radi bez naknadnih intervencija
 potrebna je čista proba na novom consumeru.
 
 Pinane reference niže opisuju povijesne ugovore faza/dokaza. Aktualno ponašanje
-intakea i executiona pripada gore navedenim trenutačnim skillovima.
+intakea, executiona, specifikacije i issue handoffa pripada gore navedenim trenutačnim skillovima,
+ne uklonjenom specifikacijskom paketu vezanom uz aplikaciju.
 
 ## Izvori
 

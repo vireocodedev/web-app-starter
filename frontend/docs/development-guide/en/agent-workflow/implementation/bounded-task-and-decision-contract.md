@@ -2,19 +2,25 @@
 
 Turn an issue or plain-language request into a checkable implementation boundary before editing. Separate facts, delegated technical choices and missing human decisions so useful ready work can continue without inventing requirements.
 
-**Documented workflow with a worked recipe.** The V1 workflow and specification-package contract define bounded leaf issues, source references, decisions and acceptance. The short task record below is a suggested working aid, not a new installed schema or automatic approval mechanism.
+**Documented workflow with a worked recipe.** The V1 workflow and root agent guide define bounded tasks, source references, decisions and acceptance. The short task record below is a suggested working aid, not a new installed schema or automatic approval mechanism.
 
 ## Trigger, owner and invariant
 
 Use when claiming an implementation leaf, expanding an ambiguous request or receiving a task that crosses capabilities. The implementation owner owns the proposed code boundary. Product/client owners retain consequential business decisions. A source-backed technical choice can be resolved within developer authority, but a guessed client answer remains a proposal.
 
-The invariant is an observable outcome with explicit owner, acceptance, dependencies, decision gates and authorized delivery scope. Parent/child decomposition does not automatically create an execution dependency. A package marked ready for specification review is not approval to start coding.
+The invariant is an observable outcome with explicit owner, acceptance, dependencies, decision gates and authorized delivery scope. Parent/child decomposition does not automatically create an execution dependency. A draft specification or completed interview is not approval to start coding.
 
 ## Read the actual execution contract
 
-For generated work, read the issue body, its stable key/source identity, `blockedBy`, `decisionBlockers`, `ownerBoundary` and the generated `IMPLEMENTATION-WORKFLOW.md`. Confirm the current issue/PR execution record rather than inferring progress from initialization status.
+Read the actual request or issue, the approved specification revision and the relevant decisions and acceptance criteria. Confirm ownership, dependencies, unresolved product questions and authorized delivery actions. Use the current issue/PR record when one exists; initialization and specification status do not report implementation progress.
 
-For a direct request, write an equivalent concise record:
+The specification creator (`.agents/skills/specification-creator/SKILL.md`) owns functional discovery and specification approval. Architecture planning, issue-package generation, tracker publication and implementation are separate tasks. The specification skill does not generate execution issues.
+
+Local issue-package generation belongs to specification-to-issues (`.agents/skills/specification-to-issues/SKILL.md`); later publication belongs to github-issues-import (`.agents/skills/github-issues-import/SKILL.md`). Generation requires the exact approved specification; the local package preserves copied approved source and approval evidence, content hashes, versioned manifest, Markdown issue bodies, labels, dependencies and source references. Missing business rules return to specification revision, rather than becoming invented issue requirements.
+
+Read the actual package and ticket acceptance, source references, owner boundary and declared blockers. Parent grouping alone creates no blocking order. Default `needs-triage` means maintainer review is still required: functional approval and a valid package do not establish architecture or agent implementation readiness.
+
+For either a direct request or an issue, a concise working record can be:
 
 ```text
 Outcome: readers can locate a category and its existing article URLs still work.
@@ -36,9 +42,9 @@ These neutral values demonstrate structure. They do not authorize repository pub
 | `PROPOSED`           | Assumption offered for review, not a confirmed source fact                     | Expose its effect and gate consequential dependent work.                  |
 | `REQUIRES_INPUT`     | Missing policy, capability, credential or conflicting scope with a human owner | Create/retain the targeted decision gate for affected work.               |
 
-The source may explicitly delegate a technical detail. Resolve that detail rather than leaving every implementation question open. Conversely, a locked business baseline may still contain unresolved inputs; lock does not magically answer them.
+The source may explicitly delegate a technical detail. Resolve that detail rather than leaving every implementation question open. Conversely, an approved specification revision cannot silently supply a newly discovered missing business rule; return that affected branch for a reviewed revision.
 
-The package validator checks reciprocal source/decision mappings and declared blockers. It cannot turn an analyst proposal into client agreement. Semantic review remains necessary.
+The labels above illustrate decision categories, not required fields in an installed issue schema. Mechanical checks cannot turn an analyst proposal into client agreement. Semantic review remains necessary.
 
 ## Scope the smallest coherent implementation
 
@@ -53,7 +59,7 @@ Ready independent work can continue while a specific decision blocks another lea
 | Observation                                                  | Decision                                                        |
 | ------------------------------------------------------------ | --------------------------------------------------------------- |
 | Issue has a parent but no execution blocker                  | Do not infer ordering solely from hierarchy.                    |
-| Readiness says ready-for-spec-review                         | Complete semantic review/authorization before coding.           |
+| Specification remains a draft                                | Complete product review and task authorization before coding.   |
 | UI title suggests an unstated permission                     | Treat as a proposal/input gap, not approved security policy.    |
 | Technical choice is delegated and source supports a solution | Resolve with rationale within the existing architecture.        |
 | Acceptance needs an unrelated cleanup                        | Keep cleanup separate unless necessary to the coherent outcome. |
@@ -64,6 +70,8 @@ Ready independent work can continue while a specific decision blocks another lea
 A completed task has implemented acceptance behavior, source/decision traceability, actual permitted verification and a clear delivery record. A blocked task has a precise owner/question/affected boundary rather than a vague request for more information.
 
 Use **Capability owners and review boundaries** to choose seams and **Source-bound evidence and handoff** to report outcomes. The guide explains how to work; it does not claim the task, approve its requirements or execute publication.
+
+Current owners: V1 workflow (`docs/v1-workflow.md`), agent guide (`AGENTS.md`), specification creator (`.agents/skills/specification-creator/SKILL.md`), specification-to-issues (`.agents/skills/specification-to-issues/SKILL.md`) and github-issues-import (`.agents/skills/github-issues-import/SKILL.md`). The pinned sources below document historical provenance, including the retired app-linked specification package; they are not its current execution instructions.
 
 ## Source provenance
 

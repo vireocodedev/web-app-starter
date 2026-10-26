@@ -6,8 +6,7 @@ explicit operator setup below; copying this template does not deploy an app.
 
 For the journey from setup through business acceptance, follow
 [From a cloned template to a production V1](docs/v1-workflow.md). Setup uses the
-two bundled skills below. The later requirements/specification workflow remains
-to be defined separately.
+two bundled skills below, followed by specification creation and issue handoff.
 
 ## Create your project from this template
 
@@ -63,14 +62,50 @@ is independent of frontend dependencies. The [project dashboard](docs/project.ht
 contains public documentation and sanitized evidence; private intake and execution
 state stay outside its inputs.
 
+## Try the intake locally
+
+Run the interview in this template checkout with hypothetical project details:
+
+```text
+$initialization-intake dry run
+$initialization-intake resume dry run
+```
+
+The dry run uses the real questionnaire and saves separate private practice state.
+Service access is simulated; it requires no real accounts or consumer repository.
+Practice completion cannot unlock initialization execution. See
+[local intake practice](.agents/skills/initialization-intake/references/dry-run.md)
+for named scenarios and resume. Dry-run support currently covers intake only.
+
 ## After initialization
 
 Setup delivers a verified application foundation. Business requirements,
 specification, implementation and acceptance are separate stages in the
-[V1 workflow](docs/v1-workflow.md). Their replacement requirements/specification
-process is outside this initialization change. The existing
-[Discovery specification package](docs/discovery-specification.md) is a legacy
-Client Discovery integration, not a next step or a consumer of local intake state.
+[V1 workflow](docs/v1-workflow.md). After full initialization, use the bundled
+[specification creator](.agents/skills/specification-creator/SKILL.md):
+
+```text
+$specification-creator start a specification using /path/to/project-brief.md
+```
+
+It checks completed full initialization, interviews you in adaptive rounds and
+saves private progress for another session. Existing notes or specifications seed
+the interview. Review the resulting `docs/specification/SPECIFICATION.md` and its
+supporting documents before approving the exact revision. Local-only setup does
+not unlock this workflow. Architecture planning, issue publication and application
+implementation follow separately. See the [skill guide](docs/specification-creator.md).
+
+Once the specification is approved, prepare and then import a local issue package:
+
+```text
+$specification-to-issues convert the approved specification into ./docs/issue-packages/v1
+$github-issues-import preview ./docs/issue-packages/v1
+$github-issues-import import ./docs/issue-packages/v1 into OWNER/REPO
+```
+
+Preparation stays local and pins the exact approved specification. The separate
+import task publishes the selected package to its repository and saves progress
+for resuming. See [issue packaging and import](docs/github-issue-workflow.md).
 
 ## Local development
 

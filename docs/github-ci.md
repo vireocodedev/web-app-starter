@@ -8,15 +8,15 @@ not settings inherited by **Use this template**.
 
 ## Verification selection
 
-| Changed paths | Jobs selected |
-| --- | --- |
-| `backend/**` | Backend image/smoke lane and three backend test shards |
-| `frontend/**` | Frontend static, Storybook/image/smoke and three frontend test shards |
-| Both app folders | All application lanes |
-| Other `infrastructure/ci/**` | Foundation verification |
-| `infrastructure/release/**`, `.github/**`, `.vscode/**`, routing or shard helper/config/tests | All lanes |
-| Documentation outside the app folders | Portable initialization/docs and aggregate gate |
-| Manual dispatch or the first branch push | All lanes |
+| Changed paths                                                                                 | Jobs selected                                                         |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `backend/**`                                                                                  | Backend image/smoke lane and three backend test shards                |
+| `frontend/**`                                                                                 | Frontend static, Storybook/image/smoke and three frontend test shards |
+| Both app folders                                                                              | All application lanes                                                 |
+| Other `infrastructure/ci/**`                                                                  | Foundation verification                                               |
+| `infrastructure/release/**`, `.github/**`, `.vscode/**`, routing or shard helper/config/tests | All lanes                                                             |
+| Documentation outside the app folders                                                         | Portable initialization/docs and aggregate gate                       |
+| Manual dispatch or the first branch push                                                      | All lanes                                                             |
 
 The template also treats `.agents/skills/initialization-intake/**` and
 `.agents/skills/initialization-execution/**` as shared setup changes. The change
@@ -29,7 +29,14 @@ The independent **Portable initialization and documentation** lane always runs,
 including for documentation-only changes. It selects the execution package's
 pinned Node/npm,
 installs the execution package's lockfile, verifies the intake state/completion
-contract and execution documentation, and runs Chromium desktop/mobile flows.
+contract, execution completion evidence and execution documentation, and runs
+Chromium desktop/mobile flows. The same lane runs the Node-core-only
+`specification-creator` checks for its prerequisite, saved interview, approval and
+revision contracts; those checks use isolated synthetic consumers without
+provider credentials.
+The two downstream issue skills also run in this lane: approved-specification
+packaging uses local fixtures, and GitHub import uses a fake transport to exercise
+publication, interrupted requests and resumability without creating live issues.
 It checks generated pages and repeats verification in an isolated consumer
 containing both skills. Browser binaries and dependencies remain in the
 disposable job. Template-only assertions remain required in a real checkout.

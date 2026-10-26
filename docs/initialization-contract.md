@@ -11,6 +11,10 @@ intake explicitly stops with instructions to finish `$initialization-intake`.
 Completing intake records the user's confirmation of the resolved scope; it is
 not proof that initialization, CI or deployments have succeeded.
 
+The [local dry run](../.agents/skills/initialization-intake/references/dry-run.md)
+uses the same intake interview with hypothetical inputs and separate private
+session state. Its practice completion cannot satisfy execution's real intake gate.
+
 See the [setup entry point](template-initialization.md) for invocation and
 consumer-specific setup decisions. Preserve existing credentials, data and
 completed evidence when adopting the new skills; an incomplete legacy run needs

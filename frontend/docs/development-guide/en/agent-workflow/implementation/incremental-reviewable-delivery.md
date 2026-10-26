@@ -2,11 +2,11 @@
 
 Choose a reviewable task boundary, preserve unrelated work and publish only the actions requested for that task. Small delivery units are useful because behavior, evidence and source identity remain understandable together.
 
-**Source-backed implementation recipe.** The V1 workflow and specification contract require bounded issues, PR linkage and completion evidence. The commit/checkpoint sequence below is a recommended application of those contracts, not an installed Git automation or standing permission to push, merge or deploy.
+**Source-backed implementation recipe.** The V1 workflow and root agent guide require bounded tasks, review and completion evidence. The commit/checkpoint sequence below is a recommended application of those contracts, not an installed Git automation or standing permission to push, merge or deploy.
 
 ## Trigger, owner and invariant
 
-Use for an implementation leaf, an incremental guide expansion or a task with explicit commit/push/PR instructions. The implementation owner prepares the coherent candidate. The coordinating developer owns integration and the current publication scope. Issues/PRs become execution records after publication; initialization/generation status is not coding progress.
+Use for an implementation leaf, an incremental guide expansion or a task with explicit commit/push/PR instructions. The implementation owner prepares the coherent candidate. The coordinating developer owns integration and the current publication scope. Issues/PRs become execution records after publication; initialization/specification status is not coding progress.
 
 The invariant is that delivered source, stated behavior, review result and evidence describe the same increment. A commit is not proof of passing checks. A pushed branch is not proof of a successful remote CI run. A WIP PR is not production acceptance.
 
@@ -53,7 +53,13 @@ A local-only task remains local. A permission to push does not authorize changin
 
 Lead a commit/PR description with the concrete problem and resulting behavior. Include compatibility decisions and actual verification limits. Keep the description current as the PR grows; do not leave a title about an abandoned first approach over unrelated final scope.
 
-Link stable issue keys and actual imported execution records where relevant. A generated proposal or ready-for-spec-review issue is not automatically an approved coding target. Preserve source/decision mapping when an increment implements only part of a larger accepted capability.
+Link the actual issue or request, approved specification revision and affected acceptance criteria where relevant. A proposed requirement or draft specification is not automatically an approved coding target. Preserve source/decision mapping when an increment implements only part of a larger accepted capability.
+
+The specification creator (`.agents/skills/specification-creator/SKILL.md`) produces functional specification documents. Local issue-package generation belongs to specification-to-issues (`.agents/skills/specification-to-issues/SKILL.md`); later publication belongs to github-issues-import (`.agents/skills/github-issues-import/SKILL.md`). A request to generate the local package grants no GitHub-write authority. Offline validation/dry-run can inspect the package without API access; actual import requires an explicit import request for the exact target repository.
+
+Publish blockers before dependants. Use native blocking/sub-issue relationships where available, with explicit linked references as the documented fallback. Grouping alone does not imply a blocker. Imports reconcile stable markers and saved mappings on resume, preserve human edits and closed issues, and stop on conflicts instead of silently replacing existing work. Preserve the exact imported package identity in the handoff.
+
+`needs-triage` remains the default. Functional approval does not automatically grant `ready-for-agent`, and publication does not authorize architecture invention, application source edits or implementation.
 
 ## Failure and decision table
 
@@ -71,6 +77,8 @@ Link stable issue keys and actual imported execution records where relevant. A g
 Record resulting behavior, task scope, commit/branch/PR when actually created, checks and omissions, review findings resolved and next bounded task. Private client data remains outside public artifacts unless separately approved.
 
 The owning V1/specification/release procedures remain authoritative. This article executes no Git, issue, PR or deployment action.
+
+Current owners: V1 workflow (`docs/v1-workflow.md`), agent guide (`AGENTS.md`) and specification creator (`.agents/skills/specification-creator/SKILL.md`). The pinned references below preserve historical provenance, including the retired app-linked specification contract. The current two skills own the issue handoff; historical procedures do not replace their contracts.
 
 ## Source provenance
 

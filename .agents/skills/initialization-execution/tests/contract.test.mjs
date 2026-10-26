@@ -50,7 +50,9 @@ test("both complete skill packages ship with valid entrypoints and resolvable pu
 test("private intake and execution state are ignored and absent from tracked files", async () => {
   for (const path of [
     ".agents/skills/initialization-intake/state/intake.json",
+    ".agents/skills/initialization-intake/state/dry-runs/default/intake.json",
     ".template-initialization/state.json",
+    ".template-initialization/completion.json",
   ]) {
     await execute("git", ["check-ignore", "--quiet", path], {
       cwd: defaultRoot,

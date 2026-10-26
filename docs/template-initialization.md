@@ -27,6 +27,32 @@ A bare skill invocation offers a task menu and waits; a concrete task proceeds
 directly. See [registration](../.agents/skills/initialization-execution/references/runbook.md#codex-skill-registration)
 for agents that do not discover the bundled skills.
 
+## Try intake in this template
+
+Practice the questionnaire here without creating a consumer repository:
+
+```text
+$initialization-intake dry run
+$initialization-intake resume dry run
+```
+
+The same questions, answer validation and confirmation flow use hypothetical
+targets and simulated service prerequisites. No GitHub login, hosting access or
+real credentials are needed. Progress is saved privately at
+`.agents/skills/initialization-intake/state/dry-runs/default/intake.json`.
+Use `dry run using session inventory-demo` for a separate scenario. Read the
+[dry-run contract](../.agents/skills/initialization-intake/references/dry-run.md)
+for commands, resume and boundaries. Practice completion cannot unlock real
+initialization execution. Dry-run support currently covers intake only.
+
+## Continue after real initialization
+
+After full initialization, use [specification creator](specification-creator.md)
+for the business interview and approved functional specification. Its prerequisite
+checks the structured execution completion receipt for this consumer; intake,
+readiness-only and local-only results do not qualify. Execution owns creating or
+reconciling that receipt from actual evidence before handing off.
+
 The authoritative reusable detail remains with its owners:
 
 - [Intake skill](../.agents/skills/initialization-intake/SKILL.md): questionnaire,

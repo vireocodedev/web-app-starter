@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { JSDOM } from "jsdom";
+import { fullCompletionReceipt } from "./completion-fixture.mjs";
 import {
   buildProjectHtml,
   loadReferences,
@@ -87,6 +88,31 @@ test("renders every source offline, with deterministic output and honest consume
   );
 });
 
+test("structured recorded completion renders honestly and damaged receipts stay incomplete", () => {
+  const receipt = fullCompletionReceipt();
+  const sources = [
+    source("docs/acceptance/initialization-acceptance.json", receipt),
+  ];
+  let document = new JSDOM(buildProjectHtml(sources)).window.document;
+  assert.match(
+    document.querySelector(".hero .pill").textContent,
+    /Recorded setup complete/,
+  );
+  assert.match(
+    document.body.textContent,
+    /Current live health has not been rechecked/,
+  );
+  assert.doesNotMatch(
+    document.body.textContent,
+    /No consumer acceptance record exists/,
+  );
+  receipt.recovery.isolated = false;
+  document = new JSDOM(buildProjectHtml(sources)).window.document;
+  assert.match(document.querySelector(".hero .pill").textContent, /Not ready/);
+  receipt.phases.local = {};
+  assert.doesNotThrow(() => buildProjectHtml(sources));
+});
+
 test("supports search, source filters, empty state, reset and filtered deep links without a server", () => {
   const { window } = new JSDOM(buildProjectHtml(fixture()), {
     runScripts: "dangerously",
@@ -149,7 +175,7 @@ test("never reports ready when consumer phases are incomplete or missing", () =>
     new JSDOM(buildProjectHtml(sources)).window.document.querySelector(
       ".hero .pill",
     ).textContent,
-    /Verified ready/,
+    /Not ready/,
   );
 });
 
@@ -190,6 +216,34 @@ test("loads exactly top-level Markdown and acceptance JSON, and rejects malforme
       '{"value":true}',
     );
     const privateMarker = "PRIVATE_PREPARATION_AND_OPERATOR_REFERENCES";
+    await mkdir(join(root, "docs/issue-packages/v1"), { recursive: true });
+    await writeFile(
+      join(root, "docs/issue-packages/v1/README.md"),
+      privateMarker,
+    );
+    await mkdir(join(root, ".agents/skills/github-issues-import/state"), {
+      recursive: true,
+      mode: 0o700,
+    });
+    await writeFile(
+      join(root, ".agents/skills/github-issues-import/state/checkpoint.json"),
+      JSON.stringify({ body: privateMarker }),
+      { mode: 0o600 },
+    );
+    await mkdir(join(root, "docs/specification"));
+    await writeFile(
+      join(root, "docs/specification/SPECIFICATION.md"),
+      privateMarker,
+    );
+    await mkdir(join(root, ".agents/skills/specification-creator/state"), {
+      recursive: true,
+      mode: 0o700,
+    });
+    await writeFile(
+      join(root, ".agents/skills/specification-creator/state/interview.json"),
+      JSON.stringify({ answer: privateMarker }),
+      { mode: 0o600 },
+    );
     await mkdir(join(root, ".agents/skills/initialization-intake/state"), {
       recursive: true,
       mode: 0o700,
@@ -197,6 +251,18 @@ test("loads exactly top-level Markdown and acceptance JSON, and rejects malforme
     await writeFile(
       join(root, ".agents/skills/initialization-intake/state/intake.json"),
       privateMarker,
+      { mode: 0o600 },
+    );
+    await mkdir(
+      join(root, ".agents/skills/initialization-intake/state/dry-runs/demo"),
+      { recursive: true, mode: 0o700 },
+    );
+    await writeFile(
+      join(
+        root,
+        ".agents/skills/initialization-intake/state/dry-runs/demo/intake.json",
+      ),
+      JSON.stringify({ answer: privateMarker }),
       { mode: 0o600 },
     );
     await writeFile(

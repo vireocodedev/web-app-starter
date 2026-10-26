@@ -6,15 +6,17 @@ this page adds no execution, publication or deployment permission.
 
 ## Stage map
 
-| Stage | Completion evidence | Procedure owner |
-| --- | --- | --- |
-| Clone and inspect | Intended consumer checkout, preserved work and compatible bundled skills | [Setup entry point](template-initialization.md) |
-| Complete initialization intake | All applicable answers, ready prerequisites and confirmed execution scope for this checkout | [Intake skill](../.agents/skills/initialization-intake/SKILL.md) |
-| Execute initialization | Actual local, CI, deployment and recovery evidence within the confirmed scope | [Execution skill](../.agents/skills/initialization-execution/SKILL.md) |
-| Agree requirements and specification | Reviewed business scope, decisions and observable acceptance criteria | Replacement workflow to be defined separately |
-| Implement bounded outcomes | Reviewed changes, relevant passing checks and actual delivery evidence | Repository agent and development guides |
-| Accept business V1 on staging | Agreed journeys, roles, integrations and failures accepted on the exact candidate | Product/client owners and [release procedure](../infrastructure/release/README.md) |
-| Promote and hand over | Exact accepted image pair in production, smoke/recovery evidence and operating instructions | [Release owner](../infrastructure/release/README.md) |
+| Stage                                | Completion evidence                                                                         | Procedure owner                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Clone and inspect                    | Intended consumer checkout, preserved work and compatible bundled skills                    | [Setup entry point](template-initialization.md)                                    |
+| Complete initialization intake       | All applicable answers, ready prerequisites and confirmed execution scope for this checkout | [Intake skill](../.agents/skills/initialization-intake/SKILL.md)                   |
+| Execute initialization               | Actual local, CI, deployment and recovery evidence within the confirmed scope               | [Execution skill](../.agents/skills/initialization-execution/SKILL.md)             |
+| Agree requirements and specification | Approved exact specification revision, covered topics and observable acceptance criteria    | [Specification creator](../.agents/skills/specification-creator/SKILL.md)          |
+| Prepare local issue package          | Exact approved source, validated issue bodies and dependency graph                          | [Specification to issues](../.agents/skills/specification-to-issues/SKILL.md)      |
+| Import GitHub issues                 | Actual remote issue identities and resumable publication results                            | [GitHub issues import](../.agents/skills/github-issues-import/SKILL.md)            |
+| Implement bounded outcomes           | Reviewed changes, relevant passing checks and actual delivery evidence                      | Repository agent and development guides                                            |
+| Accept business V1 on staging        | Agreed journeys, roles, integrations and failures accepted on the exact candidate           | Product/client owners and [release procedure](../infrastructure/release/README.md) |
+| Promote and hand over                | Exact accepted image pair in production, smoke/recovery evidence and operating instructions | [Release owner](../infrastructure/release/README.md)                               |
 
 A deployed skeleton completes setup, not business V1. Intake completion establishes
 setup decisions and scope, not successful execution or business approval.
@@ -41,6 +43,13 @@ access references and permitted actions before execution. Resume in a separate
 agent session with `$initialization-intake resume intake`; resolved answers remain
 available and missing inputs stay visible. Credentials remain in protected stores.
 
+To practice this first stage here, use `$initialization-intake dry run` and later
+`$initialization-intake resume dry run`. The
+[local practice contract](../.agents/skills/initialization-intake/references/dry-run.md)
+keeps the same questionnaire with hypothetical targets, simulated prerequisites
+and separate saved sessions. Practice completion cannot unlock the next stage;
+dry-run support currently covers intake only.
+
 Execution's first gate verifies completed intake for the actual checkout and its
 current answers. Missing, partial, stale or mismatched intake produces an explicit
 stop directing the user to `$initialization-intake`, before provider readiness
@@ -57,21 +66,57 @@ visible blockers. Historical template receipts do not certify a consumer.
 No Client Discovery account, project UUID, API connection or workbook export is
 part of this setup path.
 
-## Requirements and specification remain a separate design task
+## Create and approve the functional specification
 
-The replacement requirements/specification workflow is outside this initialization
-change. No new automated specification or issue-generation workflow is supplied.
-The existing [Discovery specification package](discovery-specification.md) is a
-legacy integration with the experimental app; it is not part of the current
-journey and does not consume local initialization intake.
+After full initialization, run the bundled
+[specification creator](../.agents/skills/specification-creator/SKILL.md):
 
-Before implementation, agree useful scope, exclusions, users, permissions,
-journeys, data rules, integrations, dependencies and observable acceptance
-criteria. Keep unresolved product decisions explicit with an owner and affected
-work. Setup answers cannot fill these business decisions. Technical choices may
-be resolved within existing architecture and delegated authority.
+```text
+$specification-creator start a specification using /path/to/project-brief.md
+$specification-creator resume the specification interview
+```
+
+The first operation checks execution completion for this consumer. Missing,
+incomplete, inconsistent or local-only evidence stops the task and directs you
+back to initialization execution. The offline check verifies recorded completion;
+it does not rerun setup or assert current live health.
+
+The agent extracts established requirements from supplied material, identifies
+gaps and contradictions, and interviews you in numbered adaptive rounds. It asks
+the currently answerable questions, records actual answers and challenges feature
+value and first-release scope. Future ideas and exclusions stay explicit. Pages,
+roles, data relationships, workflows, cross-cutting requirements, visual direction,
+delivery constraints and acceptance receive applicable follow-up questions.
+
+Private progress lives in the Git-ignored
+`.agents/skills/specification-creator/state/`; another session resumes unresolved
+branches. Review `docs/specification/SPECIFICATION.md` and its supporting documents.
+Completion requires addressed applicable topics, resolved implementation-blocking
+product decisions and approval of that exact revision. Later changes preserve the
+approved version, reopen affected branches and require renewed approval.
+
+This workflow creates the functional specification. Architecture planning, issue
+creation/publication and application implementation are separate tasks. Setup
+answers and automated validation cannot supply missing client decisions or grant
+business approval. See the [skill guide](specification-creator.md).
 
 ## Implement, accept and promote
+
+Before implementation, prepare and publish bounded issues through the separate
+[issue workflow](github-issue-workflow.md):
+
+```text
+$specification-to-issues convert the approved specification into ./docs/issue-packages/v1
+$github-issues-import preview ./docs/issue-packages/v1
+$github-issues-import import ./docs/issue-packages/v1 into OWNER/REPO
+```
+
+Preparation checks exact specification approval, writes local Markdown bodies and
+a source-bound manifest, and validates the package without GitHub calls. Import
+is a separate explicit publication task for that package's repository, with saved
+progress and duplicate reconciliation. Default `needs-triage` keeps functional
+agreement distinct from technical readiness and permission to implement. Package
+readiness, actual issue URLs and implemented behavior are separate evidence.
 
 For each authorized outcome, establish its source, boundaries, dependencies and
 acceptance. Use repository guidance, independent review where required and checks

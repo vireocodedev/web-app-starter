@@ -20,6 +20,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const defaultRoot = resolve(here, "../../../..");
 const next =
   "Intake is not complete; run $initialization-intake to finish or resume intake before initialization execution.";
+const rehearsalNext =
+  "Dry-run intake is not complete; resume $initialization-intake dry run with the same session. This rehearsal cannot authorize initialization execution.";
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 const stable = (value) =>
   JSON.stringify(value, (_, v) =>
@@ -88,6 +90,24 @@ async function exists(path) {
   }
 }
 export async function workspace(selected = defaultRoot) {
+  const { stateDirectories, ...target } = await resolveWorkspace(selected);
+  return target;
+}
+function modeOptions(dryRun, session) {
+  if (typeof dryRun !== "boolean") fail("dryRun must be a boolean.");
+  if (!dryRun && session !== undefined) fail("A session requires --dry-run.");
+  const selected = session === undefined ? "default" : session;
+  if (
+    dryRun &&
+    (typeof selected !== "string" ||
+      !/^[a-z0-9][a-z0-9-]{0,63}$/.test(selected))
+  )
+    fail(
+      "Use a dry-run session name of 1–64 lowercase letters, digits or hyphens, starting with a letter or digit.",
+    );
+  return dryRun ? { dryRun: true, session: selected } : {};
+}
+async function resolveWorkspace(selected = defaultRoot, mode = {}) {
   const root = resolve(selected);
   if ((await realpath(root)) !== root)
     fail("Select the canonical consumer worktree path.");
@@ -110,7 +130,7 @@ export async function workspace(selected = defaultRoot) {
     );
   if (!match) fail("Expected a credential-free GitHub consumer origin.");
   const name = match[1].toLowerCase();
-  if (name === "vireocodedev/web-app-starter")
+  if (!mode.dryRun && name === "vireocodedev/web-app-starter")
     fail("The canonical template cannot be initialized as a consumer.");
   for (const segment of [".agents", "skills", "initialization-intake"]) {
     const parent =
@@ -128,8 +148,25 @@ export async function workspace(selected = defaultRoot) {
     "initialization-intake",
     "state",
   );
-  if (await exists(directory)) await statSafe(directory, "directory", true);
-  return { root, name, directory, path: join(directory, "intake.json") };
+  const stateDirectories = [directory];
+  if (mode.dryRun)
+    stateDirectories.push(
+      join(directory, "dry-runs"),
+      join(directory, "dry-runs", mode.session),
+    );
+  for (const path of stateDirectories) {
+    if (!(await exists(path))) break;
+    await statSafe(path, "directory", true);
+  }
+  const selectedDirectory = stateDirectories.at(-1);
+  return {
+    root,
+    name,
+    ...mode,
+    stateDirectories,
+    directory: selectedDirectory,
+    path: join(selectedDirectory, "intake.json"),
+  };
 }
 async function schemaDigest(root) {
   // Bind completion to the target consumer's installed schema and helper bytes.
@@ -152,7 +189,7 @@ async function schemaDigest(root) {
   }
   return sha(Buffer.concat(bytes));
 }
-function validateShape(state) {
+function validateShape(state, target) {
   own(state, [
     "schemaVersion",
     "schemaDigest",
@@ -161,7 +198,21 @@ function validateShape(state) {
     "answers",
     "prerequisites",
     "completion",
+    "dryRun",
   ]);
+  if (Object.hasOwn(state, "dryRun")) {
+    if (!target.dryRun)
+      fail(
+        "Dry-run intake cannot be used for initialization execution; finish real intake separately.",
+      );
+    own(state.dryRun, ["session"]);
+    if (state.dryRun.session !== target.session)
+      fail("Dry-run intake session does not match the selected session.");
+  } else if (target.dryRun) {
+    fail(
+      "Real intake cannot be used as dry-run state; start a separate rehearsal.",
+    );
+  }
   own(state.repository, ["root", "name"]);
   if (
     state.schemaVersion !== schemaVersion ||
@@ -217,7 +268,7 @@ async function load(target, currentSchema, allowStale = false) {
       "Invalid intake JSON; preserve it and reconcile through $initialization-intake.",
     );
   }
-  validateShape(state);
+  validateShape(state, target);
   if (
     state.repository.root !== target.root ||
     state.repository.name !== target.name
@@ -233,14 +284,33 @@ async function load(target, currentSchema, allowStale = false) {
 }
 function report(state, target) {
   if (!state)
-    return { complete: false, statePath: target.path, reason: "missing", next };
-  const issues = assess(state);
+    return {
+      complete: false,
+      statePath: target.path,
+      reason: "missing",
+      ...(target.dryRun
+        ? {
+            dryRun: true,
+            session: target.session,
+            rehearsalComplete: false,
+            next: rehearsalNext,
+          }
+        : { next }),
+    };
+  const issues = assess(state, { dryRun: Boolean(target.dryRun) });
   const complete =
     [...issues.missing, ...issues.invalid, ...issues.blocked].length === 0 &&
     Boolean(state.completion) &&
     state.completion.digest === digest(state);
   return {
-    complete,
+    complete: target.dryRun ? false : complete,
+    ...(target.dryRun
+      ? {
+          dryRun: true,
+          session: target.session,
+          rehearsalComplete: complete,
+        }
+      : {}),
     statePath: target.path,
     revision: state.revision,
     repository: state.repository,
@@ -252,7 +322,11 @@ function report(state, target) {
     proposed: Object.keys(state.answers).filter(
       (id) => state.answers[id].status === "proposed",
     ),
-    ...(complete ? { digest: state.completion.digest } : { next }),
+    ...(complete
+      ? target.dryRun
+        ? { rehearsalDigest: state.completion.digest }
+        : { digest: state.completion.digest }
+      : { next: target.dryRun ? rehearsalNext : next }),
   };
 }
 async function write(target, state) {
@@ -279,14 +353,22 @@ async function write(target, state) {
     });
   }
 }
-export async function run(command, { root = defaultRoot, input } = {}) {
+export async function run(
+  command,
+  { root = defaultRoot, input, dryRun = false, session } = {},
+) {
   if (
     !["init", "status", "save", "complete", "require-complete"].includes(
       command,
     )
   )
     fail("Use init, status, save, complete or require-complete.");
-  const target = await workspace(root);
+  const mode = modeOptions(dryRun, session);
+  if (dryRun && command === "require-complete")
+    fail(
+      "Dry-run intake cannot satisfy require-complete or authorize initialization execution; finish real intake separately.",
+    );
+  const target = await resolveWorkspace(root, mode);
   const currentSchema = await schemaDigest(target.root);
   if (["status", "require-complete"].includes(command)) {
     const result = report(await load(target, currentSchema), target);
@@ -300,9 +382,16 @@ export async function run(command, { root = defaultRoot, input } = {}) {
     }
     return result;
   }
-  if (!(await exists(target.directory)))
-    await mkdir(target.directory, { mode: 0o700 });
-  await statSafe(target.directory, "directory", true);
+  for (const directory of target.stateDirectories) {
+    if (!(await exists(directory))) {
+      try {
+        await mkdir(directory, { mode: 0o700 });
+      } catch (error) {
+        if (error.code !== "EEXIST") throw error;
+      }
+    }
+    await statSafe(directory, "directory", true);
+  }
   const lockPath = join(target.directory, ".write-lock");
   let lock;
   try {
@@ -329,13 +418,14 @@ export async function run(command, { root = defaultRoot, input } = {}) {
         schemaVersion,
         schemaDigest: currentSchema,
         repository: { root: target.root, name: target.name },
+        ...(target.dryRun ? { dryRun: { session: target.session } } : {}),
         revision: 0,
         answers: {},
         prerequisites: {},
         completion: null,
       };
     } else {
-      if (!state) fail(next);
+      if (!state) fail(target.dryRun ? rehearsalNext : next);
       own(
         input,
         command === "save"
@@ -358,10 +448,13 @@ export async function run(command, { root = defaultRoot, input } = {}) {
           schemaDigest: currentSchema,
           revision: state.revision + 1,
           answers: { ...state.answers, ...input.answers },
-          prerequisites: { ...state.prerequisites, ...input.prerequisites },
+          prerequisites: {
+            ...state.prerequisites,
+            ...input.prerequisites,
+          },
           completion: null,
         };
-        validateShape(state);
+        validateShape(state, target);
       } else {
         own(input.confirmation, ["response"]);
         const response = input.confirmation.response;
@@ -373,10 +466,14 @@ export async function run(command, { root = defaultRoot, input } = {}) {
           fail(
             "Record the actual user response confirming the displayed scope.",
           );
-        const issues = assess(state);
+        const issues = assess(state, { dryRun });
         if ([...issues.missing, ...issues.invalid, ...issues.blocked].length)
-          fail(next);
-        state = { ...state, revision: state.revision + 1, completion: null };
+          fail(target.dryRun ? rehearsalNext : next);
+        state = {
+          ...state,
+          revision: state.revision + 1,
+          completion: null,
+        };
         state.completion = {
           digest: digest(state),
           confirmedAt: new Date().toISOString(),
@@ -396,15 +493,30 @@ async function main() {
   const [command, ...args] = process.argv.slice(2);
   let root = defaultRoot;
   let inputPath;
+  let dryRun = false;
+  let session;
   const seen = new Set();
   for (let i = 0; i < args.length; i++) {
     const flag = args[i];
-    if (!["--root", "--input"].includes(flag) || seen.has(flag) || !args[i + 1])
-      fail("Use --root PATH and optional --input FILE (or - for stdin).");
+    if (
+      !["--root", "--input", "--dry-run", "--session"].includes(flag) ||
+      seen.has(flag)
+    )
+      fail(
+        "Use --root PATH, optional --input FILE (or - for stdin), and --dry-run with optional --session NAME.",
+      );
     seen.add(flag);
+    if (flag === "--dry-run") {
+      dryRun = true;
+      continue;
+    }
+    if (!args[i + 1] || args[i + 1].startsWith("--"))
+      fail("Expected a value for the selected intake option.");
     if (flag === "--root") root = resolve(args[++i]);
+    else if (flag === "--session") session = args[++i];
     else inputPath = args[++i];
   }
+  modeOptions(dryRun, session);
   let input;
   if (inputPath) {
     let bytes;
@@ -421,7 +533,7 @@ async function main() {
       fail("Invalid JSON input; values were not echoed.");
     }
   }
-  const result = await run(command, { root, input });
+  const result = await run(command, { root, input, dryRun, session });
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 }
 if (
@@ -434,7 +546,12 @@ if (
       error instanceof Error && !error.code && !error.cmd
         ? error.message
         : "Local intake inspection failed; verify consumer Git metadata and protected files.";
-    process.stderr.write(message + "\n" + next + "\n");
+    process.stderr.write(
+      message +
+        "\n" +
+        (process.argv.includes("--dry-run") ? rehearsalNext : next) +
+        "\n",
+    );
     process.exitCode = 1;
   });
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Specification to issues"
+  short_description: "Prepare approved specifications for GitHub issue import"
+  default_prompt: "Use $specification-to-issues to prepare a local issue package from this consumer's approved specification."

@@ -458,9 +458,13 @@ to each consumer, not inherited from historical template receipts.
 
 ## 9. Report the result
 
-Business requirements and specification are subsequent work. The former
-Client Discovery integration is not part of these initialization skills.
-Do not require its account, project ID or exports to complete setup.
+Business requirements and specification are subsequent work through
+`$specification-creator`, which requires full initialization. Follow the
+[completion receipt contract](completion.md) to prepare actual structured phase
+evidence, run its `complete` producer and verify `require-complete`. The private
+binding and sanitized acceptance document must agree. Local-only work remains
+bounded local setup and does not unlock specification creation. No external
+discovery service, project ID or exports are required.
 
 Return the approved identity, changed surfaces, commands and outcomes, and any
 blocked checks or deferred artwork. Point to local setup instructions without

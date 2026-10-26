@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { assessFullInitializationReceipt } from "./completion.mjs";
 import { Children, cloneElement, createElement, isValidElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import Markdown from "react-markdown";
@@ -43,13 +44,30 @@ export async function loadReferences() {
       path: ".agents/skills/initialization-intake",
       directory: resolve(skillDirectory, "../initialization-intake"),
     },
+    {
+      path: ".agents/skills/specification-creator",
+      directory: resolve(skillDirectory, "../specification-creator"),
+      optional: true,
+    },
+    {
+      path: ".agents/skills/specification-to-issues",
+      directory: resolve(skillDirectory, "../specification-to-issues"),
+      optional: true,
+    },
+    {
+      path: ".agents/skills/github-issues-import",
+      directory: resolve(skillDirectory, "../github-issues-import"),
+      optional: true,
+    },
   ];
   const sources = [];
   for (const owner of packages) {
     const paths = (
-      await readdir(resolve(owner.directory, "references"), {
-        withFileTypes: true,
-      })
+      owner.optional
+        ? await entries(resolve(owner.directory, "references"))
+        : await readdir(resolve(owner.directory, "references"), {
+            withFileTypes: true,
+          })
     )
       .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
       .map((entry) => entry.name)
@@ -293,7 +311,8 @@ export function buildProjectHtml(sources, { reference = false } = {}) {
     (source) =>
       source.path === "docs/acceptance/initialization-acceptance.json",
   )?.data;
-  const name = consumer?.identity?.display_name ?? "Project";
+  const name =
+    consumer?.identity?.display_name ?? consumer?.repository ?? "Project";
   const phases = [
     "intake",
     "identity",
@@ -304,10 +323,19 @@ export function buildProjectHtml(sources, { reference = false } = {}) {
     "production",
     "recovery",
     "handoff",
-  ].map((phase) => [phase, consumer?.phases?.[phase] ?? "unrecorded"]);
+  ].map((phase) => {
+    const status =
+      consumer?.phases?.[phase]?.status ?? consumer?.phases?.[phase];
+    return [phase, typeof status === "string" ? status : "unrecorded"];
+  });
   const passed = phases.filter(([, status]) => status === "passed").length;
-  const ready =
-    consumer?.ready === true && phases.length > 0 && passed === phases.length;
+  let ready = false;
+  try {
+    assessFullInitializationReceipt(consumer);
+    ready = true;
+  } catch {
+    // Readiness needs structured completion evidence, including artifact/recovery identity.
+  }
   const documents = sources
     .filter((source) => source.path.endsWith(".md"))
     .map((source) => ({
@@ -373,7 +401,11 @@ ${Object.entries(data)
     )
     .join("");
   const remaining = consumer?.remaining ?? [
-    "No consumer acceptance record exists. Readiness has not been established.",
+    ready
+      ? "Full setup completion is recorded. Current live health has not been rechecked."
+      : consumer
+        ? "Full setup completion has not been established from structured consumer evidence."
+        : "No consumer acceptance record exists. Readiness has not been established.",
   ];
   const manifest = sources
     .map((source) => `${source.path} ${source.digest}`)
@@ -390,7 +422,7 @@ ${Object.entries(data)
 <p class="eyebrow">Acceptance evidence</p><nav aria-label="Acceptance evidence">${nav(records)}</nav>
 <p class="eyebrow">Guides &amp; procedures</p><nav aria-label="Documentation">${nav(documents)}</nav>
 <p class="eyebrow">Operator-owned</p><a href="${reference ? "https://github.com/vireocodedev/web-app-starter/blob/main/infrastructure/ci/verification/host-acceptance.json" : "../infrastructure/ci/verification/host-acceptance.json"}">Shared host receipt ↗</a><p class="intro">Reference only. Infrastructure ownership and source-bound receipts stay separate.</p></aside>
-<main class="main" id="main"><header class="hero" id="overview"><div class="topline"><span class="eyebrow">Initialization workspace</span><span class="pill ${ready ? "passed" : "partial"}">${ready ? "Verified ready" : "Not ready · acceptance incomplete"}</span></div><h1>Your project, at a glance.</h1>
+<main class="main" id="main"><header class="hero" id="overview"><div class="topline"><span class="eyebrow">Initialization workspace</span><span class="pill ${ready ? "passed" : "partial"}">${ready ? "Recorded setup complete" : "Not ready · acceptance incomplete"}</span></div><h1>Your project, at a glance.</h1>
 <p class="lede">${reference ? "Bundled template reference only. This page contains no consumer acceptance or private preparation. Repository-file links open canonical template source, not this consumer." : "One place for the complete setup story. Current consumer evidence is separated from inherited receipts, and unfinished gates stay visible."}</p>
 <p class="source-path">${escape(consumer?.repository ?? "Consumer repository not recorded")}</p></header>
 <div class="stats"><div class="stat"><strong>${passed} / ${phases.length}</strong><span>Acceptance phases passed</span></div><div class="stat"><strong>${documents.length}</strong><span>Source documents</span></div><div class="stat"><strong>${records.length}</strong><span>Acceptance records</span></div><div class="stat"><strong>Offline</strong><span>One file · no external assets</span></div></div>

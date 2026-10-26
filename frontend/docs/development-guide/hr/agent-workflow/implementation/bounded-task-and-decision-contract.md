@@ -2,19 +2,25 @@
 
 Prije izmjene pretvori issue ili zahtjev u provjerljiv implementacijski opseg. Razlikuj činjenice, delegirane tehničke odluke i nedostajuće ljudske odgovore bez izmišljanja zahtjeva.
 
-**Dokumentirani workflow s receptom.** V1 i specification-package ugovor definiraju leaf issue, source, odluke i prihvat. Kratki radni zapis je preporučeno pomagalo, ne nova shema ni automatizirano odobrenje.
+**Dokumentirani workflow s receptom.** V1 workflow i root agent guide definiraju ograničene zadatke, izvore, odluke i prihvat. Kratki radni zapis je preporučeno pomagalo, ne nova shema ni automatizirano odobrenje.
 
 ## Okidač, vlasnik i ugovor
 
 Koristi pri claimu leafa, nejasnom zahtjevu ili promjeni više capabilityja. Implementator upravlja code boundaryjem, a product/client vlasnik poslovnim odlukama. Tehničku delegaciju možeš riješiti u razvojnoj ovlasti; pretpostavljeni odgovor ostaje prijedlog.
 
-Ugovor je opažljiv ishod s vlasnikom, prihvatom, ovisnostima, decision gateom i ovlaštenom isporukom. Parent nije automatska izvršna ovisnost. Ready-for-spec-review nije odobrenje za coding.
+Ugovor je opažljiv ishod s vlasnikom, prihvatom, ovisnostima, decision gateom i ovlaštenom isporukom. Parent nije automatska izvršna ovisnost. Nacrt specifikacije ili dovršen intervju nije odobrenje za coding.
 
 ## Pročitaj izvršni ugovor
 
-Za generirani rad čitaj body, stable key/source, `blockedBy`, `decisionBlockers`, `ownerBoundary` i generirani `IMPLEMENTATION-WORKFLOW.md`. Progress prati u aktualnom issue/PR zapisu, ne kroz setup status.
+Pročitaj stvarni zahtjev ili issue, odobrenu reviziju specifikacije te povezane odluke i kriterije prihvata. Potvrdi vlasništvo, ovisnosti, otvorena produktna pitanja i ovlaštenu isporuku. Kad postoji issue/PR, koristi njegov aktualni zapis; status inicijalizacije i specifikacije ne opisuje napredak implementacije.
 
-Za izravni zahtjev koristan je ekvivalent:
+Specification creator (`.agents/skills/specification-creator/SKILL.md`) vodi funkcionalno otkrivanje i odobrenje specifikacije. Arhitekturno planiranje, generiranje paketa issuea, objava u tracker i implementacija zasebni su zadaci. Specifikacijski skill ne generira izvršne issuee.
+
+Lokalni paket issuea vodi specification-to-issues (`.agents/skills/specification-to-issues/SKILL.md`), a naknadnu objavu github-issues-import (`.agents/skills/github-issues-import/SKILL.md`). Generiranje zahtijeva točnu odobrenu specifikaciju; lokalni paket čuva kopirani odobreni izvor i dokaz odobrenja, content hasheve, verzionirani manifest, Markdown tijela issuea, labele, ovisnosti i reference izvora. Nedostajuća poslovna pravila vraćaju se na reviziju specifikacije umjesto izmišljanja zahtjeva u issueu.
+
+Čitaj stvarni paket i prihvat zadatka, reference izvora, vlasničku granicu i deklarirane blokere. Parent grupiranje samo ne određuje blokirajući redoslijed. Zadani `needs-triage` znači da je još potreban maintainer review: funkcionalno odobrenje i valjan paket ne dokazuju arhitekturu ili spremnost za agentsku implementaciju.
+
+Za izravni zahtjev ili issue koristan je kratak radni zapis:
 
 ```text
 Ishod: kategorija je dostupna i postojeći URL-ovi rade.
@@ -36,9 +42,9 @@ To su neutralni primjeri, ne dozvola za push, deploy, podatkovnu promjenu ili re
 | `PROPOSED`           | Pretpostavka za pregled                    | Prikaži učinak i blokiraj posljedični ovisni rad.           |
 | `REQUIRES_INPUT`     | Nedostajuća politika, pristup ili konflikt | Zadrži ciljanu odluku, vlasnika i gate.                     |
 
-Delegirani tehnički detalj riješi, ne ostavljaj sve otvoreno. Locked baseline može sadržavati neriješene ulaze; lock ih ne odgovara.
+Delegirani tehnički detalj riješi, ne ostavljaj sve otvoreno. Odobrena revizija specifikacije ne daje prešutan odgovor na naknadno otkriveno poslovno pravilo; pogođenu granu vrati na pregledanu reviziju.
 
-Validator provjerava recipročne mappings i gateove, ne pretvara analitičku pretpostavku u suglasnost klijenta. Potreban je semantički review.
+Gornje oznake ilustriraju kategorije odluka, nisu obavezna polja ugrađene issue sheme. Mehaničke provjere ne pretvaraju analitičku pretpostavku u suglasnost klijenta. Potreban je semantički review.
 
 ## Najmanji cjeloviti zahvat
 
@@ -53,7 +59,7 @@ Neovisan ready posao može nastaviti dok odluka blokira drugi leaf. Zapiši toč
 | Opažanje                      | Odluka                                       |
 | ----------------------------- | -------------------------------------------- |
 | Parent postoji, blocker ne    | Ne zaključuj redoslijed samo iz hijerarhije. |
-| Ready-for-spec-review         | Prvo semantički review i ovlast.             |
+| Specifikacija je još nacrt    | Prvo produktni review i ovlast za zadatak.   |
 | UI naziv implicira permission | Prijedlog/input gap, ne potvrđeni policy.    |
 | Tehnička odluka delegirana    | Riješi uz izvor i rationale.                 |
 | Pojavi se nepovezani cleanup  | Odvoji osim nužne koherentne promjene.       |
@@ -64,6 +70,8 @@ Neovisan ready posao može nastaviti dok odluka blokira drugi leaf. Zapiši toč
 Dovršen task ima ponašanje, traceability, dopuštene provjere i delivery zapis. Blokiran task ima konkretan owner/question/boundary.
 
 Povezane teme su **Capability vlasnici** i **Source-bound handoff**. Vodič ne claima issue, ne odobrava zahtjeve i ne objavljuje izmjene.
+
+Aktualni vlasnici: V1 workflow (`docs/v1-workflow.md`), agent guide (`AGENTS.md`), specification creator (`.agents/skills/specification-creator/SKILL.md`), specification-to-issues (`.agents/skills/specification-to-issues/SKILL.md`) i github-issues-import (`.agents/skills/github-issues-import/SKILL.md`). Pinani izvori niže opisuju povijesno podrijetlo, uključujući uklonjeni paket vezan uz aplikaciju; nisu njegove aktualne izvršne upute.
 
 ## Izvori
 

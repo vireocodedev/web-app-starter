@@ -7,3 +7,5 @@
 .npmrc
 /.template-initialization/
 /.agents/skills/initialization-intake/state/
+/.agents/skills/specification-creator/state/
+/.agents/skills/github-issues-import/state/

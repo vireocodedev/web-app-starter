@@ -1,4 +1,0 @@
-interface:
-  display_name: "Discovery specification"
-  short_description: "Build specifications and issue plans from locked scope"
-  default_prompt: "Use $discovery-specification to generate a specification from a production project ID in my chosen output folder."

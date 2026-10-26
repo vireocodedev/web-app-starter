@@ -26,6 +26,10 @@ run the sibling intake gate from the selected consumer worktree:
 node .agents/skills/initialization-intake/scripts/intake.mjs require-complete
 ```
 
+Use only real intake at this gate. Dry-run state and `rehearsalComplete` are
+practice results; never add `--dry-run`, substitute a practice state path or
+treat practice confirmation as permission to initialize.
+
 Use `--root PATH` when selecting another worktree. If the helper is unavailable,
 or the command fails for missing, partial, invalid, stale or mismatched intake,
 **STOP**. Explicitly tell the user: “Intake is not complete. Run
@@ -106,8 +110,13 @@ npm --prefix .agents/skills/initialization-execution run docs:check
 ## Finish
 
 Full initialization is complete only when the contract's current consumer
-local/CI/staging/production/recovery gates pass. Write sanitized
-`docs/acceptance/initialization-acceptance.json`, update consumer setup guidance,
+local/CI/staging/production/recovery gates pass. Follow the
+[completion receipt contract](references/completion.md) to record actual structured
+evidence with `scripts/completion.mjs complete --input /private/evidence.json`.
+It binds full intake, all nine phases, the immutable image pair and initialized
+recovery to this consumer. Verify `scripts/completion.mjs require-complete` before
+reporting full completion or handing off to `$specification-creator`. Local-only
+work does not unlock specification creation. Update consumer setup guidance,
 and report actual repository/environment URLs, development/debug commands,
 deployment/recovery instructions, protected credential references and limitations.
 Keep private intake and execution state out of public artifacts. Report bounded

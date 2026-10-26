@@ -1,5 +1,9 @@
 # Private state and helper API
 
+For a local practice session, first read [dry runs](dry-run.md). Add `--dry-run`
+and the selected `--session NAME` to practice commands; its isolated state never
+satisfies the real completion gate. The commands below describe real intake.
+
 Run Node 24 from the consumer root (use its local Node launcher when needed):
 
 ```sh

@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub issues import"
+  short_description: "Preview and resume a specification issue import"
+  default_prompt: "Use $github-issues-import to preview an issue package or explicitly import it into its matching GitHub repository."
