@@ -100,7 +100,7 @@ def register_and_validate_ci(args):
     ctx = context(args, operator=True)
     source = ci_source(ctx)
     if not re.fullmatch('[0-9a-f]{64}', args.expected_config_sha256):
-        raise InitError('Require the current observed configuration SHA-256 from step 11.2.')
+        raise InitError('Require the current observed configuration SHA-256 from step 11.3.')
     path = registration_path(ctx)
     info = path.lstat()
     if path.is_symlink() or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o077:
