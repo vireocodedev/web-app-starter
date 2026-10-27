@@ -184,17 +184,12 @@ python3 -B docs/template-initialization/scripts/6_1_audit_identity.py
 
 ### 7.1 Prepare private backend configuration — workstation
 
-Generate `backend/.env` credentials while preserving an existing file.
+Generate/preserve `backend/.env`; automatically check private permissions, identity,
+password lengths and available/owned PostgreSQL port. Authentication follows in 8.1.
 
 ```bash
 python3 -B docs/template-initialization/scripts/7_1_prepare_backend_env.py
 ```
-
-### 7.A Confirm private backend identity — manual
-
-Privately check project/database names, initial user and free local database port
-in `backend/.env`. Preserve matching existing credentials/data; keep generated
-passwords (12 characters minimum, 72 UTF-8 bytes maximum).
 
 ### 7.2 Prepare frontend dependencies and HTTP settings — workstation
 

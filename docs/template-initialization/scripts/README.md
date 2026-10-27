@@ -80,3 +80,7 @@ Step 11.3 captures the stopped controller configuration hash into protected,
 source/boot/consumer-bound progress. Step 11.4 uses it automatically while the
 canonical registration lock still rejects stale configuration; an explicitly
 observed `--expected-config-sha256` remains available for operator reconciliation.
+
+Step 7.1 checks protected backend env identity/password bounds and local database
+binding ownership automatically without printing secrets or resetting volumes.
+An existing same-checkout Compose binding is accepted; step 8.1 checks real auth.

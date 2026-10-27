@@ -365,9 +365,12 @@ python3 -B docs/template-initialization/scripts/7_1_prepare_backend_env.py
 ```
 
 This creates ignored `backend/.env`, mode `0600`, with random passwords and
-preserves an existing file. Open it privately. Before the first backend startup,
-confirm project/database names and local initial-user identity. Keep the generated
-passwords (minimum 12 characters, maximum 72 UTF-8 bytes).
+preserves an existing file. The script checks owner-only permissions, selected
+project/database/account identity, password lengths (12 characters minimum,
+72 UTF-8 bytes maximum), and the local PostgreSQL binding. A busy port is accepted
+only for this checkout's exact running Compose PostgreSQL service; foreign or
+ambiguous ownership stops setup. It prints a nonsecret result. No credentials or
+volumes are reset. Actual database password authentication happens at step 8.1.
 
 ### 7.2 Prepare frontend dependencies and HTTP settings
 

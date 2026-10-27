@@ -1,5 +1,6 @@
 """Consumer-local initialization contracts; no tools, network or databases run."""
 import contextlib
+import errno
 import importlib.util
 import io
 import json
@@ -54,7 +55,9 @@ class LocalInitializationTests(unittest.TestCase):
 
     def backend_env(self, **overrides):
         values = {**local.backend_identity(self.ctx), "POSTGRES_PASSWORD": "retained-db-password", "INITIAL_USER_PASSWORD": "retained-user-password", "POSTGRES_PORT": "55480", **overrides}
-        return self.write("backend/.env", "# Kept private\n" + "\n".join(f"{key}={value}" for key, value in values.items()) + "\n")
+        path = self.write("backend/.env", "# Kept private\n" + "\n".join(f"{key}={value}" for key, value in values.items()) + "\n")
+        path.chmod(0o600)
+        return path
 
     def test_java_moves_both_roots_and_preserves_relative_packages_and_sql(self):
         self.java_roots()
@@ -95,7 +98,7 @@ class LocalInitializationTests(unittest.TestCase):
     def test_backend_existing_env_preserves_all_bytes_and_credentials(self):
         path = self.backend_env()
         before = path.read_bytes()
-        with patch.object(local, "run") as command:
+        with patch.object(local, "run") as command, patch.object(local, "check_database_binding", return_value="available"):
             local.prepare_backend_env(self.ctx)
         self.assertEqual(path.read_bytes(), before)
         command.assert_called_once()
@@ -111,7 +114,7 @@ class LocalInitializationTests(unittest.TestCase):
     def test_backend_new_env_binds_selected_identity_preserving_generated_secrets(self):
         def setup(argv, **kwargs):
             self.backend_env(COMPOSE_PROJECT_NAME="template-local", POSTGRES_DB="template", POSTGRES_USER="template", INITIAL_USER_USERNAME="admin", INITIAL_USER_EMAIL="admin@example.com", INITIAL_USER_DISPLAY_NAME="Local Administrator")
-        with patch.object(local, "run", side_effect=setup):
+        with patch.object(local, "run", side_effect=setup), patch.object(local, "check_database_binding", return_value="available"):
             local.prepare_backend_env(self.ctx)
         path = self.root / "backend/.env"
         values = local.read_literal_env(path)
@@ -122,6 +125,56 @@ class LocalInitializationTests(unittest.TestCase):
         self.assertEqual(values["POSTGRES_PASSWORD"], "retained-db-password")
         self.assertIn("INITIAL_USER_DISPLAY_NAME=Fixture Administrator\n", path.read_text())
         self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_backend_env_requires_private_owner_only_permissions(self):
+        path = self.backend_env()
+        path.chmod(0o644)
+        with self.assertRaisesRegex(local.InitError, "0600"):
+            local.checked_backend_env(self.ctx)
+
+    def test_database_free_binding_is_read_only_and_needs_no_docker(self):
+        with patch.object(local.socket, "socket") as socket, patch.object(local, "run") as command:
+            self.assertEqual(local.check_database_binding(self.ctx, {"POSTGRES_PORT": "55480"}), "available")
+        socket.return_value.__enter__.return_value.bind.assert_called_once_with(("127.0.0.1", 55480))
+        command.assert_not_called()
+
+    def binding(self, *, labels=None, bindings=None, status="running", identifiers="abcdef012345", failure=False):
+        expected = {"com.docker.compose.project": self.ctx.values["COMPOSE_PROJECT_NAME"],
+                    "com.docker.compose.service": "postgres",
+                    "com.docker.compose.project.working_dir": str(self.root / "backend"),
+                    "com.docker.compose.project.config_files": str(self.root / "backend/compose.yaml")}
+        inspect = "\n".join(json.dumps(value) for value in (
+            expected if labels is None else {**expected, **labels},
+            bindings if bindings is not None else {"5432/tcp": [{"HostIp": "127.0.0.1", "HostPort": "55480"}]}, status))
+        with patch.object(local.socket, "socket") as socket, patch.object(local, "run", side_effect=[
+                SimpleNamespace(returncode=int(failure), stdout=identifiers), SimpleNamespace(returncode=0, stdout=inspect)]) as command:
+            socket.return_value.__enter__.return_value.bind.side_effect = OSError(errno.EADDRINUSE, "busy")
+            value = local.check_database_binding(self.ctx, {"POSTGRES_PORT": "55480"})
+            return value, command
+
+    def test_busy_binding_accepts_only_this_checkout_running_compose_database(self):
+        result, command = self.binding()
+        self.assertIn("this checkout", result)
+        self.assertEqual(command.call_count, 2)
+        self.assertTrue(all(call.kwargs["capture"] for call in command.call_args_list))
+
+    def test_foreign_stopped_ambiguous_or_wildcard_database_binding_fails(self):
+        cases = ({"labels": {"com.docker.compose.project": "foreign"}},
+                 {"labels": {"com.docker.compose.project.working_dir": "/other/checkout/backend"}},
+                 {"labels": {"com.docker.compose.project.config_files": "/other/compose.yaml"}},
+                 {"bindings": {"5432/tcp": [{"HostIp": "0.0.0.0", "HostPort": "55480"}]}},
+                 {"status": "exited"}, {"identifiers": ""},
+                 {"identifiers": "abcdef012345\nabcdef123456"}, {"failure": True})
+        for case in cases:
+            with self.subTest(case=case), self.assertRaises(local.InitError):
+                self.binding(**case)
+
+    def test_binding_inspection_failure_is_not_treated_as_free(self):
+        with patch.object(local.socket, "socket") as socket, patch.object(local, "run") as command:
+            socket.return_value.__enter__.return_value.bind.side_effect = OSError(errno.EACCES, "denied")
+            with self.assertRaisesRegex(local.InitError, "permissions"):
+                local.check_database_binding(self.ctx, {})
+            command.assert_not_called()
 
     def test_env_duplicate_assignments_and_symlinks_fail_without_changing_target(self):
         duplicate = self.write("frontend/.env.local", "VITE_API_MODE=http\nVITE_API_MODE=mock\n")

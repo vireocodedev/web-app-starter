@@ -5,10 +5,13 @@ Public entrypoints load the same verified env and prove consumer identity first.
 """
 from __future__ import annotations
 
+import errno
 import json
 import os
 import re
 import shutil
+import socket
+import stat
 import tempfile
 from pathlib import Path
 
@@ -157,6 +160,9 @@ def backend_identity(ctx):
 def checked_backend_env(ctx):
     path = ctx.root / "backend/.env"
     values = read_literal_env(path)
+    info = path.stat()
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
+        raise InitError("backend/.env must be owned by you with mode 0600; inspect privately before continuing.")
     mismatches = [key for key, expected in backend_identity(ctx).items() if values.get(key) != expected]
     if mismatches:
         raise InitError("Existing backend/.env identity differs for " + ", ".join(mismatches) + "; preserve credentials/volumes and reconcile privately before startup.")
@@ -169,6 +175,43 @@ def checked_backend_env(ctx):
     return values
 
 
+def check_database_binding(ctx, values):
+    """A bind probe reserves nothing; only this exact checkout may own a busy port."""
+    port = int(values.get("POSTGRES_PORT", "55436"))
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.bind(("127.0.0.1", port))
+        return "available"
+    except OSError as error:
+        if error.errno != errno.EADDRINUSE:
+            raise InitError("Cannot inspect the local PostgreSQL binding; resolve local socket permissions before startup.") from None
+    project = ctx.values["COMPOSE_PROJECT_NAME"]
+    result = run(["docker", "container", "ls", "--all", "--filter", "label=com.docker.compose.project=" + project,
+                  "--filter", "label=com.docker.compose.service=postgres", "--format", "{{.ID}}"],
+                 capture=True, check=False)
+    identifiers = result.stdout.splitlines()
+    if result.returncode or len(identifiers) != 1 or not re.fullmatch("[0-9a-f]{12,64}", identifiers[0]):
+        raise InitError("POSTGRES_PORT is occupied by an unverified owner; preserve existing resources and select a free port privately.")
+    result = run(["docker", "container", "inspect", "--format",
+                  "{{json .Config.Labels}}\n{{json .NetworkSettings.Ports}}\n{{json .State.Status}}", identifiers[0]],
+                 capture=True, check=False)
+    try:
+        if result.returncode:
+            raise ValueError()
+        labels, bindings, status = [json.loads(line) for line in result.stdout.splitlines()]
+        backend = (ctx.root / "backend").resolve()
+        if (not isinstance(labels, dict) or not isinstance(bindings, dict) or status != "running"
+                or labels.get("com.docker.compose.project") != project
+                or labels.get("com.docker.compose.service") != "postgres"
+                or labels.get("com.docker.compose.project.working_dir") != str(backend)
+                or labels.get("com.docker.compose.project.config_files") != str(backend / "compose.yaml")
+                or bindings.get("5432/tcp") != [{"HostIp": "127.0.0.1", "HostPort": str(port)}]):
+            raise ValueError()
+    except (ValueError, TypeError):
+        raise InitError("POSTGRES_PORT is occupied outside this checkout's verified Compose binding; preserve resources and reconcile privately.") from None
+    return "owned by this checkout's running PostgreSQL"
+
+
 def prepare_backend_env(ctx, args=None):
     path = ctx.root / "backend/.env"
     existed = path.exists() or path.is_symlink()
@@ -177,7 +220,10 @@ def prepare_backend_env(ctx, args=None):
     run(["bash", str(ctx.root / "backend/scripts/with-local-node.sh"), str(ctx.root / "backend/scripts/setup-local.mjs")], cwd=ctx.root)
     if not existed:
         merge_literal_env(path, backend_identity(ctx))
-    checked_backend_env(ctx)
+    values = checked_backend_env(ctx)
+    binding = check_database_binding(ctx, values)
+    print("Backend identity, private permissions and password lengths verified; PostgreSQL port " + binding + ".")
+    print("Database password authentication is checked at step 8.1; existing database data was not changed.")
     print("Local backend credentials prepared; existing files and passwords are preserved. Read the ignored backend/.env privately for login.")
 
 
