@@ -30,7 +30,7 @@ replace a previously recorded repository ID.
 parser accepts literal data, not shell exports, interpolation or command
 substitution. Every entrypoint supports `--help` without performing setup.
 
-The shared helpers `_shared.py`, `_local.py`, `_operations.py` and `_handoff.py`
+The shared helpers `_shared.py`, `_local.py`, `_operations.py`, `_handoff.py` and `_github_policy.py`
 are private Python modules rather than standalone numbered actions. They centralize env parsing,
 argv-safe commands and the extracted local/operator implementations. They do not
 replace the existing application or infrastructure runtime owners.
@@ -49,6 +49,14 @@ losing local observations. Initial upload retries require identical host files;
 later context switches still require deliberate reconciliation. Follow the
 [section 11 handoff](../INIT_GUIDE.md#111-verify-github-app-access-and-transfer-the-initialization-state)
 for the host `--env` path, protected modes and operator commands.
+
+Section 12 configures branch protection and deployment environments through
+`12_2_configure_github_policy.py --verify-protection` after successful consumer CI.
+It binds the required gate to its observed App, preserves compatible stronger
+policy and records read-back evidence. The optional proof mode journals one
+owned failing-to-green validation PR and closes it without merging; rerun the
+same command after an interruption. Follow the [policy step](../INIT_GUIDE.md#122-configure-and-verify-github-policy)
+for prerequisites, conflicts and release-branch handling.
 
 Read-only API contracts use the official [GitHub repository API](https://docs.github.com/en/rest/repos/repos)
 and [Hetzner Cloud API](https://docs.hetzner.cloud/reference/cloud). Actual provider,

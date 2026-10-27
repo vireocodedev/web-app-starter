@@ -186,7 +186,7 @@ def watch_initialization_ci(ctx, number, sha):
                 raise InitError('CI run identity, completion or attempt changed during gate inspection; inspect before resuming.')
             initialization_pr_identity(ctx, gh_json(ctx, pull_path), number=number, sha=sha)
             print('CI gate succeeded for the exact initialization PR source: ' + sha, flush=True)
-            return
+            return final, gates[0]
         if time.monotonic() >= deadline:
             raise InitError('Stopped waiting after one hour; the CI run remains available at ' + run_url + '. Resume this step later.')
         time.sleep(10)
@@ -729,7 +729,7 @@ def cli(action):
     if action in ('activate_ci', 'activate_controller', 'enable_backup_schedule'):
         arguments.add_argument('--reviewed', action='store_true', help='Confirm the existing guide review/acceptance gate was completed.')
     if action == 'prepare_release_source':
-        arguments.add_argument('--source-sha', required=True, help='Exact observed release commit from step 12.2.')
+        arguments.add_argument('--source-sha', required=True, help='Exact observed release commit from step 12.3.')
     if action == 'inspect_packages':
         arguments.add_argument('--absence-confirmed', action='store_true',
                                help='Operator confirmed unresolved names are absent and may be created in organization package inventory.')

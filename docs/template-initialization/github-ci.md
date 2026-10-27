@@ -52,6 +52,12 @@ the actual eviction/PostgreSQL lifecycle test. Shared inherited Spring fixtures
 can have explicit assignment affinity; test methods never run concurrently against
 a shared database. Each worker owns its own Docker/PostgreSQL resources.
 
+A failed backend test shard retains its JUnit XML and the last 1 MiB of the
+job-local Docker daemon log for seven days in a separate `backend-diagnostics-*`
+artifact. Full Gradle exception output preserves container-startup causes in the
+job log. These diagnostics are failure evidence; they cannot replace the
+successful source-bound shard reports required by the gate.
+
 Foundation verification retains lifecycle, authentication, routing/gate, shard
 proof, release helper and shell checks. No lane uses application credentials,
 production databases, a host Docker daemon or a writable cache shared with
@@ -134,23 +140,21 @@ this monorepo.
 
 ## Protect main after successful CI
 
-GitHub template creation does not copy branch policy. In **Settings -> Branches**
-configure protection for the exact integration branch, or use the repository
-branch-protection API with equivalent settings:
+GitHub template creation does not copy branch policy. After genuine consumer CI
+succeeds, run the numbered [GitHub policy step](INIT_GUIDE.md#122-configure-and-verify-github-policy).
+It uses the authenticated workstation CLI to configure and read back protection
+and deployment environments; selected-repository runner registration remains a
+separate operator prerequisite.
 
-- Require a pull request before merging.
-- Required approving reviews: **0**.
-- No required code-owner review or last-push approval.
-- Require the successful **CI gate** check, bound to GitHub Actions.
-- Require the branch to be up to date before merging.
-- Enforce protection for administrators; no routine bypass actors.
-- Block force pushes and deletion.
+The policy step requires a PR, the observed GitHub Actions `CI gate`, an up-to-date
+branch, administrator enforcement, and blocked force pushes/deletion. Its default
+review count is zero without code-owner or last-push approval. It preserves
+compatible stronger classic and inherited rules, and reports conflicts or private
+plan limitations instead of weakening protection or changing visibility.
 
-Preserve stronger compatible organization policies and report conflicting
-inherited rules explicitly. A private repository needs the corresponding plan
-entitlement; never make it public or remove checks to bypass a limitation.
-
-Read back the effective policy. Use a task-owned harmless validation PR to prove
-a failing/missing required check blocks merging, then show that corrected green
-checks permit merging with zero approvals. Do not merge a failing fixture or
-weaken protection to demonstrate it.
+The guide invokes `--verify-protection` to exercise one task-owned temporary PR:
+real failing gate plus blocked merge, then corrected green CI and the allowed
+merge state. The script journals ownership and exact source/run/attempt evidence,
+resumes interrupted work, and closes the temporary PR without merging it. Settings
+read-back alone does not count as this enforcement proof. Resolve any stronger
+approval requirements reported by that proof deliberately.
