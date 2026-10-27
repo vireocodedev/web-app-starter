@@ -110,6 +110,13 @@ class ShardTests(unittest.TestCase):
             section = re.split(r'\n  [a-z][a-z-]*:', workflow.split('\n  ' + kind + '-tests:')[1], 1)[0]
             self.assertIn('shard: [1, 2, 3]', section)
             self.assertIn('matrix.shard }}/3)', section)
+        backend = re.split(r'\n  [a-z][a-z-]*:', workflow.split('\n  backend-tests:')[1], 1)[0]
+        diagnostics = backend.split('      - name: Collect failed backend diagnostics')[1].split('      - name: Preserve source-bound backend inventory')[0]
+        self.assertEqual(diagnostics.count('if: failure()'), 2)
+        self.assertIn('backend/build/test-results/test/*.xml', diagnostics)
+        self.assertIn('tail -c 1048576 "$HOME/docker.log"', diagnostics)
+        self.assertIn('name: backend-diagnostics-${{ matrix.shard }}-${{ github.run_attempt }}', diagnostics)
+        self.assertNotIn('continue-on-error', backend)
         self.assertIn('name: CI gate', workflow)
         self.assertIn('needs: [changes, backend, backend-tests, frontend, frontend-tests, frontend-build, foundation]', workflow)
         self.assertIn("pattern: '*-shard-*-${{ github.run_attempt }}'", workflow)

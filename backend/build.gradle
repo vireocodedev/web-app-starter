@@ -59,6 +59,9 @@ tasks.withType(Test).configureEach {
 	maxParallelForks = 1
 	jvmArgs '-XX:ActiveProcessorCount=2'
 	systemProperty 'spring.test.context.cache.maxSize', '2'
+
+	// Keep the actual Docker/container startup response in failed CI test output.
+	testLogging.exceptionFormat = 'full'
 }
 
 tasks.named('test') {
