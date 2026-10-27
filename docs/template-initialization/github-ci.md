@@ -35,6 +35,13 @@ lane retains Storybook and the real pinned Dockerfile's production build and
 image smoke checks. Three deterministic test shards each use **one** Vitest
 worker; local `npm run test` and `npm run verify` still execute the full suite.
 
+Static verification and frontend builds bound Node's old-space heap to 1536 MiB.
+Storybook and the Docker build also bound Rolldown and Rayon to two threads each.
+These application build settings preserve headroom for native memory and the runner;
+the shared pool's resource limits remain operator-owned. See the
+[resource-budget guide](../../frontend/docs/development-guide/en/ci/verification/resource-budgets.md)
+for diagnosis, including reclaim stalls without an OOM kill.
+
 Selected backend work has a separate pinned Dockerfile/JAR/image smoke lane and
 three test shards. Every shard compiles the **complete** test source set, including
 fixtures referenced across test classes. Gradle's `ciTestInventory` task discovers

@@ -28,6 +28,10 @@ When workspace instructions require one heavy verification at a time, a coordina
 
 The installed workflow has three frontend and three backend test shards, with matrix fail-fast disabled. Shared pool slots control simultaneous jobs; matrix size controls the number of queued units. Every frontend shard explicitly runs Vitest with one worker. Frontend configuration itself uses one worker in CI and two locally at the pinned snapshot.
 
+Frontend static verification limits Node's old-space heap to 1536 MiB. Storybook and the production Docker build use the same heap bound and set both `ROLLDOWN_WORKER_THREADS=2` and `RAYON_NUM_THREADS=2`. Rolldown's runtime and Rayon are separate native thread pools; limiting the JavaScript heap alone does not bound their memory. These build-only settings leave room for native allocations, the runner and sibling processes within the worker's memory budget. They do not change the deployed application's environment. See [Rolldown's thread-pool documentation](https://rolldown.rs/guide/troubleshooting).
+
+Inspect `memory.events` and memory pressure as well as OOM counters. Sustained reclaim above `memory.high` can stall a build and its runner heartbeat without an OOM kill. Measure the actual build with its heap and native pools bounded before proposing a larger host limit; local process RSS is supporting evidence, while the complete CI run must also fit the worker cgroup.
+
 Backend tests compile the complete source set. The Gradle inventory and real test tasks use a single fork; test JVMs see two processors. Spring's test-context cache is bounded to two because each cached context owns a server, pool and PostgreSQL resources. Fixtures sharing a database are not made concurrent just because classes can be assigned to different jobs.
 
 The build JVM has a separate ceiling:

@@ -113,6 +113,8 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Verify formatting, lint, architecture and all TypeScript projects
+        env:
+          NODE_OPTIONS: --max-old-space-size=1536
         run: npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck
 
   frontend-tests:
@@ -185,6 +187,10 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Build Storybook
+        env:
+          NODE_OPTIONS: --max-old-space-size=1536
+          ROLLDOWN_WORKER_THREADS: "2"
+          RAYON_NUM_THREADS: "2"
         run: npm run build-storybook
       - name: Build and smoke-test frontend image
         working-directory: .
