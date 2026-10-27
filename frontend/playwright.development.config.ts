@@ -10,13 +10,8 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   projects: [
     {
-      name: "documentation",
+      name: "application",
       testMatch: "documentation.development.spec.ts",
-    },
-    {
-      grep: /Contacts|creates the first contact/,
-      name: "contacts",
-      testMatch: "application.spec.ts",
     },
   ],
   retries: process.env.CI ? 2 : 0,

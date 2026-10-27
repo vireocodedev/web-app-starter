@@ -15,10 +15,12 @@ stanje.
 ## Aplikacijski runtime i runtime značajke
 
 `createAppRuntime()` gradi stabilnu infrastrukturu i zamrzava rezultat: jedan
-Query klijent, konfigurirani Axios, auth runtime i registar značajki. Contacts
-treba ovu granicu jer Query i mutation opcije ovise o ubrizganom adapteru i
-Query klijentu. Settings, Patterns, Architecture i Handbook prezentacijske su značajke i
-ne dobivaju tvornice ili runtime hookove samo radi ujednačenosti.
+Query klijent, konfigurirani Axios, auth runtime i prazan registar značajki.
+Settings je prezentacijska značajka i ne treba tvornicu ni runtime hook. Contacts
+pokazuje ubrizgane Query/API ovisnosti pod `docs/storybook/examples/Contacts/`,
+uz vlastiti preview Context i privatni memorijski adapter. Nije registriran u
+produkcijskom runtimeu. Potrošač mora izričito implementirati i registrirati
+svaku novu poslovnu značajku.
 
 ## Redoslijed providera
 

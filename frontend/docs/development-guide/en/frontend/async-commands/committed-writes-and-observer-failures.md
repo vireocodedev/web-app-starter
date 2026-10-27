@@ -2,7 +2,7 @@
 
 A successful command can be followed by a failed cache refresh, notification, analytics callback, or parent observer. Those failures do not undo the server's commit. Model the command outcome separately so the UI does not invite the person to repeat an already completed action.
 
-This is a **reference consumer pattern with an installed starter comparison**. client-discovery-app has a small `notifyMutationCommitted` utility that isolates observer failures. The starter Contacts mutation factory uses targeted collection invalidation in `onSuccess`; it does not install that utility or define a general durable-command outcome protocol. Decide which behavior a feature needs rather than assuming every mutation wrapper has the stronger guarantee.
+This is a **reference consumer pattern with a documentation-only Contacts comparison**. client-discovery-app has a small `notifyMutationCommitted` utility that isolates observer failures. The Contacts reference under `docs/storybook/examples/Contacts/` uses targeted collection invalidation in `onSuccess`; it does not install that utility or define a general durable-command outcome protocol. Decide which behavior a feature needs rather than assuming every mutation wrapper has the stronger guarantee.
 
 ## Trigger and owner
 
@@ -50,7 +50,7 @@ Isolation is also not permission to forget observability. The reference helper i
 
 Treat cache invalidation as a deliberate async boundary. Awaiting an invalidation in a mutation callback can be useful when a feature intentionally keeps a saving indicator until the next view is ready. That presentation choice still must not erase the distinction between acknowledged persistence and failed refresh. Check the actual mutation library behavior and callback contract before promising how errors propagate.
 
-The starter Contacts factory invalidates only `ContactQueryKey.collection()`, which is a useful scope rule. Preserve that narrow ownership when adding outcome separation; replacing it with “invalidate everything” increases failure surface and does not improve acknowledgement semantics.
+The documentation-only Contacts factory invalidates only `ContactQueryKey.collection()`, which is a useful scope rule. Preserve that narrow ownership when adding outcome separation; replacing it with “invalidate everything” increases failure surface and does not improve acknowledgement semantics.
 
 ## Recovery and feedback
 

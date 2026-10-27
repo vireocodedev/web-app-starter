@@ -1,0 +1,645 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as WorkflowStories from "./WorkflowCommands.stories";
+
+<Meta of={WorkflowStories} />
+
+# Workflow commands, conflicts and coordinated refresh
+
+Treat an approval as a command against the facts the person reviewed. Capture
+the record ID, expected version and proposed values together before confirmation.
+Keep command acknowledgement separate from subsequent read-model refreshes.
+Handle stale decisions and uncertain outcomes explicitly rather than repeating
+a write with a newer hidden version.
+
+## Try it
+
+Edit **Approval comment**, choose **Approve request**, then cancel: zero commands
+are sent. Confirm to commit once and refresh the request detail, lists, approval
+queue, dashboard and inbox. Another viewer and an unrelated owner remain intact.
+
+**Conflict** begins with local version 7 and server version 8. Rejection retains
+the original basis/comment. Cancel **Reload latest request** to preserve both;
+confirm **Discard and reload** to accept version 8 and clear the draft, then
+review and enter a new decision. **Refresh failure** completes approval but fails
+one read: **Retry refresh** sends no approval. **Uncertain outcome** loses the
+acknowledgement after commit: **Reconcile outcome** reads status without replay.
+Use **Fail next read-model refresh** before reloading or reconciling to see a
+failed follow-up read without claiming that a reload completed an approval.
+Retry retains the original recovery context and sends no business command.
+
+<Canvas of={WorkflowStories.Overview} story={{ inline: false, height: "1250px" }} sourceState="none" />
+
+## Before you start
+
+Read Architecture, Confirmations, Loading and saving feature data, Building a
+backend-connected feature, and Testing a feature. Paths are relative to
+`frontend/`. Existing authoritative consumer protocols are:
+
+- `docs/development-guide/en/frontend/editing/pinned-values-and-revisions.md`.
+- `docs/development-guide/en/frontend/async-commands/generation-guards-after-await.md`.
+- `docs/development-guide/en/frontend/async-commands/committed-writes-and-observer-failures.md`.
+- `docs/development-guide/en/frontend/async-commands/stable-retry-identity.md`.
+- `docs/development-guide/en/frontend/collections/query-key-scope-and-invalidation.md`.
+
+The starter installs feedback, Query, auth/HTTP and Contacts examples. It does
+**not** install an approval API, a workflow engine, a universal pinned-editor
+hook or a durable receipt service. The following modules are **consumer recipes**
+to implement in the record-owning feature. The isolated story implements that
+protocol locally; it does not add a business application or backend endpoint.
+
+## 1. Agree the command and backend transaction boundary
+
+Keep the decision narrow. A record response contains display facts; a command
+contains only the target, expected version and editable decision input. Versions
+must remain exact safe integers across the wire.
+
+```ts
+// Consumer recipe: src/features/requests/models/Approval.ts
+import { z } from "zod";
+
+export const approvalRecordSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  version: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  status: z.enum(["PENDING", "APPROVED"]),
+});
+export const approvalCommandSchema = z.object({
+  id: z.string().min(1),
+  expectedVersion: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  comment: z.string().trim().min(1).max(1000),
+});
+export type ApprovalRecord = z.infer<typeof approvalRecordSchema>;
+export type ApprovalCommand = z.infer<typeof approvalCommandSchema>;
+```
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Approval command producer and consumer responsibilities</caption>
+  <thead>
+    <tr>
+      <th scope="col">Boundary</th>
+      <th scope="col">Contract</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">POST /requests/:id/approve</th>
+      <td>
+        Body: expectedVersion and comment. Server checks live actor, record visibility, approval eligibility, pending
+        state and exact version in one transaction. Accepted 200 contains the committed record.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Atomic business effects</th>
+      <td>
+        State transition, version increment, mandatory audit and persisted notification changes commit together.
+        APPROVED is terminal for this record identity: it never transitions back to PENDING and IDs are not reused.
+        Competing writers participate in the same documented concurrency protocol.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">409 REQUEST_REJECTED</th>
+      <td>
+        This recipe agrees that an approval decision is stale or no longer valid. No change commits. The UI preserves
+        useful authorized input and requires an explicit new basis; it does not guess that every app endpoint has this
+        meaning.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Known denial or validation</th>
+      <td>
+        Document rejection before mutation, status/error codes and owned fields. Permission loss clears restricted
+        state. Ordinary validation keeps the draft. Neither is success.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Uncertain acknowledgement</th>
+      <td>
+        Transport loss or malformed success might follow commit. No automatic replay. Reconcile a documented
+        authoritative outcome or use a server receipt tied to the exact immutable command.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Read projections</th>
+      <td>
+        Request detail/lists, queues, counts and inbox are views of acknowledged state. A read failure cannot turn an
+        accepted approval into a rejected approval.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+Backend ownership and transaction/revision examples already live in
+`docs/development-guide/en/backend/application-services/transactional-commands.md`,
+`data/revision-conflicts-and-shared-locks.md`, and
+`security/resource-scope-and-composite-keys.md`. These are required reading for
+implementing the producer. This tutorial does not claim that an in-memory
+simulation proves database atomicity. External email/webhooks need their own
+durable delivery contract; a database rollback cannot recall them.
+
+For this single terminal PENDING→APPROVED operation, a fresh authorized primary record
+can establish that the request is now approved. It cannot prove which lost
+command produced it, its comment, or the exact audit identity. A workflow that
+needs those facts, permits repeated actions, or charges money requires a server
+receipt/query keyed by an immutable command ID. Define and implement that
+protocol before enabling replay; do not invent a client-only idempotency flag.
+
+## 2. Put endpoint parsing inside the feature API adapter
+
+```ts
+// Consumer recipe: src/features/requests/api/approval.api.ts
+import type { ApprovalCommand, ApprovalRecord } from "../models/Approval";
+export interface ApprovalApi {
+  approve(command: ApprovalCommand): Promise<ApprovalRecord>;
+  read(id: string, signal?: AbortSignal): Promise<ApprovalRecord>;
+}
+export class ApprovalConflictError extends Error {}
+export class ApprovalDeniedError extends Error {}
+export class ApprovalValidationError extends Error {}
+export class ApprovalOutcomeUnknownError extends Error {}
+```
+
+```ts
+// Consumer recipe: src/features/requests/api/approval.api.http.ts
+import axios, { type AxiosInstance } from "axios";
+import { decodeAppHttpError } from "@/app/data/http/appHttpError";
+import { approvalCommandSchema, approvalRecordSchema } from "../models/Approval";
+import {
+  ApprovalConflictError,
+  ApprovalDeniedError,
+  ApprovalOutcomeUnknownError,
+  ApprovalValidationError,
+  type ApprovalApi,
+} from "./approval.api";
+
+export function createApprovalHttpApi(http: AxiosInstance): ApprovalApi {
+  return {
+    async read(id, signal) {
+      const response = await http.get(`/requests/${encodeURIComponent(id)}`, { signal });
+      const record = approvalRecordSchema.parse(response.data);
+      if (record.id !== id) throw new Error("The response belongs to another request.");
+      return record;
+    },
+    async approve(input) {
+      const command = approvalCommandSchema.parse(input);
+      let payload: unknown;
+      try {
+        const response = await http.post(`/requests/${encodeURIComponent(command.id)}/approve`, {
+          expectedVersion: command.expectedVersion,
+          comment: command.comment,
+        });
+        payload = response.data;
+      } catch (error) {
+        const decoded = decodeAppHttpError(error, ["comment"]);
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+        if (status === 409 && decoded?.code === "REQUEST_REJECTED") throw new ApprovalConflictError();
+        if (status === 403 && decoded?.code === "FORBIDDEN") throw new ApprovalDeniedError();
+        if (status === 400 && decoded?.code === "VALIDATION_FAILED") throw new ApprovalValidationError();
+        // Do not infer rollback from an unrecognized failure or a lost acknowledgement.
+        throw new ApprovalOutcomeUnknownError();
+      }
+      const parsed = approvalRecordSchema.safeParse(payload);
+      if (
+        !parsed.success ||
+        parsed.data.id !== command.id ||
+        parsed.data.status !== "APPROVED" ||
+        parsed.data.version <= command.expectedVersion
+      )
+        throw new ApprovalOutcomeUnknownError();
+      return parsed.data;
+    },
+  };
+}
+```
+
+Receive the same configured Axios instance through the feature factory as in
+Building a backend-connected feature. Auth owns fresh CSRF and identity expiry;
+do not copy interceptors into this adapter. The example conservatively treats
+unrecognized failures as uncertain. An endpoint may expose stronger known
+pre-commit outcomes; add them through an agreed contract and producer/consumer
+tests. The port's meaningful errors do not expose transport internals to UI.
+
+## 3. Pin basis and proposed values together
+
+The editor accepts `{ id, version, title, status }` once from a fresh authorized
+observation. Current Query results remain separate observations. Same-stamp
+refreshes do not reset fields; a newer version may mark the editor stale but
+must not silently replace only its hidden expectedVersion.
+
+Capture the exact command before opening confirmation. Freeze primitive command
+values, synchronously claim the operation, and capture its owner generation.
+After confirmation, after the API, and after refresh, recheck the current owner
+and authority. Backend checks remain necessary because permission can change
+after the final browser check.
+
+The following complete controller is feature-owned consumer code. Callbacks
+receive translated copy from the caller. It never imports another feature or
+creates another global state store. `current()` reports committed owner state,
+not a ref mutated during an abandoned React render.
+
+```ts
+// Consumer recipe: src/features/requests/models/createApprovalController.ts
+import type { ApprovalCommand, ApprovalRecord } from "./Approval";
+import {
+  ApprovalConflictError,
+  ApprovalDeniedError,
+  ApprovalValidationError,
+  type ApprovalApi,
+} from "../api/approval.api";
+
+type Recovery = "none" | "conflict" | "refresh" | "uncertain";
+type RefreshContext = "approval" | "reload" | "reconcile";
+type Editor = Readonly<{ ownerKey: string; authorized: boolean; basis: ApprovalRecord; comment: string }>;
+type Copy = Readonly<{
+  approveTitle: string;
+  reloadTitle: string;
+  confirm: string;
+  discard: string;
+  cancel: string;
+  cancelled: string;
+  completed: string;
+  conflict: string;
+  uncertain: string;
+  refreshFailed: string;
+  reloadedRefreshFailed: string;
+  reconciledRefreshFailed: string;
+  acceptanceFailed: string;
+  readSucceeded: string;
+  feedbackFailed: string;
+  denied: string;
+  invalid: string;
+  reloaded: string;
+  reconciled: string;
+  readFailed: string;
+}>;
+type Options = Readonly<{
+  api: ApprovalApi;
+  current: () => Editor;
+  confirm: (
+    request: Readonly<{
+      title: string;
+      message: string;
+      confirmLabel: string;
+      cancelLabel: string;
+      destructive?: boolean;
+      signal: AbortSignal;
+    }>,
+  ) => Promise<{ status: "confirmed" | "cancelled" }>;
+  refresh: () => Promise<void>;
+  accept: (record: ApprovalRecord, discardDraft: boolean) => void;
+  clearRestricted: () => void;
+  publish: (state: Readonly<{ busy: boolean; recovery: Recovery; message: string }>) => void;
+  notifyAccepted: () => void;
+  copy: Copy;
+}>;
+
+export function createApprovalController(options: Options) {
+  let active: AbortController | null = null;
+  let generation = 0;
+  let invalidated = false;
+  let recovery: Recovery = "none";
+  let refreshContext: RefreshContext | null = null;
+  let pendingAcceptance: Readonly<{ record: ApprovalRecord; discardDraft: boolean }> | null = null;
+  let feedbackFailed = false;
+  // These are local observers, not part of the server transaction. Their
+  // failure cannot erase an acknowledgement or skip required read refreshes.
+  const observe = (observer: () => void) => {
+    try {
+      observer();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const invalidate = () => {
+    invalidated = true;
+    generation += 1;
+    active?.abort();
+    active = null;
+  };
+  const execute = async (kind: "approve" | "reload" | "refresh" | "reconcile") => {
+    const editor = options.current();
+    if (invalidated || active || !editor.authorized) return;
+    if (kind === "approve" && (recovery !== "none" || editor.basis.status !== "PENDING" || !editor.comment.trim()))
+      return;
+    if (kind === "reload" && recovery !== "conflict") return;
+    if (kind === "reconcile" && recovery !== "uncertain") return;
+    if (kind === "refresh" && (recovery !== "refresh" || refreshContext === null)) return;
+    const operation = new AbortController();
+    active = operation;
+    const epoch = generation;
+    const ownerKey = editor.ownerKey;
+    const command: ApprovalCommand = Object.freeze({
+      id: editor.basis.id,
+      expectedVersion: editor.basis.version,
+      comment: editor.comment.trim(),
+    });
+    const isCurrent = () =>
+      active === operation &&
+      epoch === generation &&
+      !operation.signal.aborted &&
+      options.current().authorized &&
+      options.current().ownerKey === ownerKey;
+    const report = (message: string, busy = true) => observe(() => options.publish({ busy, recovery, message }));
+    try {
+      if (kind === "approve" || kind === "reload") {
+        const result = await options.confirm({
+          title: kind === "approve" ? options.copy.approveTitle : options.copy.reloadTitle,
+          message: `${editor.basis.title} · ${command.expectedVersion} · ${command.comment}`,
+          confirmLabel: kind === "approve" ? options.copy.confirm : options.copy.discard,
+          cancelLabel: options.copy.cancel,
+          destructive: kind === "reload",
+          signal: operation.signal,
+        });
+        if (!isCurrent()) return;
+        if (result.status !== "confirmed") {
+          report(options.copy.cancelled, false);
+          return;
+        }
+      }
+      report("");
+      if (kind === "approve") {
+        let accepted: ApprovalRecord;
+        try {
+          accepted = await options.api.approve(command);
+        } catch (error) {
+          if (!isCurrent()) return;
+          if (error instanceof ApprovalDeniedError) {
+            invalidate();
+            options.clearRestricted();
+            options.publish({ busy: false, recovery: "none", message: options.copy.denied });
+          } else if (error instanceof ApprovalValidationError) report(options.copy.invalid, false);
+          else {
+            recovery = error instanceof ApprovalConflictError ? "conflict" : "uncertain";
+            report(recovery === "conflict" ? options.copy.conflict : options.copy.uncertain, false);
+          }
+          return;
+        }
+        if (!isCurrent()) return;
+        // Retain this known receipt if accepting it into the local editor fails.
+        refreshContext = "approval";
+        pendingAcceptance = { record: accepted, discardDraft: false };
+        feedbackFailed = !observe(options.notifyAccepted);
+        if (!isCurrent()) return;
+        report(options.copy.completed);
+      } else if (kind === "reload" || kind === "reconcile") {
+        const fresh = await options.api.read(command.id, operation.signal);
+        if (!isCurrent()) return;
+        // PENDING does not prove that the original command stopped running.
+        // Only this endpoint's terminal APPROVED state closes that possibility.
+        if (kind === "reconcile" && fresh.status !== "APPROVED") {
+          report(options.copy.uncertain, false);
+          return;
+        }
+        refreshContext = kind;
+        pendingAcceptance = { record: fresh, discardDraft: kind === "reload" };
+        feedbackFailed = false;
+      }
+      const context = refreshContext;
+      if (context === null) return;
+      const acceptance = pendingAcceptance;
+      if (acceptance && observe(() => options.accept(acceptance.record, acceptance.discardDraft)))
+        pendingAcceptance = null;
+      if (!isCurrent()) return;
+      const completion =
+        context === "approval"
+          ? options.copy.completed
+          : context === "reload"
+            ? options.copy.reloaded
+            : options.copy.reconciled;
+      let refreshFailed = false;
+      try {
+        await options.refresh();
+      } catch {
+        refreshFailed = true;
+      }
+      if (!isCurrent()) return;
+      if (pendingAcceptance || refreshFailed) {
+        recovery = "refresh";
+        const failed =
+          context === "approval"
+            ? options.copy.refreshFailed
+            : context === "reload"
+              ? options.copy.reloadedRefreshFailed
+              : options.copy.reconciledRefreshFailed;
+        report(
+          pendingAcceptance
+            ? `${context === "approval" ? options.copy.completed : options.copy.readSucceeded} ${options.copy.acceptanceFailed}`
+            : failed,
+          false,
+        );
+      } else {
+        recovery = "none";
+        refreshContext = null;
+        report(feedbackFailed ? `${completion} ${options.copy.feedbackFailed}` : completion, false);
+      }
+    } catch {
+      if (isCurrent()) report(options.copy.readFailed, false);
+    } finally {
+      // An old operation cannot clear a replacement owner's busy state.
+      if (active === operation) active = null;
+    }
+  };
+  return Object.freeze({ execute, invalidate });
+}
+```
+
+The controller captures command values and blocks duplicate invocations before
+React paints. Keep the opener focusable while its dialog is open; publish busy
+state for the actual command/read and disable controls then. Only `confirmed`
+permits sending. On record/viewer/session change or observed restriction,
+invalidate first, then clear obsolete restricted state and publish the new
+owner's UI. In React, do this at the committed owner boundary (for example,
+identity-keyed subtree teardown or the owner's layout-effect transition), not
+by mutating refs during render. A different owner starts a new controller.
+
+The public transitions are enforced inside the controller, not just by hiding
+buttons: approve requires no recovery, reload requires a conflict, reconcile
+requires uncertainty, and refresh requires a previously failed refresh. Calling
+refresh while uncertain does nothing; only an authoritative read can establish
+an outcome. `invalidate()` permanently ends this controller's owner.
+
+Refresh retains whether it follows an acknowledged approval, a fresh reload or
+an authoritative reconciliation. Supply distinct translated
+`refreshFailed`, `reloadedRefreshFailed` and `reconciledRefreshFailed` messages;
+retry uses that same context. A successful recovery read followed by a failed
+projection refresh never claims a new approval completed.
+
+Local acceptance, notification and status publication are observers. An observer
+exception does not downgrade a known acknowledgement or skip required refreshes.
+`accept`, `notifyAccepted` and `publish` are synchronous-only collaborators;
+`observe` catches synchronous exceptions only. TypeScript's `() => void` also
+accepts async functions, so review this contract explicitly. Put asynchronous
+work in the awaited `refresh` collaborator, rather than returning an unobserved
+promise from a presentation callback.
+If accepting the known record into the editor fails, the controller retains that
+exact record and blocks new decisions with refresh recovery. Retry attempts local
+acceptance and read refresh only, never another approval. `acceptanceFailed`
+explains this local failure; `readSucceeded` identifies a fresh read whose local
+acceptance failed. A notification failure is reported with `feedbackFailed`
+after refresh, without replaying the notification or business command. Observe
+and diagnose presentation failures in the appropriate application owner as well.
+
+Reconciliation keeps uncertainty latched while the authoritative record remains
+PENDING: the original command might still be running. It neither accepts that
+read into the editor nor refreshes away the latch. Only the agreed terminal
+APPROVED state permits the read-based recovery shown here. This establishes
+current state, not which command produced it or whose comment/audit was committed.
+Exact attribution requires the server receipt protocol described above.
+
+An acknowledged result remains a server fact even when its initiating editor
+is obsolete; this controller suppresses obsolete local acceptance, notifications
+and refresh callbacks. Application-wide observers require their own valid owner.
+Neither aborting the confirmation nor suppressing a continuation rolls back a
+write already submitted.
+
+## 4. Inject public refresh collaborators across owners
+
+The requests owner refreshes its own detail/list keys. Queue, dashboard and inbox
+owners export narrow refresh collaborators through their public indices when
+application composition needs them. The composition root injects those
+collaborators; the requests feature never imports their private query-key files
+or calls their generic runtime hooks.
+
+```ts
+// Consumer recipe: src/features/requests/api/createApprovalRefresh.ts
+export type ApprovalRefreshOwners = Readonly<{
+  requests: () => Promise<void>;
+  queue: () => Promise<void>;
+  dashboard: () => Promise<void>;
+  inbox: () => Promise<void>;
+}>;
+export function createApprovalRefresh(owners: ApprovalRefreshOwners) {
+  return async () => {
+    const results = await Promise.allSettled(
+      [owners.requests, owners.queue, owners.dashboard, owners.inbox].map(refresh => Promise.resolve().then(refresh)),
+    );
+    if (results.some(result => result.status === "rejected"))
+      throw new Error("An affected projection failed to refresh.");
+  };
+}
+```
+
+Each callback captures the **same viewer and request scope as the command**.
+Within its owner, define deliberate keys such as `['requests', viewerId,
+'detail', id]`, `['requests', viewerId, 'lists', filters]`, `['approval-queue',
+viewerId, filters]`, `['dashboard', viewerId]` and `['inbox', viewerId, filters]`.
+Normalize all filter inputs. Invalidate each intended prefix and await active
+reads with `{ throwOnError: true }` when the UI must expose refresh failure.
+Inactive matching keys become stale, not necessarily fetched immediately.
+
+The query-key owner decides whether the response affects one record, all lists
+for that viewer, or another precise projection. The simulation demonstrates
+these five categories plus other-viewer/unrelated sentinels. It is not a reason
+to copy its `tutorial-*` names into production. Avoid whole-cache invalidation
+for a successful approval. Identity expiry is separate: installed auth clears
+private non-auth Query data using its existing broader policy.
+
+Owner callbacks must return promises and not swallow required read errors.
+Collect failures without converting them into a second command. The composition
+root has visibility of all public runtimes, so it is the integration owner; no
+exceptional cross-feature hook edge is needed. The backend-connected tutorial
+shows exact HTTP/runtime registration edits. Add the new narrow collaborators
+to their owning factories' public surfaces deliberately when implementing a
+consumer, rather than referring to imaginary installed refresh APIs.
+
+## 5. Connect feedback without conflating it with persistence
+
+The installed adapter is `useRgoFeedback()` under the existing application
+provider. Pass its `confirm` method to the controller and translate all supplied
+copy using the feature's paired resource namespace. `notifyAccepted` should
+call `feedback.notify({ id, message: translatedAccepted, severity: "success" })`
+only after the API acknowledges. Dismiss the exact owned notification at
+teardown when its presentation lifetime ends. The provider owns focus and
+confirmation settlement; the feature owns its command and recovery policy.
+
+Do not put refresh inside a promise presented as the mutation's all-or-nothing
+outcome. Keep three visible outcomes:
+
+- **Rejected command:** no commit under the documented endpoint contract;
+  retained safe draft, localized validation/denial/conflict recovery.
+- **Acknowledged command, failed refresh:** command completed; Retry refresh
+  issues reads only, with zero additional approval attempts.
+- **Uncertain command:** no reliable acknowledgement; block resubmission and
+  reconcile. A generic error toast plus an active Approve button is insufficient.
+
+For conflicts, a fresh background query never replaces the pin. Explicit reload
+asks before discarding useful input, obtains a fresh authorized record, and
+replaces basis and values together. If that read fails, retain the old pin/draft
+and conflict/uncertain recovery. After a successful reload, the person reviews
+the new facts and makes a **new** decision; this is not an automatic retry.
+
+The preview's authority-revocation action ends its private owner immediately,
+aborts its confirmation, clears restricted draft/cache presentation and prevents
+late local updates. Real capability/visibility revocation must come from the
+app's agreed authority contract and server responses, as in Capability-aware
+pages and actions. A frontend boolean never authorizes a command on the server.
+
+## 6. Verify decisions, races and recovery at their owners
+
+Use the real controller, feedback provider, QueryClient and HTTP adapter when
+their behavior is under test. Replace external transport/server state only.
+Use held started/release promises for races rather than sleeps. Prove:
+
+- Cancel, Escape, backdrop and owner abortion send zero commands and preserve the draft.
+- Two invocations before a render start one decision/command.
+- Captured ID, expectedVersion and comment stay unchanged while confirmation is open.
+- Owner change or revocation before confirmation settles prevents submission.
+- A late old-owner response cannot replace new-owner fields, clear its busy state or notify it.
+- Version-7 conflict retains version-7 input; cancel reload preserves it; accepted reload updates values and token together.
+- Accepted approval refreshes all intended scopes and leaves other viewers/owners unchanged.
+- Read refresh failure after acceptance keeps “completed”; Retry refresh never calls approve again.
+- Lost/malformed acknowledgement blocks replay; reconciliation performs a read, not a second write.
+- A reconciliation read that is still PENDING keeps uncertainty latched without accepting the record or refreshing it away; the original command may still be running.
+- Recovery read failure keeps the write blocked and does not silently establish a newer basis.
+- Real backend authorization, transaction rollback, competing writers and revision tests establish actual persistence guarantees.
+
+Coordinate checks sequentially from the repository root:
+
+```sh
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run typecheck
+npm --prefix frontend run test:browser:storybook
+npm --prefix frontend run verify
+```
+
+Add focused model/API/component tests under `tests/features/requests/` and
+cross-owner composition under `tests/integration/` when implementing the recipe.
+Testing a feature explains fresh caches, handler lifetime, rejection assertions
+and cleanup. Local Storybook simulations cannot prove backend transaction
+atomicity, production cookie behavior, all permission rules or durable receipts.
+
+## Common mistakes
+
+- Capturing a version after confirmation, or attaching a new hidden version to an older proposed decision.
+- Treating a mounted flag, disabled button or confirmed dialog as continuing authority.
+- Claiming busy state after awaiting and permitting duplicate clicks to start two operations.
+- Using an unconditional finally that clears another owner's busy state.
+- Reporting an acknowledged approval as failed because a dashboard read failed.
+- Refreshing only the visible detail and leaving queues/counts/inbox stale, or invalidating the whole application to hide missing ownership.
+- Automatically retrying a 409 or uncertain write with a newly generated command identity.
+- Deep-importing another feature's cache keys instead of injecting its narrow public collaborator.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the linked authoritative protocols and the installed examples
+`docs/storybook/examples/Contacts/hooks/useContactActions.ts`,
+`useContactsWorkspace.ts`, `api/contact.mutation.ts`, and
+`src/app/auth/createAppAuthRuntime.ts`. No universal controller, receipt helper or
+approval API named here exists in production until a consumer implements it.
+
+```sh
+npm --prefix frontend run guide:index -- search "Workflow commands" "expectedVersion"
+```
+
+## Storybook fixture reference
+
+`WorkflowCommands.stories.tsx`, `WorkflowCommandsExample.tsx` and
+`workflowFixture.ts` live only in `docs/storybook/workflows/WorkflowCommands/`.
+Each preview has its own QueryClient, five scoped projections, sentinels,
+synthetic revisioned record and counters. It consumes the real global feedback
+provider and owns confirmation abortion, duplicate prevention, generation checks,
+private timer teardown, cache cleanup and notification dismissal. It performs
+no network, cookie or storage operation and supplies no theme/provider shim.
+The in-memory atomic update and lost-acknowledgement scenario are teaching
+fixtures, not backend evidence. Global theme changes preserve local draft and
+open decisions; ending the preview ends only its owned work.

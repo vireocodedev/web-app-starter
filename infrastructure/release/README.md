@@ -125,8 +125,6 @@ when provisioning.
 The two manual workflows and host controller are implemented below. Their live
 activation, first GHCR publication, real deployments/TLS/accounts and initialized
 restore acceptance require the operator gates below; source alone is not evidence.
-The template's completed activation and exact digests/run IDs are recorded in
-[release acceptance](../../docs/acceptance/release-acceptance.json).
 
 ## Deploy an initialized project
 
@@ -241,12 +239,14 @@ The current target uses `18080/18081` for staging frontend/backend and
    from GitHub. Transfer a **clean exact committed checkout**, including its Git
    identity, into an operator-controlled root-owned directory. Independent
    review and real supported-host validation are required before activation.
-2. Run [install.py](install.py) as root from that protected checkout. It accepts
-   `--repository`, `--repository-id`, `--slug`, repeatable `--actor`,
-   `--staging-workflow-id`, `--production-workflow-id`, `--staging-hostname`,
-   `--production-hostname`, the four `--<environment>-<component>-port` arguments,
-   `--username`, `--display-name`, and `--email`. Optional `--app-settings` and
-   `--app-key` are protected **paths**, not secret values.
+2. Run [14_4_install_release.py](../../docs/template-initialization/scripts/14_4_install_release.py)
+   as root from that protected checkout, using `--env` for the protected values
+   file prepared by the [initialization guide](../../docs/template-initialization/INIT_GUIDE.md).
+   It loads the selected repository, slug, maintainer, hostnames, ports and account
+   identity from that file, plus actual numeric repository/workflow IDs from its
+   env-bound `progress.json`. Copy the matching `verification.json` with those
+   observations. App metadata/key references retain their protected host paths;
+   credentials never become command arguments.
    It refuses an existing project installation rather than overwrite it.
 3. Installation creates these project-scoped, root-only paths:
    - `/etc/web-app-deploy/<slug>/`: protected controller/runtime configuration,
@@ -259,15 +259,16 @@ The current target uses `18080/18081` for staging frontend/backend and
      and production backups.
    - Disabled `web-app-deploy-<slug>.service`,
      `web-app-backup-<slug>.service` and `web-app-backup-<slug>.timer`.
-   Unit hardening includes a read-only host filesystem and only the project's
-   state writable; access to the host Docker socket is privileged and confined
-   to this reviewed host process, never a runner.
+     Unit hardening includes a read-only host filesystem and only the project's
+     state writable; access to the host Docker socket is privileged and confined
+     to this reviewed host process, never a runner.
 4. Publish **only** the generated public `controller.crt` as the repository
    Actions variable `DEPLOY_CONTROLLER_CERT`. No server private key, SSH key,
    DB password, App key, registry password, or plaintext workflow token belongs
    in an Actions variable/artifact.
-5. Run [prepare.py](prepare.py) with `--config` pointing to the protected
-   `controller.json`. It checks free ports and absent project resources,
+5. Run [14_5_prepare_release.py](../../docs/template-initialization/scripts/14_5_prepare_release.py)
+   with the same `--env` file. It derives this project's protected `controller.json`
+   path and checks free ports and absent project resources,
    records creation intent, provisions separate labeled networks/volumes and
    pinned PostgreSQL instances without public DB ports, and adds only
    `/etc/caddy/sites/<slug>.caddy`. It validates the full Caddy configuration
@@ -362,6 +363,7 @@ Scheduled/manual backups use the same environment lock; the backup CLI is
    diagnostics. Verify expected initialized user rows/enabled BCrypt hashes,
    successful Flyway versions and the session tables. The initial rehearsal
    restored one enabled user, two migrations and queryable session data.
+
 6. Verify the scratch container's task-specific ownership label before removing
    only that exact container and temporary credential/copy files. Preserve the
    original backups and protected retrieved operator copy. If local Docker
@@ -374,11 +376,8 @@ environment, exact destination volume and data-loss/retention consequences.
 Never automatically restore over the live database or infer image rollback
 compatibility from the existence of an old digest.
 
-**Current operational limits:** both manual releases and real browser flows
-passed, and the production timer is enabled only after the initialized restore
-passed. Its first scheduled firing is still future evidence. Shared CI
-cross-repository acceptance remains a follow-up. The controller-memory OOM was
-resolved by the [reviewed and validated transport repair](../../docs/acceptance/controller-memory-acceptance.json),
-including this deployment controller, without redeploying apps or changing limits.
-Ubuntu unattended security updates were identified as the cause of
-the interrupted initial CI run; updates were not disabled or protections relaxed.
+**Acceptance evidence:** record actual release, HTTPS authentication, backup
+retrieval and isolated restore results for each environment. After timer
+activation, confirm scheduled execution from its logs separately from manual
+backup and restore checks. Verify shared CI access for the intended repository
+and current installed-source validation with the operator.

@@ -4,7 +4,6 @@ import { initReactI18next } from "react-i18next";
 import type {} from "./i18next.augmentation";
 import { appLocales, defaultAppLocale, type AppLocale } from "./localeConfig";
 import { translationResources } from "./localeSetup";
-import { developmentGuideTranslationResources } from "./translations/developmentGuideResources";
 
 export function resolvedAppLocale(language: string | undefined): AppLocale {
   return appLocales.includes(language as AppLocale) ? (language as AppLocale) : defaultAppLocale;
@@ -20,14 +19,9 @@ export function createAppI18n(initialLocale: AppLocale): i18n {
     initAsync: false,
     interpolation: { escapeValue: false },
     lng: initialLocale,
-    ns: import.meta.env.DEV ? ["translation", "development-guide"] : ["translation"],
+    ns: ["translation"],
     react: { useSuspense: false },
-    resources: import.meta.env.DEV
-      ? {
-          en: { ...translationResources.en, ...developmentGuideTranslationResources.en },
-          hr: { ...translationResources.hr, ...developmentGuideTranslationResources.hr },
-        }
-      : translationResources,
+    resources: translationResources,
     supportedLngs: appLocales,
   });
 

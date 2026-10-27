@@ -8,12 +8,13 @@ that collaborate through providers and small hooks.
 `src/app/localization` owns supported locales, i18next creation, translation
 shapes, formatting helpers, locale presentation, and the locale preference.
 English and Croatian objects have matching typed shapes in each namespace.
-Application strings use `translation` and `useAppTranslation()`. Development
-guide strings have a separate `development-guide` entry point and use
-`useDevelopmentGuideTranslation()` throughout guide content, navigation, and
-documentation. The guide namespace is registered only in development; its
-strings are absent from production builds. Components use locale-aware formatter
-hooks rather than importing locale objects directly. RGO applications are LTR only.
+Application strings use only `translation` and `useAppTranslation()` in every
+application build. Open `AppTranslationResource`/`AppTranslationResources`
+interfaces describe the normal resources independently of their concrete
+implementation. Storybook alone augments its guide namespaces under
+`docs/storybook/`; production imports no guide resources or type augmentation.
+Components use locale-aware formatter hooks rather than importing locale objects
+directly. RGO applications are LTR only.
 
 `src/app/theme` owns the MUI theme, component defaults, typography, spacing,
 breakpoints, color scheme, and display preferences. Theme creation receives the
@@ -33,8 +34,8 @@ palette so MUI CSS variables and JavaScript theme reads use the same values.
 The Accessibility preference owner also lives here: motion follows the operating
 system by default, and text links keep each page's current underline style.
 Users can instead reduce nonessential motion or always underline content links.
-The latter includes guide breadcrumbs and related-reading links while leaving
-app navigation and button links unchanged.
+This applies to content links while leaving app navigation and button links
+unchanged. Storybook references demonstrate article links independently.
 
 `src/app/shell` owns the temporary or permanent desktop drawer mode, the
 permanent drawer's open and collapsed states, and desktop header stickiness.

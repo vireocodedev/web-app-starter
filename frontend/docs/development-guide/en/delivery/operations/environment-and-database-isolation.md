@@ -2,7 +2,7 @@
 
 Keep staging and production independently addressable while preserving database lifetime across application releases. Replacing an image pair must never imply recreating the persistent database or borrowing another environment's credentials.
 
-**Installed template pattern.** `infrastructure/release/install.py`, `prepare.py` and `runtime.py` own protected settings, initial database resources and fixed application Compose generation. The release README owns installation/activation procedure; a normal release does not provision these resources again.
+**Installed template pattern.** `docs/template-initialization/scripts/14_4_install_release.py` and `14_5_prepare_release.py` own protected setup and initial database resources; `infrastructure/release/runtime.py` owns fixed application Compose generation. The release README owns installation/activation procedure; a normal release does not provision these resources again.
 
 ## Trigger, owner and invariant
 
@@ -34,7 +34,7 @@ Each environment receives a different generated database password and separate p
 
 ## Preparation is a guarded one-time mutation
 
-`prepare.py` verifies that all configured loopback ports can bind, the project proxy site is absent and intended database resources do not already exist. It records exact creation intent before creating labeled networks and volumes. A new volume's mountpoint must be expected, nonsymlinked and empty before ownership is set.
+`14_5_prepare_release.py` verifies that all configured loopback ports can bind, the project proxy site is absent and intended database resources do not already exist. It records exact creation intent before creating labeled networks and volumes. A new volume's mountpoint must be expected, nonsymlinked and empty before ownership is set.
 
 If preparation is interrupted, its durable marker forces operator inspection. Blindly rerunning an installer or deleting the marker can collide with partially created state. A configured free port at preparation is a prerequisite, not a permanent reservation against every later host process.
 

@@ -2,17 +2,17 @@
 
 Prije izmjene pretvori issue ili zahtjev u provjerljiv implementacijski opseg. Razlikuj činjenice, delegirane tehničke odluke i nedostajuće ljudske odgovore bez izmišljanja zahtjeva.
 
-**Dokumentirani workflow s receptom.** V1 i specification-package ugovor definiraju leaf issue, source, odluke i prihvat. Kratki radni zapis je preporučeno pomagalo, ne nova shema ni automatizirano odobrenje.
+**Dokumentirani workflow s receptom.** V1 workflow i repozitorijske agentske upute definiraju ograničene ishode, izvore, odluke i prihvat. Kratki radni zapis je preporučeno pomagalo, ne nova shema ni automatizirano odobrenje.
 
 ## Okidač, vlasnik i ugovor
 
 Koristi pri claimu leafa, nejasnom zahtjevu ili promjeni više capabilityja. Implementator upravlja code boundaryjem, a product/client vlasnik poslovnim odlukama. Tehničku delegaciju možeš riješiti u razvojnoj ovlasti; pretpostavljeni odgovor ostaje prijedlog.
 
-Ugovor je opažljiv ishod s vlasnikom, prihvatom, ovisnostima, decision gateom i ovlaštenom isporukom. Parent nije automatska izvršna ovisnost. Ready-for-spec-review nije odobrenje za coding.
+Ugovor je opažljiv ishod s vlasnikom, prihvatom, ovisnostima, decision gateom i ovlaštenom isporukom. Parent nije automatska izvršna ovisnost. Zahtjevi pripremljeni za review još trebaju dogovor prije ovisne implementacije.
 
 ## Pročitaj izvršni ugovor
 
-Za generirani rad čitaj body, stable key/source, `blockedBy`, `decisionBlockers`, `ownerBoundary` i generirani `IMPLEMENTATION-WORKFLOW.md`. Progress prati u aktualnom issue/PR zapisu, ne kroz setup status.
+Za rad iz issuea pročitaj stvarni issue, dogovorene izvorne zahtjeve, ovisnosti, otvorene odluke i granicu vlasništva. Progress prati u aktualnom issue/PR zapisu, ne kroz setup status. Generirana shema paketa ni datoteka implementacijskog workflowa nisu preduvjet.
 
 Za izravni zahtjev koristan je ekvivalent:
 
@@ -38,7 +38,7 @@ To su neutralni primjeri, ne dozvola za push, deploy, podatkovnu promjenu ili re
 
 Delegirani tehnički detalj riješi, ne ostavljaj sve otvoreno. Locked baseline može sadržavati neriješene ulaze; lock ih ne odgovara.
 
-Validator provjerava recipročne mappings i gateove, ne pretvara analitičku pretpostavku u suglasnost klijenta. Potreban je semantički review.
+Pri reviewu poveži kriterije prihvata s izvorima i odredi koji rad ovisi o svakoj otvorenoj odluci. Mehanički potpun zapis ne pretvara analitičku pretpostavku u suglasnost klijenta.
 
 ## Najmanji cjeloviti zahvat
 
@@ -53,7 +53,7 @@ Neovisan ready posao može nastaviti dok odluka blokira drugi leaf. Zapiši toč
 | Opažanje                      | Odluka                                       |
 | ----------------------------- | -------------------------------------------- |
 | Parent postoji, blocker ne    | Ne zaključuj redoslijed samo iz hijerarhije. |
-| Ready-for-spec-review         | Prvo semantički review i ovlast.             |
+| Zahtjevi čekaju review        | Prvo semantički review i ovlast.             |
 | UI naziv implicira permission | Prijedlog/input gap, ne potvrđeni policy.    |
 | Tehnička odluka delegirana    | Riješi uz izvor i rationale.                 |
 | Pojavi se nepovezani cleanup  | Odvoji osim nužne koherentne promjene.       |
@@ -68,7 +68,4 @@ Povezane teme su **Capability vlasnici** i **Source-bound handoff**. Vodič ne c
 ## Izvori
 
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:docs/v1-workflow.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/references/specification-contract.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/SKILL.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/scripts/validate-package.mjs`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:AGENTS.md`

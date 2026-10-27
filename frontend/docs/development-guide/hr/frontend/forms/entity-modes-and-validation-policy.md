@@ -34,6 +34,8 @@ Nemojte `initialValue?: Entity` prešutno koristiti za obje operacije; neuspjeli
 
 ## Pogreške i oporavak
 
+Zajednički helper ima jednu namjeru validacije. Za nepotpuni nacrt i strogo završno slanje slijedite [referentne upute Draft and submit forms](../../../../storybook/forms/DraftAndSubmitForms/DraftAndSubmitForms.mdx). Primjer povezuje ugrađenu mehaniku obrasca s izričitom namjerom naredbe, uvjetnim poljima, prihvaćenom osnovicom i zaštitom izlaska; ne slabi zajednički helper niti uvodi drugi form framework.
+
 Pregledani helper prijavljuje submitting prije parsiranja i čekanja. Sam ne daje opći `finally` reset, oporavak sukoba ni pretplatu stvarnog stanja obrasca. Povežite stvarni životni ciklus kako odbijeni parse ili zahtjev ne bi ostavio roditelja trajno zauzetim. Jedan helper nije potpun stroj čekanja.
 
 Razriješeni callback istinit je koliko i njegova implementacija. Ako pokrene zahtjev bez vraćanja ili čekanja, `onSaved` dolazi prerano. Ako HTTP prihvaćanje asinkrone naredbe smatra konačnim dovršetkom, treba drugi tok ishoda. Pogrešku promatrača nakon poznatog commita također treba razdvojiti od stvarnog zapisivanja.

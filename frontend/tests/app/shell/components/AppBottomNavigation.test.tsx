@@ -10,9 +10,6 @@ const translations = vi.hoisted(() => ({ labels: {} as Record<string, string> })
 vi.mock("@/app/localization/hooks/useAppTranslation", () => ({
   useAppTranslation: () => ({ t: (key: string) => translations.labels[key] ?? key }),
 }));
-vi.mock("@/app/localization/hooks/useDevelopmentGuideTranslation", () => ({
-  useDevelopmentGuideTranslation: () => ({ t: (key: string) => translations.labels[key] ?? key }),
-}));
 
 describe("mobile shortcut label fitting", () => {
   let availableWidth: number;
@@ -71,7 +68,7 @@ describe("mobile shortcut label fitting", () => {
   });
 
   it("reduces text only as needed, falls back to two lines at the floor, and recovers after widening", () => {
-    render(<AppBottomNavigationLabel label="Contacts dashboard" />);
+    render(<AppBottomNavigationLabel label="Workspace overview" />);
     expect(Number.parseFloat(text().style.fontSize)).toBeCloseTo(11.2);
     expect(text()).toHaveAttribute("data-rgo-label-lines", "1");
 
@@ -96,7 +93,7 @@ describe("mobile shortcut label fitting", () => {
     const { rerender } = render(<AppBottomNavigationLabel label="Home" />);
     expect(text()).toHaveAttribute("data-rgo-label-lines", "1");
     availableWidth = 80;
-    rerender(<AppBottomNavigationLabel label="Nadzorna ploča kontakata" />);
+    rerender(<AppBottomNavigationLabel label="Nadzorna ploča projekata" />);
     expect(text().style.fontSize).toBe("11px");
     expect(text()).toHaveAttribute("data-rgo-label-lines", "2");
     expect(observers[0].disconnect).toHaveBeenCalledOnce();
@@ -120,7 +117,7 @@ describe("mobile shortcut label fitting", () => {
   it("refits after font loading and window resizing and removes every subscription on unmount", async () => {
     const removeWindowListener = vi.spyOn(window, "removeEventListener");
     const removeFontListener = vi.spyOn(fonts, "removeEventListener");
-    const { unmount } = render(<AppBottomNavigationLabel label="Contacts dashboard" />);
+    const { unmount } = render(<AppBottomNavigationLabel label="Workspace overview" />);
     fontWidthScale = 1.5;
     act(() => fonts.dispatchEvent(new Event("loadingdone")));
     expect(text().style.fontSize).toBe("11px");
@@ -144,20 +141,20 @@ describe("mobile shortcut label fitting", () => {
     translations.labels = {
       "navigation.home": "Home",
       "navigation.settings": label,
-      "navigation.contactsDashboard": "Nadzorna ploča kontakata",
+      "settings.accessibility": "Pristupačnost",
     };
     const { container } = render(
-      <MemoryRouter initialEntries={["/contacts"]}>
+      <MemoryRouter initialEntries={["/workspace"]}>
         <AppBottomNavigation
           items={[
             { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.home", to: "/" },
-            { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.settings", to: "/contacts" },
+            { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.settings", to: "/workspace" },
             {
               Icon: HomeOutlinedIcon,
               kind: "link",
-              labelKey: "navigation.contactsDashboard",
-              labelNamespace: "development-guide",
-              to: "/guide",
+              labelKey: "settings.accessibility",
+              labelNamespace: "translation",
+              to: "/accessibility",
             },
           ]}
         />
@@ -165,7 +162,7 @@ describe("mobile shortcut label fitting", () => {
     );
     expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
-    expect(screen.getByRole("link", { name: "Nadzorna ploča kontakata" })).toHaveAttribute("href", "/guide");
+    expect(screen.getByRole("link", { name: "Pristupačnost" })).toHaveAttribute("href", "/accessibility");
     const longText = screen.getByRole("link", { name: label }).querySelector("[data-rgo-bottom-navigation-label-text]");
     expect(longText).toHaveAttribute("data-rgo-label-lines", "2");
     expect(longText).toHaveTextContent(label);

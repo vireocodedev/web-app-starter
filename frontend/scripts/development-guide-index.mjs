@@ -7,14 +7,13 @@ import {
   handbookArticles,
   handbookCategories,
   handbookTopics,
-} from "../src/features/development-guide/handbook/catalog/handbookManifest.ts";
-import { englishHandbookTranslations } from "../src/app/localization/translations/development-guide-handbook.en.ts";
+} from "../docs/storybook/handbook/Handbook/catalog/handbookManifest.ts";
+import { englishHandbookTranslations } from "../docs/storybook/handbook/Handbook/localization/development-guide-handbook.en.ts";
 
 const workspaceRoot = resolve(import.meta.dirname, "../..");
-const featureRoot = "frontend/src/features/development-guide";
-const pageRoot = "frontend/src/pages/development-guide";
-const translationRoot = "frontend/src/app/localization/translations";
-const roots = [featureRoot, pageRoot, "frontend/docs/development-guide", "frontend/docs/architecture", translationRoot];
+const sourceRoot = "frontend/src";
+const storybookRoot = "frontend/docs/storybook";
+const roots = ["frontend/docs/development-guide", "frontend/docs/architecture", storybookRoot];
 const metadata = {
   articles: handbookArticles,
   categories: handbookCategories,
@@ -39,11 +38,6 @@ const label = (translations, key) =>
     .split(".")
     .reduce((value, segment) => value?.[segment], translations) ?? key;
 
-function includedTranslation(path) {
-  const local = path.slice(translationRoot.length + 1);
-  return local === "handbook" || local.startsWith("handbook/") || /^(?:development-guide|developmentGuide)/.test(local);
-}
-
 function englishCounterpart(path) {
   return path.replace("/hr/", "/en/").replace(/\.hr\./, ".en.");
 }
@@ -51,48 +45,67 @@ function englishCounterpart(path) {
 /** Scan current bytes, including uncatalogued files; never follow links or execute guide examples. */
 export async function scanGuide({ root = workspaceRoot, catalog = metadata } = {}) {
   const records = [];
+  const seen = new Set();
   const fingerprint = createHash("sha256");
+  async function addFile(path, entry, owner) {
+    if (seen.has(path) || (!entry.isFile() && !entry.isSymbolicLink())) return;
+    seen.add(path);
+    const bytes = entry.isSymbolicLink() ? null : await readFile(resolve(root, path));
+    let text;
+    if (bytes && !bytes.includes(0)) {
+      try {
+        text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      } catch {
+        // Binary files remain visible in the inventory without producing misleading search hits.
+      }
+    }
+    const digest = bytes ? createHash("sha256").update(bytes).digest("hex") : "symlink-not-followed";
+    fingerprint.update(`${path}\0${digest}\n`);
+    const article = catalog.articles.find(item =>
+      ["en", "hr"].some(locale => path === `frontend/docs/development-guide/${locale}/${item.contentPath}.md`),
+    );
+    const lines = text?.split(/\r?\n/) ?? [];
+    records.push({
+      path,
+      owner,
+      lines,
+      text,
+      article,
+      title: article
+        ? label(catalog.translations, article.titleKey)
+        : (lines.find(line => /^#\s+/.test(line))?.replace(/^#\s+/, "") ?? basename(path)),
+      description: article ? label(catalog.translations, article.descriptionKey) : "",
+      unavailable: entry.isSymbolicLink() ? "symlink not followed" : text === undefined ? "binary" : undefined,
+    });
+  }
   async function visit(directory, owner) {
     for (const entry of (await readdir(resolve(root, directory), { withFileTypes: true })).sort((a, b) =>
       compare(a.name, b.name),
     )) {
       const path = `${directory}/${entry.name}`;
-      if (owner === translationRoot && !includedTranslation(path)) continue;
       if (entry.isDirectory()) {
         await visit(path, owner);
         continue;
       }
-      if (!entry.isFile() && !entry.isSymbolicLink()) continue;
-      const bytes = entry.isSymbolicLink() ? null : await readFile(resolve(root, path));
-      let text;
-      if (bytes && !bytes.includes(0)) {
-        try {
-          text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-        } catch {
-          // Binary files remain visible in the inventory without producing misleading search hits.
-        }
+      await addFile(path, entry, owner);
+    }
+  }
+  async function visitStories(directory, owner) {
+    for (const entry of (await readdir(resolve(root, directory), { withFileTypes: true })).sort((a, b) =>
+      compare(a.name, b.name),
+    )) {
+      const path = `${directory}/${entry.name}`;
+      if (entry.isDirectory()) {
+        await visitStories(path, owner ?? (entry.name === "stories" ? path : undefined));
+      } else if (owner || /\.(?:mdx|stories\.tsx?)$/.test(entry.name)) {
+        await addFile(path, entry, owner ?? directory);
       }
-      const digest = bytes ? createHash("sha256").update(bytes).digest("hex") : "symlink-not-followed";
-      fingerprint.update(`${path}\0${digest}\n`);
-      const article = catalog.articles.find(item =>
-        ["en", "hr"].some(locale => path === `frontend/docs/development-guide/${locale}/${item.contentPath}.md`),
-      );
-      const lines = text?.split(/\r?\n/) ?? [];
-      records.push({
-        path,
-        owner,
-        lines,
-        text,
-        article,
-        title: article
-          ? label(catalog.translations, article.titleKey)
-          : (lines.find(line => /^#\s+/.test(line))?.replace(/^#\s+/, "") ?? basename(path)),
-        description: article ? label(catalog.translations, article.descriptionKey) : "",
-        unavailable: entry.isSymbolicLink() ? "symlink not followed" : text === undefined ? "binary" : undefined,
-      });
     }
   }
   for (const owner of roots) await visit(owner, owner);
+  // Retain legacy source discovery so misplaced MDX/CSF and stories/ fixtures remain visible.
+  // Read bytes only; loading Storybook configuration could execute project code.
+  await visitStories(sourceRoot);
   records.sort((a, b) => compare(a.path, b.path));
   const paths = new Set(records.map(record => record.path));
   for (const record of records) {
@@ -192,7 +205,7 @@ export function formatOverview(index) {
   const groups = new Map();
   for (const record of index.records) {
     const local = record.path.slice(record.owner.length + 1).split("/");
-    const depth = record.owner === featureRoot || record.owner === pageRoot ? (local[0] === "patterns" ? 2 : 1) : 0;
+    const depth = record.owner === storybookRoot ? 1 : 0;
     const group = depth && local.length > depth ? `${record.owner}/${local.slice(0, depth).join("/")}` : record.owner;
     groups.set(group, (groups.get(group) ?? 0) + 1);
   }

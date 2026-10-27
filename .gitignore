@@ -6,4 +6,3 @@
 !.env.example
 .npmrc
 /.template-initialization/
-/.agents/skills/initialization-intake/state/

@@ -24,7 +24,7 @@ function page(overrides: Partial<AppRouteDefinition> = {}): AppRouteDefinition {
 
 function translations(locale: "en" | "hr" = "en") {
   const i18n = createAppI18n(locale);
-  return { app: i18n.getFixedT(locale, "translation"), developmentGuide: i18n.getFixedT(locale, "development-guide") };
+  return { app: i18n.getFixedT(locale, "translation") };
 }
 
 describe("command palette route entries", () => {
@@ -39,29 +39,7 @@ describe("command palette route entries", () => {
     expect(croatian[3]).toMatchObject({ context: "Postavke", label: "Pristupačnost" });
     expect(
       createAppCommandPaletteEntries(appRouteRegistry, translations(), true).some(entry => entry.id === "contacts"),
-    ).toBe(true);
-  });
-
-  it("includes the category landing and Backend content with Frontend context for existing pages", () => {
-    const entries = createAppCommandPaletteEntries(appRouteRegistry, translations(), true);
-    expect(entries).toContainEqual({
-      id: "developmentGuideIndex",
-      label: "Development guide",
-      context: "Development guide",
-      to: "/dev-guide",
-    });
-    expect(entries).toContainEqual({
-      id: "developmentGuideBackend",
-      label: "Backend",
-      context: "Development guide",
-      to: "/dev-guide/backend",
-    });
-    expect(entries.find(entry => entry.id === "contacts")).toMatchObject({
-      context: "Development guide / Frontend / Example pages",
-      label: "Contacts CRUD",
-      to: "/dev-guide/frontend/example-pages/contacts-crud",
-    });
-    expect(entries.some(entry => entry.id.startsWith("legacy"))).toBe(false);
+    ).toBe(false);
   });
 
   it("requires explicit membership, excludes public pages, and inherits development availability", () => {

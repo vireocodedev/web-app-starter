@@ -1,59 +1,51 @@
 # Feature inventory and responsibilities
 
-The template ships five kinds of feature owners. They demonstrate different
-shapes; they are not requirements for every application.
+The application ships Home, Settings, authentication and generic infrastructure.
+All teaching features and article readers live in Storybook, outside `src/`.
 
-## Shipped feature shapes
+## Installed and reference owners
 
-| Feature      | Responsibility                                                                               | Runtime factory? | Optional example?                |
-| ------------ | -------------------------------------------------------------------------------------------- | ---------------- | -------------------------------- |
-| Contacts     | End-to-end contact UI, domain model, Query options, mutations, and async browser persistence | Yes              | Yes                              |
-| Settings     | Presents preferences owned by app localization, theme, and shell                             | No               | Usually retained, but adaptable  |
-| Patterns     | Development-only interactive recipes grouped by capability                                   | No               | Yes, by category or as a section |
-| Architecture | Development-only source guide rendered from these Markdown articles                          | No               | Yes                              |
-| Handbook     | Development-only fullstack patterns, bilingual article catalog and content adaptation        | No               | Yes                              |
+| Owner                         | Location                                             | Responsibility                                                  | Production runtime factory? |
+| ----------------------------- | ---------------------------------------------------- | --------------------------------------------------------------- | --------------------------- |
+| Settings                      | `src/features/settings/`                             | Presents app-owned localization, theme and shell preferences    | No                          |
+| Home and authentication pages | `src/pages/`, `src/app/auth/`                        | Application entry and session boundaries                        | Auth is app infrastructure  |
+| Contacts                      | `docs/storybook/examples/Contacts/`                  | Complete reference UI, domain model, API port and Query options | No production registration  |
+| Patterns                      | `docs/storybook/patterns/<Category>/`                | Focused interactive examples and shared gallery                 | No                          |
+| Architecture reference        | `docs/storybook/architecture/ArchitectureReference/` | Reader/catalog for canonical architecture Markdown              | No                          |
+| Handbook                      | `docs/storybook/handbook/Handbook/`                  | English reader/catalog for paired fullstack articles            | No                          |
 
 ## Constructed and presentation features
 
-Contacts has `contacts.feature.ts`, registration in
-`src/app/bootstrap/runtime/appFeatures.ts`, and
-`hooks/useContactsFeature.ts` because it constructs an adapter-backed runtime.
-It is not evidence that every feature needs those files.
+The production registry `src/app/bootstrap/runtime/appFeatures.ts` is empty.
+Settings composes owner hooks and requires no factory, API or runtime lookup.
+Contacts demonstrates a real factory with injected API and Query dependencies,
+constructed only by its isolated preview. Its hook reads a private reference
+Context, not a production `useAppFeature("contacts")` member. The live preview
+selects memory data; its browser-storage adapter is retained as an inert tested
+reference. Installing a consumer feature requires explicit implementation,
+adapter choice, runtime registration and a canonical typed lookup wrapper.
 
-Settings is presentation and composition. Patterns categories contain
-independent teaching implementations, while
-`src/features/development-guide/patterns/gallery` owns the shared
-preview/navigation presentation. Architecture owns its source-article catalog and
-locale/content adapter under `src/features/development-guide/architecture`.
-Handbook owns its fullstack manifest, paired Markdown lookup and content adapter
-under `src/features/development-guide/handbook`; Contacts lives under
-`src/features/development-guide/contacts`. Shared Markdown rendering, heading
-extraction, contents and page framing belong to `app/shell/documentation` and
-receive data rather than importing either catalog. The router turns the public
-Handbook manifest into concrete destinations and related links. Guidance owners
-do not import a removable example implementation merely to describe it.
-
-## Patterns categories
-
-The shipped Patterns categories are Feedback, Overlays, Localization and
-formatting, Application state, Server data, Routing and URL state, Forms, and
-Tables and collections. Each category owns its pages, implementation, tests,
-route-group metadata, and translations. The Application state category also
-owns its development-only Signal registration and persisted example value.
-Categories may be removed independently while the shared gallery and remaining
-categories continue to work.
+The Patterns categories are Feedback, Overlays, Localization and formatting,
+Application state, Server data, Routing and URL state, Forms, and Tables and
+collections. Each owns its reference panels and tests. Application state creates
+private Signals and memory storage with preview-owned cleanup; the production
+Signal registry is empty. Shared Markdown rendering belongs to
+`docs/storybook/shared/documentation/`, and shared gallery presentation remains
+under `docs/storybook/patterns/shared/`. No reader or catalog is an app dependency.
 
 ## Conditional folders and removal
 
-Folders are conditional. A feature gains `api/`, `models/`, `signals/`,
-`hooks/`, `components/`, `types/`, or `stories/` only when it owns that role.
-A compact feature may need only `index.ts` and one implementation file. Empty
-role folders and placeholder factories create misleading contracts. For
-example, place that implementation at `components/FeatureSummary.tsx` rather
-than at the feature root.
+Folders are conditional. A feature gains `api/`, `models/`, `signals/`, `hooks/`,
+`components/` or `types/` only when it owns that role. A compact feature may need
+only `index.ts` and `components/FeatureSummary.tsx`; empty role folders and
+placeholder factories create misleading contracts.
 
-Before removing a teaching feature, trace its public export, pages, route and
-navigation records, translations, tests, mocks, persistence keys, runtime or
-Signal registration, and documentation links. Architecture remains usable
-when Contacts or a Patterns category is removed; links to optional destinations
-must be conditional rather than hard runtime dependencies.
+Tutorials and preview support use section and same-name folders under
+`docs/storybook/`, with section-wide helpers in `shared/`. Production source may
+not import docs or Storybook configuration, even through raw imports or globs.
+
+Before removing an installed feature, trace public exports, pages, routes,
+navigation, translations, tests, mocks, persistence keys, runtime construction and
+Signal registration. Removing a documentation example instead affects only its
+Storybook consumers, reference tests and guidance. Keep canonical article bodies
+and immutable pinned source provenance when reorganizing their readers.

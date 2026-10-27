@@ -2,28 +2,28 @@
 
 Make a handoff say exactly what is implemented, what was observed and what remains unknown. Source provenance, local verification, remote CI and live acceptance are different claims with different identities.
 
-**Documented workflow with an evidence recipe.** The V1/source/specification contracts and CI/release protocols define installed receipts and state boundaries. The compact handoff below is a working recommendation, not a replacement schema for those receipts.
+**Documented workflow with an evidence recipe.** The V1 workflow, repository agent instructions and CI/release protocols define evidence ownership and state boundaries. The compact handoff below is a working recommendation, not a replacement schema for those receipts.
 
 ## Trigger, owner and invariant
 
-Use when finishing a task, resuming another agent's work, accepting a generated package or reporting deployment. The implementing owner records source and checks. The operator owns live/recovery observations; product/client owners own business acceptance.
+Use when finishing a task, resuming another agent's work, reviewing agreed requirements or reporting deployment. The implementing owner records source and checks. The operator owns live/recovery observations; product/client owners own business acceptance.
 
-The invariant is that evidence describes the exact candidate and its real layer. A template acceptance receipt does not certify a generated consumer. A generated specification does not prove implemented code. A green build does not prove all tests or a live deployment.
+The invariant is that evidence describes the exact candidate and its real layer. A template acceptance receipt does not certify a generated consumer. Agreed requirements do not prove implemented code. A green build does not prove all tests or a live deployment.
 
 ## Distinguish identities before combining them
 
-| Identity                                        | Purpose                                         |
-| ----------------------------------------------- | ----------------------------------------------- |
-| Repository commit or working-tree scope         | What source was implemented/reviewed.           |
-| Discovery project/baseline/version/content hash | Which agreed scope was selected.                |
-| Export-file SHA-256                             | Integrity of original downloaded bytes.         |
-| CI SHA/run/attempt                              | Which execution produced verification evidence. |
-| Immutable frontend/backend digests              | Which artifacts form a release pair.            |
-| Staging receipt and environment transaction     | Which host acceptance/mutation was observed.    |
+| Identity                                     | Purpose                                         |
+| -------------------------------------------- | ----------------------------------------------- |
+| Repository commit or working-tree scope      | What source was implemented/reviewed.           |
+| Requirement document/version or content hash | Which agreed scope was selected.                |
+| Input-file SHA-256                           | Integrity of the exact input bytes.             |
+| CI SHA/run/attempt                           | Which execution produced verification evidence. |
+| Immutable frontend/backend digests           | Which artifacts form a release pair.            |
+| Staging receipt and environment transaction  | Which host acceptance/mutation was observed.    |
 
-The server `contentHash` identifies its selected canonical payload, not the entire export envelope. `exportFileSha256` is a separate whole-file checksum. The source capture explicitly records that it does not recompute the server canonical hash; do not collapse the fields into interchangeable “same hash” evidence.
+When recording a checksum, state exactly which file or canonical payload was hashed and how it was produced. A whole-file checksum and a service-defined payload hash may identify different bytes; compare them only when the producing contract establishes equivalence.
 
-Resume verifies pinned capture-owned files and source identity offline. It does not silently fetch a newer baseline or overwrite agent-authored documents. If source refresh is requested, preserve execution history and review the change rather than reassigning old evidence to the new source.
+When resuming, compare recorded source identity with the actual working tree and agreed requirements. Preserve existing documents and execution history. Review an explicitly requested requirements refresh rather than reassigning old evidence to the new source.
 
 ## Report states, not one green checkbox
 
@@ -53,27 +53,24 @@ A successful status read can become stale after source changes or another releas
 
 ## Failure and decision table
 
-| Observation                                       | Decision                                                         |
-| ------------------------------------------------- | ---------------------------------------------------------------- |
-| Log belongs to another checkout or attempt        | Do not use it as proof for this candidate.                       |
-| New source after old passing build                | Reassess affected evidence before claiming completion.           |
-| Generation complete, implementation unimplemented | Preserve both states; no coding completion inferred.             |
-| Template production was accepted                  | Consumer still needs its own initialized/live evidence.          |
-| Artifact published, host result absent            | State publication success and deployment uncertainty separately. |
-| Source status is tentative/unanswered             | Preserve the status; do not rewrite it as confirmed.             |
+| Observation                                    | Decision                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------- |
+| Log belongs to another checkout or attempt     | Do not use it as proof for this candidate.                       |
+| New source after old passing build             | Reassess affected evidence before claiming completion.           |
+| Requirements agreed, implementation incomplete | Preserve both states; no coding completion inferred.             |
+| Template production was accepted               | Consumer still needs its own initialized/live evidence.          |
+| Artifact published, host result absent         | State publication success and deployment uncertainty separately. |
+| Source status is tentative/unanswered          | Preserve the status; do not rewrite it as confirmed.             |
 
 ## Acceptance and inspection
 
-A receiver should be able to locate the source, understand decisions, reproduce allowed checks, identify what was not verified and continue without repeating unrelated work. Stable issue/PR keys and import mappings retain execution identity across handoffs.
+A receiver should be able to locate the source, understand decisions, reproduce allowed checks, identify what was not verified and continue without repeating unrelated work. Stable issue/PR keys and source references retain execution identity across handoffs.
 
 Relevant owner procedures remain authoritative for publishing client artifacts, running checks, deploying or restoring. Reading a handoff grants no new authority. This article creates no receipt, runs no validation and changes no progress state.
 
 ## Source provenance
 
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:docs/v1-workflow.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/references/export-contract.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/references/specification-contract.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/scripts/prepare-output.mjs`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:infrastructure/ci/test_shards.py`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:infrastructure/release/README.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:frontend/docs/architecture/en/tests-mocks-stories-and-architecture-checks.md`

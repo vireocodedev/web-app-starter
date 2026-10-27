@@ -2,7 +2,7 @@
 
 Objedinjavanje CI poslova ne smije prikriti neuspjeh ranije faze ni ostaviti njezine procese u sljedećoj. Sačuvaj izvorni budžet, svaki ishod i vlasništvo nad cleanupom.
 
-**Referenca iz potrošačkog projekta, nije ugrađeni starter helper.** Recept dolazi iz `client-discovery-app` datoteka `infrastructure/ci/utility_phase.py`, workflowa i utility gatea. Starter ima odvojene portable/static/build/foundation poslove. Helper nije unaprijed dostupan niti je ovo dozvola za zamjenu workflowa bez pregledane migracije.
+**Referenca iz potrošačkog projekta, nije ugrađeni starter helper.** Recept dolazi iz `client-discovery-app` datoteka `infrastructure/ci/utility_phase.py`, workflowa i utility gatea. Starter ima odvojene frontend static/build, backend image/test i foundation poslove koje odabire klasifikacija promjena. Helper nije unaprijed dostupan niti je ovo dozvola za zamjenu workflowa bez pregledane migracije.
 
 ## Okidač, vlasnik i ugovor
 

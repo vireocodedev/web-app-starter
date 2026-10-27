@@ -8,10 +8,10 @@ import {
   handbookArticles,
   handbookCategories,
   handbookTopics,
-} from "../src/features/development-guide/handbook/catalog/handbookManifest.ts";
-import { englishHandbookTranslations } from "../src/app/localization/translations/development-guide-handbook.en.ts";
-import { croatianHandbookTranslations } from "../src/app/localization/translations/development-guide-handbook.hr.ts";
-import { markdownHeadings } from "../src/app/shell/documentation/markdownHeadings.ts";
+} from "../docs/storybook/handbook/Handbook/catalog/handbookManifest.ts";
+import { englishHandbookTranslations } from "../docs/storybook/handbook/Handbook/localization/development-guide-handbook.en.ts";
+import { croatianHandbookTranslations } from "../docs/storybook/handbook/Handbook/localization/development-guide-handbook.hr.ts";
+import { markdownHeadings } from "../docs/storybook/shared/documentation/markdownHeadings.ts";
 
 const frontendRoot = resolve(import.meta.dirname, "..");
 const contentRoot = resolve(frontendRoot, "docs/development-guide");

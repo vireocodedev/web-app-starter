@@ -35,8 +35,9 @@ construction, Signal registration, stories, and documentation links. Search
 for the public feature name and route ID after deletion. Keep generic
 infrastructure that remaining features still use.
 
-For optional Patterns categories, remove only that category's pages, feature,
-tests, route group, translations, and any category-specific Signal/storage
-registration. Keep shared gallery and application infrastructure. After any
-removal, verify startup, direct URLs, navigation, Not Found behavior, and both
-locales.
+Documentation examples live only under `docs/storybook/`, with reference tests
+under `tests/storybook/`. Removing a reference category affects its Storybook
+readers, gallery, reference tests and guide links; it cannot remove an application
+registration because none is installed. Keep shared docs rendering and canonical
+article bodies when only one example is removed. After an application removal,
+verify startup, direct URLs, navigation, Not Found behavior and both locales.

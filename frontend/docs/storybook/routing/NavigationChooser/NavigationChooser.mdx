@@ -1,0 +1,383 @@
+import { Canvas, Meta, Source } from "@storybook/addon-docs/blocks";
+import * as NavigationChooserStories from "./NavigationChooser.stories";
+import registrySource from "./navigationChooserRoutes.ts?raw";
+
+<Meta of={NavigationChooserStories} />
+
+# Navigation chooser pages
+
+Use the whole page content area to help users choose their next destination.
+The existing `AppCategoryList` supplies the full-width icon-and-arrow rows used
+by the Development Guide's Patterns and category indexes. Its ordered entries
+can mix ordinary links and named groups.
+
+This example opens Tools as a chooser, with Getting started followed by a
+Workspace group containing Members and Activity. The shell header and main menu
+remain available. The chooser fills the content area; it does not open the
+browser's fullscreen mode.
+
+```text
+/tools                     Chooser (index page)
+├── /tools/getting-started  Getting started
+├── /tools/members          Members
+└── /tools/activity         Activity
+```
+
+## Try it
+
+Choose a row, then use **Back to Tools** to return to the chooser. Open the main
+menu and choose **Tools** from any child page. The preview address bar follows
+the selected destination. Try the direct-entry stories and **Mobile page chooser**,
+then change the global Theme toolbar; the current page remains open.
+
+<Canvas of={NavigationChooserStories.Chooser} story={{ inline: false, height: "650px" }} sourceState="none" />
+
+## Before you start
+
+Use an initialized starter checkout with dependencies installed. Follow
+`frontend/README.md` for startup and sign in before testing application URLs.
+These steps extend the existing authenticated router and providers. The example
+uses static pages and needs no new backend endpoint.
+
+All implementation paths below are relative to `frontend/`. Application text
+uses paired locale resources. Storybook fixtures remain English-only and are
+identified at the end of this tutorial.
+
+## Files you will change
+
+```text
+src/pages/tools/ToolsIndexPage.tsx                    create
+src/pages/tools/ToolsPages.tsx                        create
+src/app/localization/translations/translation.en.ts   extend
+src/app/localization/translations/translation.hr.ts   extend
+src/app/router/routeRegistry.tsx                      extend
+```
+
+## 1. Add application text
+
+Add this property inside the existing `englishTranslations` export in
+`src/app/localization/translations/translation.en.ts`, preserving other keys:
+
+```ts
+tools: {
+  title: "Tools",
+  chooserTitle: "Choose a tool",
+  description: "Choose a page to continue.",
+  navigation: "Tools navigation",
+  gettingStarted: "Getting started",
+  gettingStartedDescription: "Start with the setup checklist for your workspace.",
+  workspaceGroup: "Workspace",
+  members: "Members",
+  membersDescription: "Manage the people in this workspace.",
+  activity: "Activity",
+  activityDescription: "Review recent workspace changes.",
+  backToTools: "Back to Tools",
+},
+```
+
+Add matching keys inside `croatianTranslations` in `translation.hr.ts`, with
+translated application values. English starter values can be copied during
+implementation, then translated before delivery. Keep the application resource
+shapes aligned; this tutorial and its stories stay English-only.
+
+## 2. Build the chooser page
+
+Create this complete file. It supplies items directly to the installed generic
+`src/app/shell/components/AppCategoryList.tsx`. The Storybook preview uses that
+same component; the former in-application guide chooser has been retired.
+
+```tsx
+// src/pages/tools/ToolsIndexPage.tsx
+import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
+import RocketLaunchOutlinedIcon from "@mui/icons-material/RocketLaunchOutlined";
+import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+import { AppCategoryList, type AppCategoryListEntry } from "@/app/shell/components/AppCategoryList";
+
+export function ToolsIndexPage() {
+  const { t } = useAppTranslation();
+  const items = [
+    {
+      id: "getting-started",
+      Icon: RocketLaunchOutlinedIcon,
+      label: t("tools.gettingStarted"),
+      description: t("tools.gettingStartedDescription"),
+      to: "/tools/getting-started",
+    },
+    {
+      id: "workspace",
+      label: t("tools.workspaceGroup"),
+      items: [
+        {
+          id: "members",
+          Icon: GroupOutlinedIcon,
+          label: t("tools.members"),
+          description: t("tools.membersDescription"),
+          to: "/tools/members",
+        },
+        {
+          id: "activity",
+          Icon: TimelineOutlinedIcon,
+          label: t("tools.activity"),
+          description: t("tools.activityDescription"),
+          to: "/tools/activity",
+        },
+      ],
+    },
+  ] satisfies readonly AppCategoryListEntry[];
+
+  return (
+    <AppCategoryList
+      title={t("tools.chooserTitle")}
+      description={t("tools.description")}
+      navigationLabel={t("tools.navigation")}
+      items={items}
+    />
+  );
+}
+```
+
+A link has `id`, `Icon`, `label`, and `to`; its `description` is optional. A group
+has `id`, `label`, and an `items` array of links; it can also have a description.
+Keep stable unique IDs and meaningful translated labels. The array controls
+presentation order, including where groups appear.
+
+Workspace is a visual group, so it creates no extra URL segment or router
+parent. All three destinations are children of Tools. Grouping can change
+without changing route hierarchy.
+
+`AppCategoryList` already renders real React Router links with accessible names,
+optional descriptions, keyboard focus, responsive wrapping, and trailing arrows.
+Its heading is an `h2`; the shell owns the Tools `h1`. Use the shared component
+instead of reproducing its rows or intercepting their click events.
+
+## 3. Create the destination pages
+
+Create this file so every chooser link has real content to open. The private
+`ToolPage` helper shares static presentation. For business content, compose the
+owning feature's public interface from the page, following
+`frontend/docs/architecture/en/route-entries-and-feature-composition.md`.
+
+```tsx
+// src/pages/tools/ToolsPages.tsx
+import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Link } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+function ToolPage({ title, description }: Readonly<{ title: string; description: string }>) {
+  const { t } = useAppTranslation();
+  return (
+    <Paper sx={{ p: 3 }} variant="outlined">
+      <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+        <Typography component="h2" variant="h5">
+          {title}
+        </Typography>
+        <Typography>{description}</Typography>
+        <Button component={Link} to="/tools" variant="outlined">
+          {t("tools.backToTools")}
+        </Button>
+      </Stack>
+    </Paper>
+  );
+}
+
+export function ToolsGettingStartedPage() {
+  const { t } = useAppTranslation();
+  return <ToolPage title={t("tools.gettingStarted")} description={t("tools.gettingStartedDescription")} />;
+}
+
+export function ToolsMembersPage() {
+  const { t } = useAppTranslation();
+  return <ToolPage title={t("tools.members")} description={t("tools.membersDescription")} />;
+}
+
+export function ToolsActivityPage() {
+  const { t } = useAppTranslation();
+  return <ToolPage title={t("tools.activity")} description={t("tools.activityDescription")} />;
+}
+```
+
+The chooser and destination pages render content directly. They share the
+application shell, but each occupies the content area at its own URL. There is
+no page sidebar or section tab row in this example. Category choosers can also
+live inside a larger tabbed area, when a consumer page needs it; the list
+layout and the surrounding shell navigation are separate choices.
+
+## 4. Connect the index and child routes
+
+In `src/app/router/routeRegistry.tsx`, add these imports. Reuse its existing
+`AppRouteDefinition` type import and add `Outlet` explicitly.
+
+```tsx
+import { Outlet } from "react-router";
+import BuildOutlinedIcon from "@mui/icons-material/BuildOutlined";
+
+import { ToolsIndexPage } from "@/pages/tools/ToolsIndexPage";
+import { ToolsGettingStartedPage, ToolsMembersPage, ToolsActivityPage } from "@/pages/tools/ToolsPages";
+```
+
+Insert these five records into the existing `appRouteRegistry`, preserving its
+other entries, its direct `export const appRouteRegistry` declaration and the
+route/navigation helper functions below it. Its existing
+`as const satisfies Record<string, AppRouteDefinition>` checks the entries.
+
+```tsx
+tools: {
+  Component: Outlet,
+  access: "authenticated",
+  contentMaxWidth: "xl",
+  navigation: { Icon: BuildOutlinedIcon, labelKey: "tools.title" },
+  path: "/tools",
+  title: t => t("tools.title"),
+},
+toolsIndex: {
+  Component: ToolsIndexPage,
+  access: "authenticated",
+  index: true,
+  parentId: "tools",
+  title: t => t("tools.title"),
+},
+toolsGettingStarted: {
+  Component: ToolsGettingStartedPage,
+  access: "authenticated",
+  parentId: "tools",
+  path: "/tools/getting-started",
+  title: t => t("tools.gettingStarted"),
+},
+toolsMembers: {
+  Component: ToolsMembersPage,
+  access: "authenticated",
+  parentId: "tools",
+  path: "/tools/members",
+  title: t => t("tools.members"),
+},
+toolsActivity: {
+  Component: ToolsActivityPage,
+  access: "authenticated",
+  parentId: "tools",
+  path: "/tools/activity",
+  title: t => t("tools.activity"),
+},
+```
+
+The Tools parent renders `Outlet`. Its index child owns the chooser at exactly
+`/tools`, with no path of its own. The three destination records are siblings
+of that index, each with a complete application path and matching access. The
+default translation namespace is `translation`.
+
+Keep the chooser as an **index child**. A `defaultChildId` redirect would bypass
+it. The parent needs no `headerNavigation`, and the pages need no
+`AppPageNavigation`. The `contentMaxWidth: "xl"` metadata lets the shell provide
+a wide, centered content area and normal mobile gutters. The children inherit
+that width; the list handles its own row spacing.
+
+Expose Tools in the main menu by extending the existing list in the same file:
+
+```tsx
+export const appNavigationItems = [
+  homeNavigationItem,
+  navigationLink(appRouteRegistry.tools),
+] satisfies readonly AppNavigationItem[];
+```
+
+Preserve other destinations already present. This uses the existing
+`navigationLink` helper and `AppNavigationItem` import. The preview also supplies
+a working Tools menu entry; it stays selected on child pages and returns to the
+chooser. The main menu and the full-page category list serve different levels
+of navigation.
+
+## Common mistakes
+
+- **Opening Tools skips the chooser:** use an index child and remove any
+  `defaultChildId` redirect from this parent.
+- **The chooser remains above a selected destination:** place it in its own index
+  page. The parent renders only `Outlet`, which selects one child at a time.
+- **Workspace grouping creates unexpected URLs:** keep visual groups in the
+  list's `items`; declare router parents only when they own route composition.
+- **A row opens a blank or missing page:** register its destination and keep its
+  `to` synchronized with the full route path. An `id` alone creates no route.
+- **Labels, descriptions, or focus targets collide:** use stable unique IDs and
+  supply readable labels and a meaningful `navigationLabel`.
+- **Duplicate headers or excess spacing appear:** reuse the existing shell and
+  its width/gutter metadata. Let `AppCategoryList` render its own content heading.
+- **Tools is missing from the main menu:** pass its explicit navigation entry
+  through the existing application menu list; route registration is separate.
+
+## 5. Verify your implementation
+
+From the workspace root, run these checks sequentially:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+Expect both to exit successfully. Start the application using `frontend/README.md`,
+sign in, and check:
+
+- Open `/tools`: the chooser renders at that exact URL, with Getting started
+  followed by the Workspace group containing Members and Activity.
+- Follow each row: its destination heading renders, the chooser is replaced,
+  the URL updates, and the shell focuses its main content.
+- Choose Back to Tools and the Tools main-menu entry: each returns to the chooser.
+  The menu stays selected on all Tools children.
+- Open each child directly, reload it, and use the real application's browser
+  Back and Forward buttons. Content and URL must agree.
+- Use Tab and Enter on rows and menu entries. Check readable labels, descriptions,
+  and visible keyboard focus at narrow widths without horizontal page overflow.
+- Check both application locales and all themes. Storybook remains English-only;
+  changing its global theme preserves the selected destination.
+
+For route and shell test patterns, read
+`frontend/tests/app/router/routeHierarchy.test.tsx` and
+`frontend/tests/app/shell/components/AppShell.test.tsx`. Finish delivery checks
+with `npm --prefix frontend run verify`. Storybook's memory history demonstrates
+routing interactions; real application authentication, deep-link reloads, and
+browser Back/Forward remain assembled application checks.
+
+## Read this tutorial without Storybook
+
+The complete application recipe is fenced MDX source. Find it and the current
+fixtures without running a browser:
+
+```sh
+npm --prefix frontend run guide:index -- search "Navigation chooser pages"
+npm --prefix frontend run guide:index -- search navigationChooserRegistry
+```
+
+Routing policy remains authoritative in
+`frontend/docs/architecture/en/router-and-shell-responsibilities.md`. The actual
+list implementation is
+`frontend/src/app/shell/components/AppCategoryList.tsx`. This tutorial composes
+that installed component; no new list or navigation API is required.
+
+## Storybook fixture reference
+
+The preview uses the real `AppCategoryList`, `AppShell`, route hierarchy builder,
+and global theme/localization providers. English-only support files live under
+`frontend/docs/storybook/routing/NavigationChooser/`:
+
+- `navigationChooserRoutes.ts` defines the parent, index, three child pages, and
+  memory-router factory. A preview-only home redirect targets `/tools`.
+- `NavigationChooserExample.tsx` supplies the shell, Tools main-menu entry,
+  ordered chooser items, and static destination pages.
+- `NavigationChooserPreview.tsx` owns and disposes the mounted router.
+- `NavigationChooser.stories.tsx` selects the chooser, direct entries, and mobile
+  state. `NavigationChooser.mdx` is this tutorial.
+- `../shared/StorybookBrowserFrame.tsx` wraps the preview's `AppShell` inside its router,
+  sharing one viewport with the address bar and allowing long content to scroll.
+- `../shared/StorybookAddressBar.tsx` reads pathname, query, and fragment with no URL props.
+  The shared frame renders it above the shell.
+
+<Source code={registrySource} language="tsx" />
+
+Use the production files from steps 1–4 when building your application. The
+fixture router, home redirect, fixed shell options, address bar, and English
+labels belong to Storybook. Its actual browser URL identifies the story;
+the preview address bar shows the simulated application URL.
+
+The global Theme toolbar updates the list, content, shell, and address bar
+without resetting the selected page. The preview starts no authentication,
+Query runtime, preference controls, or backend requests.

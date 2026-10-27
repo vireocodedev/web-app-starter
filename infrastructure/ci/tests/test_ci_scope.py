@@ -1,5 +1,6 @@
 import copy
 import importlib.util
+from itertools import combinations
 from pathlib import Path
 import unittest
 
@@ -15,11 +16,13 @@ class CIScopeTests(unittest.TestCase):
                 (['backend/src/main/App.java'], (True, False, False)),
                 (['frontend/package-lock.json'], (False, True, False)),
                 (['backend/build.gradle', 'frontend/src/main.tsx'], (True, True, False)),
-                (['docs/template-initialization.md'], (False, False, False)),
+                (['docs/template-initialization/INIT_GUIDE.md'], (False, False, False)),
+                (['docs/template-initialization/github-ci.md'], (False, False, False)),
+                (['docs/template-initialization/scripts/14_4_install_release.py'], (True, True, True)),
+                (['docs/template-initialization/scripts/14_5_prepare_release.py'], (True, True, True)),
+                (['docs/template-initialization/.env.example'], (True, True, True)),
                 (['infrastructure/ci/manage.py'], (False, False, True)),
                 (['.github/workflows/ci.yml'], (True, True, True)),
-                (['.agents/skills/initialization-intake/scripts/intake.mjs'], (True, True, True)),
-                (['.agents/skills/initialization-execution/SKILL.md'], (True, True, True)),
                 (['.vscode/launch.json'], (True, True, True)),
                 (['infrastructure/release/smoke_images.py'], (True, True, True)),
                 (['infrastructure/ci/ci_scope.py'], (True, True, True)),
@@ -32,17 +35,17 @@ class CIScopeTests(unittest.TestCase):
 
     def needs(self, owners=('backend',)):
         needs = {'changes': {'result': 'success', 'outputs': {
-            owner: str(owner in owners).lower() for owner in ci.LANES}},
-            'portable': {'result': 'success'}}
+            owner: str(owner in owners).lower() for owner in ci.LANES}}}
         for owner, lanes in ci.LANES.items():
             for lane in lanes:
                 needs[lane] = {'result': 'success' if owner in owners else 'skipped'}
         return needs
 
     def test_gate_accepts_each_selected_combination(self):
-        for owners in ((), ('frontend',), ('backend',), ('foundation',), tuple(ci.LANES)):
-            with self.subTest(owners=owners):
-                ci.gate(self.needs(owners))
+        for count in range(len(ci.LANES) + 1):
+            for owners in combinations(ci.LANES, count):
+                with self.subTest(owners=owners):
+                    ci.gate(self.needs(owners))
 
     def test_every_required_lane_is_fail_closed(self):
         needs = self.needs(tuple(ci.LANES))
@@ -57,13 +60,14 @@ class CIScopeTests(unittest.TestCase):
             with self.subTest(missing=lane), self.assertRaises(ValueError):
                 ci.gate(changed)
 
-    def test_unselected_lanes_must_really_skip_and_docs_never_skip(self):
+    def test_unselected_lanes_must_skip_and_selection_must_be_valid(self):
         for owner, lanes in ci.LANES.items():
             for lane in lanes:
-                needs = self.needs(())
-                needs[lane]['result'] = 'success'
-                with self.subTest(lane=lane), self.assertRaises(ValueError):
-                    ci.gate(needs)
+                for result in ('success', 'failure', 'cancelled', None):
+                    needs = self.needs(())
+                    needs[lane]['result'] = result
+                    with self.subTest(lane=lane, result=result), self.assertRaises(ValueError):
+                        ci.gate(needs)
         for value in (None, 'yes', True):
             needs = self.needs()
             needs['changes']['outputs']['frontend'] = value

@@ -1,0 +1,146 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./SignalsAndPersistence.stories";
+
+<Meta of={Stories} />
+
+# Signals and persistence in practice
+
+Give synchronous shared state one live owner. Normalize writes through actions, derive values with computed Signals, hydrate before effects, and dispose the effects when their owner ends. Persistence sits behind that owner; it does not become a second live store.
+
+## Try it
+
+Change hours and hourly rate, inspect computed totals, save and remount the preview, then simulate unavailable storage. Invalid or missing persisted data falls back safely. Theme changes keep the current session. All preview storage is private memory; no story touches `rgo.app.*` keys.
+
+<Canvas of={Stories.Overview} story={{ inline: false, height: "900px" }} sourceState="none" />
+
+## Before you start
+
+Read `docs/architecture/en/state-ownership-and-signal-lifecycle.md`, `docs/development-guide/en/frontend/state/signal-hydration-and-disposable-effects.md` and `versioned-persisted-preferences.md`. The migrated estimate reference is at `docs/storybook/patterns/ApplicationState/signals/estimate/`. The production Signal registry has no development-guide module or estimate storage key.
+
+Query owns asynchronous feature data, forms own drafts and validation, and URLs own shareable filters. Use Signals for synchronous shared reactive state. A local interaction can stay in React state. Never mirror Query records into Signals merely to provide another consumer.
+
+## 1. Define sources and computed values
+
+The complete reference source file is:
+
+```ts
+// Reference: docs/storybook/patterns/ApplicationState/signals/estimate/sigEstimate.ts
+import { computed, signal } from "@preact/signals-react";
+import { defaultEstimate, type EstimatePersistenceStatus } from "./sigEstimate.model";
+
+export const sigEstimateHours = signal<number>(defaultEstimate.hours);
+export const sigEstimateHourlyRate = signal<number>(defaultEstimate.hourlyRate);
+export const sigEstimatePersistenceStatus = signal<EstimatePersistenceStatus>("idle");
+export const sigEstimateTotal = computed(() => sigEstimateHours.value * sigEstimateHourlyRate.value);
+```
+
+Keep source Signals in `sig<Group>.ts`, normalization in `sig<Group>.actions.ts`, and application effects in `sig<Group>.effects.ts`. The installed Signals transform observes `.value` reads during rendering in both app and Storybook. A nonreactive `.peek()` read deliberately does not subscribe.
+
+## 2. Normalize mutations and batch coordinated updates
+
+These are selected functions from the reference action module:
+
+```ts
+// Excerpt: docs/storybook/patterns/ApplicationState/signals/estimate/sigEstimate.actions.ts
+function normalizeEstimateValue(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+export function setEstimateHours(hours: number) {
+  sigEstimateHours.value = normalizeEstimateValue(hours);
+}
+
+export function setEstimate(estimate: { hourlyRate: number; hours: number }) {
+  batch(() => {
+    setEstimateHours(estimate.hours);
+    setEstimateHourlyRate(estimate.hourlyRate);
+  });
+}
+```
+
+A computed total derives from sources; actions do not write a second total. Keep UI control parsing separate from domain normalization. Batch a coordinated logical change so observers see a coherent result.
+
+## 3. Put persistence behind a validated contract
+
+The gallery's `estimateStorage.ts` contains a private memory slot. It demonstrates hydration and effect ownership without storing teaching data in the app. `signalPersistenceFixture.ts` beside this tutorial separately demonstrates validated/versioned snapshots, recovery and unavailable storage through injected memory storage.
+
+For a real consumer preference, extend the app-owned typed storage contract deliberately. This is an **installation excerpt**, not an existing estimate key:
+
+```ts
+// Partial patch: consumer entries in src/app/data/storage/appLocalStorage.ts
+const estimateKey = "consumer.estimate";
+const estimateSchema = z.object({
+  version: z.literal(1),
+  hours: z.number().finite().nonnegative(),
+  hourlyRate: z.number().finite().nonnegative(),
+});
+```
+
+Add the key to the actual owner's key map, schema and defaults, then provide its read/write collaborator to the feature owner. Decide migration, malformed input recovery, quota failure and security scope before installing persistence. Do not persist secrets or copy the Storybook memory provider into application bootstrap. A persisted preference requires one canonical hydration owner; do not independently hydrate the same Signals from multiple components.
+
+## 4. Hydrate before starting disposable effects
+
+The complete migrated reference effect module is:
+
+```ts
+// Reference: docs/storybook/patterns/ApplicationState/signals/estimate/sigEstimate.effects.ts
+import { effect } from "@preact/signals-react";
+import type { SignalEffectsModule } from "@rgo-web/frontend";
+import { estimateStorage } from "./estimateStorage";
+import { hydrateEstimate } from "./sigEstimate.actions";
+import { sigEstimateHourlyRate, sigEstimateHours, sigEstimatePersistenceStatus } from "./sigEstimate";
+
+export function initEstimateSignalEffects(): () => void {
+  return effect(() => {
+    const estimate = { hourlyRate: sigEstimateHourlyRate.value, hours: sigEstimateHours.value };
+    try {
+      estimateStorage.write(estimate);
+      sigEstimatePersistenceStatus.value = "saved";
+    } catch {
+      sigEstimatePersistenceStatus.value = "unavailable";
+    }
+  });
+}
+
+export const applicationStateSignalModule = {
+  hydrate: hydrateEstimate,
+  initEffects: initEstimateSignalEffects,
+} satisfies SignalEffectsModule;
+```
+
+The preview owner hydrates, starts the effect and returns its disposer. A component-owned DOM effect also restores its prior document title on unmount. Storage failure reports unavailable persistence while keeping live edits intact.
+
+For an installed application-lifetime group, export its lifecycle member through the feature's public index and explicitly add it to `src/app/bootstrap/signals/signalModules.ts`. `initSignalEffects.ts` hydrates **all** registered modules before starting **any** effects and returns cleanup. The current production registry is empty. Registration order must not encode hidden dependencies.
+
+## 5. Verify recovery and ownership
+
+```sh
+npm --prefix frontend run test -- tests/integration/applicationState/signals/estimate/sigEstimate.test.ts
+npm --prefix frontend run verify:architecture
+```
+
+Check normalization, coherent hydration, persistence failure and disposal. Component effects must stop on unmount; application effects stop with bootstrap. A passing preview does not prove cross-tab synchronization or database durability. The browser test exercises its own private adapter and never changes real preference storage.
+
+## Common mistakes
+
+- Mirroring asynchronous Query data in a second live store.
+- Starting persistence before hydration and overwriting saved values with defaults.
+- Installing one effect per consumer for application-owned state.
+- Assuming a frozen registry disposes resources automatically.
+- Treating the private preview's memory slot as browser persistence.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the lifecycle/storage articles named above, and the current source examples. `docs/storybook/patterns/ApplicationState/signals/estimate/` contains the migrated reference actions, private memory adapter and disposable effect. `signalPersistenceFixture.ts` beside this tutorial demonstrates validated memory snapshots and the installed Signal-effects service. Both are preview-only owners; neither registers an estimate key or effect in production.
+
+The numbered steps and literal code fences are readable directly by developers and agents. Reference blocks identify existing documentation files; the consumer storage block is an installation excerpt that requires explicit schema, defaults and lifecycle registration. Inspect `src/app/bootstrap/signals/` before adding an application-lifetime group.
+
+Discover the related guidance from the workspace root:
+
+```sh
+npm --prefix frontend run guide:index -- search "signal" "hydration"
+```
+
+## Storybook fixture reference
+
+`SignalsAndPersistence.stories.tsx`, `SignalsAndPersistenceExample.tsx` and `signalPersistenceFixture.ts` remain private to this tutorial. The migrated gallery has separate reference source under `docs/storybook/patterns/ApplicationState/`. Both use memory storage and disposable lifetimes. Neither is registered in production.

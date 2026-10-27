@@ -19,18 +19,14 @@ export default defineConfig([
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["src/features/*/stories/**/*Example.tsx"],
+    files: ["docs/storybook/**/*Example.tsx"],
     rules: {
       "react-refresh/only-export-components": ["error", { allowExportNames: ["handlers", "resetProjectsMock"] }],
     },
   },
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: [
-      "src/features/*/hooks/use*Feature.ts",
-      "src/features/development-guide/*/hooks/use*Feature.ts",
-      "src/features/development-guide/patterns/*/hooks/use*Feature.ts",
-    ],
+    ignores: ["src/features/*/hooks/use*Feature.ts"],
     rules: {
       "no-restricted-imports": [
         "error",

@@ -1,8 +1,12 @@
 import type { Preview } from "@storybook/react-vite";
+import { createElement } from "react";
 import { setupWorker } from "msw/browser";
 import { mswLoader } from "msw-storybook-addon/csf3";
 
 import { parseAppConfig } from "../src/app/bootstrap/config/appConfig.js";
+import { StorybookProviders } from "./StorybookProviders.js";
+import { StorybookDocsContainer } from "./StorybookDocsContainer.js";
+import { StorybookSource } from "./StorybookSource.js";
 
 const fixtureApiBaseUrl = "https://api.example.invalid";
 const storybookConfig = parseAppConfig({
@@ -25,6 +29,7 @@ function isProtectedApiRequest(requestUrl: string) {
 }
 
 const preview = {
+  decorators: [(Story, context) => createElement(StorybookProviders, { storyId: context.id }, createElement(Story))],
   loaders: [
     mswLoader(async () => {
       const worker = setupWorker();
@@ -40,6 +45,8 @@ const preview = {
     }),
   ],
   parameters: {
+    docs: { container: StorybookDocsContainer, components: { Source: StorybookSource } },
+    backgrounds: { disable: true },
     a11y: { test: "error" },
     controls: { disable: true },
     options: {

@@ -1,0 +1,881 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as CapabilityStories from "./CapabilityAwarePages.stories";
+
+<Meta of={CapabilityStories} />
+
+# Capability-aware pages and actions
+
+Use a server-derived page projection for discovery, independently gate a direct
+URL, and use the loaded record's capabilities for its actions. The server checks
+live authority again when each read or command executes.
+
+## Try it
+
+**Page denied** omits Reviews from both destination lists while the address bar
+still shows `/reviews` and the route explains denial. **Action denied** retains
+the readable request. **Revocation during confirmation** removes approval
+permission while the real shared confirmation is open; confirm after the notice
+to observe zero writes. **Check backend rejection** bypasses the UI guard and
+demonstrates an independent rejection by the private server stand-in.
+
+<Canvas of={CapabilityStories.Overview} story={{ inline: false, height: "900px" }} sourceState="none" />
+
+## Before you start
+
+This is a **consumer implementation recipe**, not an installed permission API.
+It closes the documented presentation gap without implementing TeamOps, creating
+roles, changing the platform session, or adding endpoints to this starter.
+All new modules below must be implemented in the consumer. Paths are relative to
+`frontend/`. New English labels in application snippets must become typed paired
+English/Croatian resource keys during adoption; previews remain English.
+
+Read Architecture, Authentication and HTTP integration, Loading and saving
+feature data, and Confirmations first. Authoritative contracts are
+`docs/development-guide/en/frontend/access/capability-aware-pages.md`,
+`docs/development-guide/en/frontend/access/revocation-and-private-cache.md`, and
+`docs/development-guide/en/frontend/async-commands/generation-guards-after-await.md`.
+
+Current source boundaries matter:
+
+- `src/app/auth/models/AppAuthUser.ts` contains identity only: ID, display name,
+  email. Do not assume `user.roles` or `user.permissions` exists.
+- `src/app/router/types/AppRoute.ts` permits `access: "public" | "authenticated"`.
+  Do not invent `access: "manager"` or an unsupported policy metadata field.
+- `src/app/auth/components/AppAuthGate.tsx` resolves authentication, not resource
+  authorization. Authentication alone cannot approve a record.
+- `src/app/router/components/AuthenticatedAppShell.tsx` composes menu props and
+  command-palette entries. Shell presentation receives those values.
+- `scripts/application-architecture-policy.mjs` does not permit feature or ordinary
+  page imports of auth hooks, or router imports of feature indices. The recipe
+  puts authority hooks in the router and passes narrow inputs through the page.
+
+## 1. Agree the server projection before adding UI policy
+
+Keep page eligibility separate from record permission. The following are proposed
+consumer endpoints, **not installed starter endpoints**. The shared configured
+Axios base URL already contains `/api`; adapter URLs omit that prefix.
+
+<table style={{ width: "100%", tableLayout: "fixed" }}>
+  <caption>Consumer authority and resource contracts</caption>
+  <thead>
+    <tr>
+      <th scope="col">Boundary</th>
+      <th scope="col">Contract</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">GET /api/me/page-access</th>
+      <td>
+        Current viewerId and pages.reviews boolean. Authenticated, non-cacheable by shared proxies; no role array
+        required.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">GET /api/reviews/current</th>
+      <td>
+        Authorized record projection: id, title, authorityRevision, capabilities.approve. Denied reads return the agreed
+        403 or hidden-resource 404, never an empty success.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">POST /api/reviews/:id/approve</th>
+      <td>
+        Session + fresh CSRF; reload enabled actor and live resource authority in the command's transaction. Return the
+        accepted projection, or a bounded public denial/conflict response.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Revocation</th>
+      <td>
+        A fresh observation removes obsolete actions and restricted content. Cache cancellation/removal is scoped by
+        viewer and resource; no claim of instantaneous server push.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+Backend owners follow
+`docs/development-guide/en/backend/security/live-authority-and-session-claims.md`,
+`session-and-csrf-lifecycle.md` in the same directory, and
+`resource-scope-and-composite-keys.md`. The starter session endpoint reloads an
+enabled account; that does not automatically authorize future domain commands.
+Choose the actual membership/role model and concurrency protocol in the product.
+This tutorial consumes explicit outcomes rather than inventing that business policy.
+
+## 2. Add an auth-owned, validated page projection
+
+This complete new module receives the existing shared HTTP client. Query owns
+async state; a provider exposes its observation, not a second mutable cache.
+The viewer is part of the key and the validated response must match that viewer.
+
+```ts
+// src/app/auth/api/pageAccess.query.ts
+import { queryOptions } from "@tanstack/react-query";
+import type { AxiosInstance } from "axios";
+import { z } from "zod";
+
+const pageAccessSchema = z
+  .object({
+    viewerId: z.string().min(1),
+    pages: z.object({ reviews: z.boolean() }).readonly(),
+  })
+  .readonly();
+export type PageAccess = z.output<typeof pageAccessSchema>;
+
+export function createPageAccessQuery(http: AxiosInstance) {
+  return (viewerId: string) =>
+    queryOptions({
+      queryKey: ["page-access", viewerId] as const,
+      queryFn: async ({ signal }) => {
+        const response = await http.get<unknown>("/me/page-access", { signal });
+        const access = pageAccessSchema.parse(response.data);
+        if (access.viewerId !== viewerId) throw new Error("Page-access viewer mismatch");
+        return access;
+      },
+      staleTime: 0,
+      retry: false,
+    });
+}
+export type PageAccessQuery = ReturnType<typeof createPageAccessQuery>;
+```
+
+The private Context stays with auth; the deliberate hook is consumed only by
+router composition. Initial loading, transport failure and denial remain distinct.
+Background refresh also blocks freshness-sensitive use here: this conservative
+recipe does not treat retained eligibility as a new authorization observation.
+
+```tsx
+// src/app/auth/components/PageAccessProvider.tsx
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+import type { PageAccess, PageAccessQuery } from "../api/pageAccess.query";
+import { useAppAuth } from "../hooks/useAppAuth";
+
+type Observation = Readonly<{
+  access: PageAccess | null;
+  state: "loading" | "error" | "ready";
+  retry: () => void;
+}>;
+const Context = createContext<Observation | null>(null);
+type Collaborators = Readonly<{
+  query: PageAccessQuery;
+  revokeReviews: (viewerId: string) => Promise<void>;
+}>;
+
+export function PageAccessProvider({ children, query, revokeReviews }: PropsWithChildren<Collaborators>) {
+  const { user, status } = useAppAuth();
+  if (status !== "authenticated" || !user)
+    return <Context.Provider value={{ access: null, state: "loading", retry: () => {} }}>{children}</Context.Provider>;
+  return (
+    <ViewerPageAccess key={user.id} viewerId={user.id} query={query} revokeReviews={revokeReviews}>
+      {children}
+    </ViewerPageAccess>
+  );
+}
+
+function ViewerPageAccess({
+  children,
+  viewerId,
+  query,
+  revokeReviews,
+}: PropsWithChildren<Collaborators & { viewerId: string }>) {
+  const mounted = useRef(true);
+  const cleanupGeneration = useRef(0);
+  const pendingCleanup = useRef(false);
+  const cleanupRunning = useRef(false);
+  const [cleanup, setCleanup] = useState({ running: false, failed: false });
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      cleanupGeneration.current += 1;
+      cleanupRunning.current = false;
+    };
+  }, []);
+  const result = useQuery(query(viewerId));
+  const state = result.isPending || result.isFetching ? "loading" : result.isError ? "error" : "ready";
+  const access = state === "ready" && result.data?.viewerId === viewerId ? (result.data ?? null) : null;
+  const finishCleanup = useCallback(async () => {
+    if (!pendingCleanup.current || cleanupRunning.current) return;
+    const generation = ++cleanupGeneration.current;
+    cleanupRunning.current = true;
+    setCleanup({ running: true, failed: false });
+    try {
+      await revokeReviews(viewerId);
+      if (!mounted.current || generation !== cleanupGeneration.current) return;
+      pendingCleanup.current = false;
+      cleanupRunning.current = false;
+      setCleanup({ running: false, failed: false });
+    } catch {
+      if (!mounted.current || generation !== cleanupGeneration.current) return;
+      cleanupRunning.current = false;
+      setCleanup({ running: false, failed: true });
+    }
+  }, [revokeReviews, viewerId]);
+  useEffect(() => {
+    const observed = result.data;
+    if (!observed || observed.viewerId !== viewerId || observed.pages.reviews) return;
+    pendingCleanup.current = true;
+    void finishCleanup();
+  }, [result.data, finishCleanup, viewerId]);
+  return (
+    <Context.Provider
+      value={{
+        access: cleanup.running || cleanup.failed ? null : access,
+        state: cleanup.failed ? "error" : cleanup.running ? "loading" : state,
+        retry: () => {
+          void finishCleanup();
+          void result.refetch();
+        },
+      }}
+    >
+      {children}
+    </Context.Provider>
+  );
+}
+
+export function usePageAccess() {
+  const observation = useContext(Context);
+  if (!observation) throw new Error("PageAccessProvider is required");
+  return observation;
+}
+```
+
+**Provider registration patch, not a replacement file:** the complete runtime
+composition in step 5 adds `pageAccess` while preserving the auth runtime. In
+`src/app/bootstrap/runtime/AppProviders.tsx`, import the new provider and wrap
+the existing children inside `AppAuthProvider` with
+`<PageAccessProvider query={runtime.auth.pageAccess} revokeReviews={runtime.auth.revokeReviews}>`.
+The typed cleanup collaborator is injected by composition; auth never imports
+the Reviews feature. Retain all existing runtime,
+Query, localization, theme, feedback and auth construction/cleanup. The installed
+auth provider keys descendants by identity; its runtime cancels/removes private
+queries on session transitions. Do not create another QueryClient or HTTP client.
+
+## 3. Filter every discovery surface without changing route identity
+
+Use one router-owned map for page eligibility. An unlisted destination below
+follows existing authentication policy; the explicit Reviews route needs the
+new eligibility observation. Register real consumer route IDs/destinations here,
+including protected descendants. URL builders stay pure.
+
+```ts
+// src/app/router/pageEligibility.ts
+import type { PageAccess } from "@/app/auth/api/pageAccess.query";
+import type { AppNavigationItem, AppNavigationLink } from "./types/AppRoute";
+import type { AppCommandPaletteEntry } from "@/app/shell/types/AppCommandPaletteEntry";
+
+export function canDiscoverDestination(to: string, access: PageAccess | null): boolean {
+  const pathname = to.split(/[?#]/, 1)[0] ?? "";
+  return !/^\/reviews(?:\/|$)/.test(pathname) || access?.pages.reviews === true;
+}
+
+export function visibleNavigation(items: readonly AppNavigationItem[], access: PageAccess | null): AppNavigationItem[] {
+  return items.flatMap<AppNavigationItem>(item => {
+    if (item.kind === "link") return canDiscoverDestination(item.to, access) ? [item] : [];
+    const children = item.items.filter(child => canDiscoverDestination(child.to, access));
+    return children.length ? [{ ...item, items: children }] : [];
+  });
+}
+export function visibleBottomNavigation(items: readonly AppNavigationLink[], access: PageAccess | null) {
+  return items.filter(item => canDiscoverDestination(item.to, access));
+}
+export function visibleCommands(entries: readonly AppCommandPaletteEntry[], access: PageAccess | null) {
+  return entries.filter(entry => canDiscoverDestination(entry.to, access));
+}
+```
+
+**Patch `AuthenticatedAppShell.tsx`:** call `usePageAccess()` there, use its
+`access` in `visibleNavigation(navigationItems, access)` and
+`visibleBottomNavigation(bottomNavigationItems, access)` before passing AppShell
+props; pass `visibleCommands(entries, access)` to AppCommandPalette. Apply the
+same predicate to new section tabs/sidebar lists or account destinations that
+expose protected routes. Do not filter the registry itself: a denied bookmarked
+URL must still resolve to the guarded route and its explanation.
+
+## 4. Gate direct entry in router composition
+
+This complete new router component is independent of menu visibility. It is
+mounted below the installed AppAuthGate. The page receives viewer identity
+through Outlet context, without importing auth. A denied or refreshing projection
+never mounts protected page content. A failed check offers retry, not a fake
+empty page. A new viewer receives a new page lifetime.
+
+```tsx
+// src/app/router/components/ReviewsAccessRoute.tsx
+import { Alert, Button, Stack, Typography } from "@mui/material";
+import { Link, Outlet } from "react-router";
+
+import { usePageAccess } from "@/app/auth/components/PageAccessProvider";
+
+export function ReviewsAccessRoute() {
+  const { access, state, retry } = usePageAccess();
+  if (state === "loading") return <Typography role="status">Checking page access…</Typography>;
+  if (state === "error")
+    return (
+      <Alert severity="error" action={<Button onClick={retry}>Retry access check</Button>}>
+        Page access could not be checked.
+      </Alert>
+    );
+  if (!access?.pages.reviews)
+    return (
+      <Stack spacing={2}>
+        <Typography component="h1" variant="h5">
+          Page access denied
+        </Typography>
+        <Button component={Link} to="/">
+          Return home
+        </Button>
+      </Stack>
+    );
+  return <Outlet key={access.viewerId} context={{ viewerId: access.viewerId }} />;
+}
+```
+
+**Route registration patch:** import this router component into
+`src/app/router/routeRegistry.tsx` and register a consumer parent with
+`Component: ReviewsAccessRoute`, `access: "authenticated"`, `path: "reviews"`,
+and a localized title. Register its page child with `index: true`, matching
+access and `parentId` referencing that parent; that child imports a thin
+`src/pages/reviews/ReviewsPage.tsx` through the existing router seam. Set
+`commandPalette: true` and navigation metadata on the appropriate registered
+destination, then add its link to the explicit app navigation list. The exact
+typed metadata fields and default/index rules are in the existing routing tutorials.
+
+The gate passes only viewer identity. The public feature below loads its own
+record through its registered runtime. There is no dynamic-host placeholder or
+untyped record injected through the route. New modules are consumer recipe code,
+not installed APIs. The lesson uses a minimal review projection; the product owns
+its actual business fields and translations.
+
+An observed page denial also invokes the injected cleanup. The provider keeps
+allowed reentry blocked until that cleanup settles; a cleanup failure retains
+the error state and safe retry. Retry reruns outstanding cleanup even when the
+next projection allows Reviews, or repeats the identical denial. Access remains
+blocked until that cleanup succeeds. The keyed viewer lifetime and generation
+guard prevent an old viewer's completion from changing the new observation.
+The feature's named cleanup cancels then removes
+only this viewer's review read family. It deliberately preserves the separate
+unresolved command-attempt family. A new allowed feature mount always starts an
+authorized read (`staleTime: 0`) and hides retained content while fetching, so an
+old projection cannot flash during quick denied/allowed transitions.
+
+## 5. Build the complete feature and safe command owner
+
+The proposed approval contract additionally accepts a stable `attemptId` and
+expected version. A server-owned receipt read returns **pending** until it can
+prove a terminal **approved** or **not-applied** outcome for that exact attempt,
+plus the currently authorized record. A missing receipt is not automatically
+not-applied. This terminal guarantee requires backend implementation and tests;
+it is not supplied by an arbitrary fresh record GET. No retry is allowed while
+an attempt's outcome is unknown.
+
+The proposed GET `/api/reviews/:id/approval-attempts/:attemptId` must bind the
+attempt to the current actor and record. A terminal not-applied receipt closes
+that attempt durably: a delayed POST with its identity must not later commit.
+Concurrent command/receipt reads follow the backend's shared transaction/lock
+protocol. Implementing this endpoint as “no row found means not-applied” would
+violate the contract. If the backend cannot establish a terminal result, return
+pending and keep the frontend guard; do not authorize replay from an elapsed timer.
+
+```ts
+// Consumer recipe: src/features/reviews/models/Review.ts
+import { z } from "zod";
+
+export const reviewSchema = z.object({
+  id: z.string().min(1),
+  viewerId: z.string().min(1),
+  title: z.string().min(1),
+  version: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  authorityRevision: z.string().min(1),
+  capabilities: z.object({ approve: z.boolean() }),
+});
+export type Review = z.output<typeof reviewSchema>;
+export const receiptSchema = z.discriminatedUnion("state", [
+  z.object({ state: z.literal("pending") }),
+  z.object({ state: z.literal("approved"), record: reviewSchema }),
+  z.object({ state: z.literal("not-applied"), record: reviewSchema }),
+]);
+export type Receipt = z.output<typeof receiptSchema>;
+```
+
+The port exposes domain values and cancellation only. Runtime schemas remain
+with models and are consumed by the transport adapter.
+
+```ts
+// Consumer recipe: src/features/reviews/api/review.api.ts
+import type { Review, Receipt } from "../models/Review";
+
+export interface ReviewApi {
+  read(signal?: AbortSignal): Promise<Review>;
+  approve(id: string, input: Readonly<{ attemptId: string; expectedVersion: number }>): Promise<Review>;
+  reconcile(id: string, attemptId: string, signal?: AbortSignal): Promise<Receipt>;
+}
+```
+
+```ts
+// Consumer recipe: src/features/reviews/api/review.api.http.ts
+import type { AxiosInstance } from "axios";
+import { reviewSchema, receiptSchema } from "../models/Review";
+import type { ReviewApi } from "./review.api";
+
+export function createReviewHttpApi(http: AxiosInstance): ReviewApi {
+  return {
+    async read(signal) {
+      const response = await http.get<unknown>("/reviews/current", { signal });
+      return reviewSchema.parse(response.data);
+    },
+    async approve(id, { attemptId, expectedVersion }) {
+      const response = await http.post<unknown>(`/reviews/${encodeURIComponent(id)}/approve`, {
+        attemptId,
+        expectedVersion,
+      });
+      const record = reviewSchema.parse(response.data);
+      if (record.id !== id || record.version <= expectedVersion || record.capabilities.approve)
+        throw new Error("Unusable approval acknowledgement");
+      return record;
+    },
+    async reconcile(id, attemptId, signal) {
+      const response = await http.get<unknown>(
+        `/reviews/${encodeURIComponent(id)}/approval-attempts/${encodeURIComponent(attemptId)}`,
+        { signal },
+      );
+      const receipt = receiptSchema.parse(response.data);
+      if (
+        receipt.state !== "pending" &&
+        (receipt.record.id !== id || (receipt.state === "approved" && receipt.record.capabilities.approve))
+      )
+        throw new Error("Unusable approval receipt");
+      return receipt;
+    },
+  };
+}
+```
+
+The configured client already has auth-owned CSRF/expiry interceptors. The server
+reauthorizes every endpoint. Its receipt is actor/resource/attempt scoped and
+cannot turn a still-running command into a terminal rejection. Known server
+errors can later receive specific translated presentation; the conservative
+example below blocks replay for every unacknowledged write.
+
+```ts
+// Consumer recipe: src/features/reviews/reviews.feature.ts
+import { queryOptions, skipToken, type QueryClient } from "@tanstack/react-query";
+import type { AxiosInstance } from "axios";
+import { createReviewHttpApi } from "./api/review.api.http";
+import type { Review } from "./models/Review";
+
+export function createReviewsFeature({
+  http,
+  queryClient,
+}: Readonly<{ http: AxiosInstance; queryClient: QueryClient }>) {
+  const api = createReviewHttpApi(http);
+  const recordKey = (viewerId: string) => ["reviews", viewerId, "current"] as const;
+  const attemptKey = (viewerId: string, id: string) => ["review-commands", viewerId, id] as const;
+  const requireViewer = (record: Review, viewerId: string) => {
+    if (record.viewerId !== viewerId) throw new Error("Review viewer mismatch");
+    return record;
+  };
+  return Object.freeze({
+    query: (viewerId: string) =>
+      queryOptions({
+        queryKey: recordKey(viewerId),
+        queryFn: async ({ signal }) => {
+          const record = await api.read(signal);
+          if (signal.aborted) throw new DOMException("Review read aborted", "AbortError");
+          return requireViewer(record, viewerId);
+        },
+        staleTime: 0,
+        retry: false,
+      }),
+    revokeRead: async (viewerId: string) => {
+      const scope = { queryKey: ["reviews", viewerId] as const };
+      try {
+        await queryClient.cancelQueries(scope);
+      } finally {
+        queryClient.removeQueries(scope);
+      }
+    },
+    attempt: (viewerId: string, id: string) =>
+      queryOptions<string | null>({
+        queryKey: attemptKey(viewerId, id),
+        queryFn: skipToken,
+        initialData: null,
+        gcTime: Infinity,
+      }),
+    current: (viewerId: string) => {
+      const state = queryClient.getQueryState<Review>(recordKey(viewerId));
+      return state?.status === "success" &&
+        state.fetchStatus === "idle" &&
+        !state.isInvalidated &&
+        Date.now() - state.dataUpdatedAt < 5000 &&
+        state.data?.viewerId === viewerId
+        ? state.data
+        : null;
+    },
+    approve: async (viewerId: string, record: Review, signal: AbortSignal) => {
+      const key = attemptKey(viewerId, record.id);
+      if (signal.aborted || queryClient.getQueryData<string | null>(key)) throw new Error("Approval blocked");
+      const attemptId = crypto.randomUUID();
+      // Keep the guard in the identity-scoped Query cache, including across route remounts.
+      queryClient.setQueryData(key, attemptId);
+      const accepted = requireViewer(
+        await api.approve(record.id, { attemptId, expectedVersion: record.version }),
+        viewerId,
+      );
+      if (signal.aborted) return;
+      queryClient.setQueryData(recordKey(viewerId), accepted);
+      queryClient.setQueryData(key, null);
+    },
+    reconcile: async (viewerId: string, id: string, signal: AbortSignal) => {
+      const key = attemptKey(viewerId, id);
+      const attemptId = queryClient.getQueryData<string | null>(key);
+      if (!attemptId || signal.aborted) return false;
+      const receipt = await api.reconcile(id, attemptId, signal);
+      if (signal.aborted || receipt.state === "pending") return false;
+      const record = requireViewer(receipt.record, viewerId);
+      queryClient.setQueryData(recordKey(viewerId), record);
+      queryClient.setQueryData(key, null);
+      return true;
+    },
+  });
+}
+export type ReviewsFeatureRuntime = ReturnType<typeof createReviewsFeature>;
+```
+
+This runtime stores only the unresolved attempt identity as local command state
+in the private cache; it does not duplicate the record. The attempt query has no
+fetch function and record refreshes cannot clear it. Its key survives ordinary
+route remounts and is removed by the installed auth runtime's identity cleanup.
+The old owner's aborted continuation never repopulates that private cache. A
+browser reload is a stronger boundary: restore uncertain attempts from an
+actor-scoped backend command ledger before enabling approval in a product that
+supports recovery across reloads; the in-memory guard alone does not claim that.
+
+```ts
+// Consumer recipe: src/features/reviews/hooks/useReviewsFeature.ts
+import { useAppFeature } from "@/app/bootstrap/runtime/useAppFeature";
+export function useReviewsFeature() {
+  return useAppFeature("reviews");
+}
+```
+
+```tsx
+// Consumer recipe: src/features/reviews/components/ApproveReviewButton.tsx
+import { Alert, Button, Stack } from "@mui/material";
+import { useRgoFeedback } from "@rgo-web/frontend";
+import { useEffect, useRef, useState } from "react";
+import type { Review } from "../models/Review";
+
+type Props = Readonly<{
+  record: Review;
+  blocked: boolean;
+  current: () => Review | null;
+  approve: (signal: AbortSignal) => Promise<void>;
+  reconcile: (signal: AbortSignal) => Promise<boolean>;
+}>;
+export function ApproveReviewButton({ record, blocked, current, approve, reconcile }: Props) {
+  const feedback = useRgoFeedback();
+  const operation = useRef<AbortController | null>(null);
+  const mounted = useRef(true);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      operation.current?.abort();
+    };
+  }, []);
+  useEffect(() => {
+    operation.current?.abort();
+  }, [record.authorityRevision]);
+  const run = async (recover: boolean) => {
+    if (operation.current || (blocked && !recover)) return;
+    const owner = new AbortController();
+    operation.current = owner;
+    try {
+      if (recover) {
+        setBusy(true);
+        const known = await reconcile(owner.signal);
+        if (!owner.signal.aborted)
+          setMessage(
+            known
+              ? "Terminal outcome reconciled. Review the current record."
+              : "Outcome still unknown. Approval remains blocked.",
+          );
+        return;
+      }
+      const sameAuthority = () => {
+        const next = current();
+        return (
+          !owner.signal.aborted &&
+          next?.capabilities.approve === true &&
+          next.viewerId === record.viewerId &&
+          next.id === record.id &&
+          next.authorityRevision === record.authorityRevision &&
+          next.version === record.version
+        );
+      };
+      if (!sameAuthority()) {
+        setMessage("Fresh authority is required. Reload the record.");
+        return;
+      }
+      const decision = await feedback.confirm({
+        title: "Approve request?",
+        message: "Approve this reviewed request?",
+        confirmLabel: "Approve",
+        cancelLabel: "Keep pending",
+        signal: owner.signal,
+      });
+      if (decision.status !== "confirmed" || owner.signal.aborted) return;
+      if (!sameAuthority()) {
+        setMessage("Authority changed. No command was sent.");
+        return;
+      }
+      setBusy(true);
+      await approve(owner.signal);
+      if (!owner.signal.aborted) setMessage("Approval acknowledged.");
+    } catch {
+      if (!owner.signal.aborted)
+        setMessage("No usable acknowledgement. Reconcile this attempt; approval remains blocked.");
+    } finally {
+      if (operation.current === owner) operation.current = null;
+      if (mounted.current) setBusy(false);
+    }
+  };
+  return (
+    <Stack spacing={1}>
+      <Button disabled={!record.capabilities.approve || busy || blocked} onClick={() => void run(false)}>
+        Approve request
+      </Button>
+      {blocked && (
+        <Button disabled={busy} onClick={() => void run(true)}>
+          Reconcile approval attempt
+        </Button>
+      )}
+      {message && <Alert severity="info">{message}</Alert>}
+    </Stack>
+  );
+}
+```
+
+The synchronous ref prevents duplicate decisions. The current getter rejects
+fetching, failed, invalidated or expired authority, and is checked after the
+confirmation. Revision changes abort the pending prompt without throwing away
+an uncertainty guard. The button is keyed by viewer and record, not revision:
+changing a capability cannot silently erase local recovery presentation. The
+runtime's cache guard independently refuses another send after an unknown write.
+
+```tsx
+// Consumer recipe: src/features/reviews/components/ReviewFeature.tsx
+import { Alert, Button, Stack, Typography } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { useReviewsFeature } from "../hooks/useReviewsFeature";
+import { ApproveReviewButton } from "./ApproveReviewButton";
+import type { Review } from "../models/Review";
+
+function LoadedReview({ viewerId, record }: Readonly<{ viewerId: string; record: Review }>) {
+  const feature = useReviewsFeature();
+  const attempt = useQuery(feature.attempt(viewerId, record.id));
+  return (
+    <Stack spacing={2}>
+      <Typography component="h1" variant="h5">
+        {record.title}
+      </Typography>
+      <ApproveReviewButton
+        key={`${viewerId}:${record.id}`}
+        record={record}
+        blocked={Boolean(attempt.data)}
+        current={() => feature.current(viewerId)}
+        approve={signal => feature.approve(viewerId, record, signal)}
+        reconcile={signal => feature.reconcile(viewerId, record.id, signal)}
+      />
+    </Stack>
+  );
+}
+export function ReviewFeature({ viewerId }: Readonly<{ viewerId: string }>) {
+  const feature = useReviewsFeature();
+  const result = useQuery(feature.query(viewerId));
+  if (result.isPending || result.isFetching)
+    return <Typography role="status">Checking current review authority…</Typography>;
+  if (result.isError)
+    return (
+      <Alert severity="error">
+        Review unavailable. No protected record is rendered.
+        <Button onClick={() => void result.refetch()}>Retry review</Button>
+      </Alert>
+    );
+  return (
+    <Stack spacing={2}>
+      <Button onClick={() => void result.refetch()} disabled={result.isFetching}>
+        Refresh review authority
+      </Button>
+      <LoadedReview viewerId={viewerId} record={result.data} />
+    </Stack>
+  );
+}
+```
+
+```ts
+// Consumer recipe: src/features/reviews/index.ts
+export { ReviewFeature } from "./components/ReviewFeature";
+export { createReviewsFeature, type ReviewsFeatureRuntime } from "./reviews.feature";
+export { useReviewsFeature } from "./hooks/useReviewsFeature";
+```
+
+The canonical hook compiles only after the following actual registry changes.
+These complete consumer replacements extend the starter's empty feature registry.
+Home and Settings remain installed through their existing page/router owners;
+Contacts is a separate Storybook reference. Preserve any existing consumer feature
+registrations if applying this to a personalized app; do not replace them with an unrelated tutorial's feature list.
+
+```ts
+// Consumer recipe: src/app/bootstrap/runtime/appFeatures.ts
+import type { QueryClient } from "@tanstack/react-query";
+import type { AxiosInstance } from "axios";
+import { createReviewsFeature, type ReviewsFeatureRuntime } from "@/features/reviews";
+
+export type AppFeatureDependencies = Readonly<{ queryClient: QueryClient; http: AxiosInstance }>;
+export function createAppFeatures(dependencies: AppFeatureDependencies) {
+  const features: AppFeatures = {
+    reviews: createReviewsFeature(dependencies),
+  };
+  return Object.freeze(features);
+}
+export type AppFeatures = Readonly<{ reviews: ReviewsFeatureRuntime }>;
+export type AppFeatureName = keyof AppFeatures;
+export const allowedCrossFeatureHooks = {} as const satisfies Partial<
+  Record<AppFeatureName, readonly AppFeatureName[]>
+>;
+```
+
+```ts
+// Consumer recipe: src/app/bootstrap/runtime/createAppRuntime.ts
+import { createAppAxios } from "@/app/data/http/createAppAxios";
+import { createAppAuthRuntime } from "@/app/auth/createAppAuthRuntime";
+import { createPageAccessQuery } from "@/app/auth/api/pageAccess.query";
+import type { AppAuthLoginAssistance } from "@/app/auth/types/AppAuthLoginAssistance";
+import type { AppConfig } from "@/app/bootstrap/config/appConfig";
+import { createAppFixedSettings } from "@/app/bootstrap/config/fixedSettings";
+import { createAppQueryClient } from "@/app/data/query/createAppQueryClient";
+import { createAppFeatures } from "./appFeatures";
+
+export function createAppRuntime(
+  config: AppConfig,
+  options: Readonly<{ loginAssistance?: AppAuthLoginAssistance }> = {},
+) {
+  const queryClient = createAppQueryClient();
+  const http = createAppAxios(config);
+  const baseAuth = createAppAuthRuntime({ http, loginAssistance: options.loginAssistance, queryClient });
+  const features = createAppFeatures({ queryClient, http });
+  const auth = Object.freeze({
+    ...baseAuth,
+    pageAccess: createPageAccessQuery(http),
+    revokeReviews: features.reviews.revokeRead,
+  });
+  const fixedSettings = createAppFixedSettings(config);
+  return Object.freeze({ auth, features, fixedSettings, queryClient });
+}
+export type AppRuntime = ReturnType<typeof createAppRuntime>;
+```
+
+This version constructs `pageAccess` in composition, so do not also add the
+same member to createAppAuthRuntime. Retain the earlier AppProviders registration:
+PageAccessProvider receives `runtime.auth.pageAccess` and the typed
+`runtime.auth.revokeReviews` collaborator inside AppAuthProvider.
+Auth is constructed before feature requests, so its interceptors exist once.
+
+```tsx
+// Consumer recipe: src/pages/reviews/ReviewsPage.tsx
+import { useOutletContext } from "react-router";
+import { ReviewFeature } from "@/features/reviews";
+
+export function ReviewsPage() {
+  const { viewerId } = useOutletContext<Readonly<{ viewerId: string }>>();
+  return <ReviewFeature key={viewerId} viewerId={viewerId} />;
+}
+```
+
+With the parent/index registration above, this is now a complete path:
+shared HTTP + Query client → registered Reviews runtime → canonical feature hook
+→ viewer-only gated route context → thin page → public UI → owned read/command.
+Neither the page nor the feature imports auth; the router imports the page,
+not the feature. No arbitrary host must supply an undeclared record.
+
+## 6. Revoke the right owner and restricted projections together
+
+When view eligibility is lost, stop rendering the record immediately, invalidate
+pending action owners, clear restricted drafts and retry identities, then cancel
+and remove the named viewer/resource queries. Do not rely on asynchronous cache
+removal as the only visibility guard. A late successful read must not re-open
+the old owner. Unrelated viewers/public data are outside this cleanup boundary.
+
+This recipe implements that read boundary with the injected `revokeReviews`
+collaborator and `revokeRead()` runtime method. The separate `review-commands`
+attempt entries remain blocked across ordinary route/page-access detours; they
+are not deleted merely to make an approval button usable. Terminal receipt
+reconciliation or the installed whole-identity cleanup owns their removal.
+The minimal example has no editable draft. A richer editor must add its own
+restricted-draft disposal to the same injected owner transition.
+
+An ordinary timeout is not proof of revocation. Preserve permitted input while
+showing an unavailable/stale state, and require fresh capabilities before another
+decision. Conversely, when access is explicitly revoked, an old private draft is
+not a safe fallback. Re-entry requires a fresh authorized projection and a new
+owner, not resurrection from the previous session's pin or browser storage.
+
+## Common mistakes
+
+- Hiding Reviews while leaving its URL unguarded, or hiding a button while the API accepts it.
+- Adding roles to AppAuthUser or new route access strings as if those APIs existed.
+- Importing auth hooks into product features/pages or a feature directly into router composition.
+- Treating retained capability data during refresh/failure as fresh authority.
+- Confirming with a captured permission after its viewer, record or revision changed.
+- Interpreting 403 as an empty collection, or a timeout as permanent revocation.
+- Clearing the whole shared cache from an ordinary page or keeping restricted drafts after denial.
+
+## 7. Verify your implementation
+
+Run applicable checks sequentially from the workspace root:
+
+```sh
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run typecheck
+npm --prefix frontend run test:browser:storybook
+```
+
+Check omitted menu and palette destinations, denied direct entry, loading/error
+with no protected content, readable records with unavailable actions, cancel and
+Escape with zero writes, and revocation during confirmation with zero writes.
+Test an independently forged unauthorized HTTP command against the real backend;
+the private fixture proves only its own deterministic rejection. Test viewer
+changes, late reads and scoped cache cleanup in owner tests, both application
+locales, keyboard focus after content removal, narrow screens, and global theme
+changes with an open prompt. Keep backend enforcement and local preview evidence
+separate in the final report.
+
+## Read this tutorial without Storybook
+
+Read the numbered steps, the explicitly new consumer modules and registration
+patches above, then the current source files named under Before you start. Discover
+the broader contracts with `npm --prefix frontend run guide:index -- search capability authority`.
+The backend security articles define live authority and transaction responsibilities;
+this recipe defines frontend composition without choosing business roles.
+
+## Storybook fixture reference
+
+`CapabilityAwarePages.stories.tsx` exports Overview, PageDenied, ActionDenied and
+Revocation. `CapabilityAwarePagesExample.tsx` uses MemoryRouter, the shared dynamic
+address bar and the actual feedback provider. `capabilityFixture.ts` is a private
+server stand-in with independent authority checks, revision and write counters.
+The two visible destination lists illustrate menu/palette filtering; the complete
+production filter functions above adapt the actual AppShell/AppCommandPalette
+inputs. The fixture does not mount the full authenticated shell.
+
+Scenario changes restart private state; theme changes preserve it. Cleanup aborts
+the owned confirmation and clears its revocation timer. No real network, session,
+storage, application preference, feature runtime or extra theme provider is used.
+The ordinary document flow introduces no nested scroll owner.

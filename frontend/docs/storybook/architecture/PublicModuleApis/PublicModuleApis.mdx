@@ -1,0 +1,129 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./PublicModuleApis.stories";
+
+<Meta of={Stories} />
+
+# Public module APIs
+
+A feature's `index.ts` is its deliberate public interface. Export the members actual consumers need and retain private implementation behind that seam.
+
+## Try it
+
+<Canvas of={Stories.Overview} story={{ inline: false, height: "720px" }} sourceState="none" />
+
+## Before you start
+
+Paths are relative to `frontend/`. Read `docs/architecture/en/feature-anatomy-filenames-and-public-interfaces.md`, `docs/architecture/en/dependency-boundaries-and-imports.md`. Inspect the current implementation and its callers before reusing a pattern. Contacts lives only under `docs/storybook/examples/Contacts/`; installed Settings and app infrastructure remain under `src/`. Consumer recipes describe explicit installation work, not APIs already registered in the app.
+
+## 1. Start from a consumer
+
+Read `docs/architecture/en/feature-anatomy-filenames-and-public-interfaces.md` and `dependency-boundaries-and-imports.md`. Inspect the installed `src/features/settings/index.ts`: pages consume public Settings controls and section hooks, while app providers retain preference ownership.
+
+<table style={{ width: "100%", tableLayout: "fixed" }}>
+  <caption>Match the public interface to its consumer</caption>
+  <thead>
+    <tr>
+      <th scope="col">Consumer</th>
+      <th scope="col">Interface it needs</th>
+      <th scope="col">Responsibility that stays inside the feature</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Contacts directory preview</th>
+      <td>
+        <code>ContactsFeature</code>
+      </td>
+      <td>table, editor, validation and command coordination</td>
+    </tr>
+    <tr>
+      <th scope="row">Contacts dashboard preview</th>
+      <td>
+        <code>ContactsDashboard</code>
+      </td>
+      <td>dashboard presentation and data use</td>
+    </tr>
+    <tr>
+      <th scope="row">Reference runtime composition</th>
+      <td>
+        <code>createContactsFeature</code>, runtime type
+      </td>
+      <td>query/mutation option construction; the preview injects its private adapter</td>
+    </tr>
+    <tr>
+      <th scope="row">Contacts implementation</th>
+      <td>
+        <code>useContactsFeature</code>
+      </td>
+      <td>private preview-provider lookup behind one owned hook</td>
+    </tr>
+  </tbody>
+</table>
+
+The Contacts reference at `docs/storybook/examples/Contacts/index.ts` deliberately exports feature-level UI and its factory/hook. Those are **documentation APIs**, not members of the production runtime. A consumer implementing equivalent behavior chooses its own `src/features/<feature>/index.ts`.
+
+```ts
+// Excerpt: reference Contacts public exports, relative to its owner.
+export { ContactsFeature } from "./components/ContactsFeature";
+export { ContactsDashboard } from "./components/ContactsDashboard";
+export { createContactsFeature, type ContactsFeature as ContactsFeatureRuntime } from "./contacts.feature";
+export { useContactsFeature } from "./hooks/useContactsFeature";
+```
+
+Export only warranted members. A presentation feature needs no factory or runtime hook for symmetry.
+
+## 2. Cross a feature through its public index
+
+```tsx
+// Excerpt: consumer page, after implementing this feature in src.
+import { ContactsFeature } from "@/features/contacts";
+```
+
+Pages and approved runtime composition use deliberate named exports. They do not reach into `components/ContactForm`, a model or a private Context. Within the owner, relative imports are normal. Avoid `export *` barrels and indirect Context/internal leaks.
+
+## 3. Distinguish a module API from an internal port
+
+`docs/storybook/examples/Contacts/api/contact.api.ts` defines the reference persistence port. It is used internally by adapters and data factories; it is not the public module surface. An exported symbol in an internal file is not automatically a cross-owner API. Decide whether a new consumer needs public UI, a narrow operation or different composition before exporting internals.
+
+## 4. Respect application leaves and runtime wrappers
+
+A feature may consume approved app interfaces such as:
+
+```tsx
+// Approved application leaves; the feature supplies its own labels and rules.
+import { AppSingleChoiceToggleGroup } from "@/app/forms/components/AppSingleChoiceToggleGroup";
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+```
+
+The reference `useContactsFeature` reads a private preview Context. It is not a production `useAppFeature("contacts")` registration. An installed runtime feature instead adds its factory/type to `appFeatures.ts`, creates one canonical owned lookup wrapper and publishes that wrapper deliberately. See Building a backend-connected feature for the complete production recipe.
+
+## Common mistakes
+
+- Confusing internal exports with a public module interface.
+- Publishing a private Context through another barrel.
+- Repeating generic runtime keys outside the canonical feature wrapper.
+- Copying a docs provider into production without deliberate runtime ownership.
+
+## 5. Verify your implementation
+
+Run from the workspace root:
+
+```sh
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+npm --prefix frontend run typecheck
+```
+
+Run the owning focused tests and required final checks. Static verification checks placement, imports and declared contracts; it cannot establish product ownership, backend authority or runtime cleanup by itself.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the authoritative articles named above and the current source examples. The numbered steps and code fences are directly readable by developers and agents. Storybook is optional for reading; run it to exercise the interactive cases. Discover related guidance from the workspace root:
+
+```sh
+npm --prefix frontend run guide:index -- search "Public module APIs"
+```
+
+## Storybook fixture reference
+
+`../shared/ArchitectureExample.tsx` and `../shared/architectureExamples.ts` render selected inert walkthroughs. They do not scan the filesystem or execute the snippets. This tutorial and its same-name CSF module live together outside `src/`. Contacts source is a documentation reference under `docs/storybook/examples/Contacts/`, with tests under `tests/storybook/contacts/`; production code must never import it.

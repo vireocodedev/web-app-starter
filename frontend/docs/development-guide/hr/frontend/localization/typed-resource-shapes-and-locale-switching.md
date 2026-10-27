@@ -24,13 +24,13 @@ const english = {
 // Poruku zovite brojčanim countom, ne spajanjem sufiksa.
 ```
 
-Starter za odgovarajuće guide poruke namjerno ima one/few/other u oba jezika kako bi hrvatski kardinalni oblici stali u oblik. Engleski singular/plural nije cijelo pravilo svakog jezika. Proslijedite broj, a i18next neka bira oblik.
+Dokumentacijski resursi vodiča namjerno imaju one/few/other u oba jezika kako bi hrvatski kardinalni oblici stali u oblik. Žive pod `docs/storybook/` i nisu dio aplikacijskih resursa. Engleski singular/plural nije cijelo pravilo svakog jezika. Proslijedite broj, a i18next neka bira oblik.
 
 Brojevi, valuta i datumi posebna su granica. `useAppLocalizationFormatters` mijenja vezane funkcije s jezikom i zadano koristi aplikacijsku zonu. Valuta je izričit argument; jezik ne određuje poslovnu valutu.
 
 ## Sačuvajte provider vijek
 
-`createAppI18n` stvara instancu, ne globalni default. Obične resurse daje svim buildovima, guide samo DEV-u. Bundled inicijalizacija je sinkrona. Remote resursi trebaju novi readiness/error ugovor, ne pretpostavljeno čekanje.
+`createAppI18n` stvara instancu, ne globalni default. Svim aplikacijskim buildovima daje samo obične resurse. Storybook zasebno registrira prostore imena vodiča iz `docs/storybook/`; otvorena sučelja aplikacijskih resursa dopuštaju to proširenje samo u dokumentaciji, bez produkcijskog importa. Bundled inicijalizacija je sinkrona. Remote resursi trebaju novi readiness/error ugovor, ne pretpostavljeno čekanje.
 
 Provider sluša languageChanged, ažurira locale i document `lang`/`dir`, a cleanup vraća stare atribute. Setter sprema izričit izbor i mijenja instancu osim uz fixed. Browser je početni fallback, ne trajno nadjačavanje korisnika.
 
@@ -53,7 +53,7 @@ i18next za React ima isključen interpolation escaping. To nije dopuštenje za u
 
 ## Scenariji prihvaćanja
 
-Nedostajući hrvatski property hvata shape. Brojčani count pokriva oblike. Jezik mijenja izbornike, MUI, formatere i document bez promjene nacrta. Spremljeni izbor ima prednost nad browserom. Fixed se ne mijenja shortcutom. Stari memo tekst nije pogrešno pripisan provideru. Produkcija ne preuzima DEV copy.
+Nedostajući hrvatski property hvata shape. Brojčani count pokriva oblike. Jezik mijenja izbornike, MUI, formatere i document bez promjene nacrta. Spremljeni izbor ima prednost nad browserom. Fixed se ne mijenja shortcutom. Stari memo tekst nije pogrešno pripisan provideru. Aplikacijski resursi u razvoju i produkciji ne sadrže tekst vodiča.
 
 ## Izbjegnite ove prečace
 

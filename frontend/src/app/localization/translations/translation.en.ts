@@ -57,7 +57,6 @@ export const englishTranslations = {
     bottom: "Bottom navigation",
     breadcrumbs: "Breadcrumbs",
     collapseSidebar: "Collapse sidebar",
-    developmentGuide: "Development guide",
     expandSidebar: "Expand sidebar",
     closeNavigation: "Close navigation",
     closeMenuTooltip: "Close menu",

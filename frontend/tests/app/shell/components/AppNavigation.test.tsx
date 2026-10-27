@@ -11,23 +11,17 @@ import type { AppNavigationItem } from "@/app/router/types/AppRoute";
 vi.mock("@/app/localization/hooks/useAppTranslation", () => ({
   useAppTranslation: () => ({ t: (key: string) => key }),
 }));
-const guideLabelPrefix = vi.hoisted(() => ({ value: "" }));
-vi.mock("@/app/localization/hooks/useDevelopmentGuideTranslation", () => ({
-  useDevelopmentGuideTranslation: () => ({ t: (key: string) => guideLabelPrefix.value + key }),
-}));
 
 function CurrentPathname() {
   return <output>{useLocation().pathname}</output>;
 }
 
 afterEach(() => {
-  guideLabelPrefix.value = "";
   vi.restoreAllMocks();
 });
 
 describe("AppNavigation", () => {
   it("shows only Home in the permanent drawer with a separate active marker", () => {
-    guideLabelPrefix.value = "guide:";
     render(
       <MemoryRouter initialEntries={["/"]}>
         <AppNavigation navigationItems={appNavigationItems} variant="panel" />
@@ -36,7 +30,7 @@ describe("AppNavigation", () => {
     const home = screen.getByRole("link", { name: "navigation.home" });
     expect(home).toHaveAttribute("aria-current", "page");
     expect(screen.queryByRole("link", { name: "navigation.settings" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "guide:navigation.developmentGuide" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Development guide" })).toBeNull();
     const activeLine = home.closest("li")?.querySelector("[data-rgo-active-line]");
     expect(activeLine).not.toBeNull();
     expect(activeLine).toHaveAttribute("aria-hidden", "true");

@@ -59,6 +59,8 @@ Stabilni kodovi tijekom prikaza mapiraju se na lokalne prijevodne ključeve. Pos
 
 ## Domenska proširenja ostaju namjerna
 
+[Upute za backend-connected feature](../../../../storybook/data/BackendConnectedFeature/BackendConnectedFeature.mdx) daju cjelovit referentni frontend primjer s ovim oblikom odgovora. Mapiranje statusa pojedinog endpointa i predložena objava domenskih polja izričiti su ugovori potrošača, a ne proširenje ugrađenog zajedničkog skupa kodova. Implementirajte i provjerite odgovarajući backend popis dopuštenih polja prije nego obrascu obećate te detalje.
+
 Ugrađeni skup kodova ne definira kod zastarjele revizije ili domenskog konflikta. Budući uređivač mora zasebno definirati značenje statusa 409, sigurna polja, autorizaciju/skrivanje resursa i oporavak koji čuva nacrt, pa zajedno ažurirati backend izgradnju, frontend dekodiranje/prijevode i pokrivenost ugovora. Nemojte zaključiti domenski protokol iz generičkog fallbacka `REQUEST_REJECTED` niti dodavati nepregledana polja odgovora po endpointima.
 
 LMS ostaje usporedba sa starijom implementacijom: njegov stariji `ErrorResponse` sadrži timestamp/status/path i opcionalni prijevodni ključ. To pokazuje seam prevođenja, a ne uputu za kopiranje payloada ili prosljeđivanje proizvoljnih poruka iznimki. Ovaj predložak ne šalje `requestId` niti obećava mehanizam korelacijskog identifikatora. Takav mehanizam uvedite samo kroz zaseban odobreni dizajn.

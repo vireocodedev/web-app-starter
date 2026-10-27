@@ -7,11 +7,11 @@ import subprocess
 
 
 def scope(paths, force=False):
-    shared = force or any(path.startswith(('.github/', '.agents/skills/initialization-intake/',
-                                          '.agents/skills/initialization-execution/',
-                                          '.vscode/', 'infrastructure/release/'))
+    shared = force or any(path.startswith(('.github/', '.vscode/', 'infrastructure/release/',
+                                          'docs/template-initialization/scripts/'))
                           or path in ('infrastructure/ci/ci_scope.py', 'infrastructure/ci/test_shards.py',
                                       'infrastructure/ci/test-timings.json',
+                                      'docs/template-initialization/.env.example',
                                       'infrastructure/ci/tests/test_ci_shards.py') for path in paths)
     return {
         'backend': shared or any(path.startswith('backend/') for path in paths),
@@ -31,8 +31,6 @@ def gate(needs):
     changes = needs.get('changes', {})
     if changes.get('result') != 'success':
         raise ValueError('CI change detection did not succeed.')
-    if needs.get('portable', {}).get('result') != 'success':
-        raise ValueError('Required portable initialization/documentation verification did not succeed.')
     for owner, jobs in LANES.items():
         selected = changes.get('outputs', {}).get(owner)
         if selected not in ('true', 'false'):

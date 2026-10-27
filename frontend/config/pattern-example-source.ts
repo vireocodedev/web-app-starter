@@ -62,14 +62,12 @@ async function examplePaths(root: string): Promise<Set<string>> {
       if (entry.isDirectory()) await visit(file);
       if (!entry.isFile() || !entry.name.endsWith(".tsx")) continue;
       const content = await readFile(file, "utf8");
-      for (const match of content.matchAll(
-        /\bsourcePath:\s*['"](src\/features\/development-guide\/patterns\/[^'"\r\n]+\.tsx)['"]/g,
-      ))
+      for (const match of content.matchAll(/\bsourcePath:\s*['"](docs\/storybook\/patterns\/[^'"\r\n]+\.tsx)['"]/g))
         paths.add(match[1]);
     }
   }
   try {
-    await visit(resolve(root, "src/features/development-guide/patterns"));
+    await visit(resolve(root, "docs/storybook/patterns"));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }

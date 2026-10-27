@@ -6,7 +6,7 @@ hard to scan.
 ## Grow from a compact owner
 
 ```text
-src/features/development-guide/contacts/
+docs/storybook/examples/Contacts/
 ├── index.ts
 ├── contacts.feature.ts
 ├── api/
@@ -15,7 +15,8 @@ src/features/development-guide/contacts/
 └── models/
 ```
 
-This is Contacts' shape, not a mandatory skeleton. Settings groups named
+This is the documentation-only Contacts reference shape, not a mandatory skeleton
+or an installed product feature. Settings groups named
 subcapabilities under `sections/`; a presentation-only feature needs no
 `.feature.ts`; a feature without persisted or remote data needs no `api/`.
 

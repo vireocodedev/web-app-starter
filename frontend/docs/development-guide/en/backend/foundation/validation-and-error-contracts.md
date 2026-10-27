@@ -59,6 +59,8 @@ The [Spring-session adapter](../../../../../../frontend/src/app/auth/api/appAuth
 
 ## Domain extensions remain deliberate
 
+The [backend-connected feature tutorial](../../../../storybook/data/BackendConnectedFeature/BackendConnectedFeature.mdx) provides a complete frontend consumer recipe using this envelope. Its endpoint-specific status mapping and proposed domain-field publication are explicit consumer contracts, not additions to the installed shared vocabulary. Implement and test the corresponding backend field allowlist before promising those field details to a form.
+
 The installed vocabulary does not define a stale-revision or domain-conflict code. A future editor must separately specify its 409 meaning, safe fields, authorization/resource-hiding policy and draft-preserving recovery, then update backend construction, frontend decoding/translations and contract coverage together. Do not infer a domain protocol from the generic `REQUEST_REJECTED` fallback or add unreviewed envelope fields endpoint by endpoint.
 
 LMS remains a legacy comparison: its older `ErrorResponse` includes timestamp/status/path and an optional translation key. That demonstrates a translation seam, not an instruction to copy its payload or forward arbitrary exception messages. This starter emits no `requestId` and promises no correlation-ID facility. Introduce such a facility only through its own approved design.

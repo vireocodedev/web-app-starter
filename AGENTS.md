@@ -14,6 +14,13 @@ applicable documentation and examples before planning or changing code. This
 applies to frontend, backend, infrastructure, CI, documentation and verification.
 Reuse the documented infrastructure and existing code patterns.
 
+The [Storybook Development Guide](frontend/docs/storybook/README.md) is mandatory
+frontend guidance. Before planning, implementing or reviewing frontend work,
+read its Architecture section and every task-relevant tutorial in full, inspect
+their current source examples, and follow all applicable contracts. Read the
+MDX directly when Storybook is not running; the discovery workflow covers both
+the Storybook tutorials and the wider development guide.
+
 If a required pattern is undocumented, the guide conflicts with current code,
 or the proposed approach departs from an existing pattern, STOP the affected
 implementation and request Bruno's explicit approval. Present the gap,
@@ -90,14 +97,14 @@ not establish knowledge of the current checkout.
 
 | Profile              | Route work here                                                                                                                        | Required knowledge and completion focus                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `frontend-ui`        | Feature/page presentation, forms, tables, overlays, localization, responsive behavior and accessibility.                               | Read [frontend instructions](frontend/AGENTS.md), [source ownership](frontend/docs/architecture/en/source-map-and-ownership.md) and applicable UI recipes from the live guide. Inspect the [Contacts example](frontend/src/features/development-guide/contacts) and the nearest installed component. Reuse the installed component system and documented source patterns; cover requested states, validation/submit/close behavior, both locales, keyboard/focus and narrow screens where affected.                                                           |
+| `frontend-ui`        | Feature/page presentation, forms, tables, overlays, localization, responsive behavior and accessibility.                               | Read [frontend instructions](frontend/AGENTS.md), [source ownership](frontend/docs/architecture/en/source-map-and-ownership.md) and applicable UI recipes from the live guide. Inspect the [Contacts Storybook reference](frontend/docs/storybook/examples/Contacts) and the nearest installed component. Reuse the installed component system and documented source patterns; cover requested states, validation/submit/close behavior, both locales, keyboard/focus and narrow screens where affected.                                            |
 | `frontend-platform`  | Startup/providers, runtime lifetimes, routing, shell/navigation, preferences, HTTP/Query infrastructure and persisted state.           | Read [frontend instructions](frontend/AGENTS.md), [dependency boundaries](frontend/docs/architecture/en/dependency-boundaries-and-imports.md) and the route/navigation/preferences skills it names when triggered. Inspect the relevant owner under [app](frontend/src/app). Check public seams, provider/effect disposal, route access/URLs, cache/session lifetimes and storage recovery where affected. Product state stays with its feature.                                                                                                    |
 | `backend-domain`     | Business commands, HTTP endpoints/DTOs, services, repositories, queries and external integrations.                                     | Read [backend instructions](backend/AGENTS.md), especially its package/interface contract, and applicable application-service, query, integration and API-compatibility articles. Inspect the current [backend feature packages](backend/src/main/java/com/vireocode/backend). Keep transport, business and persistence responsibilities explicit; check validation/errors, callers, transaction scope and failure behavior. Coordinate schema or authority changes with `security-data`.                                                           |
 | `security-data`      | Authentication/authorization, sessions/CSRF, account provisioning, secrets, database schema, integrity, locking and concurrent writes. | Read [backend instructions](backend/AGENTS.md), [session lifecycle](frontend/docs/development-guide/en/backend/security/session-and-csrf-lifecycle.md), [schema ownership](frontend/docs/development-guide/en/backend/data/flyway-and-schema-ownership.md) and the task's security/data articles. For browser changes also read frontend instructions and current auth adapters. Review real authority and producer/consumer behavior, negative paths, constraints and migration compatibility; preserve applied migration bytes and existing data. |
-| `ci-infrastructure`  | Workflow gates/shards, shared runner/controller, worker isolation, resource budgets and CI provisioning.                               | Read the [CI operator guide](infrastructure/ci/README.md), [consumer CI contract](docs/github-ci.md) and applicable CI handbook articles; inspect [.github workflows](.github/workflows) and [CI source](infrastructure/ci). Preserve the canonical shared-pool owner, complete gate evidence and trust boundaries. Privileged lifecycle/isolation changes require independent review and fresh-host validation before activation.                                                                                                                  |
-| `release-operations` | Images/runtime packaging, staging/production promotion, deployment controllers, backups, restore and operational recovery.             | Read the [release operator guide](infrastructure/release/README.md), applicable delivery articles and the [setup runbook](docs/template-initialization.md). Inspect [release source](infrastructure/release). Bind evidence to the exact frontend/backend artifact pair and environment; account for migration, backup and recovery behavior. Execute only operational actions already authorized for the task.                                                                                                                                     |
-| `project-workflow`   | Consumer personalization, initialization intake/execution, issue handoff and V1 acceptance coordination.                               | Read the [V1 workflow](docs/v1-workflow.md), [initialization entry point](docs/template-initialization.md) and whichever bundled skill owns the requested phase. Preserve approved scope/source identity, decision blockers, private inputs and consumer-specific setup evidence. Keep setup readiness, specification readiness, implementation and business acceptance distinct; involve technical profiles for affected app/infra work.                                                                                                             |
-| `documentation`      | Agent instructions/skills, Development Guide articles/catalogs, architecture docs, public runbooks and documentation dashboard.        | Read the [guide maintenance contract](frontend/docs/development-guide/README.md#maintain-a-pattern) and the affected subject's authoritative owner. For agent instructions/skills, use `writing-for-agents`; for skills also read its skill mechanics. Keep rules at one owner, links actionable, English/Croatian guide content aligned and examples faithful to current code. Follow dashboard regeneration/verification when its inputs change. Instruction changes receive independent review.                                                  |
+| `ci-infrastructure`  | Workflow gates/shards, shared runner/controller, worker isolation, resource budgets and CI provisioning.                               | Read the [CI operator guide](infrastructure/ci/README.md), [consumer CI contract](docs/template-initialization/github-ci.md) and applicable CI handbook articles; inspect [.github workflows](.github/workflows) and [CI source](infrastructure/ci). Preserve the canonical shared-pool owner, complete gate evidence and trust boundaries. Privileged lifecycle/isolation changes require independent review and fresh-host validation before activation.                                                                                                                  |
+| `release-operations` | Images/runtime packaging, staging/production promotion, deployment controllers, backups, restore and operational recovery.             | Read the [release operator guide](infrastructure/release/README.md), applicable delivery articles and the [setup runbook](docs/template-initialization/INIT_GUIDE.md). Inspect [release source](infrastructure/release). Bind evidence to the exact frontend/backend artifact pair and environment; account for migration, backup and recovery behavior. Execute only operational actions already authorized for the task.                                                                                                                                     |
+| `project-workflow`   | Consumer personalization, manual initialization, issue handoff and V1 acceptance coordination.                                         | Read the [project lifecycle](README.md#project-lifecycle) and [manual initialization guide](docs/template-initialization/INIT_GUIDE.md) for setup work. Preserve approved scope/source identity, decision blockers, private inputs and consumer-specific setup evidence. Keep setup readiness, specification readiness, implementation and business acceptance distinct; involve technical profiles for affected app/infra work.                                                                                                                                             |
+| `documentation`      | Agent instructions/skills, Development Guide articles/catalogs, architecture docs and public runbooks.                                 | Read the [guide maintenance contract](frontend/docs/development-guide/README.md#maintain-a-pattern) and the affected subject's authoritative owner. For agent instructions/skills, use `writing-for-agents`; for skills also read its skill mechanics. Keep rules at one owner, links actionable, English/Croatian guide content aligned and examples faithful to current code. Check affected links and examples against their current owners. Instruction changes receive independent review.                                                     |
 
 For a new capability, assign the nearest profile and its actual domain owner;
 add a reusable profile here only when an established responsibility is missing.
@@ -197,33 +204,22 @@ source examples. Apply the mandatory approval gate above to actual gaps or
 architectural departures.
 
 For coordinating a consumer from clone through accepted production business V1,
-read [the V1 workflow](docs/v1-workflow.md); follow its linked owners for each task.
+read [the project lifecycle](README.md#project-lifecycle); follow its linked owners for each task.
 
 For initializing a consumer from this template, or resuming incomplete template
-personalization, follow [Template initialization](docs/template-initialization.md).
-Use [initialization intake](.agents/skills/initialization-intake/SKILL.md) with
-`$initialization-intake` to collect all setup answers and human prerequisites
-upfront. Resume from its ignored `state/intake.json` in the skill directory.
-Then use [initialization execution](.agents/skills/initialization-execution/SKILL.md)
-with `$initialization-execution`; it must stop before setup if intake is incomplete.
-Agents supporting slash commands use the same names with `/`. Bare invocations
-ask a short task menu; concrete requests proceed directly. Use the execution
-contract for full setup versus local-only scope and learning-edit status.
-Apply that workflow only when requested, not during ordinary application work.
+personalization, follow the numbered [manual initialization guide](docs/template-initialization/INIT_GUIDE.md).
+It owns prerequisites, commands, resume decisions and completion evidence. Apply setup
+only when requested, within the task's authorized local/provider/delivery scope.
 
 Business requirements/specification follow initialization as separate work.
-The former Client Discovery integration is outside the current initialization
-path; its replacement requirements workflow is not implemented by these skills.
+The requirements workflow remains to be defined separately.
 
-Generic initialization procedures and tools live in the
-[execution package](.agents/skills/initialization-execution/SKILL.md) and sibling
-intake package. Update their bundled
-references at their source; keep consumer-specific setup in the runbook entry
-point. After changes to public project documents or bundled references, follow
-the [dashboard verification procedure](.agents/skills/initialization-execution/references/runbook.md#project-documentation-dashboard).
+Keep initialization procedures and consumer-specific setup in the manual guide.
+After documentation changes, check affected links, commands and examples against
+their current owners.
 
 When an implementation adds or changes consumer-specific values, configuration,
-prerequisites, or setup steps, update that runbook in the same change. Include
+prerequisites, or setup steps, update that guide in the same change. Include
 the affected files, required inputs, setup actions, safeguards, and verification.
 Keep it the authoritative setup guide; link to it rather than duplicating steps.
 

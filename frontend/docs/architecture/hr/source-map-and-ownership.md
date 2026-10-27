@@ -9,7 +9,7 @@ koja tu sposobnost čini preglednom.
 ```text
 src/
 ├── app/          stabilna infrastruktura i kompozicija aplikacije
-├── features/     produktne sposobnosti i uklonjivi primjeri
+├── features/     ugrađene produktne sposobnosti (trenutačno Settings)
 ├── pages/        ulazi ruta koji slažu javna sučelja
 ├── main.tsx      pokretanje i korijen kompozicije
 └── vite-env.d.ts Vite tipovi i deklaracije vremena izgradnje
@@ -28,8 +28,8 @@ oznake i raspored te zadržavaju vlasništvo nad validacijom i pohranom.
 
 `src/app/overlays` koordinira prikaze unutar preklapanja vezanog uz stranicu.
 Upravljač i `RgoOverlayProvider` moraju se ukloniti zajedno kako panel ne bi
-ostao bez zaštite zatvaranja. Kontakti i primjeri slojeva u razvojnom vodiču
-uključuju prikaz kao donju ladicu ispod granice od 1024 px. Pružatelj pamti
+ostao bez zaštite zatvaranja. Izolirani Contacts i overlay primjeri u Storybooku
+pokazuju prikaz kao donju ladicu ispod granice od 1024 px. Pružatelj pamti
 taj prikaz pri otvaranju svakog sloja kako promjena širine ne bi ponovno
 montirala aktivni uređivač; spremljena postavka prikaza vrijedi za nove
 slojeve otvorene na računalu.
@@ -40,22 +40,23 @@ privatne mehanizme i postojeće zaštićeno zatvaranje. Privremeni paneli i donj
 ladice ispunjavaju jednu izdignutu površinu; odmak radnog prostora tablice
 pripada samo usidrenim panelima.
 
-Uklonjive razvojne upute grupirane su bez spajanja njihovih vlasnika:
+Sve nastavne implementacije i čitači žive izvan aplikacije:
 
 ```text
-src/features/development-guide/{architecture,contacts,handbook,patterns/<category>}
-src/pages/development-guide/{architecture,contacts,handbook,patterns}
-tests/features/development-guide/{architecture,contacts,patterns/<category>}
+docs/storybook/examples/Contacts/
+docs/storybook/patterns/<Category>/
+docs/storybook/architecture/ArchitectureReference/
+docs/storybook/handbook/Handbook/
+docs/storybook/shared/documentation/
+tests/storybook/
 ```
 
-Architecture, Contacts, Handbook i svaka Patterns kategorija i dalje imaju odvojena javna
-sučelja i granice ovisnosti. `development-guide` je fizičko grupiranje koda koji
-se izostavlja iz produkcije, a ne jedna široka granica značajke.
-
-Katalog Handbook posjeduje dvojezične fullstack članke u
-`docs/development-guide/`. Router sastavlja njegov javni manifest u rute
-kategorija, tema i članaka. Zajednički prikaz Markdowna i navigacija stranice
-pripadaju `app/shell/documentation`; ne uvoze kataloge članaka.
+Handbook katalog posjeduje metapodatke i dohvat uparenog Markdowna kanonskih
+članaka pod `docs/development-guide/{en,hr}/`. Architecture čita kanonske članke
+pod `docs/architecture/{en,hr}/`. Storybook posjeduje engleske čitače i zajednički
+prikaz Markdowna; produkcija ne uvozi kataloge ni sadržaj. U `src/` nema ruta,
+preusmjerenja, navigacije, prostora imena ni registracija primjera razvojnog
+vodiča, čak ni tijekom razvoja.
 
 ## Vlasnici paketa, testova i mockova
 
@@ -69,13 +70,24 @@ područja `integration/` i `browser/`. Vrhunski `mocks/` sadrži razvojnu MSW
 granicu i determinističke auth pripreme. Ni jedno ne pripada u produkcijski
 `src/`.
 
-## Neobvezni primjeri i stabilna infrastruktura
+Storybookove upute, CSF primjeri i pripreme prikaza žive izvan `src/`, pod
+`docs/storybook/<sekcija>/<Upute>/`. Svake upute imaju istoimenu mapu, a zajednički
+helperi sekcije koriste `shared/`. Ulaz `docs/storybook/README.md` usmjerava obvezno
+čitanje arhitekture i uputa za zadatak. Grupiranje dokumentacije
+ne spaja produkcijske mogućnosti koje primjeri prikazuju.
 
-Neki isporučeni primjeri nisu obvezni. Contacts je cjelovit primjer značajke,
-Settings je prezentacija aplikacijskih postavki, a Patterns, Architecture i Handbook su
-razvojne upute. Pri uklanjanju primjera uklonite njegovu značajku, stranice,
-testove, rute, prijevode i registracije. Stabilni vlasnici kao `src/app/data`,
-`src/app/router` i ljuska ostaju dok ih aplikacija treba.
+## Reference i stabilna infrastruktura
+
+Contacts je cjelovita dokumentacijska referenca, a ne ugrađena produktna značajka.
+Živi prikaz koristi ubrizgani memorijski adapter i privatni Query klijent; adapter
+pohrane u pregledniku ostaje neaktivan dok ga test izričito ne stvori. Settings
+prikazuje aplikacijske postavke. Produkcijski registri `appFeatures.ts` i
+`signalModules.ts` prazni su dok potrošač namjerno ne ugradi značajku ili modul
+životnog ciklusa. Stabilna infrastruktura ostaje u `src/app/`.
+
+Produkcijski izvor ne uvozi niti ponovno izvozi sadržaj iz `docs/` ili
+`.storybook/`, uključujući raw Markdown, doslovne dinamičke importe i globove.
+Dokumentacija i testovi smiju koristiti ugrađeni izvor kroz dopuštena sučelja.
 
 ## Izbjegavajte kod bez vlasnika
 

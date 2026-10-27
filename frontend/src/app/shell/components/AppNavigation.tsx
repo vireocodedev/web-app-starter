@@ -13,7 +13,6 @@ import { useState, type MouseEvent } from "react";
 import { Link, useLocation } from "react-router";
 
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
-import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 import type { AppNavigationItem, AppNavigationLink } from "@/app/router/types/AppRoute";
 import { navigationPathMatchesLocation } from "./navigationPath";
 
@@ -34,14 +33,12 @@ function itemMatchesLocation(item: AppNavigationItem, pathname: string): boolean
 /** Renders top-level destinations in either the permanent panel or temporary drawer. */
 export function AppNavigation({ collapsed = false, navigationItems, onNavigate, variant }: AppNavigationProps) {
   const { t } = useAppTranslation();
-  const { t: guideT } = useDevelopmentGuideTranslation();
   const { pathname } = useLocation();
   const [menu, setMenu] = useState<{ anchor: HTMLElement; item: Extract<AppNavigationItem, { kind: "menu" }> } | null>(
     null,
   );
   const iconOnly = variant === "panel" && collapsed;
-  const label = (item: AppNavigationItem | AppNavigationLink) =>
-    item.labelNamespace === "development-guide" ? guideT(item.labelKey) : t(item.labelKey);
+  const label = (item: AppNavigationItem | AppNavigationLink) => t(item.labelKey);
   const closeMenu = () => setMenu(null);
   const selectDestination = () => {
     closeMenu();

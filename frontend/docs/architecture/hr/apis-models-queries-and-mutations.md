@@ -9,10 +9,15 @@ validacija, cache i UI mogli neovisno mijenjati.
 ulaznoj granici. API port u `<domain>.api.ts` opisuje domenske operacije i
 zahtjeve poput `AbortSignal`; ne izlaže Axios ili Zod tipove.
 
-Adapter poput `contact.api.browser-storage.ts` implementira port. Contacts
-namjerno koristi asinkrone metode nad provjerenom pohranom preglednika. Budući
+Adapter poput `contact.api.browser-storage.ts` implementira port. Contacts referenca
+namjerno izlaže asinkrone metode; živi Storybook prikaz koristi memorijske podatke. Budući
 HTTP adapter može implementirati isto sučelje uz aplikacijsku Axios instancu
 ubrizganu kroz tvornicu.
+
+Contacts je dokumentacijska referenca pod `docs/storybook/examples/Contacts/`,
+a ne ugrađena značajka. Živi prikaz ubrizgava memorijski adapter; adapter provjerene
+pohrane u pregledniku neaktivan je, testiran primjer. Vlasnik kompozicije bira
+adapter i predaje ga tvornici zajedno s Query klijentom.
 
 ## Opcije upita i mutacija
 
@@ -31,8 +36,8 @@ komponenta
       → odabrani adapter
 ```
 
-Tvornica značajke bira adapter i ubrizgava zajedničke ovisnosti kao
-`QueryClient`. Query koristite za asinkrone podatke, uključujući asinkroni
+Vlasnik kompozicije bira adapter i predaje ga tvornici uz zajedničke ovisnosti
+kao `QueryClient`. Query koristite za asinkrone podatke, uključujući asinkroni
 ugovor Contactsa. Ne kopirajte Query podatke u Signale ili Context. Query
 posjeduje učitavanje, pogreške, prekid, cache, osvježavanje i invalidaciju;
 lokalni UI posjeduje privremeni prikaz i odabir.

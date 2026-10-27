@@ -16,22 +16,21 @@ domain-specific error presentation.
 
 ## Application and feature persistence
 
-There are two browser-persistence owners in the shipped template:
+`src/app/data/storage/appLocalStorage.ts` validates stable, non-sensitive
+application preferences such as locale, color mode and navigation. It contains
+no teaching-example state.
 
-- `src/app/data/storage/appLocalStorage.ts` validates non-sensitive
-  application preferences such as locale, color mode, navigation, and Pattern
-  example state.
-- `src/features/development-guide/contacts/api/contact.storage.ts` validates Contacts data. Its
-  `ContactApiBrowserStorage` adapter implements an asynchronous feature API and
-  honors `AbortSignal` even though the backing store is local.
+The separate `docs/storybook/examples/Contacts/api/contact.storage.ts` and
+`contact.api.browser-storage.ts` files are inert, tested references. The live
+Contacts preview injects a private memory adapter and Query client; it calls no
+HTTP backend and does not construct its browser-storage adapter.
 
 ## Contacts keeps an asynchronous boundary
 
-Contacts therefore does **not** call an HTTP backend. Components consume
-TanStack Query options from the constructed Contacts runtime; the adapter is
-replaceable without changing those components. Keep this async contract when
-introducing a server adapter so cancellation, loading, error, and invalidation
-behavior remain meaningful.
+Reference components consume Query options from their private constructed
+runtime. An installed consumer feature must choose and inject its own adapter,
+register its runtime and preserve cancellation, loading, error and invalidation
+semantics; documentation does not install that behavior in the application.
 
 The browser-storage adapter serializes every mutation through one FIFO queue.
 Each queued operation reads the latest validated snapshot and checks its abort

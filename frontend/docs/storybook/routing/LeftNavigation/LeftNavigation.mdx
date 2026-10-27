@@ -1,0 +1,450 @@
+import { Canvas, Meta, Source } from "@storybook/addon-docs/blocks";
+import * as LeftNavigationStories from "./LeftNavigation.stories";
+import registrySource from "./leftNavigationRoutes.ts?raw";
+
+<Meta of={LeftNavigationStories} />
+
+# Pages with left navigation
+
+Build a Project page with three content sections: Overview, Members, and Activity.
+Use the same `AppPageNavigation` component that Settings uses for Appearance,
+Navigation, and Accessibility. On wide content, the links form a left rail beside
+the page. On narrow content, a page picker opens them in a bottom sheet.
+
+```text
+/project                      → /project/overview
+├── /project/overview          Overview
+├── /project/members           Members
+│   └── /project/members/details
+└── /project/activity          Activity
+```
+
+The router owns the URLs. A page layout supplies the three navigation links and
+renders the matched child through `Outlet`. Choose this pattern when sections
+belong beside the page content, as in Settings. The separate **Pages with header
+tabs** tutorial covers navigation in the application header.
+
+## Try it
+
+Choose Members, then open its details. Members remains selected. Try **Mobile page
+selector** for the bottom sheet and **Narrow content on a wide screen** to see that
+the layout follows available content width. Switch the global Theme toolbar;
+the current route stays selected. The preview address bar above the shell
+updates as you navigate.
+Open the main menu and choose **Project** to return to Overview. Project remains
+selected in the main menu while its page links select Members or Activity.
+
+<Canvas of={LeftNavigationStories.DefaultChild} story={{ inline: false, height: "600px" }} sourceState="none" />
+
+## Before you start
+
+Use an initialized starter checkout with dependencies installed. The implementation
+steps extend its existing authenticated router and providers; follow
+`frontend/README.md` for startup and sign in before testing application URLs.
+This recipe adds static page content and links, with no backend endpoint.
+
+All implementation paths below are relative to `frontend/`. The application code
+uses a new `project` translation branch. The live preview uses separate English
+fixtures; its source reference is at the end of this tutorial.
+
+## Files you will change
+
+```text
+src/pages/project/ProjectLayout.tsx                  create
+src/pages/project/ProjectPages.tsx                   create
+src/app/localization/translations/translation.en.ts  extend
+src/app/localization/translations/translation.hr.ts  extend
+src/app/router/routeRegistry.tsx                     extend
+```
+
+## 1. Add application text
+
+Add this property inside the existing `englishTranslations` export in
+`src/app/localization/translations/translation.en.ts`, preserving the other keys:
+
+```ts
+project: {
+  title: "Project",
+  overview: "Overview",
+  overviewDescription: "A summary of this project.",
+  members: "Members",
+  membersDescription: "People taking part in this project.",
+  activity: "Activity",
+  activityDescription: "Recent changes in this project.",
+  memberDetails: "Member details",
+  memberDetailsDescription: "This deeper page keeps Members selected.",
+  openMemberDetails: "Open member details",
+  backToMembers: "Back to Members",
+  navigation: "Project navigation",
+  pages: "Project pages",
+  choosePage: "Choose Project page: {{page}}",
+  closePages: "Close Project pages",
+},
+```
+
+Add the same keys inside `croatianTranslations` in `translation.hr.ts`, with your
+application's translated values. English starter values can be copied while
+implementing, then translated before delivery. Application resources keep their
+paired shape; this Storybook tutorial and its stories stay English-only.
+
+## 2. Build the page-owned layout
+
+Create this file. It follows `SettingsLayoutPage` in
+`frontend/src/pages/settings/SettingsPage.tsx`, using the generic application
+component directly.
+
+```tsx
+// src/pages/project/ProjectLayout.tsx
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
+import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+import { Box } from "@mui/material";
+import { useState } from "react";
+import { Outlet } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+import { AppPageNavigation } from "@/app/shell/components/AppPageNavigation";
+
+export function ProjectLayout() {
+  const { t } = useAppTranslation();
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  const links = [
+    { Icon: DashboardOutlinedIcon, label: t("project.overview"), to: "/project/overview" },
+    { Icon: GroupOutlinedIcon, label: t("project.members"), to: "/project/members" },
+    { Icon: TimelineOutlinedIcon, label: t("project.activity"), to: "/project/activity" },
+  ];
+
+  return (
+    <Box
+      ref={setContainer}
+      sx={{
+        boxSizing: "border-box",
+        containerType: "inline-size",
+        marginInline: "auto",
+        maxWidth: 1280,
+        minWidth: 0,
+        px: { xs: "16px", md: 0 },
+        width: "100%",
+      }}
+    >
+      <Box
+        sx={{
+          display: "grid",
+          gap: 3,
+          minWidth: 0,
+          "@container (min-width: 900px)": {
+            alignItems: "start",
+            gap: 4,
+            gridTemplateColumns: "240px minmax(0, 1fr)",
+          },
+        }}
+      >
+        <AppPageNavigation
+          container={container}
+          labels={{
+            navigation: t("project.navigation"),
+            pages: t("project.pages"),
+            choosePage: page => t("project.choosePage", { page }),
+            close: t("project.closePages"),
+          }}
+          links={links}
+        />
+        <Box sx={{ maxWidth: 860, minWidth: 0, width: "100%" }}>
+          <Outlet />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+```
+
+The outer `Box` establishes the CSS container. Pass that **same element** to
+`AppPageNavigation`; its resize observer and the CSS grid must measure the same
+content width. State through `ref={setContainer}` supplies the mounted element.
+Keep the grid inside that container because a container query applies to its
+descendants.
+
+At **900px or more of content width**, the layout uses a 240px navigation column
+and a flexible content column. Below 900px, the shared component renders a page
+picker instead. Padding is excluded from the measured content width. This is
+independent of the browser viewport and the shell's 1024px breakpoint: a narrow
+panel on a wide screen can still need the picker.
+
+Keep `minWidth: 0` and `minmax(0, 1fr)` so content can shrink without pushing the
+page sideways. The shared navigation already handles its sticky rail, active
+indicator, sheet, keyboard access, and focus handoff.
+
+## 3. Create the child pages
+
+Create this file with four thin page components. The local `ProjectSection`
+helper shares presentation only. For business screens, compose the owning
+feature's public interface from the page, following
+`frontend/docs/architecture/en/route-entries-and-feature-composition.md`.
+
+```tsx
+// src/pages/project/ProjectPages.tsx
+import { Button, Paper, Stack, Typography } from "@mui/material";
+import type { ReactNode } from "react";
+import { Link } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+function ProjectSection({
+  title,
+  description,
+  children,
+}: Readonly<{
+  title: string;
+  description: string;
+  children?: ReactNode;
+}>) {
+  return (
+    <Paper sx={{ p: 3 }} variant="outlined">
+      <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+        <Typography component="h2" variant="h5">
+          {title}
+        </Typography>
+        <Typography>{description}</Typography>
+        {children}
+      </Stack>
+    </Paper>
+  );
+}
+
+export function ProjectOverviewPage() {
+  const { t } = useAppTranslation();
+  return <ProjectSection title={t("project.overview")} description={t("project.overviewDescription")} />;
+}
+
+export function ProjectMembersPage() {
+  const { t } = useAppTranslation();
+  return (
+    <ProjectSection title={t("project.members")} description={t("project.membersDescription")}>
+      <Button component={Link} to="/project/members/details" variant="outlined">
+        {t("project.openMemberDetails")}
+      </Button>
+    </ProjectSection>
+  );
+}
+
+export function ProjectActivityPage() {
+  const { t } = useAppTranslation();
+  return <ProjectSection title={t("project.activity")} description={t("project.activityDescription")} />;
+}
+
+export function ProjectMemberDetailsPage() {
+  const { t } = useAppTranslation();
+  return (
+    <ProjectSection title={t("project.memberDetails")} description={t("project.memberDetailsDescription")}>
+      <Button component={Link} to="/project/members" variant="outlined">
+        {t("project.backToMembers")}
+      </Button>
+    </ProjectSection>
+  );
+}
+```
+
+## 4. Connect the routes
+
+In `src/app/router/routeRegistry.tsx`, add these imports. Reuse its existing
+`AppRouteDefinition` type import and add `Outlet` explicitly.
+
+```tsx
+import { Outlet } from "react-router";
+import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
+
+import { ProjectLayout } from "@/pages/project/ProjectLayout";
+import {
+  ProjectOverviewPage,
+  ProjectMembersPage,
+  ProjectActivityPage,
+  ProjectMemberDetailsPage,
+} from "@/pages/project/ProjectPages";
+```
+
+Insert these six records into the existing `appRouteRegistry` object alongside
+Home and Settings. Preserve its other records, the direct
+`export const appRouteRegistry` declaration and the helper functions below it. Its existing `as const satisfies Record<string, AppRouteDefinition>`
+checks these entries.
+
+```tsx
+project: {
+  Component: ProjectLayout,
+  access: "authenticated",
+  defaultChildId: "projectOverview",
+  navigation: { Icon: FolderOutlinedIcon, labelKey: "project.title" },
+  path: "/project",
+  title: t => t("project.title"),
+},
+projectOverview: {
+  Component: ProjectOverviewPage,
+  access: "authenticated",
+  mobileSurface: "flush",
+  parentId: "project",
+  path: "/project/overview",
+  title: t => t("project.overview"),
+},
+projectMembers: {
+  Component: Outlet,
+  access: "authenticated",
+  parentId: "project",
+  path: "/project/members",
+  title: t => t("project.members"),
+},
+projectMembersIndex: {
+  Component: ProjectMembersPage,
+  access: "authenticated",
+  index: true,
+  mobileSurface: "flush",
+  parentId: "projectMembers",
+  title: t => t("project.members"),
+},
+projectMemberDetails: {
+  Component: ProjectMemberDetailsPage,
+  access: "authenticated",
+  mobileSurface: "flush",
+  parentId: "projectMembers",
+  path: "/project/members/details",
+  title: t => t("project.memberDetails"),
+},
+projectActivity: {
+  Component: ProjectActivityPage,
+  access: "authenticated",
+  mobileSurface: "flush",
+  parentId: "project",
+  path: "/project/activity",
+  title: t => t("project.activity"),
+},
+```
+
+The parent redirects to Overview. Members uses `Outlet`, an index child for its
+landing page, and a details child. All children use matching access and complete
+paths beneath their parent. The default translation namespace is `translation`.
+
+The layout's `links` supply left-navigation membership and order. These child
+records need neither `navigation` metadata nor `headerNavigation`. Setting
+`headerNavigation` would opt into the separate header-tab pattern.
+
+`AppPageNavigation` matches link destinations with `end: false`, so the Members
+link remains active at `/project/members/details`. Use `activePath` only when the
+active-match path should differ from the destination. Keep these three links as
+siblings; a broad `/project` link would also match every descendant.
+
+Set `mobileSurface: "flush"` on each leaf record so the layout owns its 16px
+mobile gutter, as Settings does. The shell reads the deepest matched route;
+this option is not inherited from the parent. Without it, the shell's inset
+and the layout padding would add together.
+
+To expose Project in the main drawer, extend the existing list in the same file:
+
+```tsx
+export const appNavigationItems = [
+  homeNavigationItem,
+  navigationLink(appRouteRegistry.project),
+] satisfies readonly AppNavigationItem[];
+```
+
+Preserve other destinations already in the list. This uses its existing
+`navigationLink` helper and `AppNavigationItem` import. Drawer placement is
+independent of the page's left navigation; registered URLs work without it.
+The preview supplies Project to `AppShell.navigationItems`, so the main menu and
+the page-owned left navigation can both be exercised.
+
+## Common mistakes
+
+- **The picker never becomes a left rail:** set `containerType: "inline-size"`
+  on the measured outer element, pass it through `container`, and place the grid
+  inside it. Check available content width, not only browser width.
+- **Grid and picker disagree after resizing:** use the same container and 900px
+  threshold. An unrelated ref or viewport media query can make them disagree.
+- **The URL changes but content stays blank:** render `Outlet` in ProjectLayout
+  and in intermediate Members, which owns its index and details routes.
+- **Two left links are selected:** use distinct sibling destinations instead of
+  a broad parent link. The page component's default match includes descendants.
+- **No left links despite child route metadata:** supply the explicit `links`
+  array to `AppPageNavigation`; route metadata alone does not create this rail.
+- **The sheet navigates or restores focus too early:** use the shared component's
+  links and close behavior. It waits for the sheet to exit before navigating;
+  the shell then owns focus in the new content. Escape restores the picker.
+- **Horizontal page overflow:** retain `minWidth: 0` on the wrappers and content,
+  and use `minmax(0, 1fr)` for the flexible grid column.
+- **Route validation or labels fail:** keep matching parent/child access, full
+  paths, and both application resource shapes. Use an index child or
+  `defaultChildId` for each parent, rather than both on the same parent.
+
+## 5. Verify your implementation
+
+From the workspace root, run these checks sequentially:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+Expect both to exit successfully. They validate types, translation keys, imports,
+and ownership; they do not establish browser behavior. Start the application
+using `frontend/README.md`, sign in, and check:
+
+- Open `/project`: Overview renders after a replacement redirect.
+- At a content width of at least 900px, the rail contains Overview, Members, and
+  Activity. Exactly one link has `aria-current="page"`.
+- Open each child directly. Open Members details and confirm Members stays active.
+  Reload a child URL, then use Back and Forward; URL, content, and selection agree.
+- Below 900px, open the picker and select Activity. The sheet exits, Activity
+  renders, and focus moves to the shell's main content.
+- Reopen the sheet and press Escape or choose Close: it dismisses and returns
+  focus to the picker. Choosing a link to the exact current pathname preserves
+  its query and fragment; choosing Members from its details page returns to Members.
+- Resize an open sheet into a wide content area: it closes and the rail appears.
+  Shrinking again leaves the sheet closed until the picker is activated.
+- Use keyboard navigation and all themes; the route and selected page persist.
+  Check a narrow screen for overflow and readable labels.
+
+For automated test patterns, read
+`frontend/tests/features/settings/components/SettingsPageNavigation.test.tsx`
+and `frontend/tests/app/router/routeHierarchy.test.tsx`. Complete delivery checks
+with `npm --prefix frontend run verify`. A Storybook build alone does not prove
+application authentication or browser deep-link reload behavior.
+
+## Read this tutorial without Storybook
+
+All application code above is available as fenced MDX source. Agents and
+developers can find it and the current fixtures without running a browser:
+
+```sh
+npm --prefix frontend run guide:index -- search "Pages with left navigation"
+npm --prefix frontend run guide:index -- search leftNavigationRegistry
+```
+
+The routing and navigation policy remains authoritative in
+`frontend/docs/architecture/en/router-and-shell-responsibilities.md`.
+
+## Storybook fixture reference
+
+The preview uses the real `AppPageNavigation`, `AppShell`, route hierarchy builder,
+and global theme/localization providers. English-only support files live under
+`frontend/docs/storybook/routing/LeftNavigation/`:
+
+- `leftNavigationRoutes.ts` defines the isolated registry and memory-router factory.
+- `LeftNavigationExample.tsx` contains the shell, explicit Project main-menu
+  entry, measured layout, three page links, and static pages.
+- `../shared/StorybookBrowserFrame.tsx` shares the preview viewport between the address bar
+  and shell, allowing long content to scroll normally.
+- `../shared/StorybookAddressBar.tsx` supplies the shared browser-style address bar above
+  the shell. It reads the preview router's pathname, query, and fragment.
+- `LeftNavigationPreview.tsx` owns and disposes the router for the mounted example.
+- `LeftNavigation.stories.tsx` selects default, direct-entry, details, mobile, and
+  narrow-content states. `LeftNavigation.mdx` is this tutorial.
+
+<Source code={registrySource} language="tsx" />
+
+Use the production files from steps 1–4 when building your application. The fixture
+router and static English labels belong to Storybook. Wrap the preview's
+`AppShell` in `StorybookBrowserFrame` inside its router. It includes the address
+bar, which follows that router without URL props. The actual browser address bar
+identifies the story. The Narrow content story limits page width to 800px while
+the browser may remain wide.
+
+The global Theme toolbar updates every example, including the embedded iframe,
+while preserving the selected route. The preview starts no authentication, Query
+runtime, preference controls, or backend requests.

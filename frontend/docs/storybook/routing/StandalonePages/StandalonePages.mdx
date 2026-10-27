@@ -1,0 +1,309 @@
+import { Canvas, Meta, Source } from "@storybook/addon-docs/blocks";
+import * as StandalonePagesStories from "./StandalonePages.stories";
+import registrySource from "./standalonePagesRoutes.ts?raw";
+
+<Meta of={StandalonePagesStories} />
+
+# Standalone pages
+
+Build a normal application page with the existing shell header and a single
+content area. Reports and Support are independent destinations: each has its
+own URL, page component, and shell title. Neither has header tabs or page-owned
+left navigation.
+
+```text
+/reports     Reports page
+/support     Support page
+```
+
+The existing application shell renders the matched page through its `Outlet`.
+Each leaf page returns content directly. This follows the starter's `HomePage`
+and the page composition contract; a separate page layout is unnecessary here.
+
+## Try it
+
+Choose **Open Support**, then **Back to Reports**. The shell title and preview
+address bar change together. Try **Direct entry to Support** and **Mobile page**,
+then change the global Theme toolbar. The selected page remains open.
+Open the main menu to navigate between **Reports** and **Support**. The current
+page is selected there.
+
+<Canvas of={StandalonePagesStories.Reports} story={{ inline: false, height: "560px" }} sourceState="none" />
+
+## Before you start
+
+Use an initialized starter checkout with dependencies installed. Follow
+`frontend/README.md` for local startup and sign in before testing application
+URLs. The steps extend the existing authenticated router and providers. This
+example uses static content and needs no new backend endpoint.
+
+All implementation paths below are relative to `frontend/`. Application text
+belongs in the paired application resources. The Storybook preview uses separate
+English-only fixtures, identified at the end.
+
+## Files you will change
+
+```text
+src/pages/reports/ReportsPage.tsx                    create
+src/pages/support/SupportPage.tsx                    create
+src/app/localization/translations/translation.en.ts  extend
+src/app/localization/translations/translation.hr.ts  extend
+src/app/router/routeRegistry.tsx                     extend
+```
+
+## 1. Add application text
+
+Add these properties inside the existing `englishTranslations` export in
+`src/app/localization/translations/translation.en.ts`, preserving its other keys:
+
+```ts
+reports: {
+  title: "Reports",
+  description: "Review your reports from this standalone page.",
+  summaryTitle: "Monthly summary",
+  summaryDescription: "Place report content here. The application shell already provides the page title and gutters.",
+  openSupport: "Open Support",
+},
+support: {
+  title: "Support",
+  heading: "Get help",
+  description: "Support is another independent page. Its URL and shell title change when you follow the link.",
+  backToReports: "Back to Reports",
+},
+```
+
+Add matching keys inside `croatianTranslations` in `translation.hr.ts`, with
+translated application values. English starter values can be copied while
+implementing, then translated before delivery. Keep both resource shapes aligned;
+this tutorial and its stories stay English-only.
+
+## 2. Create the page components
+
+Create these two complete files. The examples contain static presentation and
+links. For a business screen, compose the owning feature's public interface from
+the page, as described in
+`frontend/docs/architecture/en/route-entries-and-feature-composition.md`.
+
+```tsx
+// src/pages/reports/ReportsPage.tsx
+import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Link } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+export function ReportsPage() {
+  const { t } = useAppTranslation();
+  return (
+    <Stack spacing={3} sx={{ minWidth: 0 }}>
+      <Typography color="text.secondary">{t("reports.description")}</Typography>
+      <Paper sx={{ p: 3 }} variant="outlined">
+        <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+          <Typography component="h2" id="report-summary" variant="h5">
+            {t("reports.summaryTitle")}
+          </Typography>
+          <Typography>{t("reports.summaryDescription")}</Typography>
+          <Button component={Link} to="/support" variant="outlined">
+            {t("reports.openSupport")}
+          </Button>
+        </Stack>
+      </Paper>
+    </Stack>
+  );
+}
+```
+
+```tsx
+// src/pages/support/SupportPage.tsx
+import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Link } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+export function SupportPage() {
+  const { t } = useAppTranslation();
+  return (
+    <Paper sx={{ p: 3 }} variant="outlined">
+      <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+        <Typography component="h2" variant="h5">
+          {t("support.heading")}
+        </Typography>
+        <Typography>{t("support.description")}</Typography>
+        <Button component={Link} to="/reports" variant="outlined">
+          {t("support.backToReports")}
+        </Button>
+      </Stack>
+    </Paper>
+  );
+}
+```
+
+Use React Router's `Link` through the MUI button for internal navigation. The
+existing shell supplies the route's `h1`; the content sections use `h2`. Neither
+page mounts another shell, router, theme provider, or `main` landmark.
+
+## 3. Register independent routes
+
+In `src/app/router/routeRegistry.tsx`, add these imports:
+
+```tsx
+import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
+import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+
+import { ReportsPage } from "@/pages/reports/ReportsPage";
+import { SupportPage } from "@/pages/support/SupportPage";
+```
+
+Reuse the file's existing `AppRouteDefinition` type import. Add
+`HelpOutlineOutlinedIcon` explicitly as shown above. Insert these two records
+into the existing `appRouteRegistry` alongside Home and Settings. Preserve the
+direct exported declaration, its other entries and the helper functions below it. The existing `as const satisfies Record<string, AppRouteDefinition>`
+checks the new records.
+
+```tsx
+reports: {
+  Component: ReportsPage,
+  access: "authenticated",
+  contentMaxWidth: "md",
+  navigation: { Icon: AssessmentOutlinedIcon, labelKey: "reports.title" },
+  path: "/reports",
+  title: t => t("reports.title"),
+},
+support: {
+  Component: SupportPage,
+  access: "authenticated",
+  contentMaxWidth: "md",
+  navigation: { Icon: HelpOutlineOutlinedIcon, labelKey: "support.title" },
+  path: "/support",
+  title: t => t("support.title"),
+},
+```
+
+Each record is a leaf with its own path and component. The default translation
+namespace is `translation`. `title` supplies the shell identity. Registration
+makes the URLs reachable through the existing authenticated route composition;
+keep the existing `AppAuthGate` and application startup unchanged.
+
+`contentMaxWidth: "md"` asks the shell to center and constrain the content. The
+shell also supplies responsive horizontal gutters and vertical page spacing.
+Keep its default inset mobile surface. The `Paper` padding belongs to the card;
+there is no need to add another page-wide container or duplicate shell padding.
+
+These records have no `parentId`, `headerNavigation`, or default-child redirect.
+The pages do not render `AppPageNavigation`. The `navigation` metadata above
+prepares optional application-wide drawer entries; it creates no section tabs
+for these independent routes.
+
+## 4. Add drawer destinations when needed
+
+The URLs and content links already work. If Reports and Support belong in the
+application's main drawer, extend the existing list in `routeRegistry.tsx`:
+
+```tsx
+export const appNavigationItems = [
+  homeNavigationItem,
+  navigationLink(appRouteRegistry.reports),
+  navigationLink(appRouteRegistry.support),
+] satisfies readonly AppNavigationItem[];
+```
+
+Reuse the existing `navigationLink` helper and `AppNavigationItem` import. Preserve
+other destinations already present. The main drawer is application-wide
+navigation; it is separate from the page-owned left navigation demonstrated by
+Settings. The preview supplies both Reports and Support to
+`AppShell.navigationItems`, so you can try the complete main-menu flow.
+
+## Common mistakes
+
+- **A header tab row appears:** register standalone destinations at the root of
+  the application registry. A child under a parent with header sections inherits
+  that section navigation. Omitting `headerNavigation` on the child does not
+  remove its parent's row.
+- **A blank page renders:** a leaf returns its content directly. An `Outlet`
+  without registered children has no child content to show.
+- **The page has two headers or excessive gutters:** use the existing shell.
+  Do not mount `AppShell` in the page or repeat the shell's content container.
+- **The URL works but no drawer link appears:** add its `navigationLink` to
+  `appNavigationItems`; route registration and menu placement are separate.
+- **Clicking a content link reloads the application:** use React Router's `Link`
+  for internal navigation, including MUI buttons with `component={Link}`.
+- **Titles or types fail:** keep the route's title key in both application
+  resources and its page import valid. Supply matching access policy for the
+  intended application boundary.
+- **Business logic accumulates in the page:** move it to the owning feature and
+  compose that feature through its public interface. Pages remain route adapters.
+
+## 5. Verify your implementation
+
+From the workspace root, run these checks sequentially:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+Expect both to exit successfully. Start the application using `frontend/README.md`,
+sign in, and check:
+
+- Open `/reports` directly: Reports is the shell title and Monthly summary is
+  visible in the content area. There is no header tab row or page sidebar.
+- Choose Open Support: the URL becomes `/support`, the shell title becomes
+  Support, and Get help renders. Focus moves to the shell's main content.
+- Choose Back to Reports. Also test the real browser's Back and Forward buttons,
+  reload each application URL, and confirm content and shell title agree.
+- If you added the drawer entries, open each from the drawer and check its active
+  state. No page-owned left navigation should appear.
+- Use the keyboard and all themes. At a narrow screen width, text and buttons
+  remain readable with no horizontal page overflow.
+- Verify both application locales. The Storybook fixtures remain English-only.
+
+Read `frontend/tests/app/router/routeHierarchy.test.tsx` and
+`frontend/tests/app/shell/components/AppShell.test.tsx` for existing route/shell test patterns.
+Complete delivery checks with `npm --prefix frontend run verify`. Storybook uses
+memory history; its browser Back button navigates Storybook, not the simulated
+application. Real URL reloads, authentication, and browser history need the
+assembled application checks above.
+
+## Read this tutorial without Storybook
+
+The complete application examples are fenced source in this MDX file. Find them
+and their current fixtures without running a browser:
+
+```sh
+npm --prefix frontend run guide:index -- search "Standalone pages"
+npm --prefix frontend run guide:index -- search standalonePagesRegistry
+```
+
+The routing and page ownership contracts remain authoritative in
+`frontend/docs/architecture/en/router-and-shell-responsibilities.md` and
+`frontend/docs/architecture/en/route-entries-and-feature-composition.md`.
+For grouped pages, see the separate **Pages with header tabs** and **Pages with
+left navigation** tutorials.
+
+## Storybook fixture reference
+
+The preview uses the real `AppShell`, route hierarchy builder, and global
+localization/theme providers. Support files live under
+`frontend/docs/storybook/routing/StandalonePages/`:
+
+- `standalonePagesRoutes.ts` defines two independent routes and the memory-router
+  factory. A preview-only `/` redirect supports the shell's home link.
+- `StandalonePagesExample.tsx` contains the shell, explicit Reports and Support
+  main-menu entries, and static English page content.
+- `StandalonePagesPreview.tsx` owns and disposes the router for the mounted example.
+- `StandalonePages.stories.tsx` selects Reports, direct Support, and mobile states.
+  `StandalonePages.mdx` is this tutorial.
+- `../shared/StorybookBrowserFrame.tsx` wraps the preview's `AppShell` inside its router,
+  sharing one viewport with the address bar and allowing long content to scroll.
+- `../shared/StorybookAddressBar.tsx` reads the current pathname, query, and fragment with
+  no URL props. The shared frame renders it above the shell.
+
+<Source code={registrySource} language="tsx" />
+
+Use the production files from steps 1–4 when building your application. The
+preview router, home redirect, fixed shell options, address bar, and static
+English labels belong to Storybook. Its actual browser URL identifies the story;
+the preview address bar shows the simulated application URL.
+
+The global Theme toolbar updates the shell, content, and address bar while
+preserving the selected page. The example starts no authentication, Query
+runtime, preference controls, or backend requests.

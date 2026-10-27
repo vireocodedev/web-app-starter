@@ -1,6 +1,5 @@
 import { Navigate, type Params } from "react-router";
 
-import type { DocumentationNavigationGroup } from "@/app/shell/documentation/DocumentationNavigation";
 import type {
   AppRouteAccess,
   AppRouteDefinition,
@@ -16,7 +15,6 @@ export type AppRouteHierarchyMetadata = Readonly<
     string,
     Readonly<{
       defaultChildId?: string;
-      documentationGroups?: readonly DocumentationNavigationGroup[];
     }>
   >
 >;
@@ -242,9 +240,7 @@ function resolveRouteTitle(
   translations: AppRouteTranslations,
   params: Readonly<Params<string>>,
 ): string {
-  return definition.translationNamespace === "development-guide"
-    ? definition.title(translations.developmentGuide, params)
-    : definition.title(translations.app, params);
+  return definition.title(translations.app, params);
 }
 
 function createRouteObject(
@@ -253,7 +249,6 @@ function createRouteObject(
   ancestors: readonly string[],
   path: string | undefined,
   isDevelopment: boolean,
-  metadata: AppRouteHierarchyMetadata,
 ): AppRouteObject {
   const definition = registry[routeId];
   if (!definition) throw routeError(routeId, "is not registered");
@@ -294,11 +289,6 @@ function createRouteObject(
             }),
           }
         : {}),
-      ...(metadata[routeId]?.documentationGroups
-        ? {
-            documentationGroups: metadata[routeId].documentationGroups,
-          }
-        : {}),
       resolveBreadcrumbs:
         breadcrumbs === false
           ? () => []
@@ -324,10 +314,7 @@ function createRouteObject(
                 ];
               }),
               ...(breadcrumbs ?? []).map(breadcrumb => ({
-                label:
-                  breadcrumb.translationNamespace === "development-guide"
-                    ? breadcrumb.title(translations.developmentGuide, params)
-                    : breadcrumb.title(translations.app, params),
+                label: breadcrumb.title(translations.app, params),
                 to: breadcrumb.to(params),
               })),
               { label: resolveRouteTitle(definition, translations, params) },
@@ -351,7 +338,7 @@ export function createAppRouteObjects(
   function compose(routeId: string, ancestors: readonly string[], relativePath?: string): AppRouteObject {
     const definition = registry[routeId];
     if (!definition) throw routeError(routeId, "is not registered");
-    const route = createRouteObject(registry, routeId, ancestors, relativePath, isDevelopment, metadata);
+    const route = createRouteObject(registry, routeId, ancestors, relativePath, isDevelopment);
     const children = entries.filter(
       ([childId, candidate]) =>
         candidate.parentId === routeId && routeIsEnabledInRegistry(registry, childId, isDevelopment),

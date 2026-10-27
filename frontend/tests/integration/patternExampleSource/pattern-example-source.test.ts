@@ -15,7 +15,7 @@ import {
 } from "../../../config/pattern-example-source";
 
 let root: string;
-const sourcePath = "src/features/development-guide/patterns/demo/Example with spaces.tsx";
+const sourcePath = "docs/storybook/patterns/demo/Example with spaces.tsx";
 
 beforeEach(async () => {
   root = await mkdtemp(resolve(tmpdir(), "rgo-example-source-"));
@@ -33,12 +33,12 @@ function git(...args: string[]) {
 }
 
 async function fixture() {
-  await mkdir(resolve(root, "src/features/development-guide/patterns/demo"), {
+  await mkdir(resolve(root, "docs/storybook/patterns/demo"), {
     recursive: true,
   });
   await writeFile(resolve(root, sourcePath), "export const Example = () => null");
   await writeFile(
-    resolve(root, "src/features/development-guide/patterns/demo/Panel.tsx"),
+    resolve(root, "docs/storybook/patterns/demo/Panel.tsx"),
     `const examples = [{ sourcePath:\n  '${sourcePath}' }]`,
   );
 }
@@ -294,9 +294,9 @@ describe("Pattern local editor boundary", () => {
 
   it.each([
     "../secret.tsx",
-    "src/features/development-guide/patterns/demo/../../../secret.tsx",
+    "docs/storybook/patterns/demo/../../../secret.tsx",
     "/etc/passwd",
-    "src/features/development-guide/patterns/demo/Unknown.tsx",
+    "docs/storybook/patterns/demo/Unknown.tsx",
     "src\\features\\patterns\\demo\\Example with spaces.tsx",
   ])("rejects unknown or traversing path %s", async path => {
     const result = await request({ body: JSON.stringify({ path }) });
@@ -313,7 +313,7 @@ describe("Pattern local editor boundary", () => {
   });
 
   it("refreshes its allowlist after a feature is removed", async () => {
-    await rm(resolve(root, "src/features/development-guide/patterns"), {
+    await rm(resolve(root, "docs/storybook/patterns"), {
       recursive: true,
     });
     expect((await request()).status).toBe(400);

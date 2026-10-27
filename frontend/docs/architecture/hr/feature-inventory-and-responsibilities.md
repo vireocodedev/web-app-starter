@@ -1,55 +1,51 @@
 # Popis značajki i odgovornosti
 
-Predložak isporučuje pet oblika vlasnika značajki. Oni pokazuju različite
-strukture; nisu zahtjev svakoj aplikaciji.
+Aplikacija isporučuje Početnu, Postavke, autentikaciju i generičku infrastrukturu.
+Sve nastavne značajke i čitači članaka žive u Storybooku, izvan `src/`.
 
-## Isporučeni oblici značajki
+## Ugrađeni i referentni vlasnici
 
-| Značajka     | Odgovornost                                                                  | Runtime tvornica? | Neobvezni primjer?                 |
-| ------------ | ---------------------------------------------------------------------------- | ----------------- | ---------------------------------- |
-| Contacts     | UI kontakata, domenski model, Query opcije, mutacije i asinkrona pohrana     | Da                | Da                                 |
-| Settings     | Prikaz postavki u vlasništvu lokalizacije, teme i ljuske                     | Ne                | Obično ostaje, ali je prilagodljiv |
-| Patterns     | Razvojni interaktivni recepti grupirani po sposobnosti                       | Ne                | Da, po kategoriji ili kao cjelina  |
-| Architecture | Razvojni vodič izvornog koda iz ovih Markdown članaka                        | Ne                | Da                                 |
-| Handbook     | Razvojni fullstack obrasci, dvojezični katalog članaka i prilagodba sadržaja | Ne                | Da                                 |
+| Vlasnik                 | Lokacija                                             | Odgovornost                                            | Produkcijska runtime tvornica? |
+| ----------------------- | ---------------------------------------------------- | ------------------------------------------------------ | ------------------------------ |
+| Settings                | `src/features/settings/`                             | Prikaz postavki lokalizacije, teme i ljuske            | Ne                             |
+| Početna i auth stranice | `src/pages/`, `src/app/auth/`                        | Ulaz aplikacije i granice sesije                       | Auth je infrastruktura         |
+| Contacts                | `docs/storybook/examples/Contacts/`                  | Cjelovit referentni UI, model, API port i Query opcije | Nema produkcijske registracije |
+| Patterns                | `docs/storybook/patterns/<Category>/`                | Fokusirani primjeri i zajednička galerija              | Ne                             |
+| Architecture reference  | `docs/storybook/architecture/ArchitectureReference/` | Čitač i katalog kanonskog Markdowna arhitekture        | Ne                             |
+| Handbook                | `docs/storybook/handbook/Handbook/`                  | Engleski čitač i katalog uparenih fullstack članaka    | Ne                             |
 
 ## Konstruirane i prezentacijske značajke
 
-Contacts ima `contacts.feature.ts`, registraciju u
-`src/app/bootstrap/runtime/appFeatures.ts` i
-`hooks/useContactsFeature.ts` jer stvara runtime s adapterom. To ne znači da
-svaka značajka treba te datoteke.
+Produkcijski registar `src/app/bootstrap/runtime/appFeatures.ts` prazan je.
+Settings sastavlja vlasničke hookove bez tvornice, API-ja ili runtime dohvaćanja.
+Contacts pokazuje stvarnu tvornicu s ubrizganim API i Query ovisnostima,
+konstruiranu samo u izoliranom prikazu. Hook čita privatni referentni Context,
+a ne produkcijski član `useAppFeature("contacts")`. Živi prikaz bira memorijske
+podatke; adapter pohrane u pregledniku ostaje neaktivan, testiran primjer.
+Ugradnja potrošačke značajke zahtijeva implementaciju, izbor adaptera, registraciju
+runtimea i jedan tipizirani hook vlasnika.
 
-Settings je prezentacija i kompozicija. Kategorije Patternsa sadrže neovisne
-primjere, a `src/features/development-guide/patterns/gallery` zajedničku
-prezentaciju. Architecture posjeduje katalog izvornih članaka i adapter
-lokaliteta/sadržaja pod `src/features/development-guide/architecture`. Handbook
-posjeduje fullstack manifest, dohvat uparenog Markdowna i adapter sadržaja pod
-`src/features/development-guide/handbook`, a Contacts je pod
-`src/features/development-guide/contacts`. Zajednički prikaz Markdowna, izdvajanje
-naslova, sadržaj članka i okvir stranice pripadaju `app/shell/documentation` te
-primaju podatke umjesto uvoza kataloga. Router pretvara javni Handbook manifest
-u konkretna odredišta i povezane članke. Vlasnici uputa ne uvoze uklonjive
-primjere samo da bi ih opisali.
-
-## Patterns kategorije
-
-Isporučene Patterns kategorije su Feedback, Overlays, Localization and
-formatting, Application state, Server data, Routing and URL state, Forms te
-Tables and collections. Svaka posjeduje svoje stranice, implementaciju, testove,
-metapodatke grupe ruta i prijevode. Application state dodatno posjeduje razvojnu
-Signal registraciju i spremljenu vrijednost primjera. Kategorije se mogu
-uklanjati neovisno, uz zadržavanje zajedničke galerije i preostalih kategorija.
+Patterns kategorije su Feedback, Overlays, Localization and formatting,
+Application state, Server data, Routing and URL state, Forms te Tables and
+collections. Svaka posjeduje referentne panele i testove. Application state
+stvara privatne Signale i memorijsku pohranu s čišćenjem u vlasništvu prikaza;
+produkcijski registar Signala prazan je. Zajednički Markdown prikaz pripada
+`docs/storybook/shared/documentation/`, a zajednička galerija ostaje pod
+`docs/storybook/patterns/shared/`. Aplikacija ne ovisi o čitačima ni katalozima.
 
 ## Uvjetne mape i uklanjanje
 
 Mape su uvjetne. Značajka dobiva `api/`, `models/`, `signals/`, `hooks/`,
-`components/`, `types/` ili `stories/` samo kada posjeduje tu ulogu. Prazne
-mape i lažne tvornice stvaraju pogrešne ugovore. Kompaktnoj značajci mogu biti
-dovoljne `index.ts` i jedna implementacija, primjerice
-`components/FeatureSummary.tsx`, umjesto implementacijske datoteke u korijenu
-značajke.
+`components/` ili `types/` samo kada posjeduje tu ulogu. Kompaktnoj značajci mogu
+biti dovoljne `index.ts` i `components/FeatureSummary.tsx`; prazne mape i lažne
+tvornice stvaraju pogrešne ugovore.
 
-Pri uklanjanju pratite javni izvoz, stranice, rute, prijevode, testove, mockove,
-pohranu te runtime ili Signal registraciju. Architecture mora raditi i bez
-Contactsa ili pojedine Patterns kategorije.
+Upute i pripreme prikaza koriste sekcije i istoimene mape pod `docs/storybook/`,
+sa zajedničkim helperima u `shared/`. Produkcijski izvor ne uvozi dokumentaciju
+ni Storybook konfiguraciju, uključujući raw importe i globove.
+
+Pri uklanjanju ugrađene značajke pratite javne izvoze, stranice, rute, navigaciju,
+prijevode, testove, mockove, pohranu, runtime i Signal registraciju. Uklanjanje
+dokumentacijskog primjera zahvaća samo njegove Storybook potrošače, referentne
+testove i upute. Pri reorganizaciji čitača sačuvajte kanonske članke i nepromjenjivu
+provenijenciju vezanu uz izvornu reviziju.

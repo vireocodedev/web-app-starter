@@ -1,0 +1,357 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as SettingsStories from "./SettingsAwareComponents.stories";
+
+<Meta of={SettingsStories} />
+
+# Components that respect application settings
+
+Consume the existing application preference hooks and semantic theme. A feature
+owns its task and draft; the application owns how that task is displayed. Settings
+is a presentation of those owners, so a component never imports Settings to find
+its density, color scheme or editor preference.
+
+## Try it
+
+Read **Effective application settings**, then change the global Theme toolbar.
+The installed hooks and semantic surfaces follow it without resetting the draft.
+**Local table density** supplies the actual installed RGO table's size prop.
+**Local editor layout** compares inline layout sketches with the same controlled
+draft. Those two controls are local inputs, not application preference setters.
+
+Open **Fixed false and guarded setters** to attempt changing a genuinely fixed
+boolean through its real owner. The setter rejects the change and preserves
+effective false. No nested preference provider, Context replacement or storage
+fixture is involved.
+
+<Canvas of={SettingsStories.Overview} story={{ inline: false, height: "1300px" }} sourceState="none" />
+
+## Before you start
+
+Paths are relative to `frontend/`. Read
+`docs/architecture/en/localization-theme-and-preferences.md`,
+`docs/development-guide/en/frontend/preferences/fixed-settings-and-user-precedence.md`,
+`docs/development-guide/en/frontend/preferences/storage-failure-and-cross-tab-updates.md`
+and `docs/development-guide/en/frontend/accessibility/motion-contrast-and-control-size.md`.
+The shell preference workflow lives in `.agents/skills/app-shell-preferences/SKILL.md`.
+Read **Localization and formatting** for live messages, formatted values and
+language policy. This tutorial teaches consumption of installed settings; adding
+a new application preference requires its complete owning lifecycle.
+
+## Files and ownership
+
+```text
+src/app/theme/themeSetup.ts                                  defaults, types and semantic palette tokens
+src/app/theme/components/AppThemeProvider.tsx                theme, root text scale, motion and content-link CSS
+src/app/theme/preferences/useAppDisplayPreferences.ts        effective density, editor, scale, contrast and radius
+src/app/theme/preferences/useAppAccessibilityPreferences.ts  effective motion and content-link policy
+src/app/theme/preferences/useAppColorScheme.ts               guarded System/Light/Dark/Soft dark API
+src/app/theme/preferences/useResetAppThemePreferences.ts     owner reset through guarded setters
+src/app/theme/preferences/useResetAppAccessibilityPreferences.ts
+src/app/bootstrap/config/fixedSettings.ts                    validated deployment-to-domain policy mapping
+src/app/data/storage/appLocalStorage.ts                      typed preference persistence and validation
+src/features/settings/sections/interface/hooks/useInterfaceSettingsSection.tsx
+src/features/settings/sections/accessibility/hooks/useAccessibilitySettingsSection.tsx
+docs/storybook/examples/Contacts/components/ContactsTable.tsx
+docs/storybook/examples/Contacts/hooks/useContactsWorkspace.ts
+```
+
+Theme owns display/accessibility preferences; localization owns locale; shell
+owns drawer/header presentation. Settings composes these hooks and hides fixed
+controls. It has no separate preference store or runtime factory. Bootstrap owns
+the fixed policy vocabulary. Feature code consumes effective values and keeps
+business data, dirty state and save commands in its feature.
+
+## 1. Read the owner and pass the value to the installed component
+
+ContactsTable already consumes `desktopTableSize` from
+`useAppDisplayPreferences()` and passes it to `RgoDesktopTable`. This complete
+small presentation component applies the same pattern. Its owning feature
+supplies the translated table label, empty message and columns; the rows are the feature's data.
+
+```tsx
+// Example feature component: place with the feature that owns these work items.
+import { Paper } from "@mui/material";
+import { RgoDesktopTable, type TableColumnDef } from "@rgo-web/frontend";
+
+import { useAppDisplayPreferences } from "@/app/theme/preferences/useAppDisplayPreferences";
+
+type WorkItem = Readonly<{ id: string; name: string }>;
+type WorkItemsTableProps = Readonly<{
+  rows: readonly WorkItem[];
+  columns: readonly TableColumnDef<WorkItem>[];
+  emptyContent: string;
+  tableLabel: string;
+}>;
+
+export function WorkItemsTable({ rows, columns, emptyContent, tableLabel }: WorkItemsTableProps) {
+  const { desktopTableSize } = useAppDisplayPreferences();
+  return (
+    <Paper sx={{ minWidth: 0 }} variant="outlined">
+      <RgoDesktopTable<WorkItem>
+        columns={columns}
+        emptyContent={emptyContent}
+        getRowKey={row => row.id}
+        mode="local"
+        rows={rows}
+        size={desktopTableSize}
+        tableLabel={tableLabel}
+      />
+    </Paper>
+  );
+}
+```
+
+Use a bounded complete collection in local mode; use the **Tables and collections**
+tutorial for server pagination, filtering and selection. A density choice does
+not authorize hiding important data, replacing stable row IDs or shrinking
+custom interaction targets below the task's accessibility requirements.
+
+Do not read `localStorage` directly, copy a preference into feature state, or use
+a saved value instead of the effective owner value. Those approaches bypass live
+updates, validation, deployment policy and the owner's failure handling.
+
+## 2. Resolve editor presentation at the feature's overlay boundary
+
+`useContactsWorkspace.ts` uses the same display hook and the theme's `md`
+breakpoint. Dialog maps to an RGO dialog; a docked preference uses a docked panel
+on a wide view and a modal panel on narrow views. Overlay-panel maps to a modal
+panel. These are application domain values mapped to installed RGO mechanics.
+
+This complete hook extracts that existing mapping for illustration. It is a
+recipe to place inside the relevant feature, not another installed app hook.
+
+```tsx
+import { useMediaQuery, useTheme } from "@mui/material";
+import type { RgoOverlayOptions } from "@rgo-web/frontend";
+import { useMemo } from "react";
+
+import { useAppDisplayPreferences } from "@/app/theme/preferences/useAppDisplayPreferences";
+
+export function useWorkItemEditorOptions(): RgoOverlayOptions {
+  const { editorPresentation } = useAppDisplayPreferences();
+  const theme = useTheme();
+  const narrow = useMediaQuery(theme.breakpoints.down("md"));
+
+  return useMemo<RgoOverlayOptions>(() => {
+    if (editorPresentation === "dialog") return { maxWidth: "sm", presentation: "dialog" };
+    return {
+      maxWidth: 720,
+      minWidth: 320,
+      presentation: editorPresentation === "docked-panel" && !narrow ? "docked" : "modal-panel",
+      resizable: true,
+      side: "right",
+      width: 480,
+    };
+  }, [editorPresentation, narrow]);
+}
+```
+
+Pass the resolved options when the feature opens its owned RGO overlay session,
+as Contacts does with `overlays.open(ContactsSidePanel, props, workspacePanelOptions)`.
+Keep the existing dirty/submitting/confirmation/session guards. Presentation
+choice must not become a second draft owner or a second save operation.
+
+These options are selected at opening. Do not claim changing Settings hot-moves
+an already mounted Contacts overlay; the current controller opens it with its
+initial options. Decide any future live migration explicitly, including draft,
+focus, pending work and cleanup. The inline Storybook sketch only compares
+presentation inputs and controlled draft stability; it does not implement this
+overlay controller or certify its behavior.
+
+## 3. Use semantic surfaces, responsive layout and scalable text
+
+The provider applies root font scales Normal 100%, Medium 112.5% and Big 125%.
+Use MUI typography, wrapping content and rem-based constraints so the task can
+reflow. Avoid fixed text heights and pixel-sized text that defeats root scale.
+MUI spacing numbers multiply the application's configured spacing; they are not
+literal pixels.
+
+This complete presentational component accepts translated content from its
+feature. It needs no color-mode branching and no preference provider:
+
+```tsx
+import { Paper, Stack, Typography } from "@mui/material";
+import type { ReactNode } from "react";
+
+type TaskSurfaceProps = Readonly<{ title: string; description: string; children: ReactNode }>;
+
+export function TaskSurface({ title, description, children }: TaskSurfaceProps) {
+  return (
+    <Paper
+      component="section"
+      sx={{
+        bgcolor: "rgo.surfaceSubtle",
+        borderColor: "divider",
+        color: "text.primary",
+        maxWidth: "60rem",
+        minWidth: 0,
+        p: { xs: 2, sm: 3 },
+      }}
+      variant="outlined"
+    >
+      <Stack spacing={2} sx={{ overflowWrap: "anywhere" }}>
+        <Typography component="h2" variant="h6">
+          {title}
+        </Typography>
+        <Typography color="text.secondary">{description}</Typography>
+        {children}
+      </Stack>
+    </Paper>
+  );
+}
+```
+
+`rgo.surfaceSubtle`, `text.primary`, `divider` and semantic status/action tokens
+follow Light, Dark, Soft dark and increased-contrast schemes. Default Paper/input
+shape follows the theme's derived radius. Avoid fixed hex colors, copying the
+palette into a feature or installing a local theme to correct one surface.
+Check focus, hover, disabled, selected, error and portal surfaces as well.
+
+Content-link underlining targets prose/list links under `main` and deliberately
+excludes button-like and aside navigation links. Keep real anchors and meaningful
+labels; the provider cannot infer link semantics from a clickable div.
+
+## 4. Integrate custom motion deliberately
+
+`AppThemeProvider` shortens CSS transitions for explicit reduced motion or the OS
+reduced-motion query. It keeps CSS animations, including progress indicators,
+running. It does not stop arbitrary JavaScript animation loops or SDK callbacks.
+RGO's docked entrance also observes OS policy; inspect its actual behavior before
+assuming the app's explicit override controls every library animation.
+
+For a custom JS/SDK operation, consume the effective application motion setting
+and OS query. This complete component demonstrates passing the resulting policy
+into a supplied feature-owned operation. Its `animate` flag is a collaborator
+contract to implement, not an installed RGO API.
+
+```tsx
+import { Button, useMediaQuery } from "@mui/material";
+
+import { useAppAccessibilityPreferences } from "@/app/theme/preferences/useAppAccessibilityPreferences";
+
+type RevealResultProps = Readonly<{
+  label: string;
+  reveal: (options: Readonly<{ animate: boolean }>) => void;
+}>;
+
+export function RevealResult({ label, reveal }: RevealResultProps) {
+  const { motion } = useAppAccessibilityPreferences();
+  const osReducesMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduceMotion = motion === "reduce" || osReducesMotion;
+  return <Button onClick={() => reveal({ animate: !reduceMotion })}>{label}</Button>;
+}
+```
+
+Stop/dispose any owned JS loop when its component or operation ends. Reduced
+motion must retain truthful pending and success feedback, meaningful focus and
+keyboard access. Color and animation alone cannot communicate an outcome.
+
+## 5. Respect fixed policy, guarded setters and owner resets
+
+Effective preference resolution is fixed value, then saved user choice, then
+application default for display values. Other owners can have an explicit
+additional input; inspect their actual resolution. `undefined` means configurable.
+Explicit `false`, `system` and zero-like values must not be mistaken for absence.
+
+The following is a conceptual precedence expression, not an installed resolver:
+
+```ts
+const fixedValue: boolean | undefined = false;
+const savedUserValue: boolean | undefined = true;
+const applicationDefault = false;
+const isFixed = fixedValue !== undefined;
+const effectiveValue = isFixed ? fixedValue : (savedUserValue ?? applicationDefault);
+// Effective false; the dormant saved true is preserved, never replaced by policy.
+```
+
+The real display/accessibility owners reject fixed writes before persistence.
+Settings also filters fixed rows. Hiding a control alone cannot enforce policy:
+direct callbacks, shortcuts and reset actions need the same guarded owner.
+Use `useAppColorScheme()` for `mode`/`setMode`, preserving Soft dark and guarded
+fixed policy; do not expose MUI's raw `setMode` from a feature.
+
+Use `useResetAppThemePreferences()`, `useResetAppAccessibilityPreferences()`,
+`useResetAppLocale()` and `useResetAppShellPreferences()` at the corresponding
+Settings boundary. They restore owner defaults through normal setters; do not
+clear all browser storage or enumerate preference defaults inside a feature.
+Theme reset requires the existing theme provider. Reset while fixed retains
+policy and must preserve the dormant saved user choice.
+
+Fixed configuration is constructed during bootstrap. A deployment removing a
+fixed value starts a new configuration/runtime so normal saved/default precedence
+can resume. Several provider values initialize once; do not promise arbitrary
+hot switching of deployment policy by changing props. This is presentation
+policy, never backend authorization.
+
+Storage failures should not crash interaction. The owners keep live choices
+usable with best-effort persistence. Cross-tab support is owner-specific:
+accessibility observes storage events; display values do not implement the same
+listener. Do not advertise universal all-tab synchronization.
+
+<Canvas of={SettingsStories.FixedSettings} story={{ inline: false, height: "800px" }} sourceState="none" />
+
+## Common mistakes
+
+- Importing Settings or a storage key to discover a preference's effective value.
+- Keeping a feature copy of global preferences that can drift from their owner.
+- Hardcoding table size, editor presentation, text size or palette colors.
+- Using truthiness to detect a fixed boolean, or persisting fixed policy over a saved choice.
+- Bypassing `useAppColorScheme()` with a raw MUI mode setter.
+- Clearing the draft or reopening an overlay just because the theme changed.
+- Treating shortened CSS transitions as cancellation of every animation/SDK operation.
+- Describing inline preview controls as application settings or live deployment policy.
+
+## 6. Verify your implementation
+
+Run owning checks sequentially from the workspace root:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+```
+
+Exercise the actual application in both locales, all three palette schemes and
+System mode. Change density, font size and editor preference through Settings;
+check new overlay openings on wide and narrow layouts, preserved drafts,
+translated wrapping, focus and reachable actions. Verify increased contrast,
+motion system/explicit reduce, and content-link underlines in real content.
+
+For fixed settings, save a user choice, start a runtime fixing another value,
+attempt direct setters and reset, then start without fixed policy. Assert the
+saved choice survives. Cover fixed false, unavailable storage, malformed saved
+data and owner-specific storage-event behavior. Relevant tests live under
+`tests/app/theme/`, `tests/app/data/storage/` and `tests/features/settings/`.
+
+In these stories, compare Small/Medium row geometry; switch inline editor layout
+with a non-default draft; use the global Light/Dark/Soft dark toolbar; attempt the
+fixed contrast setter and verify effective false plus unchanged app storage.
+Check narrow Docs/previews for wrapping and a single document scroller, keyboard
+focus and automated accessibility. Storybook fixes font Normal, contrast false,
+radius 8, motion Reduce and underlines Always; it cannot establish the other
+application settings combinations from this preview alone.
+
+With the current Storybook served, run
+`npm --prefix frontend run test:browser:storybook`; use `RGO_STORYBOOK_URL` for an
+existing server on another port. Finish the required `npm --prefix frontend run verify`.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the source owners listed above and the companion **Localization
+and formatting** tutorial. Discovery uses the current working tree:
+
+```sh
+npm --prefix frontend run guide:index -- search "Components that respect application settings"
+npm --prefix frontend run guide:index -- search useAppDisplayPreferences
+```
+
+## Storybook fixture reference
+
+`SettingsAwareComponentsExample.tsx` and `SettingsAwareComponents.stories.tsx`
+live beside this MDX in `docs/storybook/settings/SettingsAwareComponents/`.
+The preview consumes real global display/accessibility/color hooks and the real
+RGO table. Density/editor overrides, review status and draft are local React
+state. Its inline editor sketches do not mount the Contacts overlay controller.
+The fixed example calls the real contrast setter under Storybook's already fixed
+false policy, which rejects it before storage. There are no application storage
+writes, nested providers, network requests or production API changes here.

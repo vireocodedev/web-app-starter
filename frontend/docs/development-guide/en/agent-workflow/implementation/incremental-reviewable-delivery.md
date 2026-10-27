@@ -2,11 +2,11 @@
 
 Choose a reviewable task boundary, preserve unrelated work and publish only the actions requested for that task. Small delivery units are useful because behavior, evidence and source identity remain understandable together.
 
-**Source-backed implementation recipe.** The V1 workflow and specification contract require bounded issues, PR linkage and completion evidence. The commit/checkpoint sequence below is a recommended application of those contracts, not an installed Git automation or standing permission to push, merge or deploy.
+**Source-backed implementation recipe.** The V1 workflow and repository agent instructions require bounded outcomes and completion evidence; published issues and PRs provide execution linkage. The commit/checkpoint sequence below is a recommended application of those contracts, not an installed Git automation or standing permission to push, merge or deploy.
 
 ## Trigger, owner and invariant
 
-Use for an implementation leaf, an incremental guide expansion or a task with explicit commit/push/PR instructions. The implementation owner prepares the coherent candidate. The coordinating developer owns integration and the current publication scope. Issues/PRs become execution records after publication; initialization/generation status is not coding progress.
+Use for an implementation leaf, an incremental guide expansion or a task with explicit commit/push/PR instructions. The implementation owner prepares the coherent candidate. The coordinating developer owns integration and the current publication scope. Issues/PRs become execution records after publication; initialization status is not coding progress.
 
 The invariant is that delivered source, stated behavior, review result and evidence describe the same increment. A commit is not proof of passing checks. A pushed branch is not proof of a successful remote CI run. A WIP PR is not production acceptance.
 
@@ -53,7 +53,7 @@ A local-only task remains local. A permission to push does not authorize changin
 
 Lead a commit/PR description with the concrete problem and resulting behavior. Include compatibility decisions and actual verification limits. Keep the description current as the PR grows; do not leave a title about an abandoned first approach over unrelated final scope.
 
-Link stable issue keys and actual imported execution records where relevant. A generated proposal or ready-for-spec-review issue is not automatically an approved coding target. Preserve source/decision mapping when an increment implements only part of a larger accepted capability.
+Link stable issue keys and actual execution records where relevant. Proposed requirements awaiting review still need agreement before dependent implementation. Preserve source/decision mapping when an increment implements only part of a larger accepted capability.
 
 ## Failure and decision table
 
@@ -70,12 +70,11 @@ Link stable issue keys and actual imported execution records where relevant. A g
 
 Record resulting behavior, task scope, commit/branch/PR when actually created, checks and omissions, review findings resolved and next bounded task. Private client data remains outside public artifacts unless separately approved.
 
-The owning V1/specification/release procedures remain authoritative. This article executes no Git, issue, PR or deployment action.
+The owning V1, repository agent and release procedures remain authoritative. This article executes no Git, issue, PR or deployment action.
 
 ## Source provenance
 
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:docs/v1-workflow.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/references/specification-contract.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:frontend/docs/architecture/en/add-change-or-remove-a-feature.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:frontend/docs/architecture/en/tests-mocks-stories-and-architecture-checks.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:infrastructure/release/README.md`

@@ -19,7 +19,7 @@ function AccountHarness() {
   }, [location.pathname]);
   return (
     <>
-      <AppAuthActions developmentGuidePath="/dev-guide" />
+      <AppAuthActions />
       <main ref={mainRef} tabIndex={-1}>
         {location.pathname}
         {location.search}
@@ -65,8 +65,7 @@ describe("AppAuthActions", () => {
     expect(document.querySelector(".MuiBackdrop-root")).not.toBeNull();
     expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveFocus();
     await user.keyboard("{ArrowDown}");
-    expect(screen.getByRole("menuitem", { name: "Development guide" })).toHaveFocus();
-    await user.keyboard("{ArrowDown}");
+    expect(screen.queryByRole("menuitem", { name: "Development guide" })).toBeNull();
     expect(screen.getByRole("menuitem", { name: "Sign out" })).toHaveFocus();
     await user.keyboard("{Escape}");
     await waitUntilClosed();

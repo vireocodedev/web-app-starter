@@ -2,11 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { createSignalEffectsInitializer } from "@/app/bootstrap/signals/initSignalEffects";
 import { signalModules } from "@/app/bootstrap/signals/signalModules";
-import { applicationStateSignalModule } from "@/features/development-guide/patterns/applicationState";
 
 describe("createSignalEffectsInitializer", () => {
-  it("registers development-only example effects only in development", () => {
-    expect(signalModules.includes(applicationStateSignalModule)).toBe(import.meta.env.DEV);
+  it("starts without demonstration Signal modules", () => {
+    expect(signalModules).toEqual([]);
   });
 
   it("hydrates every registered module before starting and reversing effects", () => {

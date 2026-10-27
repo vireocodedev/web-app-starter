@@ -2,11 +2,11 @@
 
 Odaberi pregledan task boundary, sačuvaj nepovezani rad i objavi samo zatražene radnje. Mali inkrement omogućuje razumijevanje ponašanja, dokaza i source identiteta zajedno.
 
-**Source-backed implementacijski recept.** V1/spec ugovor traži bounded issue, PR link i completion dokaz. Commit/checkpoint slijed primjenjuje to pravilo; nije Git automatizacija ni trajna push/merge/deploy dozvola.
+**Source-backed implementacijski recept.** V1 workflow i repozitorijske agentske upute traže ograničen ishod i dokaz dovršetka; objavljeni issues/PRs povezuju izvršni zapis. Commit/checkpoint slijed primjenjuje to pravilo; nije Git automatizacija ni trajna push/merge/deploy dozvola.
 
 ## Okidač, vlasnik i ugovor
 
-Koristi za leaf, guide proširenje ili zadatak s commit/push/PR uputom. Implementator priprema kandidat; koordinator upravlja integracijom i publication opsegom. Nakon objave issues/PRs su izvršni zapis. Setup/generation status nije coding progress.
+Koristi za leaf, guide proširenje ili zadatak s commit/push/PR uputom. Implementator priprema kandidat; koordinator upravlja integracijom i publication opsegom. Nakon objave issues/PRs su izvršni zapis. Setup status nije coding progress.
 
 Ugovor je isti inkrement u sourceu, ponašanju, reviewu i dokazu. Commit ne dokazuje checks. Push ne dokazuje uspješan CI. WIP PR nije produkcijski prihvat.
 
@@ -51,7 +51,7 @@ Local-only ostaje lokalno. Push ne daje dozvolu za zaštitu grane, deployment di
 
 Commit/PR vodi konkretnim problemom i novim ponašanjem. Navedi kompatibilnost i stvarne provjere. Ažuriraj naslov/opis kad opseg evoluira, bez napuštenog prvog pristupa kao glavne priče.
 
-Poveži stable key i stvarni imported issue. Proposal ili ready-for-spec-review nije automatski coding target. Sačuvaj source/decision mapping kod djelomične implementacije capabilityja.
+Poveži stable key i stvarni izvršni zapis. Predloženi zahtjevi koji čekaju review trebaju dogovor prije ovisne implementacije. Sačuvaj source/decision mapping kod djelomične implementacije capabilityja.
 
 ## Pogreške i odluke
 
@@ -73,7 +73,6 @@ Vlasnički postupci ostaju autoritet. Članak ne izvršava Git, issue, PR ni dep
 ## Izvori
 
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:docs/v1-workflow.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/references/specification-contract.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:frontend/docs/architecture/en/add-change-or-remove-a-feature.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:frontend/docs/architecture/en/tests-mocks-stories-and-architecture-checks.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:infrastructure/release/README.md`

@@ -111,12 +111,13 @@ class ShardTests(unittest.TestCase):
             self.assertIn('shard: [1, 2, 3]', section)
             self.assertIn('matrix.shard }}/3)', section)
         self.assertIn('name: CI gate', workflow)
-        self.assertIn('needs: [changes, portable, backend, backend-tests, frontend, frontend-tests, frontend-build, foundation]', workflow)
+        self.assertIn('needs: [changes, backend, backend-tests, frontend, frontend-tests, frontend-build, foundation]', workflow)
         self.assertIn("pattern: '*-shard-*-${{ github.run_attempt }}'", workflow)
-        portable = workflow.split('\n  portable:')[1].split('\n  backend:')[0]
-        self.assertNotIn('    if:', portable)
-        self.assertNotIn('    needs:', portable)
-        changes = workflow.split('\n  changes:')[1].split('\n  portable:')[0]
+        gate = workflow.split('\n  gate:')[1]
+        self.assertIn('if: always()', gate)
+        for kind in ci.COUNTS:
+            self.assertIn('test_shards.py verify ' + kind, gate)
+        changes = re.split(r'\n  [a-z][a-z-]*:', workflow.split('\n  changes:')[1], 1)[0]
         self.assertNotIn('setup-node', changes)
         self.assertNotIn('npm ', changes)
 

@@ -1,31 +1,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { appLocalStorage, appLocalStorageKeys } from "@/app/data/storage/appLocalStorage";
+import { estimateStorage } from "../../../../../docs/storybook/patterns/ApplicationState/signals/estimate/estimateStorage";
 import {
   hydrateEstimate,
   resetEstimate,
   setEstimateHourlyRate,
   setEstimateHours,
-} from "@/features/development-guide/patterns/applicationState/signals/estimate/sigEstimate.actions";
-import { initEstimateSignalEffects } from "@/features/development-guide/patterns/applicationState/signals/estimate/sigEstimate.effects";
+} from "../../../../../docs/storybook/patterns/ApplicationState/signals/estimate/sigEstimate.actions";
+import { initEstimateSignalEffects } from "../../../../../docs/storybook/patterns/ApplicationState/signals/estimate/sigEstimate.effects";
 import {
   sigEstimateTotal,
   sigEstimateHourlyRate,
   sigEstimateHours,
   sigEstimatePersistenceStatus,
-} from "@/features/development-guide/patterns/applicationState/signals/estimate/sigEstimate";
+} from "../../../../../docs/storybook/patterns/ApplicationState/signals/estimate/sigEstimate";
 
 const defaultPersistedEstimate = { hourlyRate: 75, hours: 8 };
 
 beforeEach(() => {
   resetEstimate();
   sigEstimatePersistenceStatus.value = "idle";
-  appLocalStorage.set(appLocalStorageKeys.applicationStateExample, defaultPersistedEstimate);
+  estimateStorage.write(defaultPersistedEstimate);
 });
 
 afterEach(() => {
   resetEstimate();
-  appLocalStorage.set(appLocalStorageKeys.applicationStateExample, defaultPersistedEstimate);
+  estimateStorage.write(defaultPersistedEstimate);
 });
 
 describe("application state example Signal group", () => {
@@ -42,7 +42,7 @@ describe("application state example Signal group", () => {
   });
 
   it("hydrates both source Signals from the typed storage value", () => {
-    appLocalStorage.set(appLocalStorageKeys.applicationStateExample, {
+    estimateStorage.write({
       hourlyRate: 120,
       hours: 3,
     });
@@ -61,7 +61,7 @@ describe("application state example Signal group", () => {
       setEstimateHours(6);
       setEstimateHourlyRate(110);
 
-      expect(appLocalStorage.get(appLocalStorageKeys.applicationStateExample)).toEqual({ hourlyRate: 110, hours: 6 });
+      expect(estimateStorage.read()).toEqual({ hourlyRate: 110, hours: 6 });
       expect(sigEstimatePersistenceStatus.value).toBe("saved");
     } finally {
       dispose();
@@ -74,11 +74,11 @@ describe("application state example Signal group", () => {
 
     setEstimateHours(14);
 
-    expect(appLocalStorage.get(appLocalStorageKeys.applicationStateExample)).toEqual(defaultPersistedEstimate);
+    expect(estimateStorage.read()).toEqual(defaultPersistedEstimate);
   });
 
   it("keeps in-memory changes when persistence is unavailable", () => {
-    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    const setItem = vi.spyOn(estimateStorage, "write").mockImplementation(() => {
       throw new DOMException("Full", "QuotaExceededError");
     });
     const dispose = initEstimateSignalEffects();

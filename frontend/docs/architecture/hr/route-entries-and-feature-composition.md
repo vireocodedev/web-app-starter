@@ -6,7 +6,8 @@ sučelja aplikacije i značajki tvore ovaj zaslon?
 ## Granica stranice
 
 ```tsx
-import { ContactsFeature } from "@/features/development-guide/contacts";
+// Consumer recipe: after implementing src/features/contacts/index.ts.
+import { ContactsFeature } from "@/features/contacts";
 
 export function ContactsPage() {
   return <ContactsFeature />;
@@ -14,13 +15,10 @@ export function ContactsPage() {
 ```
 
 Stranice značajki koriste `src/pages/<feature>/`. Male aplikacijske granice kao
-Home, Login i Not Found mogu ostati jedna datoteka. Patterns stranice grupirane
-su po kategoriji. Architecture i Handbook stranice prilagođavaju ID članka i
-povezana odredišta dobivena od routera javnom sučelju sadržaja; lokalitet bira
-adapter značajke. Handbook indeksi i teme primaju ključeve prijevoda i popise
-od kompozicije routera, bez čitanja registra ili kataloga značajke. Stranice ne
-uvoze unutrašnjost značajke, ne stvaraju runtime,
-ne ponavljaju upite i ne posjeduju poslovno ponašanje.
+Home, Login i Not Found mogu ostati jedna datoteka. Gornji primjer je recept za potrošača;
+Contacts je dokumentacijska referenca, a ne ugrađena aplikacijska značajka. Referentne stranice i čitači članaka ostaju pod `docs/storybook/`; nisu
+ulazi aplikacijskih ruta. Stranice ne uvoze unutrašnjost značajke, ne stvaraju
+runtime, ne ponavljaju upite i ne posjeduju poslovno ponašanje.
 
 ## Pravila ruta pripadaju registru
 
@@ -50,3 +48,9 @@ značajke iznimka je koja se tamo mora prijaviti.
 Testovima ruta dokažite pristup, ugniježđena preusmjerenja, naslove, mrvice,
 omogućena odredišta i Not Found. Testovi značajke ostaju uz stablo vlasništva
 značajke.
+
+Za potpun primjer samostalnih stranica otvorite **Development Guide → Routing →
+Standalone pages → Docs** u Storybooku ili pročitajte engleski
+[izvor uputa](../../storybook/routing/StandalonePages/StandalonePages.mdx). Obuhvaća
+neovisne rute, prevedene naslove ljuske, uobičajene razmake sadržaja, interne
+poveznice i neobavezne stavke glavnog izbornika, bez navigacije odjeljaka stranice.

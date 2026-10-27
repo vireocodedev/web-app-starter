@@ -29,6 +29,7 @@
     "verify:dev-guide": "node --test scripts/tests/development-guide-index.test.mjs && node scripts/verify-development-guide.mjs",
     "test": "vitest run",
     "test:browser": "playwright test",
+    "test:browser:storybook": "playwright test --config playwright.storybook.config.ts",
     "test:browser:fixed-settings": "RGO_FIXED_SETTINGS_BROWSER=true VITE_SETTINGS_NOCFG_LOCALE=en VITE_SETTINGS_NOCFG_DRAWER_MODE=permanent VITE_SETTINGS_NOCFG_HEADER_STICKINESS=both-rows VITE_SETTINGS_NOCFG_FONT_SIZE=big VITE_SETTINGS_NOCFG_DESKTOP_TABLE_SIZE=medium VITE_SETTINGS_NOCFG_THEME=soft-dark VITE_SETTINGS_NOCFG_INCREASED_CONTRAST=true VITE_SETTINGS_NOCFG_MOTION=reduce VITE_SETTINGS_NOCFG_LINK_UNDERLINES=always VITE_SETTINGS_NOCFG_EDITOR_PRESENTATION=overlay VITE_SETTINGS_NOCFG_SURFACE_BORDER_RADIUS=18 playwright test --grep @fixed-settings",
     "test:browser:development": "playwright test --config playwright.development.config.ts",
     "typecheck": "tsc -b",

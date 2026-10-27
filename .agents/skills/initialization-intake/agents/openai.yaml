@@ -1,6 +1,0 @@
-interface:
-  display_name: "Initialization intake"
-  short_description: "Answer and resume all project setup questions"
-  default_prompt: "Use $initialization-intake to collect or resume this consumer's complete setup questionnaire."
-policy:
-  allow_implicit_invocation: false

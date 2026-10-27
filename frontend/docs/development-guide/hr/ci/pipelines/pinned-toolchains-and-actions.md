@@ -61,7 +61,7 @@ Action pin ne uklanja preuzimanje runtime artefakata. Stvarni prihvat novog host
 
 Pregledaj deklaracije, lockfile, stvarno odabrane verzije, job-local putanje i Action commitove. Potvrdi kompatibilnost Java compile/runtime faza i da nisu dodane trajne host instalacije ili zadržane vjerodajnice.
 
-Dokaz veži uz source reviziju i opažene alate u ovlaštenom CI-ju. Operativni setup ostaje u `docs/github-ci.md` i pool vodiču. **Budžeti resursa** objašnjavaju zašto ispravna verzija alata još traži ograničeno unutarnje izvršavanje.
+Dokaz veži uz source reviziju i opažene alate u ovlaštenom CI-ju. Operativni setup ostaje u `docs/template-initialization/github-ci.md` i pool vodiču. **Budžeti resursa** objašnjavaju zašto ispravna verzija alata još traži ograničeno unutarnje izvršavanje.
 
 ## Izvori
 

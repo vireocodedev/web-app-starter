@@ -4,9 +4,20 @@ import ts from "typescript";
 
 const productionSourcePattern = /^src\/.+\.(?:ts|tsx)$/;
 const nonProductionSourcePattern = /(?:\.(?:test|spec)\.|\/(?:test|__tests__|stories)\/|Example\.)/;
+export function isSourceStorybookPath(path) {
+  return /^src\/(?:.*\/)?(?:stories|storybook)(?:\/|$)/.test(path) || /^src\/.+\.stories\.tsx?$/.test(path);
+}
+
+export function isSourceGuidePath(path) {
+  return (
+    /^src\/(?:.*\/)?development-guide(?:\/|$)/.test(path) ||
+    /^src\/app\/shell\/documentation(?:\/|$)/.test(path) ||
+    /^src\/.+\/(?:development-guide[.-]|developmentGuideResources\.|useDevelopmentGuideTranslation\.)/.test(path)
+  );
+}
+
 const automatedTestPathPattern = /(?:\.(?:test|spec)\.[cm]?[jt]sx?$|\/(?:test|__tests__)\/)/;
-const groupedDevelopmentFeaturePattern = "development-guide/(?:architecture|contacts|handbook|patterns/[^/]+)";
-const featureImportPattern = new RegExp(`^@/features/((?:${groupedDevelopmentFeaturePattern})|[^/]+)(/.*)?$`);
+const featureImportPattern = /^@\/features\/([^/]+)(\/.*)?$/;
 const featureApplicationLeafPaths = new Set([
   "src/app/router/hooks/useAppQueryParams.ts",
   "src/app/router/hooks/useRouteScrollReady.ts",
@@ -19,19 +30,6 @@ const pageApplicationLeafPaths = new Set([
   "src/app/shell/components/AppCategoryList.tsx",
   "src/app/shell/components/AppBreadcrumbs.tsx",
   "src/app/shell/components/AppPageNavigation.tsx",
-]);
-const documentationPresentationConsumers = new Set([
-  "src/features/development-guide/architecture/components/ArchitectureArticle.tsx",
-  "src/features/development-guide/handbook/components/HandbookArticle.tsx",
-  "src/features/development-guide/patterns/gallery/components/ExampleGallery.tsx",
-  "src/features/development-guide/patterns/gallery/components/ExamplePageNavigation.tsx",
-  "src/features/development-guide/patterns/gallery/components/ExamplesNavigation.tsx",
-  "src/features/development-guide/patterns/gallery/components/ExamplesRouteLayout.tsx",
-  "src/features/development-guide/patterns/gallery/types/ExampleNavigation.ts",
-  "src/features/development-guide/patterns/gallery/utils/exampleNavigation.ts",
-  "src/pages/development-guide/architecture/ArchitectureRouteLayout.tsx",
-  "src/pages/development-guide/patterns/PatternCategoryLayout.tsx",
-  "src/pages/development-guide/handbook/HandbookTopicLayout.tsx",
 ]);
 const rawMuiColorSchemeOwners = new Set([
   "src/app/theme/components/AppThemeProvider.tsx",
@@ -125,8 +123,8 @@ function importRecords(path, source) {
     if (
       ts.isCallExpression(node) &&
       node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-      node.arguments.length === 1 &&
-      ts.isStringLiteral(node.arguments[0])
+      node.arguments.length >= 1 &&
+      ts.isStringLiteralLike(node.arguments[0])
     ) {
       records.push({
         kind: "dynamic-import",
@@ -135,6 +133,38 @@ function importRecords(path, source) {
         specifier: node.arguments[0].text,
         typeOnly: false,
       });
+    }
+    if (
+      ts.isImportTypeNode(node) &&
+      ts.isLiteralTypeNode(node.argument) &&
+      ts.isStringLiteralLike(node.argument.literal)
+    ) {
+      records.push({
+        kind: "type-import",
+        namedImports: [],
+        namespaceImport: false,
+        specifier: node.argument.literal.text,
+        typeOnly: true,
+      });
+    }
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ["glob", "globEager"].includes(node.expression.name.text) &&
+      ts.isMetaProperty(node.expression.expression)
+    ) {
+      const argument = node.arguments[0];
+      const patterns = argument && ts.isArrayLiteralExpression(argument) ? argument.elements : [argument];
+      for (const pattern of patterns) {
+        if (!pattern || !ts.isStringLiteralLike(pattern)) continue;
+        records.push({
+          kind: "glob",
+          namedImports: [],
+          namespaceImport: false,
+          specifier: pattern.text,
+          typeOnly: false,
+        });
+      }
     }
     ts.forEachChild(node, visit);
   }
@@ -148,7 +178,7 @@ function importSpecifiers(path, source) {
 }
 
 function sourceFeatureName(path) {
-  return path.match(new RegExp(`^src/features/((?:${groupedDevelopmentFeaturePattern})|[^/]+)/`))?.[1];
+  return path.match(/^src\/features\/([^/]+)\//)?.[1];
 }
 
 function sourceAppArea(path) {
@@ -264,6 +294,23 @@ function moduleCandidates(importerPath, specifier) {
   return /\.(?:ts|tsx)$/.test(basePath)
     ? [basePath]
     : [basePath + ".ts", basePath + ".tsx", posix.join(basePath, "index.ts"), posix.join(basePath, "index.tsx")];
+}
+
+function isDocumentationImport(importerPath, specifier, isGlob = false) {
+  if (isGlob && specifier.startsWith("!")) return false;
+  const bareSpecifier = isGlob ? specifier : specifier.split(/[?#]/, 1)[0];
+  // Vite root-absolute imports resolve from the frontend root, independently of the source graph.
+  const candidates = bareSpecifier.startsWith("/") ? [bareSpecifier] : moduleCandidates(importerPath, bareSpecifier);
+  return candidates.some(candidate => {
+    const path = posix.normalize(candidate).replace(/^\/+/, "");
+    if (isGlob) {
+      const wildcard = path.search(/[*?{\[]/);
+      const prefix = (wildcard < 0 ? path : path.slice(0, wildcard)).replace(/\/+$/, "");
+      // A repository-wide glob may include guide assets even without naming docs.
+      if (wildcard >= 0 && (!prefix || "docs".startsWith(prefix) || ".storybook".startsWith(prefix))) return true;
+    }
+    return path === "docs" || path.startsWith("docs/") || path === ".storybook" || path.startsWith(".storybook/");
+  });
 }
 
 function resolvedModulePath(byPath, importerPath, specifier) {
@@ -643,6 +690,26 @@ function assertNoViolations(files) {
       }
     }
 
+    if (isSourceStorybookPath(path)) {
+      violations.push(path + ": Storybook stories and support directories belong under docs/storybook/<section>");
+    }
+
+    if (isSourceGuidePath(path)) {
+      violations.push(path + ": development guidance belongs outside src under docs/storybook");
+    }
+
+    // Enforce the documentation boundary for every source file, including files
+    // named Example that are excluded from the product-specific owner rules.
+    if (productionSourcePattern.test(path)) {
+      for (const record of importRecords(path, byPath.get(path))) {
+        if (isDocumentationImport(path, record.specifier, record.kind === "glob")) {
+          violations.push(
+            path + ": production source must not import test, Storybook, or example code, including guide Markdown",
+          );
+        }
+      }
+    }
+
     if (path.startsWith("src/") && automatedTestPathPattern.test(path)) {
       violations.push(path + ": automated tests must live under tests/ and mirror the src/ ownership tree");
     }
@@ -652,11 +719,12 @@ function assertNoViolations(files) {
       path.startsWith("tests/") &&
       !/^tests\/(?:app|features)\/.+\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path) &&
       !/^tests\/integration\/[^/]+\/.+\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path) &&
-      !/^tests\/browser\/.+\.spec\.[cm]?[jt]sx?$/.test(path)
+      !/^tests\/browser\/.+\.spec\.[cm]?[jt]sx?$/.test(path) &&
+      !/^tests\/storybook\/.+\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path)
     ) {
       violations.push(
         path +
-          ": tests must mirror src under tests/app or tests/features, or use tests/integration/<area> or tests/browser",
+          ": tests must mirror src under tests/app or tests/features, or use tests/integration/<area>, tests/storybook or tests/browser",
       );
     }
 
@@ -695,9 +763,7 @@ function assertNoViolations(files) {
       violations.push(path + ": top-level src directories may only be app, features, or pages");
     }
 
-    const rootFeatureFile = path.match(
-      new RegExp(`^src/features/(?:${groupedDevelopmentFeaturePattern}|[^/]+)/([^/]+\\.(?:ts|tsx))$`),
-    );
+    const rootFeatureFile = path.match(/^src\/features\/[^/]+\/([^/]+\.(?:ts|tsx))$/);
     if (rootFeatureFile && rootFeatureFile[1] !== "index.ts" && !rootFeatureFile[1].endsWith(".feature.ts")) {
       violations.push(path + ": feature root may contain only index.ts and *.feature.ts files");
     }
@@ -777,7 +843,7 @@ function assertNoViolations(files) {
     }
 
     if (
-      new RegExp(`^src/features/(?:${groupedDevelopmentFeaturePattern}|[^/]+)/api/[^/]+\\.api\\.ts$`).test(path) &&
+      /^src\/features\/[^/]+\/api\/[^/]+\.api\.ts$/.test(path) &&
       /from ['"](?:axios|zod)['"]/.test(byPath.get(path))
     ) {
       violations.push(
@@ -816,36 +882,6 @@ function assertNoViolations(files) {
       const targetAppLayer = targetPath ? sourceAppArea(targetPath) : undefined;
       const isRouterComposition = path.startsWith("src/app/router/");
       const isTestModule = /\.test\.[cm]?[jt]sx?$/.test(path);
-      const isDocumentationPresentationImport =
-        targetPath === "src/app/shell/documentation/index.ts" && documentationPresentationConsumers.has(path);
-      const isArchitectureCatalogComposition =
-        path === "src/app/router/routeRegistry.tsx" &&
-        targetPath === "src/features/development-guide/architecture/index.ts" &&
-        record.namedImports.length > 0 &&
-        record.namedImports.every(({ imported }) =>
-          [
-            "ArchitectureArticleId",
-            "ArchitectureRelatedLink",
-            "architectureArticleCatalog",
-            "architectureGroups",
-          ].includes(imported),
-        );
-      const isHandbookCatalogComposition =
-        path === "src/app/router/handbookRoutes.tsx" &&
-        targetPath === "src/features/development-guide/handbook/index.ts" &&
-        record.namedImports.length > 0 &&
-        record.namedImports.every(({ imported }) =>
-          [
-            "handbookArticles",
-            "handbookCategories",
-            "handbookTopics",
-            "HandbookArticleId",
-            "HandbookFinderEntry",
-            "HandbookFinderFilters",
-            "HandbookCategoryId",
-            "HandbookTopicId",
-          ].includes(imported),
-        );
 
       if (
         !isTestModule &&
@@ -923,7 +959,9 @@ function assertNoViolations(files) {
           candidatePath => candidatePath.startsWith("tests/") || nonProductionSourcePattern.test(candidatePath),
         )
       ) {
-        violations.push(path + ": production source must not import test, Storybook, or example code");
+        violations.push(
+          path + ": production source must not import test, Storybook, or example code, including guide Markdown",
+        );
       }
 
       const featureImport = specifier.match(featureImportPattern);
@@ -938,12 +976,7 @@ function assertNoViolations(files) {
         if (
           !isOwnFeatureImport &&
           (!isPublicFeatureImport ||
-            (!isRuntimeComposition &&
-              !isSignalComposition &&
-              !isPageComposition &&
-              !isArchitectureCatalogComposition &&
-              !isHandbookCatalogComposition &&
-              !featureName))
+            (!isRuntimeComposition && !isSignalComposition && !isPageComposition && !featureName))
         ) {
           violations.push(path + ": cross-boundary feature imports must use the target feature index.ts");
         }
@@ -985,7 +1018,6 @@ function assertNoViolations(files) {
         !isOwnFeatureHookWrapper &&
         !isSettingsDefinitionImport &&
         !isSettingsShellPreferenceImport &&
-        !isDocumentationPresentationImport &&
         !candidatePaths.some(candidate => featureApplicationLeafPaths.has(candidate)) &&
         !/^@\/app\/(?:bootstrap\/(?:config|signals)|data\/(?:http|query|storage)|forms\/(?:types|hooks|utils|components)|overlays\/hooks|localization|theme)(?:\/|$)/.test(
           specifier,
@@ -998,7 +1030,6 @@ function assertNoViolations(files) {
         path.startsWith("src/pages/") &&
         specifier.startsWith("@/app/") &&
         !(path === "src/pages/LoginPage.tsx" && specifier.startsWith("@/app/auth/")) &&
-        !isDocumentationPresentationImport &&
         !candidatePaths.some(candidate => pageApplicationLeafPaths.has(candidate)) &&
         !/^@\/app\/(?:bootstrap\/signals|localization|theme)(?:\/|$)/.test(specifier)
       ) {
@@ -1009,9 +1040,7 @@ function assertNoViolations(files) {
         path.startsWith("src/app/") &&
         path !== "src/app/bootstrap/runtime/appFeatures.ts" &&
         path !== "src/app/bootstrap/signals/signalModules.ts" &&
-        specifier.startsWith("@/features/") &&
-        !isArchitectureCatalogComposition &&
-        !isHandbookCatalogComposition
+        specifier.startsWith("@/features/")
       ) {
         violations.push(
           path +
@@ -1048,12 +1077,7 @@ function assertNoViolations(files) {
             targetPath === `src/features/${targetFeatureName}/index.tsx`;
           if (
             !isPublicFeatureImport ||
-            (!isRuntimeComposition &&
-              !isSignalComposition &&
-              !isPageComposition &&
-              !isArchitectureCatalogComposition &&
-              !isHandbookCatalogComposition &&
-              !featureName)
+            (!isRuntimeComposition && !isSignalComposition && !isPageComposition && !featureName)
           ) {
             violations.push(path + ": cross-boundary feature imports must use the target feature index.ts");
           }
@@ -1078,7 +1102,6 @@ function assertNoViolations(files) {
           !isOwnFeatureHookWrapper &&
           !isSettingsDefinitionImport &&
           !isSettingsShellPreferenceImport &&
-          !isDocumentationPresentationImport &&
           !featureApplicationLeafPaths.has(targetPath) &&
           !/^src\/app\/(?:bootstrap\/(?:config|signals)|data\/(?:http|query|storage)|forms\/(?:types|hooks|utils|components)|overlays\/hooks|localization|theme)(?:\/|$)/.test(
             targetPath,
@@ -1091,7 +1114,6 @@ function assertNoViolations(files) {
           path.startsWith("src/pages/") &&
           targetPath?.startsWith("src/app/") &&
           !(path === "src/pages/LoginPage.tsx" && targetPath.startsWith("src/app/auth/")) &&
-          !isDocumentationPresentationImport &&
           !pageApplicationLeafPaths.has(targetPath) &&
           !/^src\/app\/(?:bootstrap\/signals|localization|theme)(?:\/|$)/.test(targetPath)
         ) {
@@ -1104,9 +1126,7 @@ function assertNoViolations(files) {
           path.startsWith("src/app/") &&
           !isRuntimeComposition &&
           path !== "src/app/bootstrap/signals/signalModules.ts" &&
-          targetFeatureName &&
-          !isArchitectureCatalogComposition &&
-          !isHandbookCatalogComposition
+          targetFeatureName
         ) {
           violations.push(
             path +
@@ -1177,6 +1197,15 @@ function requiredFixtures(...additionalFiles) {
 }
 
 function assertPositiveFixtures() {
+  for (const destinationPath of [
+    "docs/storybook/routing/HeaderTabs/HeaderTabs.stories.tsx",
+    "docs/storybook/routing/shared/helper.ts",
+    "docs/storybook/forms/EntityForms/submit.ts",
+    "src/features/project/content/Article.mdx",
+  ]) {
+    assert.doesNotThrow(() => assertNoViolations(requiredFixtures({ destinationPath, source: "" })));
+  }
+
   for (const specifier of [
     "@/app/forms/components/AppSingleChoiceToggleGroup",
     "../../../app/forms/components/AppSingleChoiceToggleGroup.js",
@@ -1260,11 +1289,11 @@ function assertPositiveFixtures() {
             "import type { AppRuntime } from './createAppRuntime'\nexport function useAppFeature(name: keyof AppRuntime['features']) { return name }",
         },
         {
-          destinationPath: "src/features/development-guide/contacts/index.ts",
+          destinationPath: "src/features/contacts/index.ts",
           source: "export { useContactsFeature } from './hooks/useContactsFeature'",
         },
         {
-          destinationPath: "src/features/development-guide/contacts/hooks/useContactsFeature.ts",
+          destinationPath: "src/features/contacts/hooks/useContactsFeature.ts",
           source:
             "import { useAppFeature } from '@/app/bootstrap/runtime/useAppFeature'\nexport function useContactsFeature() { return useAppFeature('contacts') }",
         },
@@ -1276,16 +1305,16 @@ function assertPositiveFixtures() {
     assertNoViolations(
       requiredFixtures(
         {
-          destinationPath: "src/features/development-guide/patterns/forms/components/FormsPanel.tsx",
+          destinationPath: "src/features/forms-demo/components/FormsPanel.tsx",
           source:
-            "import { ExampleGallery } from '@/features/development-guide/patterns/gallery'\nexport function FormsPanel() { return ExampleGallery() }",
+            "import { ExampleGallery } from '@/features/gallery'\nexport function FormsPanel() { return ExampleGallery() }",
         },
         {
-          destinationPath: "src/features/development-guide/patterns/gallery/index.ts",
+          destinationPath: "src/features/gallery/index.ts",
           source: "export { ExampleGallery } from './components/ExampleGallery'",
         },
         {
-          destinationPath: "src/features/development-guide/patterns/gallery/components/ExampleGallery.tsx",
+          destinationPath: "src/features/gallery/components/ExampleGallery.tsx",
           source: "export function ExampleGallery() { return null }",
         },
       ),
@@ -1296,15 +1325,15 @@ function assertPositiveFixtures() {
     assertNoViolations(
       requiredFixtures(
         {
-          destinationPath: "src/pages/development-guide/patterns/forms/FormsPage.tsx",
-          source: "import { FormsPanel } from '@/features/development-guide/patterns/forms'\nvoid FormsPanel",
+          destinationPath: "src/pages/forms-demo/FormsPage.tsx",
+          source: "import { FormsPanel } from '@/features/forms-demo'\nvoid FormsPanel",
         },
         {
-          destinationPath: "src/features/development-guide/patterns/forms/index.ts",
+          destinationPath: "src/features/forms-demo/index.ts",
           source: "export { FormsPanel } from './components/FormsPanel'",
         },
         {
-          destinationPath: "src/features/development-guide/patterns/forms/components/FormsPanel.tsx",
+          destinationPath: "src/features/forms-demo/components/FormsPanel.tsx",
           source: "export function FormsPanel() { return null }",
         },
       ),
@@ -1315,17 +1344,17 @@ function assertPositiveFixtures() {
     assertNoViolations(
       requiredFixtures(
         {
-          destinationPath: "src/features/development-guide/patterns/gallery/index.ts",
+          destinationPath: "src/features/gallery/index.ts",
           source: "export { ExampleGallery } from './components/ExampleGallery'",
         },
         {
-          destinationPath: "src/features/development-guide/patterns/gallery/components/ExampleGallery.tsx",
+          destinationPath: "src/features/gallery/components/ExampleGallery.tsx",
           source: "export function ExampleGallery() { return null }",
         },
         {
           destinationPath: "src/features/project/components/ProjectPatternsPanel.tsx",
           source:
-            "import { ExampleGallery } from '@/features/development-guide/patterns/gallery'\nexport function ProjectPatternsPanel() { return ExampleGallery() }",
+            "import { ExampleGallery } from '@/features/gallery'\nexport function ProjectPatternsPanel() { return ExampleGallery() }",
         },
       ),
     ),
@@ -1552,6 +1581,111 @@ function assertPositiveFixtures() {
 }
 
 function assertNegativeFixtures() {
+  for (const path of [
+    "src/features/development-guide",
+    "src/pages/development-guide/README.md",
+    "src/app/shell/documentation/Markdown.tsx",
+    "src/app/localization/translations/development-guide.en.ts",
+    "src/app/localization/translations/development-guide-handbook.en.ts",
+    "src/app/localization/translations/developmentGuideResources.ts",
+    "src/app/localization/hooks/useDevelopmentGuideTranslation.ts",
+  ]) {
+    assert.equal(isSourceGuidePath(path), true, path);
+    assert.throws(
+      () => assertNoViolations(requiredFixtures({ destinationPath: path, source: "" })),
+      /development guidance belongs outside src/,
+    );
+  }
+  for (const path of [
+    "src/stories",
+    "src/app/router/stories",
+    "src/app/router/stories/notes.md",
+    "src/storybook/support.ts",
+    "src/features/project/stories/nested/helper.ts",
+    "src/app/router/HeaderTabs.stories.ts",
+    "src/app/router/HeaderTabs.stories.tsx",
+  ]) {
+    assert.equal(isSourceStorybookPath(path), true, path);
+    assert.throws(
+      () => assertNoViolations(requiredFixtures({ destinationPath: path, source: "" })),
+      /Storybook stories and support directories belong under docs\/storybook/,
+    );
+  }
+  for (const specifier of [
+    "../../docs/architecture/en/source-map-and-ownership.md?raw",
+    "../../docs/development-guide/en/backend/security/session-and-csrf-lifecycle.md?raw",
+    "/docs/architecture/en/source-map-and-ownership.md?raw",
+    "/docs/development-guide/en/backend/security/session-and-csrf-lifecycle.md?raw",
+    "../../docs/storybook/forms/EntityForms/plainHelper.ts",
+    "../../docs/storybook/routing/HeaderTabs/Absent.mdx?raw",
+    "../../docs/storybook/architecture/shared/data.json#details",
+    "../../docs/storybook",
+    "../../.storybook/StorybookProviders",
+    "@/../docs/storybook/forms/EntityForms/plainHelper",
+    "/docs/storybook/forms/EntityForms/plainHelper.ts",
+    "/docs/storybook/forms/EntityForms/plainHelper.ts?raw",
+    "/docs/storybook/routing/HeaderTabs/Absent.mdx?raw",
+    "/docs/../docs/storybook/architecture/shared/data.json#details",
+    "/docs/storybook",
+    "/.storybook/StorybookProviders.tsx?raw",
+  ]) {
+    for (const source of [
+      `import '${specifier}'`,
+      `export { example } from '${specifier}'`,
+      `export type { Example } from '${specifier}'`,
+      `const load = () => import('${specifier}')`,
+      `const load = () => import(\`${specifier}\`)`,
+      `const load = () => import('${specifier}', { with: { type: 'json' } })`,
+      `export type Example = import('${specifier}').Example`,
+    ]) {
+      // Rejection must not depend on whether the documentation target exists or its extension.
+      for (const targetFiles of [
+        [],
+        [
+          { destinationPath: "docs/storybook/forms/EntityForms/plainHelper.ts", source: "export const example = 1" },
+          { destinationPath: ".storybook/StorybookProviders.tsx", source: "export function StorybookProviders() {}" },
+        ],
+      ]) {
+        assert.throws(
+          () => assertNoViolations(requiredFixtures({ destinationPath: "src/app/App.tsx", source }, ...targetFiles)),
+          /production source must not import test, Storybook, or example code/,
+        );
+      }
+    }
+  }
+  for (const pattern of [
+    "../../docs/development-guide/**/*.md",
+    "/docs/architecture/**/*.md",
+    "/.storybook/**/*.ts",
+    "@/../docs/**/*.md",
+    "../../**/*.md",
+  ]) {
+    for (const source of [
+      `const articles = import.meta.glob('${pattern}', { query: '?raw' })`,
+      `const articles = import.meta.glob(['./product/*.md', '${pattern}'])`,
+      `const articles = import.meta.glob(\`${pattern}\`, { eager: true })`,
+    ]) {
+      assert.throws(
+        () => assertNoViolations(requiredFixtures({ destinationPath: "src/app/ArticleExample.tsx", source })),
+        /production source must not import test, Storybook, or example code/,
+      );
+    }
+  }
+  assert.throws(
+    () =>
+      assertNoViolations(
+        requiredFixtures(
+          { destinationPath: "src/app/App.tsx", source: "import { example } from '@/app/theme/publicTheme'" },
+          { destinationPath: "src/app/theme/publicTheme.ts", source: "export { example } from './privateTheme'" },
+          {
+            destinationPath: "src/app/theme/privateTheme.ts",
+            source: "export { example } from '../../../docs/storybook/forms/EntityForms/plainHelper'",
+          },
+        ),
+      ),
+    /production source must not import test, Storybook, or example code/,
+  );
+
   for (const unsupportedPath of [
     "forms/validation/inputPolicy",
     "forms/components-extra/inputPolicy",
@@ -1724,12 +1858,11 @@ function assertNegativeFixtures() {
       assertNoViolations(
         requiredFixtures(
           {
-            destinationPath: "src/pages/development-guide/patterns/forms/FormsPage.tsx",
-            source:
-              "import { FormsPanel } from '@/features/development-guide/patterns/forms/components/FormsPanel'\nvoid FormsPanel",
+            destinationPath: "src/pages/forms-demo/FormsPage.tsx",
+            source: "import { FormsPanel } from '@/features/forms-demo/components/FormsPanel'\nvoid FormsPanel",
           },
           {
-            destinationPath: "src/features/development-guide/patterns/forms/components/FormsPanel.tsx",
+            destinationPath: "src/features/forms-demo/components/FormsPanel.tsx",
             source: "export function FormsPanel() { return null }",
           },
         ),
@@ -1741,12 +1874,12 @@ function assertNegativeFixtures() {
       assertNoViolations(
         requiredFixtures(
           {
-            destinationPath: "src/features/development-guide/patterns/forms/components/FormsPanel.tsx",
+            destinationPath: "src/features/forms-demo/components/FormsPanel.tsx",
             source:
-              "import { ExampleGallery } from '@/features/development-guide/patterns/gallery/components/ExampleGallery'\nvoid ExampleGallery",
+              "import { ExampleGallery } from '@/features/gallery/components/ExampleGallery'\nvoid ExampleGallery",
           },
           {
-            destinationPath: "src/features/development-guide/patterns/gallery/components/ExampleGallery.tsx",
+            destinationPath: "src/features/gallery/components/ExampleGallery.tsx",
             source: "export function ExampleGallery() { return null }",
           },
         ),
@@ -1882,23 +2015,23 @@ function assertNegativeFixtures() {
     );
   }
   for (const source of [
-    "import '@/app/shell/documentation/DocumentationRouteLayout'",
-    "import '../../../../app/shell/documentation/DocumentationRouteLayout'",
+    "import '@/app/shell/reading/DocumentationRouteLayout'",
+    "import '../../../app/shell/reading/DocumentationRouteLayout'",
   ]) {
     assert.throws(
       () =>
         assertNoViolations(
           requiredFixtures(
             {
-              destinationPath: "src/features/development-guide/architecture/components/ArchitectureArticle.tsx",
+              destinationPath: "src/features/articles/components/ArchitectureArticle.tsx",
               source,
             },
             {
-              destinationPath: "src/app/shell/documentation/DocumentationRouteLayout.tsx",
+              destinationPath: "src/app/shell/reading/DocumentationRouteLayout.tsx",
               source: "export function DocumentationRouteLayout() {}",
             },
             {
-              destinationPath: "src/app/shell/documentation/index.ts",
+              destinationPath: "src/app/shell/reading/index.ts",
               source: "export { DocumentationRouteLayout } from './DocumentationRouteLayout'",
             },
           ),
@@ -1907,8 +2040,8 @@ function assertNegativeFixtures() {
     );
   }
   for (const source of [
-    "import '@/features/development-guide/architecture/catalog/architectureArticles'",
-    "import '../../features/development-guide/architecture/catalog/architectureArticles'",
+    "import '@/features/articles/catalog/architectureArticles'",
+    "import '../../features/articles/catalog/architectureArticles'",
   ]) {
     assert.throws(
       () =>
@@ -1919,11 +2052,11 @@ function assertNegativeFixtures() {
               source,
             },
             {
-              destinationPath: "src/features/development-guide/architecture/catalog/architectureArticles.ts",
+              destinationPath: "src/features/articles/catalog/architectureArticles.ts",
               source: "export const architectureArticleCatalog = []",
             },
             {
-              destinationPath: "src/features/development-guide/architecture/index.ts",
+              destinationPath: "src/features/articles/index.ts",
               source: "export { architectureArticleCatalog } from './catalog/architectureArticles'",
             },
           ),

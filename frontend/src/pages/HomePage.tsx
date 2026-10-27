@@ -1,5 +1,4 @@
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import AutoStoriesOutlinedIcon from "@mui/icons-material/AutoStoriesOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useState } from "react";
@@ -97,18 +96,6 @@ export function HomePage() {
           >
             {t("navigation.settings")}
           </Button>
-          {import.meta.env.DEV ? (
-            <Button
-              component={Link}
-              endIcon={<ArrowForwardRoundedIcon />}
-              startIcon={<AutoStoriesOutlinedIcon />}
-              sx={{ justifyContent: "space-between", minWidth: { sm: 220 }, py: 1.25 }}
-              to="/dev-guide"
-              variant="outlined"
-            >
-              {t("navigation.developmentGuide")}
-            </Button>
-          ) : null}
         </Stack>
       </Box>
     </Box>

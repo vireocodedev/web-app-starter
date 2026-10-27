@@ -6,7 +6,8 @@ application and feature interfaces compose this routed screen?
 ## The page boundary
 
 ```tsx
-import { ContactsFeature } from "@/features/development-guide/contacts";
+// Consumer recipe: after implementing src/features/contacts/index.ts.
+import { ContactsFeature } from "@/features/contacts";
 
 export function ContactsPage() {
   return <ContactsFeature />;
@@ -14,13 +15,11 @@ export function ContactsPage() {
 ```
 
 Feature pages use `src/pages/<feature>/`. Small application boundaries such as
-Home, Login, and Not Found may remain one flat file. Pattern pages are grouped
-by category. Architecture and Handbook pages adapt article IDs and
-route-supplied related destinations to their public content interfaces; locale
-selection remains in the feature adapter. Handbook index and topic pages receive
-translated-key/list props from router composition and do not read its registry or
-feature catalog. Pages must not import feature internals, construct feature runtimes,
-duplicate queries, or own business behavior.
+Home, Login, and Not Found may remain one flat file. The example above is a consumer recipe;
+Contacts is a documentation reference, not an installed application owner. Storybook reference pages and article readers remain under
+`docs/storybook/`; they are not application route entries. Pages must not import
+feature internals, construct feature runtimes, duplicate queries, or own business
+behavior.
 
 ## Route policy belongs to the registry
 
@@ -53,3 +52,9 @@ declared there.
 Route tests should establish access behavior, nested redirects, titles,
 breadcrumbs, enabled destinations, and Not Found recovery. Feature tests remain
 with the feature's ownership tree.
+
+For a complete standalone-page recipe, open **Development Guide → Routing →
+Standalone pages → Docs** in Storybook or read the English
+[tutorial source](../../storybook/routing/StandalonePages/StandalonePages.mdx). It covers
+independent routes, localized shell titles, normal content spacing, internal
+links and optional main-drawer entries, without page section navigation.

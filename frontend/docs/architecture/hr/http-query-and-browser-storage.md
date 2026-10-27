@@ -15,20 +15,21 @@ ključeve, funkcije upita, mutacije, invalidaciju i prikaz domenskih pogrešaka.
 
 ## Aplikacijska pohrana i pohrana značajke
 
-Predložak ima dva vlasnika pohrane:
+`src/app/data/storage/appLocalStorage.ts` provjerava stabilne, nesenzitivne
+aplikacijske postavke poput jezika, teme i navigacije. Ne sadrži stanje
+nastavnih primjera.
 
-- `src/app/data/storage/appLocalStorage.ts` provjerava nesenzitivne aplikacijske
-  postavke poput jezika, teme i navigacije.
-- `src/features/development-guide/contacts/api/contact.storage.ts` provjerava Contacts podatke.
-  `ContactApiBrowserStorage` nudi asinkroni API značajke i poštuje
-  `AbortSignal`, iako koristi lokalnu pohranu.
+Odvojene datoteke `docs/storybook/examples/Contacts/api/contact.storage.ts` i
+`contact.api.browser-storage.ts` neaktivne su, testirane reference. Živi Contacts
+prikaz ubrizgava privatni memorijski adapter i Query klijent; ne poziva HTTP
+backend niti stvara adapter pohrane u pregledniku.
 
 ## Asinkrona granica Contactsa
 
-Contacts zato **ne poziva HTTP backend**. Komponente koriste TanStack Query
-opcije iz konstruiranog Contacts runtimea; adapter se može zamijeniti bez
-promjene komponenti. Zadržite asinkroni ugovor i pri uvođenju poslužiteljskog
-adaptera.
+Referentne komponente koriste Query opcije privatnog konstruiranog runtimea.
+Ugrađena potrošačka značajka mora odabrati i ubrizgati vlastiti adapter,
+registrirati runtime te očuvati semantiku prekida, učitavanja, pogrešaka i
+invalidacije; dokumentacija to ponašanje ne ugrađuje u aplikaciju.
 
 Adapter lokalne pohrane serijalizira svaku mutaciju kroz jedan FIFO red. Svaka
 operacija pri dolasku na red čita najnoviju provjerenu snimku i provjerava signal

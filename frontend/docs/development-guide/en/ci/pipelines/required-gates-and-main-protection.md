@@ -2,17 +2,17 @@
 
 Make merging depend on a specific trusted check and a current candidate, rather than a green status with a familiar name. Workflow success and repository protection are different owners that need matching evidence.
 
-**Installed template pattern.** The policy is documented in `docs/github-ci.md`; `infrastructure/ci/ci_scope.py` and `.github/workflows/ci.yml` produce the aggregate result. Consumer repositories must configure and verify their own protection. Template creation does not copy remote branch settings.
+**Installed template pattern.** The policy is documented in `docs/template-initialization/github-ci.md`; `infrastructure/ci/ci_scope.py` and `.github/workflows/ci.yml` produce the aggregate result. Consumer repositories must configure and verify their own protection. Template creation does not copy remote branch settings.
 
 ## Trigger, owner and contract
 
 Use when activating a generated repository, changing required check names, changing job selection, or diagnosing a PR that appears mergeable despite missing verification. The application maintainer owns the gate implementation. The repository administrator owns effective branch policy and compatible organization rules. Runner registration remains the infrastructure operator's concern.
 
-The contract is stronger than “none of the jobs failed.” Classification must succeed, the always-run portable lane must succeed, every selected owner lane must succeed, and every unselected owner lane must be skipped. Failed, cancelled, absent and unexpectedly executed jobs are distinct states. The gate rejects states that do not match its policy.
+The contract is stronger than “none of the jobs failed.” Classification must succeed, every selected owner lane must succeed, and every unselected owner lane must be skipped. Failed, cancelled, absent and unexpectedly executed jobs are distinct states. The gate rejects states that do not match its policy.
 
 ## One required check, explicit internal obligations
 
-The installed `CI gate` has `if: always()` and depends on classification, portable verification and every application/foundation lane. This preserves reporting even when an earlier dependency fails. Workflow-level path filters must not remove the only required status from an otherwise valid PR.
+The installed `CI gate` has `if: always()` and depends on classification and every application/foundation lane. This preserves reporting even when an earlier dependency fails. Workflow-level path filters must not remove the only required status from an otherwise valid PR.
 
 The gate helper validates boolean selection outputs before mapping owners to expected job outcomes. The workflow subsequently validates source/run/attempt-bound shard reports for selected applications. A selected test matrix showing green is insufficient if membership evidence is missing or belongs to another attempt.
 
@@ -61,7 +61,7 @@ Private-repository plan limitations or inherited policy conflicts are setup find
 
 Inspect actual check name/source, selected and skipped outcomes, current attempt evidence, effective required contexts and branch freshness. Verify administrator enforcement and blocked force push/deletion through read-back, not screenshots of intended settings alone.
 
-Record repository, revision, run and effective policy observations without tokens or numeric identities copied as universal defaults. Historical template acceptance is provenance for that repository only. Related reading: **Select verification by owner** explains routing; **Complete shard evidence** explains proof scope; the owning `docs/github-ci.md` retains the actual activation procedure.
+Record repository, revision, run and effective policy observations without tokens or numeric identities copied as universal defaults. Historical template acceptance is provenance for that repository only. Related reading: **Select verification by owner** explains routing; **Complete shard evidence** explains proof scope; the owning `docs/template-initialization/github-ci.md` retains the actual activation procedure.
 
 ## Source provenance
 
