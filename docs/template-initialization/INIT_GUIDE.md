@@ -561,8 +561,8 @@ and reconcile them before retrying. This upload is the initial section 11 handof
 not a way to overwrite newer host progress during later setup.
 
 The command prints all four operator commands for steps 11.2–11.5 with your exact
-host `--env` path. Copy those printed commands; supply the observed configuration
-hash for step 11.4 after inspecting step 11.3. The examples below use
+host `--env` path. Copy those printed commands; step 11.3 captures the configuration
+hash used automatically by step 11.4. The examples below use
 `PROJECT_SLUG` as a placeholder for your actual slug. On the **operator host**,
 run from the canonical reviewed root-controlled `CI_SOURCE` checkout,
 not a consumer fork. Keep private credentials in existing protected stores, and
@@ -584,8 +584,10 @@ python3 -B docs/template-initialization/scripts/11_3_stop_and_inspect_ci.py --en
 ```
 
 Inspect service/worker/job/recovery state. Registration requires stopped,
-disabled, idle execution, no jobs and no residual boundary mounts. Supply the
-reported current `configuration_sha256` as the argument below:
+disabled, idle execution, no jobs and no residual boundary mounts. Step 11.3 captures the current `configuration_sha256` in protected progress,
+bound to this consumer, canonical source and host boot. Step 11.4 uses it
+automatically; the canonical registration command still rejects a stale hash
+under its lock. Reinspect after any configuration/source/boot change.
 
 ### 11.4 Register and validate the consumer
 
@@ -598,7 +600,7 @@ inspect the existing registration and follow the [CI operator guide](../../infra
 to resume validation.
 
 ```bash
-python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env --expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256
+python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env
 ```
 
 Registration preserves other projects and leaves the controller disabled.

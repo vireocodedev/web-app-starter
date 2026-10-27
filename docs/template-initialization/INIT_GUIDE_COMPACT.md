@@ -348,7 +348,8 @@ python3 -B docs/template-initialization/scripts/11_2_prepare_registration.py --e
 
 ### 11.3 Stop and inspect the shared controller — operator host
 
-Stop the controller and print current state and `configuration_sha256`.
+Stop the controller, inspect current state and capture its configuration hash
+automatically for step 11.4.
 
 ```bash
 python3 -B docs/template-initialization/scripts/11_3_stop_and_inspect_ci.py --env /root/PROJECT_SLUG-initialization/values.env
@@ -356,9 +357,8 @@ python3 -B docs/template-initialization/scripts/11_3_stop_and_inspect_ci.py --en
 
 ### 11.D Review stopped/idle state — manual
 
-Confirm stopped/disabled controller, idle workers, no jobs or residual boundary
-mounts and current source/boot/isolation prerequisites. Copy the observed
-configuration hash into step 11.4.
+Confirm idle workers, no jobs/residual boundary mounts and current source/boot/
+isolation prerequisites. The captured hash is supplied automatically.
 
 ### 11.4 Register and validate — operator host
 
@@ -366,7 +366,7 @@ Allow several quiet minutes; wait for full worker/isolation/Docker validation.
 If interrupted, reconcile registration using the full guide before retrying.
 
 ```bash
-python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env --expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256
+python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env
 ```
 
 ### 11.E Review validation evidence — manual

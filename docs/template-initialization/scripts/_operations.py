@@ -89,19 +89,65 @@ def prepare_registration(args):
     print('Created protected registration file: ' + str(path))
 
 
+def protected_file_digest(path):
+    path = Path(path)
+    for entry in (path, *path.parents):
+        info = entry.lstat()
+        if (entry.is_symlink() or info.st_uid != 0 or info.st_mode & 0o022
+                or not (stat.S_ISREG(info.st_mode) if entry == path else stat.S_ISDIR(info.st_mode))):
+            raise InitError('Require protected root-owned installed source files and ancestors.')
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def ci_observation_identity(ctx, source):
+    boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    if not re.fullmatch('[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}', boot):
+        raise InitError('Cannot establish the current operator host boot identity.')
+    return {'repository': ctx.values['REPOSITORY'].lower(), 'slug': ctx.values['PROJECT_SLUG'],
+            'source': str(source), 'source_sha': observed_sha(execute(['git', '-C', str(source), 'rev-parse', 'HEAD'])),
+            'manage_sha256': protected_file_digest(source / 'infrastructure/ci/manage.py'),
+            'installed_controller_sha256': protected_file_digest('/usr/local/lib/web-app-ci/controller.py'),
+            'boot_id': boot}
+
+
 def stop_and_inspect_ci(args):
     ctx = context(args, operator=True)
     source = ci_source(ctx)
     execute(['systemctl', 'disable', '--now', 'web-app-ci-controller.service'], display=True)
-    execute(['python3', '-B', str(source / 'infrastructure/ci/manage.py'), 'inspect'], display=True)
-    print('Inspect all service/worker/job/recovery state; retain the observed configuration_sha256.')
+    observed = json.loads(execute(['python3', '-B', str(source / 'infrastructure/ci/manage.py'), 'inspect'], display=True))
+    digest = observed.get('configuration_sha256')
+    if (observed.get('installed') is not True or not isinstance(digest, str)
+            or not re.fullmatch('[0-9a-f]{64}', digest)
+            or observed.get('controller_active_state') not in ('inactive', 'failed')
+            or observed.get('controller_unit_file_state') not in ('disabled', 'masked')
+            or observed.get('registration_recovery_required') is not False):
+        raise InitError('Require an installed stopped/disabled controller without registration recovery before capturing its configuration.')
+    observation = dict(ci_observation_identity(ctx, source), configuration_sha256=digest)
+    update_state(ctx, ci_configuration_observation=observation, ci_registered=False)
+    print('Recorded the observed CI configuration hash for step 11.4. Registration still checks idle workers, jobs and boundary state under its lock.')
+
+
+def registration_configuration(ctx, source, explicit):
+    if explicit is not None:
+        if not isinstance(explicit, str) or not re.fullmatch('[0-9a-f]{64}', explicit):
+            raise InitError('Require a current observed configuration SHA-256 from step 11.3.')
+        return explicit
+    recorded = read_state(ctx).get('ci_configuration_observation')
+    if not isinstance(recorded, dict):
+        raise InitError('Run step 11.3 to capture the stopped controller configuration first.')
+    expected = ci_observation_identity(ctx, source)
+    if any(recorded.get(key) != value for key, value in expected.items()):
+        raise InitError('CI observation source, host boot or consumer identity changed; inspect again with step 11.3.')
+    digest = recorded.get('configuration_sha256')
+    if not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest):
+        raise InitError('Recorded CI configuration hash is invalid; inspect again with step 11.3.')
+    return digest
 
 
 def register_and_validate_ci(args):
     ctx = context(args, operator=True)
     source = ci_source(ctx)
-    if not re.fullmatch('[0-9a-f]{64}', args.expected_config_sha256):
-        raise InitError('Require the current observed configuration SHA-256 from step 11.3.')
+    expected = registration_configuration(ctx, source, args.expected_config_sha256)
     path = registration_path(ctx)
     info = path.lstat()
     if path.is_symlink() or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o077:
@@ -109,9 +155,9 @@ def register_and_validate_ci(args):
     if json.loads(path.read_text()) != {'slug': ctx.values['PROJECT_SLUG'], 'repository': ctx.values['REPOSITORY']}:
         raise InitError('Registration identity differs from verified project values.')
     execute(['python3', '-B', str(source / 'infrastructure/ci/manage.py'), 'register', '--project', str(path),
-             '--expected-config-sha256', args.expected_config_sha256], timeout=900, display=True)
+             '--expected-config-sha256', expected], timeout=900, display=True)
     execute(['python3', '-B', '/usr/local/lib/web-app-ci/controller.py', 'validate'], timeout=3600, display=True)
-    update_state(ctx, ci_registered=True, ci_registration_predecessor_sha256=args.expected_config_sha256)
+    update_state(ctx, ci_registered=True, ci_registration_predecessor_sha256=expected)
 
 
 def activate_ci(args):
@@ -725,7 +771,7 @@ def enable_backup_schedule(args):
 def cli(action):
     arguments = parser('Explicit initialization step: ' + action.replace('_', ' ') + '.')
     if action == 'register_and_validate_ci':
-        arguments.add_argument('--expected-config-sha256', required=True)
+        arguments.add_argument('--expected-config-sha256', help='Explicit observed hash override; defaults to the protected step 11.3 observation.')
     if action in ('activate_ci', 'activate_controller', 'enable_backup_schedule'):
         arguments.add_argument('--reviewed', action='store_true', help='Confirm the existing guide review/acceptance gate was completed.')
     if action == 'prepare_release_source':

@@ -174,7 +174,8 @@ class InitializationHandoffTests(unittest.TestCase):
         for name in ('11_2_prepare_registration.py', '11_3_stop_and_inspect_ci.py',
                      '11_4_register_and_validate_ci.py', '11_5_activate_ci.py'):
             self.assertIn('/root/web-app-starter/docs/template-initialization/scripts/' + name, output)
-        self.assertIn('--expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256', output)
+        self.assertNotIn('CURRENT_OBSERVED_CONFIG_SHA256', output)
+        self.assertIn('step 11.3 records the configuration hash', output)
         self.assertIn('--reviewed', output)
         self.assertNotIn(self.env.read_text(), output)
 

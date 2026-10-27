@@ -75,3 +75,8 @@ Read-only API contracts use the official [GitHub repository API](https://docs.gi
 and [Hetzner Cloud API](https://docs.hetzner.cloud/reference/cloud). Actual provider,
 SSH and DNS availability must be checked with your own selected values; mocked
 tests do not establish live access.
+
+Step 11.3 captures the stopped controller configuration hash into protected,
+source/boot/consumer-bound progress. Step 11.4 uses it automatically while the
+canonical registration lock still rejects stale configuration; an explicitly
+observed `--expected-config-sha256` remains available for operator reconciliation.
