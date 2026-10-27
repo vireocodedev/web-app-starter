@@ -125,9 +125,10 @@ server capacity. Concurrent workflows need their own queue-time measurement.
 2. Have the operator authorize/register the exact private consumer repository
    using [the CI App](github-ci-app.md) and
    [shared pool](../../infrastructure/ci/README.md).
-3. Check GitHub **Settings -> Actions -> General** permits the pinned Actions
-   and read-only repository tokens used here. No deploy/registry secrets belong
-   in PR CI.
+3. Step 12.1 configures and reads back repository Actions access for the pinned
+   workflows and read-only default tokens. It preserves compatible selections,
+   disables token PR approvals and stops on organization-policy/access conflicts.
+   No deploy/registry secrets belong in PR CI.
 4. Exercise backend-only, frontend-only, both-owner, and documentation-only PRs.
    Record job results and actual Hetzner runner identity. An idle ephemeral pool
    may show no online runner; an observed successful job proves access.

@@ -388,12 +388,6 @@ python3 -B docs/template-initialization/scripts/11_1_transfer_state.py --return-
 
 ## 12. Prove CI and configure GitHub policy
 
-### 12.A Permit checked-in Actions — manual
-
-In consumer **Settings → Actions → General**, permit pinned checked-in Actions
-and read-only tokens. Preserve runner labels `[self-hosted, Linux, X64, web-app-ci]`;
-keep deployment/registry credentials out of PR CI.
-
 ### 12.1 Open and watch initialization PR — workstation
 
 Create/resume the matching PR and wait for its exact successful CI run/gate.

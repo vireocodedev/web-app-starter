@@ -638,8 +638,11 @@ controller is deliberately active.
 
 ## 12. Prove CI and configure GitHub policy
 
-In consumer **Settings → Actions → General**, permit the checked-in pinned Actions
-and read-only repository tokens. Preserve runner labels
+Step 12.1 configures and reads back repository Actions permissions automatically:
+it enables the checked-in pinned Actions, preserves compatible existing allowlists
+and organization restrictions, sets read-only default tokens and disables token
+PR approvals. Access/organization conflicts stop with an actionable error; no
+organization policy is changed. Preserve runner labels
 `[self-hosted, Linux, X64, web-app-ci]`. Keep deployment/registry credentials out
 of PR CI. An idle disposable pool may show no online runners; verify real jobs.
 

@@ -17,6 +17,7 @@ import time
 from urllib.parse import urlencode
 
 from _shared import InitError, load_context, parser, read_state, require_consumer, run, update_state
+from _github_bootstrap import ensure_actions
 
 
 def execute(arguments, *, cwd=None, input=None, timeout=120, display=False):
@@ -246,6 +247,7 @@ def open_initialization_pr(args):
                          '--env', str(ctx.env_path)])
     pull_url = ''
     try:
+        ensure_actions(ctx)
         query = '/pulls?state=open&base=main&head=' + repo.split('/')[0] + ':initialization/setup&per_page=2'
         pulls = gh_json(ctx, query)
         if not pulls:

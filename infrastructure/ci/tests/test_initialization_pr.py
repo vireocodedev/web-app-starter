@@ -58,6 +58,7 @@ class InitializationPrTests(unittest.TestCase):
         self.incomplete_jobs = False
         self.addCleanup(patch.stopall)
         patch.object(operations, 'context', return_value=self.ctx).start()
+        self.actions = patch.object(operations, 'ensure_actions').start()
         patch.object(operations, 'run', side_effect=self.command).start()
 
     def command(self, argv, **kwargs):
@@ -110,6 +111,13 @@ class InitializationPrTests(unittest.TestCase):
                 contextlib.redirect_stdout(io.StringIO()) as output:
             operations.open_initialization_pr(SimpleNamespace())
         return output.getvalue()
+
+    def test_actions_permission_failure_stops_before_creating_or_watching_pr(self):
+        self.actions.side_effect = operations.InitError('Actions policy rejected')
+        with self.assertRaisesRegex(operations.InitError, 'Actions policy rejected'):
+            self.invoke()
+        self.actions.assert_called_once_with(self.ctx)
+        self.assertEqual(self.calls, [])
 
     def test_delayed_run_registration_then_complete_ci_succeeds(self):
         output = self.invoke()

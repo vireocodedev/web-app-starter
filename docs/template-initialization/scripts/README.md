@@ -89,3 +89,7 @@ Steps 15.3/17.2 automatically identify a unique run from the bounded recorded
 dispatch window and exact source/workflow/actor identity, then persist its ID and
 attempt before waiting. `--run-id` remains available for ambiguous/older intents;
 `--reconcile-only` never dispatches or waits for completion.
+
+Step 12.1 first configures/read-backs repository Actions permissions with the
+verified maintainer's admin authority. Pinned Actions and compatible existing
+selections are preserved; organization policy is never modified.
