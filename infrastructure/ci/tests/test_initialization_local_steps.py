@@ -2,6 +2,7 @@
 import contextlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -192,7 +193,12 @@ class LocalInitializationTests(unittest.TestCase):
 
     def test_ide_checks_identity_and_preserves_configs_without_claiming_debugger_acceptance(self):
         for name in ("launch.json", "tasks.json", "extensions.json"):
-            contents = (ROOT / ".vscode" / name).read_text().replace("com.vireocode.backend.BackendApplication", "com.example.fixture.BackendApplication")
+            contents = (ROOT / ".vscode" / name).read_text()
+            if name == "launch.json":
+                launch = json.loads(contents)
+                backend = next(config for config in launch["configurations"] if config["name"] == "Backend: local dev")
+                backend["mainClass"] = self.ctx.values["JAVA_PACKAGE"] + ".BackendApplication"
+                contents = json.dumps(launch)
             self.write(".vscode/" + name, contents)
         before = {path.name: path.read_bytes() for path in (self.root / ".vscode").glob("*.json")}
         with patch.object(local, "run") as command:
