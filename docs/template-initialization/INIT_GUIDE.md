@@ -5,6 +5,10 @@ production deployments, initial accounts, and verified recovery. This is the
 numbered procedure for developers and agents. Each script performs one explicit
 step; invoking a later script does not approve an earlier or unrelated action.
 
+For short step descriptions and commands, use [INIT_GUIDE_COMPACT.md](INIT_GUIDE_COMPACT.md).
+It follows the same procedure; this full guide owns explanations, recovery and
+consumer-specific evidence.
+
 ## Prerequisite: create and open the consumer repository
 
 Complete these steps before starting section 1:

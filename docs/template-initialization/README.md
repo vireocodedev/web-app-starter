@@ -9,6 +9,7 @@ remain explicit.
 | File                                                     | Purpose                                                                   |
 | -------------------------------------------------------- | ------------------------------------------------------------------------- |
 | [INIT_GUIDE.md](INIT_GUIDE.md)                           | Complete setup procedure and completion checklist.                        |
+| [INIT_GUIDE_COMPACT.md](INIT_GUIDE_COMPACT.md)           | Same procedure with short descriptions, commands and separate manual steps. |
 | [.env.example](.env.example)                             | Nonsecret project values and the existing shared infrastructure defaults. |
 | [scripts/](scripts/README.md)                            | Numbered entrypoints, shared data parsing and read-only preflight checks. |
 | [github-ci.md](github-ci.md)                             | Consumer CI selection, evidence and branch protection.                    |

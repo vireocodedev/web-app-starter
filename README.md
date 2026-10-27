@@ -15,6 +15,8 @@ consumer folder in VS Code. Then follow the
 It provides numbered steps and copy-paste commands for project identity, local
 development, shared CI, staging, production, accounts and recovery. Start with
 its project values and access checklist, then work through the steps in order.
+The [compact guide](docs/template-initialization/INIT_GUIDE_COMPACT.md) follows the
+same steps with short descriptions, commands and separate manual actions.
 
 The [initialization folder index](docs/template-initialization/README.md) lists
 the companion references and operator setup tools.
