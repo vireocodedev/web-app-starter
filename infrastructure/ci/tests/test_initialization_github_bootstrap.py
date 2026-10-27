@@ -160,3 +160,170 @@ class BootstrapAdapterTests(unittest.TestCase):
                 checked.write_text('  - uses: actions/checkout@main\n')
                 with self.assertRaisesRegex(bootstrap.InitError, 'full commit SHAs'):
                     bootstrap.required_actions(SimpleNamespace(root=root))
+
+
+    def test_missing_read_user_error_has_explicit_safe_auth_command(self):
+        response = subprocess.CompletedProcess([], 1, 'HTTP/2.0 403\n\nprivate-secret', '')
+        with patch.object(bootstrap, 'run', return_value=response):
+            with self.assertRaises(bootstrap.InitError) as raised:
+                bootstrap.api('user/installations/171464279/repositories')
+        self.assertIn('gh auth refresh -h github.com -s read:user', str(raised.exception))
+        self.assertNotIn('private-secret', str(raised.exception))
+
+
+    def test_app_write_error_distinguishes_admin_and_token_authority(self):
+        response = subprocess.CompletedProcess([], 1, 'HTTP/2.0 403\n\nprivate-secret', '')
+        with patch.object(bootstrap, 'run', return_value=response):
+            with self.assertRaises(bootstrap.InitError) as raised:
+                bootstrap.api('user/installations/171464279/repositories/23', method='PUT')
+        message = str(raised.exception)
+        self.assertIn('administrator access', message)
+        self.assertIn('read:user inventory scope alone does not authorize this write', message)
+        self.assertNotIn('gh auth refresh', message)
+        self.assertNotIn('private-secret', message)
+
+
+
+class AppFake:
+    def __init__(self):
+        self.installation = {'id': bootstrap.CI_INSTALLATION_ID, 'app_id': bootstrap.CI_APP_ID,
+            'account': {'login': 'fixture-owner', 'type': 'Organization'}, 'target_type': 'Organization',
+            'repository_selection': 'selected', 'permissions': copy.deepcopy(bootstrap.CI_PERMISSIONS),
+            'suspended_at': None}
+        self.repositories = {1: 'fixture-owner/existing', 2: 'fixture-owner/another'}
+        self.calls = []
+        self.state = {'repository_id': 23}
+        self.fail = None
+        self.stale = False
+        self.drop_existing = False
+        self.uncertain = False
+        self.count_change = False
+
+    def update_state(self, ctx, **values):
+        self.state.update(copy.deepcopy(values))
+
+    def api(self, path, *, method='GET', body=None):
+        self.calls.append((method, path, copy.deepcopy(body)))
+        route = path.split('?')[0]
+        if self.fail == (method, route):
+            raise bootstrap.InitError('HTTP 403 missing read:user')
+        if method == 'PUT':
+            if not self.stale:
+                self.repositories[23] = 'fixture-owner/sample-app'
+            if self.drop_existing:
+                self.repositories.pop(1)
+            if self.uncertain:
+                self.uncertain = False
+                raise bootstrap.InitError('HTTP 503 uncertain write')
+            return None
+        page = int(path.rsplit('page=', 1)[1])
+        if route == 'orgs/fixture-owner/installations':
+            return {'total_count': 1, 'installations': [copy.deepcopy(self.installation)] if page == 1 else []}
+        assert route == 'user/installations/' + str(bootstrap.CI_INSTALLATION_ID) + '/repositories', path
+        repositories = [{'id': key, 'full_name': name} for key, name in sorted(self.repositories.items())]
+        return {'total_count': len(repositories) + int(self.count_change and page > 1),
+                'repositories': repositories[(page - 1) * 100:page * 100]}
+
+    def writes(self):
+        return [call for call in self.calls if call[0] != 'GET']
+
+
+class AppBootstrapTests(unittest.TestCase):
+    def setUp(self):
+        self.fake = AppFake()
+        self.ctx = SimpleNamespace(values={'REPOSITORY': 'fixture-owner/sample-app', 'GH_ORG': 'fixture-owner'})
+        self.identity = patch.object(bootstrap, 'verify_github', return_value={'repository_id': 23}).start()
+        self.api = patch.object(bootstrap, 'api', side_effect=self.fake.api).start()
+        patch.object(bootstrap, 'read_state', side_effect=lambda ctx: copy.deepcopy(self.fake.state)).start()
+        self.state = patch.object(bootstrap, 'update_state', side_effect=lambda ctx, **values: self.fake.update_state(ctx, **values)).start()
+        self.addCleanup(patch.stopall)
+
+    def test_adds_exact_verified_id_preserves_all_selections_and_retries_without_write(self):
+        bootstrap.ensure_ci_app_access(self.ctx)
+        self.identity.assert_called_once_with(self.ctx, 'resume')
+        self.assertEqual(self.fake.writes(), [('PUT', 'user/installations/' + str(bootstrap.CI_INSTALLATION_ID) + '/repositories/23', None)])
+        self.assertEqual(self.fake.repositories, {1: 'fixture-owner/existing', 2: 'fixture-owner/another', 23: 'fixture-owner/sample-app'})
+        self.assertIsNone(self.fake.state['ci_app_access_pending'])
+        self.assertEqual(self.fake.state['ci_app_access_verified']['preserved_repository_ids'], [1, 2])
+        initial_progress = json.dumps(self.fake.state, sort_keys=True).encode()
+        self.fake.calls.clear()
+        self.state.reset_mock()
+        bootstrap.ensure_ci_app_access(self.ctx)
+        self.assertEqual(self.fake.writes(), [])
+        self.state.assert_not_called()
+        self.assertEqual(json.dumps(self.fake.state, sort_keys=True).encode(), initial_progress)
+
+    def test_wrong_installation_owner_id_app_permissions_or_suspension_never_mutates(self):
+        changes = [({'id': 999}), ({'app_id': 999}), ({'account': {'login': 'other', 'type': 'Organization'}}),
+            ({'repository_selection': 'all'}), ({'suspended_at': '2026-01-01T00:00:00Z'}),
+            ({'permissions': {'actions': 'read', 'metadata': 'read'}}),
+            ({'permissions': dict(bootstrap.CI_PERMISSIONS, contents='write')})]
+        for change in changes:
+            with self.subTest(change=change):
+                self.fake = AppFake()
+                self.fake.installation.update(change)
+                self.api.side_effect = self.fake.api
+                with self.assertRaises(bootstrap.InitError):
+                    bootstrap.ensure_ci_app_access(self.ctx)
+                self.assertEqual(self.fake.writes(), [])
+
+    def test_complete_paginated_inventory_preserved(self):
+        self.fake.repositories = {identifier: 'fixture-owner/repo-' + str(identifier) for identifier in range(100, 300)}
+        bootstrap.ensure_ci_app_access(self.ctx)
+        self.assertEqual(len(self.fake.repositories), 201)
+        self.assertTrue(any('page=3' in path for _, path, _ in self.fake.calls))
+        self.assertEqual(len(self.fake.state['ci_app_access_verified']['preserved_repository_ids']), 200)
+
+    def test_changed_or_incomplete_pagination_never_mutates(self):
+        self.fake.repositories = {identifier: 'fixture-owner/repo-' + str(identifier) for identifier in range(100, 201)}
+        self.fake.count_change = True
+        with self.assertRaisesRegex(bootstrap.InitError, 'changed during pagination'):
+            bootstrap.ensure_ci_app_access(self.ctx)
+        self.assertEqual(self.fake.writes(), [])
+
+    def test_missing_access_stops_before_add(self):
+        self.fake.fail = ('GET', 'user/installations/' + str(bootstrap.CI_INSTALLATION_ID) + '/repositories')
+        with self.assertRaisesRegex(bootstrap.InitError, 'read:user'):
+            bootstrap.ensure_ci_app_access(self.ctx)
+        self.assertEqual(self.fake.writes(), [])
+        self.assertNotIn('ci_app_access_verified', self.fake.state)
+
+    def test_failed_add_preserves_pending_inventory_and_can_resume_uncertain_success(self):
+        self.fake.uncertain = True
+        with self.assertRaisesRegex(bootstrap.InitError, '503'):
+            bootstrap.ensure_ci_app_access(self.ctx)
+        self.assertEqual(self.fake.state['ci_app_access_pending']['previous_repository_ids'], [1, 2])
+        self.assertNotIn('ci_app_access_verified', self.fake.state)
+        self.fake.calls.clear()
+        bootstrap.ensure_ci_app_access(self.ctx)
+        self.assertEqual(self.fake.writes(), [])
+        self.assertIsNone(self.fake.state['ci_app_access_pending'])
+        self.assertEqual(self.fake.state['ci_app_access_verified']['preserved_repository_ids'], [1, 2])
+
+    def test_stale_readback_or_lost_selection_fails_and_records_no_success(self):
+        for attribute in ('stale', 'drop_existing'):
+            with self.subTest(attribute=attribute):
+                self.fake = AppFake()
+                self.api.side_effect = self.fake.api
+                setattr(self.fake, attribute, True)
+                with self.assertRaisesRegex(bootstrap.InitError, 'read-back'):
+                    bootstrap.ensure_ci_app_access(self.ctx)
+                self.assertNotIn('ci_app_access_verified', self.fake.state)
+                self.assertIsNotNone(self.fake.state['ci_app_access_pending'])
+
+    def test_pending_attempt_cannot_adopt_changed_identity_or_drop_prior_selections(self):
+        self.fake.state['ci_app_access_pending'] = {'installation_id': bootstrap.CI_INSTALLATION_ID,
+            'repository_id': 23, 'previous_repository_ids': [1, 2, 3]}
+        with self.assertRaisesRegex(bootstrap.InitError, 'prior App access'):
+            bootstrap.ensure_ci_app_access(self.ctx)
+        self.assertEqual(self.fake.writes(), [])
+
+    def test_repo_id_and_foreign_inventory_are_rejected(self):
+        for key, value in [(23, 'fixture-owner/different-name'), (99, 'other-owner/foreign')]:
+            with self.subTest(value=value):
+                self.fake = AppFake()
+                self.api.side_effect = self.fake.api
+                self.fake.repositories[key] = value
+                with self.assertRaises(bootstrap.InitError):
+                    bootstrap.ensure_ci_app_access(self.ctx)
+                self.assertEqual(self.fake.writes(), [])

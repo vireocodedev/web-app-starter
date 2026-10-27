@@ -93,3 +93,8 @@ attempt before waiting. `--run-id` remains available for ambiguous/older intents
 Step 12.1 first configures/read-backs repository Actions permissions with the
 verified maintainer's admin authority. Pinned Actions and compatible existing
 selections are preserved; organization policy is never modified.
+
+Initial step 11.1 upload first grants/read-backs existing shared CI App access
+for the verified consumer only; completed retries preserve identical state.
+Return-progress performs no App mutation. Step 2.3 checks the required read:user
+scope and uses `--login` for explicit interactive authorization when missing.

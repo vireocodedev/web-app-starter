@@ -166,7 +166,10 @@ Docker Compose 5.x is required. Its version is independent of Docker Engine's
 version. An `Unsupported Docker Compose version` error refers to the Compose
 plugin; the check verifies Engine/daemon access separately.
 
-Authenticate with the intended GitHub account; retain an existing working login:
+Authenticate with the intended GitHub account; retain an existing working login.
+The App repository inventory needs `read:user` in addition to `repo` and
+`read:org`. If reported missing, rerun step 2.3 with `--login` and complete the
+interactive authorization; the script verifies the same account afterward:
 
 ### 2.3 Authenticate the intended GitHub account
 
@@ -528,21 +531,14 @@ Do not install a new pool or app-specific permanent runner.
 
 ### 11.1 Verify GitHub App access and transfer the initialization state
 
-On your **workstation**, complete this check in GitHub for each new consumer,
-before stopping the shared controller:
-
-- [ ] Open the existing [VireoCode Shared CI installation](https://github.com/organizations/vireocodedev/settings/installations/171464279).
-- [ ] Under **Repository access**, keep **Only select repositories** and confirm
-  that the exact consumer repository (`GH_ORG/PROJECT_SLUG` from `values.env`)
-  is selected. If it is missing, add it and **Save**, preserving all existing
-  repository selections. If it is already selected, verify it and continue.
-- [ ] Confirm the App retains **Actions: Read-only**, **Administration: Read and
-  write**, and automatic **Metadata: Read-only**. The
-  [GitHub App reference](github-ci-app.md#register-and-verify-a-consumer) owns the
-  installation requirements. Its private key stays on the controller host,
-  never in this checkout or Actions secrets.
-
-Missing repository access blocks registration even if the state transfer succeeds.
+On your **workstation**, this step grants the existing shared CI App access to the
+exact verified consumer using your authenticated organization-owner account.
+It preserves all selected repositories, verifies the App's identity and required
+Actions/Administration/Metadata permissions, and reads access back before upload.
+The installation remains limited to selected repositories. Its private key stays
+on the host. Missing authority or policy conflicts stop before the controller is
+stopped; no App permissions or organization policy are expanded. See the
+[GitHub App reference](github-ci-app.md#register-and-verify-a-consumer).
 
 Then, from your **workstation's consumer repository root**:
 

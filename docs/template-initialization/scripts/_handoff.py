@@ -11,6 +11,7 @@ import tempfile
 from types import SimpleNamespace
 
 from _operations import ci_source, context, execute, positive, ssh_arguments
+from _github_bootstrap import ensure_ci_app_access
 from _shared import InitError, load_context, parser, private_file, read_state, require_private_location
 
 FILES = {'values.env': 65536, 'verification.json': 65536, 'progress.json': 262144}
@@ -196,6 +197,12 @@ def transfer(args):
     snapshot_ctx, state = validate_bundle(original)
     if snapshot_ctx.values != ctx.values:
         raise InitError('Workstation values changed during validation; state was not transferred.')
+    if not args.return_progress:
+        ensure_ci_app_access(ctx)
+        original = snapshot(ctx.env_path)
+        snapshot_ctx, state = validate_bundle(original)
+        if snapshot_ctx.values != ctx.values:
+            raise InitError('Workstation values changed during App verification; state was not transferred.')
     if args.return_progress:
         actual = decode(execute(remote_arguments(ctx, 'return'), input=encode(original)))
         _, observed = validate_bundle(actual)

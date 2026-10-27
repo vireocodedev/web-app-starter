@@ -88,7 +88,8 @@ python3 -B docs/template-initialization/scripts/2_2_check_tools.py
 
 ### 2.3 Authenticate the intended GitHub account — workstation
 
-Use the configured organization-owner account with repository admin rights.
+Use the configured organization-owner account with repo/read:org/read:user
+authority. If scope/login is missing, repeat with `--login` and authorize it.
 
 ```bash
 python3 -B docs/template-initialization/scripts/2_3_authenticate_github.py
@@ -305,22 +306,16 @@ python3 -B docs/template-initialization/scripts/10_3_publish_changes.py
 
 ## 11. Register shared CI
 
-### 11.A Verify GitHub App repository access — manual
-
-Open the [existing CI App installation](https://github.com/organizations/vireocodedev/settings/installations/171464279).
-Keep **Only select repositories**; add/verify this exact consumer and save without
-removing existing selections. Confirm **Actions: Read-only**, **Administration:
-Read and write**, **Metadata: Read-only**; the private key stays on the host.
-
 ### 11.B Agree the maintenance window and source — manual
 
 Coordinate shared-pool downtime with its operator. Verify the host's canonical,
 reviewed `CI_SOURCE` checkout includes these scripts and matches the receipt's
 verifier code; preserve other consumers and use the verified SSH host key.
 
-### 11.1 Transfer initialization state — workstation
+### 11.1 Grant CI App access and transfer state — workstation
 
-Upload the three protected state files; copy the printed operator commands with
+Add/verify this exact consumer in the existing CI App, preserving selections,
+then upload three protected state files. Copy printed operator commands with
 your actual host `--env` path. Replace `PROJECT_SLUG` below with your configured slug.
 
 ```bash
@@ -390,7 +385,8 @@ python3 -B docs/template-initialization/scripts/11_1_transfer_state.py --return-
 
 ### 12.1 Open and watch initialization PR — workstation
 
-Create/resume the matching PR and wait for its exact successful CI run/gate.
+Configure/read back Actions permissions, create/resume the matching PR and wait
+for its exact successful CI run/gate.
 After fixing a failed run, rerun **all jobs**, then resume this command.
 
 ```bash
