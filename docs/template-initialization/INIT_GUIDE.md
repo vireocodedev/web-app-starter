@@ -563,6 +563,14 @@ reported current `configuration_sha256` as the argument below:
 
 ### 11.4 Register and validate the consumer
 
+**Allow several minutes for this command.** After registration it runs full
+isolation and Docker validation for every configured worker slot, followed by
+cross-slot checks. The terminal can stay quiet while these checks run. Keep it
+open and wait for successful completion before activation. Ctrl+C interrupts validation and can leave registration
+committed while completion evidence is still missing. After an interruption,
+inspect the existing registration and follow the [CI operator guide](../../infrastructure/ci/README.md#register-a-private-monorepo)
+to resume validation.
+
 ```bash
 python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env --expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256
 ```
