@@ -13,6 +13,7 @@ import socket
 import stat
 import subprocess
 import sys
+import time
 
 from _shared import InitError, load_context, parser, read_state, require_consumer, run, update_state
 
@@ -120,14 +121,101 @@ def activate_ci(args):
     execute(['systemctl', 'enable', '--now', 'web-app-ci-controller.service'], display=True)
 
 
+def initialization_pr_identity(ctx, pull, *, number=None, sha=None):
+    repo = ctx.values['REPOSITORY'].lower()
+    if (pull.get('state') != 'open'
+            or pull.get('head', {}).get('ref') != 'initialization/setup'
+            or pull.get('base', {}).get('ref') != 'main'
+            or any(pull.get(side, {}).get('repo', {}).get('full_name', '').lower() != repo
+                   for side in ('head', 'base'))
+            or (number is not None and pull.get('number') != number)
+            or (sha is not None and pull.get('head', {}).get('sha') != sha)):
+        raise InitError('Initialization PR identity changed; inspect its repository, branches and current source before resuming.')
+    return positive(pull.get('number'), 'PR number'), observed_sha(pull.get('head', {}).get('sha'))
+
+
+def initialization_ci_matches(ctx, run, number, sha):
+    return (run.get('repository', {}).get('full_name', '').lower() == ctx.values['REPOSITORY'].lower()
+            and run.get('head_sha') == sha and run.get('head_branch') == 'initialization/setup'
+            and run.get('event') == 'pull_request' and run.get('path') == '.github/workflows/ci.yml'
+            and any(pull.get('number') == number for pull in run.get('pull_requests', [])))
+
+
+def watch_initialization_ci(ctx, number, sha):
+    repo = ctx.values['REPOSITORY']
+    pull_path = '/pulls/' + str(number)
+    startup_deadline = time.monotonic() + 300
+    while True:
+        initialization_pr_identity(ctx, gh_json(ctx, pull_path), number=number, sha=sha)
+        runs = gh_json(ctx, '/actions/workflows/ci.yml/runs?event=pull_request&head_sha=' + sha + '&per_page=100')
+        matching = [run for run in runs['workflow_runs'] if initialization_ci_matches(ctx, run, number, sha)]
+        if matching:
+            observed = max(matching, key=lambda run: positive(run.get('id'), 'CI run ID'))
+            break
+        if time.monotonic() >= startup_deadline:
+            raise InitError('No matching CI run appeared within five minutes. Inspect Actions policy, workflow triggers and access.')
+        print('Waiting for GitHub Actions to create this PR source\'s CI run (up to five minutes)...', flush=True)
+        time.sleep(10)
+
+    run_id = positive(observed.get('id'), 'CI run ID')
+    attempt = positive(observed.get('run_attempt'), 'CI run attempt')
+    run_path = '/actions/runs/' + str(run_id)
+    run_url = 'https://github.com/' + repo + '/actions/runs/' + str(run_id)
+    print('Watching CI run/attempt ' + str(run_id) + '/' + str(attempt) + ': ' + run_url, flush=True)
+    deadline = time.monotonic() + 3600
+    while True:
+        initialization_pr_identity(ctx, gh_json(ctx, pull_path), number=number, sha=sha)
+        observed = gh_json(ctx, run_path)
+        if (not initialization_ci_matches(ctx, observed, number, sha)
+                or observed.get('id') != run_id or observed.get('run_attempt') != attempt):
+            raise InitError('CI run identity or attempt changed; inspect the exact run before resuming.')
+        print('CI run ' + str(run_id) + ': ' + str(observed.get('status')) + '. ' + run_url, flush=True)
+        if observed.get('status') == 'completed':
+            if observed.get('conclusion') != 'success':
+                raise InitError('CI did not succeed (' + str(observed.get('conclusion')) + '). Inspect ' + run_url
+                                + '; after fixing the cause, use rerun all jobs before resuming.')
+            jobs = gh_json(ctx, run_path + '/attempts/' + str(attempt) + '/jobs?per_page=100')
+            gates = [job for job in jobs['jobs'] if job.get('name') == 'CI gate']
+            if (jobs.get('total_count') != len(jobs['jobs']) or len(gates) != 1
+                    or gates[0].get('status') != 'completed' or gates[0].get('conclusion') != 'success'):
+                raise InitError('The exact CI attempt has no verified successful CI gate; inspect ' + run_url)
+            final = gh_json(ctx, run_path)
+            if (not initialization_ci_matches(ctx, final, number, sha)
+                    or final.get('id') != run_id or final.get('run_attempt') != attempt
+                    or final.get('status') != 'completed' or final.get('conclusion') != 'success'):
+                raise InitError('CI run identity, completion or attempt changed during gate inspection; inspect before resuming.')
+            initialization_pr_identity(ctx, gh_json(ctx, pull_path), number=number, sha=sha)
+            print('CI gate succeeded for the exact initialization PR source: ' + sha, flush=True)
+            return
+        if time.monotonic() >= deadline:
+            raise InitError('Stopped waiting after one hour; the CI run remains available at ' + run_url + '. Resume this step later.')
+        time.sleep(10)
+
+
 def open_initialization_pr(args):
     ctx = context(args, consumer=True)
     repo = ctx.values['REPOSITORY']
-    execute(['gh', 'pr', 'create', '--repo', repo, '--base', 'main', '--head', 'initialization/setup',
-             '--title', 'Initialize project', '--body', 'Personalize the consumer and verify local setup.'],
-            cwd=ctx.root, display=True)
-    execute(['gh', 'pr', 'checks', 'initialization/setup', '--repo', repo, '--watch'],
-            cwd=ctx.root, timeout=3600, display=True)
+    resume = shlex.join(['python3', '-B', 'docs/template-initialization/scripts/12_1_open_initialization_pr.py',
+                         '--env', str(ctx.env_path)])
+    pull_url = ''
+    try:
+        query = '/pulls?state=open&base=main&head=' + repo.split('/')[0] + ':initialization/setup&per_page=2'
+        pulls = gh_json(ctx, query)
+        if not pulls:
+            execute(['gh', 'pr', 'create', '--repo', repo, '--base', 'main', '--head', 'initialization/setup',
+                     '--title', 'Initialize project', '--body', 'Personalize the consumer and verify local setup.'],
+                    cwd=ctx.root, display=True)
+            pulls = gh_json(ctx, query)
+        if len(pulls) != 1:
+            raise InitError('Cannot select one open initialization PR; inspect the consumer PR list before retrying.')
+        number, sha = initialization_pr_identity(ctx, pulls[0])
+        pull_url = 'https://github.com/' + repo + '/pull/' + str(number)
+        print('Initialization PR: ' + pull_url, flush=True)
+        print('Rerun this step to resume watching this PR; it will be reused.', flush=True)
+        watch_initialization_ci(ctx, number, sha)
+    except (InitError, KeyboardInterrupt) as error:
+        message = str(error) if isinstance(error, InitError) else 'CI observation interrupted; the PR and CI run are preserved.'
+        raise InitError(message + (' PR: ' + pull_url if pull_url else '') + ' Resume with: ' + resume) from None
 
 
 def prepare_release_branch(args):

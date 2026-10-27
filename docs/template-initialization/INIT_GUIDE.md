@@ -620,6 +620,17 @@ On your **workstation**, open and watch the initialization PR:
 python3 -B docs/template-initialization/scripts/12_1_open_initialization_pr.py
 ```
 
+This step creates the PR only when no matching open PR exists; rerun the same
+command to resume after an interruption or timeout. It waits up to five minutes
+for GitHub to create the matching CI workflow run, then prints its URL and status
+while waiting up to one hour for completion. An empty check list during startup
+is expected. Only a successful complete run with its successful `CI gate` counts.
+A changed PR source or workflow attempt stops observation; rerun to select the
+current source/attempt. Authentication/API failures stop immediately. If no run
+appears, inspect Actions policy, workflow triggers and access. A failed/cancelled
+run remains failed: fix its cause and **rerun all jobs**, then resume this step.
+The script prints a resume command with your selected `--env` path.
+
 Observe the actual `CI gate` name/source App, run URL and Hetzner runner identity.
 Exercise task-owned backend-only, frontend-only, both-owner and documentation-only
 PR changes; record selected/skipped lanes. Remove temporary failure fixtures
