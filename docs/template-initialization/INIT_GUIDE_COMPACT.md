@@ -121,25 +121,20 @@ python3 -B docs/template-initialization/scripts/3_2_begin_initialization.py
 
 ## 4. Personalize the backend
 
-### 4.1 List the backend identity edits — workstation
+### 4.1 Apply backend identity — workstation
 
-Print the exact target values and files; this command does not edit them.
+Apply the verified Gradle, application, Compose, env-example, startup-fallback and
+VS Code main-class values. Recognized template/already-selected fields are safe
+to retry; unrelated content is preserved. Add `--open` only for optional inspection.
 
 ```bash
 python3 -B docs/template-initialization/scripts/4_1_edit_backend_identity.py
 ```
 
-### 4.A Apply the listed backend edits — manual
-
-Edit every listed field, including `.vscode/launch.json`'s backend main class.
-Preserve dependencies, `/api`, authentication, datasource placeholders and Flyway
-SQL. Reconcile existing `.env`/volume identity before startup; changing env values
-does not reset initialized database credentials.
-
 ### 4.2 Refactor both Java package roots — workstation
 
-Run only on fresh template-named main/test roots, then inspect the diff;
-use IDE refactoring for partially moved or overlapping roots.
+Move main/test application packages and code references, preserving SQL, fixtures
+and comments. Completed retries are no-ops; mixed/partial trees stop for inspection.
 
 ```bash
 python3 -B docs/template-initialization/scripts/4_2_refactor_java_packages.py
@@ -147,48 +142,41 @@ python3 -B docs/template-initialization/scripts/4_2_refactor_java_packages.py
 
 ## 5. Personalize the frontend and documentation
 
-### 5.1 List the frontend and documentation edits — workstation
+### 5.1 Apply frontend and documentation identity — workstation
 
-Print the exact metadata, translation and README edits.
+Update package/lock names, HTML/manifest titles, both shell-title locales and
+README identity automatically; preserve dependencies, framework provenance and artwork.
 
 ```bash
 python3 -B docs/template-initialization/scripts/5_1_edit_frontend_identity.py
 ```
 
-### 5.A Apply the listed frontend edits — manual
+### 5.2 Update title expectations — workstation
 
-Edit every listed field in both locales, package metadata/lockfile, HTML title,
-manifest and READMEs, including **Project identity**. Preserve dependency data,
-translation keys, manifest behavior, mock identities and setup instructions.
-
-### 5.2 List the title expectation edits — workstation
-
-Print the affected tests and the required title suffix.
+Apply the selected title suffix to actual assertions, preserving page-title
+prefixes and mock credentials.
 
 ```bash
 python3 -B docs/template-initialization/scripts/5_2_edit_title_expectations.py
 ```
 
-### 5.B Update titles and settle artwork — manual
+### 5.A Review artwork — manual
 
-Apply the listed test changes, preserving translated page titles and mock credentials.
-Replace shell/favicon/PWA artwork with supplied assets or record deferral; check
-light/dark readability and retain accurate RGO alt text, attribution and licenses.
+Replace shell/favicon/PWA artwork with supplied assets or retain the recorded
+branding deferral. Check light/dark readability and keep accurate RGO alt text,
+framework attribution and licenses for retained artwork.
 
 ## 6. Audit personalization
 
-### 6.1 Audit identity changes — workstation
+### 6.1 Verify selected identity automatically — workstation
 
-Search for old identity and inspect the intended diff.
+Check all owned identity fields, Java packages, title expectations and whitespace.
+Known neutral references are classified automatically; unexpected leftovers fail
+with a named path/field and repair step.
 
 ```bash
 python3 -B docs/template-initialization/scripts/6_1_audit_identity.py
 ```
-
-### 6.A Classify remaining references — manual
-
-Explain retained fixtures, examples, attribution and artwork; fix unexplained
-application identity leftovers. No search matches is expected (`rg` exit 1).
 
 ## 7. Prepare local configuration
 
@@ -208,7 +196,8 @@ passwords (12 characters minimum, 72 UTF-8 bytes maximum).
 
 ### 7.2 Prepare frontend dependencies and HTTP settings — workstation
 
-Install locked dependencies and prepare public HTTP-mode configuration.
+Install locked dependencies, format the frontend identity files automatically
+and prepare public HTTP-mode configuration.
 
 ```bash
 python3 -B docs/template-initialization/scripts/7_2_prepare_frontend_env.py

@@ -42,8 +42,8 @@ second CI foundation, existing-consumer renames, password resets and live databa
 restores are separate work.
 
 Use Python 3.11+ and Bash. Each public script is named `X_Y_name.ext`, matching
-section `X` and subsection `X.Y` below. Private `_shared.py`, `_local.py` and
-`_operations.py` modules support those entrypoints; they are not standalone steps.
+section `X` and subsection `X.Y` below. The [script index](scripts/README.md) lists
+private supporting modules; they are not standalone steps.
 
 The selected values live in ignored `.template-initialization/values.env`, copied
 from [.env.example](.env.example). Scripts parse this file as data and never source
@@ -234,19 +234,22 @@ edits. The inventory command needs Node 24 but no application dependencies.
 
 ## 4. Personalize the backend before starting PostgreSQL
 
-There is no installed personalization CLI. Edit these exact fields. Keep physical
-`frontend/` and `backend/` folders, versions/dependencies, `/api`, auth contracts,
+The scripts apply the verified consumer identity to the fields listed below.
+Keep physical `frontend/` and `backend/` folders, versions/dependencies, `/api`, auth contracts,
 and Flyway migration filenames/SQL unchanged. Avoid global text replacement.
 
-### 4.1 Edit the backend identity fields
+### 4.1 Apply the backend identity fields
 
 ```bash
 python3 -B docs/template-initialization/scripts/4_1_edit_backend_identity.py
 ```
 
-The edit scripts list the exact values from the verified env and open the
-existing files when an editor is available. Use another editor if needed; review
-the same fields below. They do not perform a global replacement. Add `--open` to the edit-script invocation to open the listed files in VS Code.
+The personalization scripts apply values from the verified env automatically.
+Each step checks every target before writing, accepts recognized template or
+already-selected values, and preserves unrelated content. Missing, ambiguous or
+foreign identity fields stop the step for inspection. A completed retry makes no
+changes. Optional `--open` opens the affected files for inspection after applying
+the changes; an editor is not required.
 
 | File                                          | Value using the example identity                                                                                                       |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -264,8 +267,8 @@ syntax. Preserve datasource placeholders and security/session configuration.
 
 Refactor **both** main/test Java package roots from `com.vireocode.backend` to
 `$JAVA_PACKAGE`, preserving all relative subpackages (`auth`, `user`, `http`, etc.)
-and `BackendApplication`. Use IDE package refactoring or this command for a fresh,
-still-template-named consumer:
+and `BackendApplication`. Run the package-refactoring step after applying the
+backend identity:
 
 ### 4.2 Refactor the Java package roots
 
@@ -273,8 +276,11 @@ still-template-named consumer:
 python3 -B docs/template-initialization/scripts/4_2_refactor_java_packages.py
 ```
 
-Inspect the diff; do not rerun over a partially moved tree. Moving packages does
-not change schema/table names or authorization contracts.
+The script moves both roots and updates Java code references while preserving
+comments, string fixtures and unrelated packages. A completed retry verifies the
+selected roots and makes no changes; mixed or partially moved trees stop for
+inspection. Moving packages does not change schema/table names or authorization
+contracts.
 
 For existing `.env`/database resources, resolve identity first. A changed Compose
 name creates a different namespace; it does not migrate a volume. Changed DB
@@ -286,7 +292,7 @@ or password reset is not the repair.
 
 ## 5. Personalize the frontend and documentation
 
-### 5.1 Edit frontend metadata and names
+### 5.1 Apply frontend metadata and names
 
 ```bash
 python3 -B docs/template-initialization/scripts/5_1_edit_frontend_identity.py
@@ -298,11 +304,13 @@ python3 -B docs/template-initialization/scripts/5_1_edit_frontend_identity.py
 | `frontend/package-lock.json`             | Top-level `name` and `packages[""].name` → same name. Preserve graph/integrity data.                                                                                                 |
 | `frontend/index.html`                    | `<title>` → HTML-escaped display name.                                                                                                                                               |
 | `frontend/public/manifest.json`          | `name`/`short_name` → selected names. Preserve `id`, `start_url`, `scope`, icon references.                                                                                          |
-| Both application translation files above | `navigation.shellTitle` → selected display name; preserve translation keys and localized page labels.                                                                                |
-| Root/frontend README                     | Consumer title/introduction; root **Project identity** with slug, display name, Java namespace and short name. Update identity-dependent JAR examples, retaining setup instructions. |
+| `frontend/src/app/localization/translations/translation.{en,hr}.ts` | `navigation.shellTitle` → selected display name; preserve translation keys and localized page labels.                                                                                |
+| Root/frontend README                     | Consumer title/introduction; root **Project identity** with slug, display name, Java namespace and short name. Retain setup instructions and framework provenance. |
 
-Update title suffix expectations in these tests, preserving translated page
-titles and mock credentials:
+The script applies the listed metadata, translations and README identity fields
+automatically while preserving dependency data, framework provenance and artwork.
+It records retained branding for later visual review. Then update the actual title
+assertion suffixes automatically, preserving page-title prefixes and mock credentials:
 
 ### 5.2 Update the title expectations
 
@@ -320,7 +328,8 @@ framework attribution/licenses.
 
 ## 6. Audit the personalization
 
-Search owned source/config without reading secret or generated files:
+Verify the selected backend/frontend fields, title expectations and Java package
+identity automatically, without reading secret or generated files:
 
 ### 6.1 Audit the identity changes
 
@@ -328,11 +337,13 @@ Search owned source/config without reading secret or generated files:
 python3 -B docs/template-initialization/scripts/6_1_audit_identity.py
 ```
 
-No matches is `rg` exit status 1, which is expected. Classify remaining matches:
-reference examples, fixtures, attribution and retained artwork can be intentional.
-Unexplained application-identity leftovers are unfinished. Preserve mock identities.
+This read-only gate checks coherence and whitespace, classifies known retained
+reference examples, fixtures, attribution and artwork automatically, and fails on
+unexpected application-identity leftovers. It names the affected path/field and
+repair step; routine initialization needs no manual reference classification.
 
-**Done:** intended diff only, with every residual identity reference explained.
+**Done:** selected identity fields, Java packages and title expectations agree;
+intentional neutral references remain preserved.
 
 ## 7. Set up the local environment
 
@@ -355,7 +366,9 @@ passwords (minimum 12 characters, maximum 72 UTF-8 bytes).
 python3 -B docs/template-initialization/scripts/7_2_prepare_frontend_env.py
 ```
 
-For existing `.env.local`, the frontend setup script merges the known settings and preserves unrelated values:
+After installing locked dependencies, this step automatically formats only the
+frontend identity files with the installed pinned Prettier. Long or escaped names
+need no manual formatting. Existing `.env.local` keeps unrelated values.
 
 The frontend setup script merges these public settings into `.env.local`: `VITE_API_BASE_URL=/api`, `VITE_API_MODE=http`, `VITE_API_WITH_CREDENTIALS=true` and `VITE_APP_ENV=development`.
 

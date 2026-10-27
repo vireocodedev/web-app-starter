@@ -30,10 +30,20 @@ replace a previously recorded repository ID.
 parser accepts literal data, not shell exports, interpolation or command
 substitution. Every entrypoint supports `--help` without performing setup.
 
-The shared helpers `_shared.py`, `_local.py`, `_operations.py`, `_handoff.py` and `_github_policy.py`
-are private Python modules rather than standalone numbered actions. They centralize env parsing,
+The shared helpers `_shared.py`, `_local.py`, `_personalization.py`, `_operations.py`,
+`_handoff.py` and `_github_policy.py` are private Python modules rather than standalone numbered actions. They centralize env parsing,
 argv-safe commands and the extracted local/operator implementations. They do not
 replace the existing application or infrastructure runtime owners.
+
+Steps 4.1, 5.1 and 5.2 apply the verified identity mechanically to their exact
+owned fields; 4.2 moves both Java application roots. Recognized template or selected
+values support safe retries, while foreign/ambiguous content stops before a step
+writes. Optional `--open` is post-edit inspection. Step 6.1 is a read-only automatic
+coherence gate; known neutral references need no manual classification. Both
+[full](../INIT_GUIDE.md) and [compact](../INIT_GUIDE_COMPACT.md) guides follow these
+same entrypoints; artwork review remains a separate manual action.
+Step 7.2 formats the frontend identity files with the installed pinned Prettier
+after its existing dependency installation, including wrapped long title values.
 
 The verification receipt is bound to the env bytes and verifier code, expires
 after 24 hours and records its scope and producer. It does not reserve names or

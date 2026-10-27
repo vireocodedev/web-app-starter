@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Show exact consumer backend edits; optionally open their existing files."""
+"""Apply verified consumer identity to the bounded backend configuration fields."""
 from _local import entry, edit_backend_identity
 
 if __name__ == "__main__":
-    entry(edit_backend_identity, "Review backend identity fields", editor=True)
+    entry(edit_backend_identity, "Apply backend identity fields", editor=True)

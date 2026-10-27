@@ -137,10 +137,15 @@ class LocalInitializationTests(unittest.TestCase):
         self.assertEqual(target.read_text(), "VITE_API_MODE=mock\n")
 
     def test_frontend_merges_http_settings_preserving_other_values(self):
+        for relative in local.personalization.FRONTEND_FORMAT_TARGETS:
+            self.write("frontend/" + relative, "retained frontend source\n")
         path = self.write("frontend/.env.local", "# Keep optional settings\nVITE_API_MODE=mock\nVITE_SETTINGS_NOCFG_THEME=dark\nVITE_REQUEST_TIMEOUT_MS=12345\n")
         with patch.object(local, "run") as command:
             local.prepare_frontend_env(self.ctx)
-        self.assertEqual(command.call_args.args[0], ["npm", "--prefix", str(self.root / "frontend"), "ci"])
+        self.assertEqual(command.call_count, 2)
+        self.assertEqual(command.call_args_list[0].args[0], ["npm", "--prefix", str(self.root / "frontend"), "ci"])
+        self.assertEqual(command.call_args_list[1].args[0], ["bash", str(self.root / "backend/scripts/with-local-node.sh"), str(self.root / "frontend/node_modules/prettier/bin/prettier.cjs"), "--write", *local.personalization.FRONTEND_FORMAT_TARGETS])
+        self.assertEqual(command.call_args_list[1].kwargs["cwd"], self.root / "frontend")
         values = local.read_literal_env(path)
         self.assertEqual(values["VITE_SETTINGS_NOCFG_THEME"], "dark")
         self.assertEqual(values["VITE_REQUEST_TIMEOUT_MS"], "12345")
