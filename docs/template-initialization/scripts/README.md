@@ -47,7 +47,7 @@ three state files over strict host-key-checked SSH. Run it with
 `--return-progress` after the operator steps to retrieve matching progress without
 losing local observations. Initial upload retries require identical host files;
 later context switches still require deliberate reconciliation. Follow the
-[section 11 handoff](../INIT_GUIDE.md#111-transfer-the-initialization-state-to-the-operator-host)
+[section 11 handoff](../INIT_GUIDE.md#111-verify-github-app-access-and-transfer-the-initialization-state)
 for the host `--env` path, protected modes and operator commands.
 
 Read-only API contracts use the official [GitHub repository API](https://docs.github.com/en/rest/repos/repos)

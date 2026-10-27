@@ -497,14 +497,25 @@ The existing shared-pool operator performs this at an agreed idle maintenance
 point. Registration affects the shared controller; coordinate other consumers.
 Do not install a new pool or app-specific permanent runner.
 
-In the organization's existing GitHub App installation, add this exact repository
-to **selected repositories**, preserving existing selections. The App retains
-Actions read, Administration write and automatic Metadata read. Its private key
-stays on the controller host, never in this checkout or Actions secrets.
+### 11.1 Verify GitHub App access and transfer the initialization state
 
-### 11.1 Transfer the initialization state to the operator host
+On your **workstation**, complete this check in GitHub for each new consumer,
+before stopping the shared controller:
 
-On your **workstation**, from the consumer repository root:
+- [ ] Open the existing [VireoCode Shared CI installation](https://github.com/organizations/vireocodedev/settings/installations/171464279).
+- [ ] Under **Repository access**, keep **Only select repositories** and confirm
+  that the exact consumer repository (`GH_ORG/PROJECT_SLUG` from `values.env`)
+  is selected. If it is missing, add it and **Save**, preserving all existing
+  repository selections. If it is already selected, verify it and continue.
+- [ ] Confirm the App retains **Actions: Read-only**, **Administration: Read and
+  write**, and automatic **Metadata: Read-only**. The
+  [GitHub App reference](github-ci-app.md#register-and-verify-a-consumer) owns the
+  installation requirements. Its private key stays on the controller host,
+  never in this checkout or Actions secrets.
+
+Missing repository access blocks registration even if the state transfer succeeds.
+
+Then, from your **workstation's consumer repository root**:
 
 ```bash
 python3 -B docs/template-initialization/scripts/11_1_transfer_state.py
