@@ -11,9 +11,11 @@ port in `<domain>.api.ts` describes domain operations and request concerns such
 as `AbortSignal`; it must not expose Axios or Zod types.
 
 An adapter such as `contact.api.browser-storage.ts` implements that port.
-Contacts deliberately uses asynchronous methods over validated browser
-storage. A future HTTP adapter can implement the same interface while using the
-application Axios instance injected by its factory.
+The documentation-only Contacts reference exposes asynchronous methods; its live
+Storybook preview injects memory data. Its validated browser-storage adapter
+remains an inert, tested reference. A consumer HTTP adapter can implement the same
+port using the application Axios instance explicitly injected by its factory.
+No Contacts adapter or runtime is installed in production.
 
 ## Query and mutation options
 
@@ -31,8 +33,8 @@ component
       → selected adapter
 ```
 
-The feature factory selects the adapter and injects shared dependencies such as
-`QueryClient`. Keep one constructed set of options in the application-lived
+The composition owner selects the adapter and passes it with shared dependencies
+such as `QueryClient` to the feature factory. Keep one constructed set of options in the application-lived
 feature runtime when those options carry stable dependencies.
 
 ## One owner for asynchronous data

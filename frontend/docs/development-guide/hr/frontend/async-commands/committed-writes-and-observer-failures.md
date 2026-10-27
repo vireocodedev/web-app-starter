@@ -2,7 +2,7 @@
 
 Nakon uspješne naredbe može zakazati osvježavanje predmemorije, obavijest, analitički callback ili promatrač roditeljske komponente. Ti problemi ne poništavaju poslužiteljski commit. Ishod naredbe modelirajte zasebno kako UI ne bi pozvao korisnika na ponavljanje već dovršene radnje.
 
-Ovo je **referentni obrazac potrošačke aplikacije uz usporedbu ugrađenog startera**. client-discovery-app ima mali `notifyMutationCommitted` utility koji izolira pogreške promatrača. Starterova tvornica Contacts mutacija koristi ciljanu invalidaciju kolekcije u `onSuccess`; ne ugrađuje taj utility ni opći protokol ishoda trajnih naredbi. Odlučite što feature treba umjesto pretpostavke da svaki omotač mutacije ima jače jamstvo.
+Ovo je **referentni obrazac potrošačke aplikacije uz usporedbu dokumentacijske Contacts reference**. client-discovery-app ima mali `notifyMutationCommitted` utility koji izolira pogreške promatrača. Contacts referenca pod `docs/storybook/examples/Contacts/` koristi ciljanu invalidaciju kolekcije u `onSuccess`; ne ugrađuje taj utility ni opći protokol ishoda trajnih naredbi. Odlučite što feature treba umjesto pretpostavke da svaki omotač mutacije ima jače jamstvo.
 
 ## Okidač i vlasnik
 
@@ -50,7 +50,7 @@ Izolacija nije dopuštenje za zanemarivanje opažljivosti. Referentni helper nam
 
 Invalidaciju predmemorije tretirajte kao namjernu asinkronu granicu. Čekanje invalidacije u mutation callbacku može biti korisno ako feature namjerno zadržava pokazatelj spremanja dok novi prikaz nije spreman. Taj izbor prikaza ipak ne smije izbrisati razliku između potvrđene persistencije i neuspjelog osvježavanja. Pregledajte stvarno ponašanje biblioteke mutacija i ugovor callbacka prije obećavanja načina propagacije pogrešaka.
 
-Starterova tvornica Contacts invalidira samo `ContactQueryKey.collection()`, što je korisno pravilo opsega. Sačuvajte to vlasništvo pri dodavanju razdvajanja ishoda; invalidacija svega povećava površinu pogrešaka i ne poboljšava semantiku potvrde.
+Dokumentacijska tvornica Contacts invalidira samo `ContactQueryKey.collection()`, što je korisno pravilo opsega. Sačuvajte to vlasništvo pri dodavanju razdvajanja ishoda; invalidacija svega povećava površinu pogrešaka i ne poboljšava semantiku potvrde.
 
 ## Oporavak i povratna informacija
 

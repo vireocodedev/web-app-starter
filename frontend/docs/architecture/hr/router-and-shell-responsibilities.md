@@ -5,45 +5,24 @@ dobivena navigacija i sadržaj rute**.
 
 ## Registar i pravila ruta
 
-`src/app/router/routeRegistry.tsx` autoritet je ruta. Definicija povezuje
-putanju, pristup, komponentu stranice, naslov, mrvice, navigacijske metapodatke,
-grupu dokumentacije, raspored sadržaja i ponašanje pomicanja. Routerova tvornica
-`handbookRoutes.tsx` izvodi konkretne zapise iz javnog manifesta sadržaja i
-spaja ih u taj registar; ne uvodi drugi mehanizam podudaranja ruta. `routes.tsx`
-pretvara omogućene zapise u React Router objekte te dodaje zaštite i rasporede.
-Modul hijerarhije najprije provjerava sve deklarirane zapise, a zatim rekurzivno
-slaže omogućene ugniježđene rute bez ograničenja dubine.
+`src/app/router/routeRegistry.tsx` autoritet je ruta. Definicija spaja putanju,
+pristup, komponentu ili odgođeni modul, naslov, mrvice, navigaciju, raspored i
+pomicanje. `routes.tsx` pretvara omogućene zapise u React Router objekte i dodaje
+zaštite i rasporede. Hijerarhija najprije provjerava sve zapise, a zatim slaže
+ugniježđene omogućene rute bez ograničenja dubine.
 
-`parentId` opisuje hijerarhiju neovisno o dokumentacijskom `groupId`-u. Putanja
-djeteta ostaje potpuna aplikacijska putanja i mora biti ispod roditeljske;
-kompozicija iz nje izvodi relativnu putanju React Routera. Dijete koristi isti
-pristup kao roditelj. Razvojno isključenje nasljeđuje se kroz sve pretke pa
-isključeni raspored ne može u produkciji ostaviti potomka, navigaciju ni cilj
-preusmjerenja.
+`parentId` opisuje hijerarhiju. Djeca zadržavaju potpune aplikacijske putanje
+ispod roditeljske; kompozicija izvodi relativne React Router putanje. Dijete
+koristi isti pristup kao roditelj. Razvojno isključenje, kada ga potrošač treba,
+nasljeđuje se kroz sve pretke.
 
-Razvojne cjeline Patterns i Architecture omogućene su samo u razvoju. U
-produkciji nestaju iz navigacije, a njihovi URL-ovi završavaju kroz uobičajeni
-Not Found. Nije dovoljno sakriti stavku navigacije i ostaviti rutu.
+Predložak registrira Početnu, Postavke i auth/error granice. Ni u jednom buildu
+nema razvojnog vodiča ni kompatibilnih preusmjerenja. Ukinuti `/dev-guide` URL-ovi
+završavaju kroz uobičajeni Not Found i tijekom razvoja. Svi čitači i primjeri
+žive pod `docs/storybook/`.
 
-`/dev-guide` je početna stranica s kategorijama, bez kartica zaglavlja. Frontend
-pod `/dev-guide/frontend` sadrži Primjere stranica, Obrasce, Obrasce radnih tokova
-i Arhitekturu.
-Primjeri stranica nude Nadzornu ploču kontakata i Kontakte CRUD. Obrasci nude
-i18n, Signals, Poslužiteljske podatke, Usmjeravanje i URL-ove, Slojeve, Tablice
-i kolekcije, Obrasce unosa te Povratne informacije. Svaka kategorija otvara prvi
-primjer i prikazuje vlastitu navigaciju. Obrasci radnih tokova koriste Handbook
-kolekciju pod `/dev-guide/frontend/workflow-patterns`, dok izvorne datoteke
-zadržavaju prenosive putanje `frontend/<tema>/<članak>.md`. Backend, Kontinuirana
-integracija, Isporuka i operacije, Razvojni tijek rada te Tijek rada AI agenata
-otvaraju stvarne indekse tema; teme nude indekse članaka i zajedničku bočnu
-navigaciju. Ugniježđeni frontend obrasci zadržavaju identitet prvog retka Vodič
-za razvoj > Frontend. Prethodni URL-ovi za Početnu i Kontakte preusmjeravaju na
-odgovarajući Primjer stranice, a stari Obrasci i Arhitektura pod Frontend.
-Parametri upita i fragmenti ostaju sačuvani. Cijeli vodič ostaje samo razvojni.
-
-Rute vodiča nasljeđuju `contentMaxWidth: "xl"`. Ljuska smješta lokalne mrvice i
-sadržaj u isti spremnik. Odlučuje najdublja izričito zadana širina; potomci bez
-vlastite postavke zadržavaju širinu pretka.
+Širina sadržaja podatak je rute: lokalne mrvice i sadržaj dijele spremnik ljuske.
+Odlučuje najdublja izričito zadana širina; potomci bez iznimke nasljeđuju pretka.
 
 ## Ljuska prima navigaciju
 
@@ -62,16 +41,13 @@ nasljeđuju odjeljke najbližeg pretka. Višak kartica na računalu ulazi u izbo
 ostaje vidljiva. Oznaka aktivne kartice prekriva donji rub zajedničke razdjelne
 crte i dvostruko je deblja. Na mobilnim uređajima drugi redak zadržava aktivni odjeljak vidljivim i prikazuje još jednu karticu na širim mobilnim prikazima. Zaseban gumb Više sekcija otvara donju ladicu sa svim neposrednim odjeljcima, pa za veće skupine ruta nije potrebno vodoravno pomicanje. Prvi redak nema gumb Više za brze radnje.
 Najdublja ruta može dati komponentu `HeaderContext` koja prima parametre
-rute i proširuje kontekst zaglavlja dinamičkim sadržajem. Postojeća ruta
-vodiča s parametrom projekta pokazuje taj obrazac. Kontekst u prvom retku
-služi kao semantički naslov jednostavnih stranica; duboke stranice vodiča
-zadržavaju lokalne mrvice i naslove članaka.
+rute i proširuje kontekst zaglavlja dinamičkim sadržajem. Izolirane upute za kartice zaglavlja pokazuju parametrizirani primjer. Kontekst
+prvog retka semantički je naslov jednostavnih stranica; dublje produktne stranice
+mogu dati lokalne mrvice i naslove sadržaja.
 
 Podudarna ruta s `headerBreadcrumb: true` dodaje svoj prevedeni naslov u prvi
-redak iza glavne rute. Kategorije tako prikazuju Vodič za razvoj → Frontend ili
-Vodič za razvoj → Backend. Preci povezuju na svoje podudarne putanje, pa naslov
-vodiča vraća na popis kategorija. Izričito uključivanje zadržava naslove
-pojedinih kartica i članaka izvan tog retka; najdublji `HeaderContext` i dalje
+redak iza glavne rute. Preci povezuju na podudarne putanje. Izričito uključivanje zadržava naslove
+pojedinih kartica i detalja izvan tog retka; najdublji `HeaderContext` i dalje
 ga proširuje dinamičkim sadržajem rute.
 
 Glavna ladica u predlošku prikazuje Početnu; aplikacije mogu dodati glavna odredišta. Na računalu je zadano privremena ladica koja prekriva sadržaj,
@@ -82,7 +58,7 @@ gumb sažima ladicu u traku ikona ili je proširuje uz prijelaz prozirnosti
 naziva. Gumb u zaglavlju skriva je ili vraća; oba se stanja spremaju.
 Zadano se pri pomicanju zadržava prvi redak zaglavlja na računalu; postavka
 može zadržati oba retka ili nijedan. Na mobilnim uređajima zadržava se samo
-prvi redak. Neobavezna bočna navigacija razvojnog vodiča odvojena je od glavne
+prvi redak. Neobavezna bočna navigacija stranice odvojena je od glavne
 ladice; na užim zaslonima postaje izbornik „Na ovoj stranici”. Obje bočne
 navigacije mogu biti vidljive na širokom zaslonu. Širinu sadržaja određuju
 podaci rute, a ne način ladice.
@@ -90,7 +66,7 @@ podaci rute, a ne način ladice.
 Brze radnje u zaglavlju računala mijenjaju način boja Sustav/Svijetla/Tamna i jezik.
 Na mobilnim uređajima te su postavke dostupne u Postavkama, a radnje koje
 aplikacija preda kroz `headerActions` prikazuju se izravno, bez gumba Više.
-Aplikacija ih treba zadržati kompaktnima. Avatar korisnika otvara izbornik s prikazanim imenom, Postavkama, Vodičem za razvoj u razvojnoj verziji i Odjavom.
+Aplikacija ih treba zadržati kompaktnima. Avatar korisnika otvara izbornik s prikazanim imenom, Postavkama i Odjavom.
 Kontrole koriste postojeće vlasnike postavki i politiku fiksnih vrijednosti.
 Izbornik računa koristi istu modalnu interakciju: klik izvan njega zatvara ga
 bez aktiviranja stranice ispod. Strelice pomiču fokus među radnjama, a
@@ -98,9 +74,7 @@ zatvaranje vraća fokus na gumb računa. Uobičajeni odabir rute oslobađa izbor
 prije navigacije. Fiksna vrijednost uklanja odgovarajuću
 promjenjivu kontrolu iz zaglavlja i Postavki.
 
-Fiksna donja traka prikazuje Početnu i Postavke te nadzornu ploču kontakata
-samo u razvojnoj verziji. Ta poveznica otvara `/dev-guide/frontend/example-pages/contacts-dashboard`; cijeli
-Vodič za razvoj dostupan je u izborniku računa. Ruta može postaviti
+Fiksna donja traka prikazuje Početnu i Postavke. Ruta može postaviti
 `mobileBottomNavigation: false` kako bi sakrila traku. Izostavljena
 vrijednost ili `true` prikazuju je; odlučuje najdublja podudarna ruta.
 Ljuska rezervira donji prostor, uključujući sigurno područje uređaja, samo
@@ -111,8 +85,7 @@ ikona. Svaka poveznica zadržava puni pristupačni naziv.
 
 Ruta može postaviti `mobileSurface: "flush"` kako bi ispod 1024 px uklonila
 samo vodoravne vanjske odmake ljuske; izostavljena vrijednost ili `"inset"`
-zadržava zadane odmake. Odlučuje najdublja podudarna ruta. Postavke i
-Kontakti koriste taj prikaz uz očuvanje unutarnjih razmaka i prikaza na
+zadržava zadane odmake. Odlučuje najdublja podudarna ruta. Postavke koriste taj prikaz uz očuvanje unutarnjih razmaka i prikaza na
 računalu.
 
 `to` stavke navigacije uvijek je odredište poveznice. `activePath`
@@ -127,7 +100,8 @@ Postavite `commandPalette: true` na zapis registra kako bi stranica bila dostupn
 u pretraživanju zaglavlja prijavljene aplikacije. Članstvo je neovisno o glavnoj,
 sekcijskoj i donjoj navigaciji te se ne nasljeđuje. Uključite sadržajne stranice,
 a ne zapise koji služe samo rasporedu ili prikazu pogreške. Početna i tri odjeljka
-Postavki dostupni su u produkciji; odredišta vodiča ostaju samo razvojna.
+Postavki dostupni su u svakom buildu; odredišta vodiča nisu u aplikacijskom
+pretraživanju.
 
 Usmjerivač izvodi stavke iz omogućenih zaštićenih ruta, određuje konkretna
 odredišta te predaje prevedene nazive i kontekst roditelja ljusci kroz
@@ -149,6 +123,14 @@ ne uvodi zaštita navigacije za značajke koje štite samo zatvaranje vlastitog
 panela ili promjenu njegova prikaza.
 
 ## Ugniježđeni aplikacijski rasporedi
+
+Za interaktivne upute pokrenite `npm run storybook` iz mape `frontend` i otvorite
+**Development Guide → Routing → Pages with header tabs → Docs**. Engleske
+[Storybookove upute](../../storybook/routing/HeaderTabs/HeaderTabs.mdx) pokazuju stvarnu
+ljusku, zadanu podrutu, izravan ulazak u podrutu, odabir na potomku i mobilni
+izbornik odjeljaka. Izolirani memorijski usmjerivač prikazuje trenutni URL primjera;
+ponovno učitavanje dubokih poveznica provjerava se u aplikaciji. Referentne rute izolirane su Storybook pripreme, a ne ugrađena aplikacijska
+odredišta.
 
 Stranica rasporeda prikazuje `Outlet`, a djeca ostaju obični zapisi registra.
 Primjer se može dodati bez izmjene graditelja ruta ili isporučenog izbornika:
@@ -202,11 +184,9 @@ ostaje tekst umjesto obmanjujuće poveznice.
 
 ## Ugniježđena dokumentacija i adapteri stranica
 
-Svaka ugniježđena dokumentacijska cjelina ima vlastiti redoslijed grupa. Zadano
-dijete izvodi se iz prve zadržane stavke iste uređene navigacije.
-Prethodno/Sljedeće ostaje unutar aktivne Patterns kategorije, Architecture
-odjeljka ili Handbook teme. Izričito povezano čitanje smije prelaziti teme;
-paginacija ne bira nepovezanu kategoriju ili preusmjerenje.
+Navigacija prethodnog/sljedećeg članka pripada Storybook čitaču i ostaje unutar
+odabrane teme ili sekcije. Navigacija potrošačkih stranica pripada njihovu
+rasporedu rute. Vizualne grupe ne registriraju aplikacijska odredišta.
 
 Stranice su tanki adapteri: uvoze javna sučelja, slažu ih za rutu i ne
 ponavljaju ponašanje značajke.
@@ -253,19 +233,26 @@ ponašanje roditelja.
 
 ## Zajednička navigacija stranica
 
-Postavke i kategorije Obrazaca koriste `AppPageNavigation` s dobivenim
-poveznicama i prevedenim nazivima. Komponenta upravlja odabirom, mobilnom
-ladicom, vraćanjem fokusa i odgođenom promjenom rute. `SettingsPageNavigation`
-prilagođava nazive Postavki, a `PatternCategoryLayout` daje primjere jedne
-kategorije. Iznad širine spremnika od 900 px prikazuju bočnu navigaciju širine
-240 px, a ispod nje birač stranice. Popisi kategorija vodiča koriste
-`AppCategoryList`. Sadržaj Obrasca nalazi se ispod poveznica u bočnoj navigaciji
-ili mobilnom izborniku; navigacija na odjeljak čeka zatvaranje izbornika. Raspored
-zadaje `DocumentationRailProvider`, a galerije šalju svoj sadržaj u njegov aktivni
-cilj umjesto prikaza iznad primjera.
+Postavke koriste `AppPageNavigation` s dobivenim poveznicama i prevedenim nazivima.
+Komponenta upravlja odabirom, mobilnom ladicom, vraćanjem fokusa i odgođenom
+promjenom rute. `SettingsPageNavigation` prilagođava nazive Postavki. Iznad širine
+spremnika od 900 px raspored prikazuje bočnu navigaciju širine 240 px, a ispod nje
+birač stranice. Galerije i bočni sadržaj članaka žive pod `docs/storybook/`;
+ne uvode aplikacijski API dokumentacijskih grupa.
+
+Za potpunu implementaciju otvorite **Development Guide → Routing → Pages with
+left navigation → Docs** u Storybooku ili pročitajte engleski
+[izvor uputa](../../storybook/routing/LeftNavigation/LeftNavigation.mdx). Tri stranice
+Project koriste raspored Postavki: bočnu navigaciju pri širini sadržaja od
+najmanje 900 px, birač stranice ispod te širine i odabir na potomku.
 
 `AppCategoryList` prihvaća uređeni niz običnih poveznica i imenovanih grupa
 (`id`, `label`, neobavezni `description` i `items` s poveznicama), u bilo kojoj
-kombinaciji. Obrasci grupiraju Signale, Poslužiteljske podatke te Usmjeravanje i
-URL-ove pod Aplikacijsko stanje. Prethodni/sljedeći primjer ostaje unutar aktivne kategorije.
+kombinaciji. Upute za birač odredišta daju izolirani primjer miješanog popisa.
 Indeks s istim naslovom kao neposredni roditelj prikazuje taj naslov samo jednom.
+
+Za birač odredišta preko cijelog sadržaja otvorite **Development Guide → Routing →
+Navigation chooser pages → Docs** u Storybooku ili pročitajte engleski
+[izvor uputa](../../storybook/routing/NavigationChooser/NavigationChooser.mdx). Koristi
+`AppCategoryList` za obične i grupirane retke te indeksnu rutu koju zamjenjuje
+odabrano odredište. Vizualne grupe popisa ne stvaraju roditeljske rute.

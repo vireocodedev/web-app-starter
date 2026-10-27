@@ -1,0 +1,347 @@
+"""Private implementation for the numbered local-initialization entrypoints.
+
+Only literal configuration is read. No initialization values are shell code.
+Public entrypoints load the same verified env and prove consumer identity first.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import shutil
+import tempfile
+from pathlib import Path
+
+from _shared import InitError, load_context, parser, require_consumer, run
+
+
+HTTP_VALUES = {
+    "VITE_API_BASE_URL": "/api",
+    "VITE_API_MODE": "http",
+    "VITE_API_WITH_CREDENTIALS": "true",
+    "VITE_APP_ENV": "development",
+}
+JAVA_KEYWORDS = set("abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while true false null _ record sealed permits var yield".split())
+
+
+def entry(action, description, *, editor=False, browser=False):
+    arguments = parser(description)
+    if editor:
+        arguments.add_argument("--open", action="store_true", help="Open the named existing files with VS Code")
+    if browser:
+        arguments.add_argument("--install-browser", action="store_true", help="Explicitly install the configured Chrome channel before browser checks")
+    args = arguments.parse_args()
+    try:
+        ctx = load_context(args)
+        require_consumer(ctx)
+        action(ctx, args)
+    except (InitError, OSError, ValueError, KeyError, TypeError) as error:
+        # Never dump command environments, response bodies or private file text.
+        message = str(error) if isinstance(error, InitError) else "Local initialization operation failed; inspect the named files privately."
+        arguments.exit(1, f"Error: {message}\n")
+
+
+def regular(path):
+    if path.is_symlink() or not path.is_file() or any(parent.is_symlink() for parent in path.parents):
+        raise InitError(f"Expected an existing regular file: {path.name}; inspect before resuming.")
+    return path
+
+
+def fields(ctx, args, changes):
+    for relative, change in changes:
+        regular(ctx.root / relative)
+        print(f"{relative}: {change}")
+    if args.open:
+        if shutil.which("code") is None:
+            raise InitError("VS Code command 'code' is unavailable; edit the listed files in your editor.")
+        run(["code", *[str(ctx.root / relative) for relative, _ in changes]], cwd=ctx.root)
+
+
+def edit_backend_identity(ctx, args):
+    v = ctx.values
+    fields(ctx, args, [
+        ("backend/settings.gradle", f"rootProject.name = {v['PROJECT_SLUG'] + '-backend'!r}"),
+        ("backend/build.gradle", f"group = {v['JAVA_PACKAGE']!r}; description = {v['DISPLAY_NAME'] + ' backend'!r}"),
+        ("backend/src/main/resources/application.yaml", f"spring.application.name: {v['PROJECT_SLUG']}-backend"),
+        ("backend/compose.yaml", f"top-level name: {v['COMPOSE_PROJECT_NAME']}"),
+        ("backend/.env.example", f"COMPOSE_PROJECT_NAME={v['COMPOSE_PROJECT_NAME']}; POSTGRES_DB/POSTGRES_USER={v['DATABASE_NAME']}; keep passwords empty"),
+        ("backend/scripts/start-local.mjs", f"fallback Compose project: {v['COMPOSE_PROJECT_NAME']}"),
+        (".vscode/launch.json", f"backend mainClass: {v['JAVA_PACKAGE']}.BackendApplication"),
+    ])
+    print("Edit only these fields. Escape values for their destination syntax. Keep dependencies, /api, auth, datasource placeholders and Flyway SQL unchanged.")
+
+
+def refactor_java_packages(ctx, args=None):
+    old, new = "com.vireocode.backend", ctx.values["JAVA_PACKAGE"]
+    if not re.fullmatch(r"[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+", new) or any(part in JAVA_KEYWORDS for part in new.split(".")):
+        raise InitError("Use dotted lowercase Java identifiers without keywords.")
+    if new == old or new.startswith(old + ".") or old.startswith(new + "."):
+        raise InitError("Use IDE refactoring for unchanged or overlapping package roots.")
+    plans, roots = [], []
+    for source in (ctx.root / "backend/src/main/java", ctx.root / "backend/src/test/java"):
+        origin, target = source / old.replace(".", "/"), source / new.replace(".", "/")
+        if not origin.is_dir() or origin.is_symlink() or target.exists() or target.is_symlink():
+            raise InitError("Expected fresh main/test package roots; inspect before resuming.")
+        if any(parent.is_symlink() for parent in origin.parents if parent != ctx.root.parent):
+            raise InitError("Package roots must not traverse symbolic links.")
+        # Preflight the whole move before writing either main or test source.
+        for parent in (target, *target.parents):
+            if parent == source:
+                break
+            if parent.is_symlink():
+                raise InitError("Target package roots must not traverse symbolic links.")
+        roots.append(origin)
+        for path in origin.rglob("*"):
+            if path.is_symlink() or (path.is_file() and path.suffix != ".java"):
+                raise InitError("Unexpected package content; use IDE refactoring.")
+            if path.is_file():
+                plans.append((path, target / path.relative_to(origin), path.read_text().replace(old, new)))
+    for origin, target, contents in plans:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("x") as stream:
+            stream.write(contents)
+        origin.unlink()
+    for origin in roots:
+        for directory in sorted((path for path in origin.rglob("*") if path.is_dir()), key=lambda path: len(path.parts), reverse=True):
+            directory.rmdir()
+        origin.rmdir()
+    print("Moved both Java roots; review declarations, imports and launch.json. Do not rerun a partially moved tree.")
+
+
+def edit_frontend_identity(ctx, args):
+    v = ctx.values
+    fields(ctx, args, [
+        ("frontend/package.json", f"name: {v['PROJECT_SLUG']}-frontend"),
+        ("frontend/package-lock.json", f"top-level name and packages[''].name: {v['PROJECT_SLUG']}-frontend; preserve dependency/integrity graph"),
+        ("frontend/index.html", f"HTML-escaped title: {v['DISPLAY_NAME']!r}"),
+        ("frontend/public/manifest.json", f"name: {v['DISPLAY_NAME']!r}; short_name: {v['PWA_SHORT_NAME']!r}; preserve id/start_url/scope/icons"),
+        ("frontend/src/app/localization/translations/translation.en.ts", f"navigation.shellTitle: {v['DISPLAY_NAME']!r}; preserve localized page labels"),
+        ("frontend/src/app/localization/translations/translation.hr.ts", f"navigation.shellTitle: {v['DISPLAY_NAME']!r}; preserve localized page labels"),
+        ("README.md", f"Project identity: slug={v['PROJECT_SLUG']}, display={v['DISPLAY_NAME']!r}, Java={v['JAVA_PACKAGE']}, short={v['PWA_SHORT_NAME']!r}; update identity-dependent JAR examples"),
+        ("frontend/README.md", f"Consumer title/introduction: {v['DISPLAY_NAME']!r}; preserve setup instructions"),
+    ])
+    print("Inspect AppShell.tsx artwork references, favicon and both PWA icons in light/dark. Retained RGO artwork keeps accurate alt='RGO', attribution and recorded branding deferral.")
+
+
+def edit_title_expectations(ctx, args):
+    fields(ctx, args, [(path, f"title suffix: {ctx.values['DISPLAY_NAME']!r}; preserve translated page titles and mock credentials") for path in (
+        "frontend/tests/integration/auth/components/AppAuthFlow.test.tsx",
+        "frontend/tests/browser/application.spec.ts",
+        "frontend/tests/browser/documentation.development.spec.ts",
+    )])
+
+
+def audit_identity(ctx, args=None):
+    result = run([
+        "rg", "-n", r"com\.vireocode\.backend|rgo-frontend-template|vireocode-backend|vireocode-web-app-starter-local|RGO application|RGO aplikacija",
+        "backend/src", "backend/settings.gradle", "backend/build.gradle", "backend/compose.yaml", "backend/.env.example", "backend/scripts", ".vscode", "frontend/src", "frontend/tests", "frontend/package.json", "frontend/package-lock.json", "frontend/index.html", "frontend/public/manifest.json", "README.md", "frontend/README.md",
+    ], cwd=ctx.root, check=False)
+    if result.returncode not in (0, 1):
+        raise InitError("Identity search failed; inspect the listed owned source paths.")
+    run(["git", "diff", "--check"], cwd=ctx.root)
+    run(["git", "diff", "--stat"], cwd=ctx.root)
+    print("Classify every residual match; unexplained application identity is unfinished. Preserve reference fixtures, attribution, retained artwork and mock identities.")
+
+
+def read_literal_env(path):
+    """Read conventional local .env fields without interpreting shell syntax."""
+    regular(path)
+    result = {}
+    for line in path.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)", stripped)
+        if not match or match[1] in result:
+            raise InitError("Local env has unsupported or duplicate assignments; inspect it privately.")
+        value = match[2]
+        if value.startswith(("'", '"')):
+            if len(value) < 2 or value[-1] != value[0]:
+                raise InitError("Local env contains an incomplete quoted assignment.")
+            value = value[1:-1]
+        else:
+            value = re.split(r"\s+#", value, maxsplit=1)[0].rstrip()
+        result[match[1]] = value
+    return result
+
+
+def merge_literal_env(path, replacements):
+    text = regular(path).read_text()
+    # Read before changing to reject ambiguous duplicate/unsupported syntax.
+    read_literal_env(path)
+    for key, value in replacements.items():
+        if "\n" in value or "\r" in value or "\x00" in value:
+            raise InitError("Local env values must fit on one line.")
+        # Spring reads backend/.env as .properties while Node reads it as dotenv.
+        # Plain validated text (including spaces) works in both; adding dotenv
+        # quotes would make those quotes part of Spring's display-name value.
+        if re.search(r"[#'\"\\]", value):
+            raise InitError("Selected env identity contains incompatible dotenv/properties syntax.")
+        rendered = value
+        expression = re.compile(rf"^{re.escape(key)}\s*=.*$", re.MULTILINE)
+        if expression.search(text):
+            text = expression.sub(lambda _: f"{key}={rendered}", text)
+        else:
+            text = text.rstrip("\n") + f"\n{key}={rendered}\n"
+    descriptor, temporary = tempfile.mkstemp(prefix=".initialization-", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "w") as stream:
+            stream.write(text)
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+
+def backend_identity(ctx):
+    return {
+        "COMPOSE_PROJECT_NAME": ctx.values["COMPOSE_PROJECT_NAME"],
+        "POSTGRES_DB": ctx.values["DATABASE_NAME"],
+        "POSTGRES_USER": ctx.values["DATABASE_NAME"],
+        "INITIAL_USER_USERNAME": ctx.values["INITIAL_USERNAME"],
+        "INITIAL_USER_EMAIL": ctx.values["INITIAL_EMAIL"],
+        "INITIAL_USER_DISPLAY_NAME": ctx.values["INITIAL_DISPLAY_NAME"],
+    }
+
+
+def checked_backend_env(ctx):
+    path = ctx.root / "backend/.env"
+    values = read_literal_env(path)
+    mismatches = [key for key, expected in backend_identity(ctx).items() if values.get(key) != expected]
+    if mismatches:
+        raise InitError("Existing backend/.env identity differs for " + ", ".join(mismatches) + "; preserve credentials/volumes and reconcile privately before startup.")
+    for key in ("POSTGRES_PASSWORD", "INITIAL_USER_PASSWORD"):
+        value = values.get(key, "")
+        if len(value) < 12 or len(value.encode("utf-8")) > 72:
+            raise InitError(f"{key} must contain at least 12 characters and at most 72 UTF-8 bytes; inspect privately.")
+    if not values.get("POSTGRES_PORT", "55436").isdigit() or not 1 <= int(values.get("POSTGRES_PORT", "55436")) <= 65535:
+        raise InitError("POSTGRES_PORT must be a valid local port.")
+    return values
+
+
+def prepare_backend_env(ctx, args=None):
+    path = ctx.root / "backend/.env"
+    existed = path.exists() or path.is_symlink()
+    if existed:
+        regular(path)
+    run(["bash", str(ctx.root / "backend/scripts/with-local-node.sh"), str(ctx.root / "backend/scripts/setup-local.mjs")], cwd=ctx.root)
+    if not existed:
+        merge_literal_env(path, backend_identity(ctx))
+    checked_backend_env(ctx)
+    print("Local backend credentials prepared; existing files and passwords are preserved. Read the ignored backend/.env privately for login.")
+
+
+def prepare_frontend_env(ctx, args=None):
+    run(["npm", "--prefix", str(ctx.root / "frontend"), "ci"], cwd=ctx.root, timeout=None)
+    path = ctx.root / "frontend/.env.local"
+    if not path.exists() and not path.is_symlink():
+        contents = regular(ctx.root / "frontend/.env.example").read_text()
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w") as stream:
+            stream.write(contents)
+    merge_literal_env(path, HTTP_VALUES)
+    print("Merged public HTTP development settings; other frontend values are preserved. Vite configuration is public: keep secrets out.")
+
+
+def verify_ignored_env(ctx, args=None):
+    for relative in ("backend/.env", "frontend/.env.local"):
+        regular(ctx.root / relative)
+        tracked = run(["git", "ls-files", "--error-unmatch", "--", relative], cwd=ctx.root, capture=True, check=False)
+        if tracked.returncode == 0:
+            raise InitError(f"{relative} is tracked; remove it from the index without deleting the private file.")
+        run(["git", "check-ignore", "--quiet", "--", relative], cwd=ctx.root)
+    print("Both checkout-local env files exist, are untracked and ignored.")
+
+
+def start_backend(ctx, args=None):
+    values = checked_backend_env(ctx)
+    process_env = {**os.environ, **values}
+    run(["bash", str(ctx.root / "backend/scripts/with-local-node.sh"), str(ctx.root / "backend/scripts/start-local.mjs")], cwd=ctx.root, env=process_env, timeout=None)
+    run([str(ctx.root / "backend/gradlew"), "--no-daemon", "--console=plain", "bootRun", "--args=--spring.profiles.active=local"], cwd=ctx.root / "backend", env=process_env, timeout=None)
+
+
+def start_frontend(ctx, args=None):
+    values = read_literal_env(ctx.root / "frontend/.env.local")
+    if any(values.get(key) != value for key, value in HTTP_VALUES.items()):
+        raise InitError("Prepare frontend HTTP settings with 7_2_prepare_frontend_env.py first.")
+    run(["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5173", "--strictPort"], cwd=ctx.root / "frontend", env={**os.environ, **HTTP_VALUES}, timeout=None)
+
+
+def check_local_health(ctx, args=None):
+    run(["curl", "--fail", "--silent", "--show-error", "--max-time", "15", "http://127.0.0.1:8080/api/actuator/health"], cwd=ctx.root)
+    print("Health alone does not prove login. Manually verify real HTTP login, navigation, reload/session persistence, logout and both locales at http://127.0.0.1:5173.")
+
+
+def stop_database(ctx, args=None):
+    values = checked_backend_env(ctx)
+    run(["docker", "compose", "--project-name", ctx.values["COMPOSE_PROJECT_NAME"], "--file", str(ctx.root / "backend/compose.yaml"), "--env-file", str(ctx.root / "backend/.env"), "stop", "postgres"], cwd=ctx.root / "backend", env={**os.environ, **values}, timeout=None)
+    print("Stopped this checkout's PostgreSQL; its persistent volume is preserved.")
+
+
+def check_ide_configuration(ctx, args=None):
+    launch = json.loads(regular(ctx.root / ".vscode/launch.json").read_text())
+    tasks = json.loads(regular(ctx.root / ".vscode/tasks.json").read_text())
+    configs = {item["name"]: item for item in launch["configurations"]}
+    labels = {item["label"]: item for item in tasks["tasks"]}
+    backend, frontend = configs["Backend: local dev"], configs["Frontend: local dev"]
+    checks = [
+        backend.get("mainClass") == ctx.values["JAVA_PACKAGE"] + ".BackendApplication",
+        backend.get("cwd") == "${workspaceFolder}/backend",
+        backend.get("envFile") == "${workspaceFolder}/backend/.env",
+        backend.get("args") == "--spring.profiles.active=local",
+        backend.get("preLaunchTask") == "Backend: start local PostgreSQL",
+        labels["Backend: start local PostgreSQL"].get("dependsOn") == "Backend: prepare local credentials",
+        frontend.get("cwd") == "${workspaceFolder}/frontend",
+        frontend.get("command") == "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort",
+        all(frontend.get("env", {}).get(key) == value for key, value in HTTP_VALUES.items()),
+    ]
+    for label, script in (("Backend: prepare local credentials", "setup-local.mjs"), ("Backend: start local PostgreSQL", "start-local.mjs")):
+        task = labels[label]
+        checks.extend([task.get("type") == "process", task.get("command") == "bash", task.get("args") == ["${workspaceFolder}/backend/scripts/with-local-node.sh", f"${{workspaceFolder}}/backend/scripts/{script}"]])
+    if not all(checks):
+        raise InitError("VS Code configuration differs from the selected identity or documented launch chain; review .vscode files.")
+    regular(ctx.root / ".vscode/extensions.json")
+    print("Static launch configuration agrees. Open the trusted root workspace, install recommended extensions and finish Java/Gradle import; manually verify both launchers, login and a backend breakpoint. Stop conflicting terminal processes first.")
+
+
+def verify_local(ctx, args):
+    run([str(ctx.root / "backend/gradlew"), "--no-daemon", "--console=plain", "test", "bootJar"], cwd=ctx.root / "backend", timeout=None)
+    run(["npm", "--prefix", str(ctx.root / "frontend"), "run", "verify"], cwd=ctx.root, timeout=None)
+    if args.install_browser:
+        run(["npx", "playwright", "install", "chrome"], cwd=ctx.root / "frontend", timeout=None)
+    run(["npm", "--prefix", str(ctx.root / "frontend"), "run", "test:browser", "--", "tests/browser/application.spec.ts", "--grep", "supports keyboard navigation|offers the account menu", "--reporter=list"], cwd=ctx.root, timeout=None)
+    run(["npm", "--prefix", str(ctx.root / "frontend"), "run", "test:browser:development", "--", "tests/browser/documentation.development.spec.ts", "--reporter=list"], cwd=ctx.root, timeout=None)
+    print("Local gates completed sequentially. This is not remote CI or business acceptance evidence.")
+
+
+def review_changes(ctx, args=None):
+    for command in (["git", "status", "--short"], ["git", "diff", "--check"], ["git", "diff"]):
+        run(command, cwd=ctx.root)
+    print("Review privately, then stage only intended paths with git add -p or explicit git add PATH for new/moved files. No files have been staged by this script.")
+
+
+def publish_changes(ctx, args=None):
+    if ctx.scope != "full":
+        raise InitError("Publication requires a full-scope verified receipt; local-only setup stops after local verification.")
+    branch = run(["git", "branch", "--show-current"], cwd=ctx.root, capture=True).stdout.strip()
+    if branch != "initialization/setup":
+        raise InitError("Publish only the initialization/setup consumer branch; inspect the current branch.")
+    staged = run(["git", "diff", "--cached", "--name-only", "-z"], cwd=ctx.root, capture=True).stdout.split("\0")
+    paths = [path for path in staged if path]
+    if not paths:
+        raise InitError("No reviewed staged changes; this script never stages files.")
+    for path in paths:
+        item = Path(path)
+        allowed = path == "README.md" or path.startswith(("backend/", "frontend/", ".vscode/", "docs/template-initialization/"))
+        private = any(part in {"node_modules", ".git", ".template-initialization", "build", "dist", "storybook-static"} for part in item.parts)
+        private |= (item.name == ".env" or item.name.startswith(".env.") and item.name != ".env.example" or item.suffix.lower() in {".pem", ".key", ".p12", ".pfx", ".dump", ".sql", ".gz", ".zip"})
+        if not allowed or private:
+            raise InitError("The staged set contains a private/generated or out-of-initialization path; review and stage intended identity changes only.")
+    diff = run(["git", "diff", "--cached", "--no-ext-diff", "--unified=0"], cwd=ctx.root, capture=True).stdout
+    additions = "\n".join(line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++"))
+    if re.search(r"-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----|(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,})|(?:POSTGRES_PASSWORD|INITIAL_USER_PASSWORD|HCLOUD_TOKEN|HETZNER_DNS_TOKEN)[ \t]*=[ \t]*[^\s#]", additions):
+        raise InitError("Potential secret material is staged; inspect privately and remove it before publishing.")
+    run(["git", "diff", "--cached", "--check"], cwd=ctx.root)
+    run(["git", "diff", "--cached", "--stat"], cwd=ctx.root)
+    run(["git", "commit", "-m", "Initialize project identity and local setup"], cwd=ctx.root)
+    run(["git", "push", "-u", "origin", "initialization/setup"], cwd=ctx.root, timeout=None)

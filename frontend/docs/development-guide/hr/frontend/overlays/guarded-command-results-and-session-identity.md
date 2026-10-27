@@ -2,7 +2,7 @@
 
 Overlay rezultat opisuje završetak UI sesije, ne dokazuje sam server uspjeh. Potvrda odlaska može završiti nakon promjene, a stari editor prijaviti uspjeh novome u istom panelu. Odvojite transportni ishod, mountani overlay i unutarnju sesiju.
 
-Ovo je **ugrađena kompozicija s RGO ugovorom**. Contacts koristi page-local provider i `useAppMultiViewOverlay`; RGO upravlja prikazom i rezultatom. Feature daje pravilo odlaska i prihvaća samo aktualne callbackove.
+Ovo spaja **ugrađenu aplikacijsku overlay infrastrukturu i Contacts referencu samo u Storybooku**. Aktualni vlasnik je `docs/storybook/examples/Contacts/`, s privatnim stanjem prikaza, bez aplikacijske rute ili runtime registracije. Contacts koristi page-local provider i `useAppMultiViewOverlay`; RGO upravlja prikazom i rezultatom. Feature daje pravilo odlaska i prihvaća samo aktualne callbackove.
 
 ## Okidač i vlasnik
 

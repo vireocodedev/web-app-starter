@@ -22,7 +22,6 @@ import { Link, Outlet, useLocation, useMatches, useNavigation } from "react-rout
 
 import { useAppLocalization } from "@/app/localization/hooks/useAppLocalization";
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
-import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 import type { AppNavigationItem, AppNavigationLink, AppRouteHandle } from "@/app/router/types/AppRoute";
 import type { AppFixedSettings } from "@/app/bootstrap/config/fixedSettings";
 import { useAppColorScheme } from "@/app/theme/preferences/useAppColorScheme";
@@ -62,7 +61,6 @@ function Brand() {
 
 function HeaderContext() {
   const { t } = useAppTranslation();
-  const { t: guideT } = useDevelopmentGuideTranslation();
   const matches = useMatches();
   const location = useLocation();
   const topMatch = matches.find(match => {
@@ -102,7 +100,7 @@ function HeaderContext() {
       >
         {identityMatches.map((match, index) => {
           const handle = match.handle as AppRouteHandle;
-          const title = handle.resolveTitle({ app: t, developmentGuide: guideT }, match.params);
+          const title = handle.resolveTitle({ app: t }, match.params);
           const isCurrent =
             identityMatches.length === 1 || match.pathname.replace(/\/$/, "") === location.pathname.replace(/\/$/, "");
           const labelStyle = {

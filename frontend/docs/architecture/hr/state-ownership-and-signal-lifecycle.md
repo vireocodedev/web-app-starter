@@ -37,3 +37,9 @@ Redoslijed registracije ne smije predstavljati ovisnost.
 Efekti komponente ostaju u komponenti i vraćaju vlastito čišćenje. Stanje rute
 ne pretvarajte u aplikacijski Signal kada ga trebaju reproducirati duboka
 poveznica i tipke Natrag/Naprijed.
+
+Produkcijski registar životnog ciklusa trenutačno je prazan. Preseljeni primjeri
+aplikacijskog stanja pod `docs/storybook/patterns/` stvaraju privatne Signale,
+ubrizganu memorijsku pohranu i efekte čiji životni vijek posjeduje prikaz. Ne
+registriraju se pri pokretanju aplikacije niti pišu aplikacijske ključeve pohrane.
+Potrošač mora izričito registrirati javni modul stvarnog aplikacijskog stanja.

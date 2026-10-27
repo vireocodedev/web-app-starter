@@ -3,7 +3,6 @@ import {
   appRouteHierarchyMetadata,
   appNavigationItems,
   appRouteRegistry,
-  routeDestination,
 } from "./routeRegistry";
 import type { AppRouteObject } from "./types/AppRoute";
 import { AppRouteLayout } from "./components/AppRouteLayout";
@@ -36,9 +35,6 @@ export function createAppRoutes(options: Readonly<{ initialDrawerMode?: AppDrawe
                   element: (
                     <AuthenticatedAppShell
                       bottomNavigationItems={appBottomNavigationItems}
-                      developmentGuidePath={
-                        import.meta.env.DEV ? routeDestination(appRouteRegistry.developmentGuide) : undefined
-                      }
                       initialDrawerMode={options.initialDrawerMode}
                       navigationItems={appNavigationItems}
                     />

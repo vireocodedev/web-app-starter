@@ -3,7 +3,6 @@ import { Breadcrumbs, Link, Typography, useMediaQuery, useTheme } from "@mui/mat
 import { Link as RouterLink, useMatches } from "react-router";
 
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
-import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 import type { AppRouteHandle } from "@/app/router/types/AppRoute";
 
 const breadcrumbTextStyle = {
@@ -27,7 +26,6 @@ export function AppBreadcrumbs({
   minimumLocalItems = 3,
 }: Readonly<{ latestOnly?: boolean; local?: boolean; minimumLocalItems?: number }>) {
   const { t } = useAppTranslation();
-  const { t: guideT } = useDevelopmentGuideTranslation();
   const theme = useTheme();
   const compactLocalBreadcrumbs = useMediaQuery(theme.breakpoints.down("sm"));
   const matches = useMatches();
@@ -36,7 +34,7 @@ export function AppBreadcrumbs({
     return typeof handle?.resolveBreadcrumbs === "function";
   });
   const handle = matchedRoute?.handle as AppRouteHandle | undefined;
-  const breadcrumbs = handle?.resolveBreadcrumbs({ app: t, developmentGuide: guideT }, matchedRoute?.params ?? {});
+  const breadcrumbs = handle?.resolveBreadcrumbs({ app: t }, matchedRoute?.params ?? {});
 
   if (!breadcrumbs?.length || (local && breadcrumbs.length < minimumLocalItems)) {
     return null;

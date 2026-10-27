@@ -1,0 +1,852 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as DraftStories from "./DraftAndSubmitForms.stories";
+
+<Meta of={DraftStories} />
+
+# Draft and submit forms
+
+Keep one form and distinguish **Save draft** from **Submit request** as explicit
+command intents. Saving may accept incomplete input; submitting must validate the
+complete active category. A successful save accepts the server's returned values
+and version together as the next clean editing basis.
+
+This is a **consumer reference recipe**, implemented only inside this tutorial's
+private fixtures. Request DTOs, commands, error codes and the leave-guard hook
+below are not installed application APIs or a backend request feature. The recipe
+uses the installed `useRgoForm`, field controls, TanStack validation logic, React
+Router blocker and feedback confirmation provider.
+
+## Try it
+
+Submit the empty form: errors appear and **Commands sent** stays zero. Then choose
+**Save draft**: the same incomplete input is accepted, version advances and the
+form becomes clean. Enter a title and quantity from 1 through 20, then submit.
+Switch Category to Software: Quantity disappears, its value is cleared, and
+submission now requires a purpose of at least 10 characters. Inspect the attempted
+command to see that inactive category values are pruned.
+
+**Save failure** rejects the first write before commit and preserves your input;
+retry succeeds. **Server validation** rejects the first command with a known title
+error and an unknown internal field; only the safe, translated title error is
+shown. Edit a field to retire the old response and retry.
+
+**Uncertain outcome** commits in the private simulated server and then loses its
+acknowledgement. Even an unchanged incomplete draft now shows **Outcome unknown**,
+keeps accepted version 7, and blocks all repeat writes and editor exits. The
+fixture's Accepted commands counter reflects its private server, not an editor
+acknowledgement. Refreshing an observation or selecting another intent must not
+clear the latch.
+
+In **Navigation guard**, edit the title and use **Change query**, **Leave editor**
+or **Preview logout**. Cancel preserves the draft and URL; confirm discards only
+changes since the accepted baseline. During a save, leave attempts are refused.
+**Simulate background refresh** advances only the observed server version: it must
+not replace typed values or the expected version in the next command.
+
+<Canvas of={DraftStories.Overview} story={{ inline: false, height: "1100px" }} sourceState="none" />
+
+## Before you start
+
+Paths below are relative to `frontend/`. Read Architecture, **Entity forms**,
+**Confirmations**, **Authentication and HTTP integration** and **Testing a feature**.
+The wider guide owns these contracts:
+
+- `docs/development-guide/en/frontend/forms/entity-modes-and-validation-policy.md`.
+- `docs/development-guide/en/frontend/forms/cross-field-constraints-and-reset.md`.
+- `docs/development-guide/en/frontend/editing/pinned-values-and-revisions.md`.
+- `docs/development-guide/en/frontend/editing/complete-navigation-guards.md`.
+- `docs/development-guide/en/frontend/async-commands/committed-writes-and-observer-failures.md`.
+
+The current `docs/storybook/examples/Contacts/components/ContactForm.tsx`
+is the reference single-intent example. Its
+`src/app/forms/utils/buildAppEntityFormOptions.ts` validates one supplied schema
+before submission. Do not attach a complete-submit schema there and expect a
+second Save draft button to bypass it. Dual-intent policy belongs to the feature;
+it does not require a second form framework or a global draft store.
+
+## 1. Agree the command contract before building the editor
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Draft and submit backend contract</caption>
+  <thead>
+    <tr>
+      <th scope="col">Concern</th>
+      <th scope="col">Contract to implement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Draft</th>
+      <td>Missing completion fields are legal; bounded types, relationships and supplied values still validate.</td>
+    </tr>
+    <tr>
+      <th scope="row">Submit</th>
+      <td>Revalidate completeness and category rules atomically before the workflow transition.</td>
+    </tr>
+    <tr>
+      <th scope="row">Authority</th>
+      <td>
+        Authenticate and authorize the current actor and record on every command. An enabled button is not permission.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Concurrency</th>
+      <td>
+        Compare the command's expected version with the stored version. A conflict preserves the authorized draft and
+        never silently upgrades its basis.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Acknowledgement</th>
+      <td>
+        Return canonical accepted values, status and new version after commit; the adapter validates that response.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Validation errors</th>
+      <td>Map agreed public field names and bounded machine codes. Never send internal exception prose as UI copy.</td>
+    </tr>
+    <tr>
+      <th scope="row">Uncertain write</th>
+      <td>
+        Distinguish a known rejection from a lost acknowledgement. Reconcile or use an agreed idempotency contract
+        before retrying an uncertain command.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+The names `draft`, `submit`, `expectedVersion`, `DRAFT`, `SUBMITTED` and the field
+error codes below are an illustrative consumer protocol. They do not assert that
+these endpoints or codes exist in this template. Define method/path, response
+schema, authorization, transaction and error mapping with the backend owner; the
+**Building a backend-connected feature** tutorial shows the transport seam.
+The preview models known pre-commit rejection, conflict and a synthetic lost
+acknowledgement after commit. Only a typed `rejected` outcome proves this command
+was not applied. An explicit `uncertain` outcome or any unclassified exception is
+conservatively unknown, including transport timeout, lost acknowledgement, and
+response decoding failure after the server may have committed.
+
+For a consumer feature, use these ordinary owned files rather than copying
+Storybook scaffolding:
+
+```text
+src/features/requests/
+├── models/draftRequestModel.ts       values, schema factory and command contracts
+├── hooks/useDraftLeaveGuard.ts       editor-owned exit policy
+└── components/DraftAndSubmitForm.tsx one form, command intents and accepted basis
+```
+
+## 2. Build a translated schema factory with explicit intent and context
+
+This complete model recipe accepts a translation function and outside validation
+context. The equipment limit is supplied by the caller; both schema and backend
+must enforce it. Incomplete does not mean arbitrary: drafts still trim text, cap
+lengths and reject an out-of-range quantity when one was supplied.
+
+The transition policy clears both category details on a deliberate category
+change. The schema also prunes inactive payload values, so command serialization
+does not depend solely on which controls are visible. Blank quantity is `null`,
+not zero. A production feature supplies its typed product-namespace translations
+in both supported locales; the dictionary below supplies this English tutorial.
+
+```ts
+// Example: src/features/requests/models/draftRequestModel.ts
+import { z } from "zod";
+
+/** Consumer recipe: these messages, DTOs and helpers are not installed app APIs. */
+export const draftExampleMessages = {
+  formLabel: "Draft request",
+  title: "Request title",
+  category: "Category",
+  equipment: "Equipment",
+  software: "Software",
+  quantity: "Quantity",
+  softwarePurpose: "Software purpose",
+  submit: "Submit request",
+  save: "Save draft",
+  saving: "Saving…",
+  required: "This field is required.",
+  titleLong: "Use at most 120 characters.",
+  purposeLong: "Use at most 500 characters.",
+  purposeShort: "Explain the purpose in at least 10 characters.",
+  quantityRange: "Enter a whole quantity within the allowed range.",
+  notAvailable: "This value is no longer available. Choose another value.",
+  invalid: "Correct the marked fields. No command was sent.",
+  rejected: "The write was rejected. Your input is unchanged; retry when ready.",
+  uncertain:
+    "The write outcome is unknown. Further writes and editor exits are blocked. Reconcile the authoritative record before continuing.",
+  outcomeUnknown: "Outcome unknown",
+  logoutFailed: "The sign-out action did not complete. Follow the authentication owner's recovery policy.",
+  serverInvalid: "The server rejected these values. Correct the marked fields.",
+  conflict:
+    "The saved version changed. Your input and original version are preserved. Review fresh data before retrying.",
+  saved: "Draft accepted. The returned values are now the clean baseline.",
+  submitted: "Request submitted after complete validation.",
+  idle: "Save an incomplete draft, or complete the fields and submit.",
+  discardTitle: "Discard unsaved changes?",
+  discardMessage: "Leave this editor and discard changes since the last accepted save?",
+  discard: "Discard changes",
+  keep: "Keep editing",
+  busyLeave: "Stay here while the command is pending. Leaving would not undo a server write.",
+  draftHelp: "An incomplete draft is allowed. Submit requires a title and the active category details.",
+  categoryHelp: "Changing category clears its previous details. Hidden details are also pruned from the command.",
+  dirty: "Dirty",
+  clean: "Clean",
+  acceptedVersion: "Accepted version",
+  latestVersion: "Latest observed version",
+  stale: "Background data changed. The draft and its accepted version stay pinned together.",
+  logout: "Preview logout",
+} as const;
+
+export type DraftMessage = keyof typeof draftExampleMessages;
+export type DraftTranslate = (key: DraftMessage) => string;
+export type DraftIntent = "draft" | "submit";
+export type DraftValues = {
+  title: string;
+  category: "equipment" | "software";
+  quantity: number | null;
+  softwarePurpose: string;
+};
+export type DraftValidationContext = Readonly<{ intent: DraftIntent; maximumEquipmentQuantity: number }>;
+
+export function pruneDraftValues(value: DraftValues): DraftValues {
+  return value.category === "equipment" ? { ...value, softwarePurpose: "" } : { ...value, quantity: null };
+}
+
+export function createDraftRequestSchema(t: DraftTranslate, context: DraftValidationContext) {
+  return z
+    .object({
+      title: z.string().trim().max(120, t("titleLong")),
+      category: z.enum(["equipment", "software"]),
+      quantity: z.number({ error: t("quantityRange") }).nullable(),
+      softwarePurpose: z.string().trim().max(500, t("purposeLong")),
+    })
+    .superRefine((value, issue) => {
+      if (context.intent === "submit" && !value.title) {
+        issue.addIssue({ code: "custom", path: ["title"], message: t("required") });
+      }
+      if (value.category === "equipment") {
+        if (value.quantity === null) {
+          if (context.intent === "submit") {
+            issue.addIssue({ code: "custom", path: ["quantity"], message: t("required") });
+          }
+        } else if (
+          !Number.isInteger(value.quantity) ||
+          value.quantity < 1 ||
+          value.quantity > context.maximumEquipmentQuantity
+        ) {
+          issue.addIssue({ code: "custom", path: ["quantity"], message: t("quantityRange") });
+        }
+      } else if (context.intent === "submit" && value.softwarePurpose.length < 10) {
+        issue.addIssue({ code: "custom", path: ["softwarePurpose"], message: t("purposeShort") });
+      }
+    })
+    .transform(pruneDraftValues);
+}
+
+export type DraftCommand = Readonly<{ intent: DraftIntent; expectedVersion: number; values: DraftValues }>;
+export type AcceptedDraft = Readonly<{ version: number; status: "DRAFT" | "SUBMITTED"; values: DraftValues }>;
+
+export class DraftCommandError extends Error {
+  readonly kind: "validation" | "conflict" | "rejected" | "uncertain";
+  readonly fieldErrors: unknown;
+
+  constructor(kind: DraftCommandError["kind"], fieldErrors: unknown = []) {
+    super(kind);
+    this.kind = kind;
+    this.fieldErrors = fieldErrors;
+  }
+}
+
+/** Translate only known codes on active, explicitly allowed fields. Never render server prose. */
+export function mapDraftServerErrors(raw: unknown, values: DraftValues, t: DraftTranslate) {
+  const fields: Partial<Record<keyof DraftValues, string>> = {};
+  const parsed = z
+    .array(z.object({ field: z.string().max(80), code: z.string().max(80) }))
+    .max(20)
+    .safeParse(raw);
+  if (!parsed.success) return fields;
+  for (const { field, code } of parsed.data) {
+    if (field !== "title" && field !== "quantity" && field !== "softwarePurpose") continue;
+    if (field === "quantity" && values.category !== "equipment") continue;
+    if (field === "softwarePurpose" && values.category !== "software") continue;
+    if (code === "required") fields[field] = t("required");
+    else if (code === "outOfRange") fields[field] = t("quantityRange");
+    else if (code === "notAvailable") fields[field] = t("notAvailable");
+  }
+  return fields;
+}
+```
+
+## 3. Compose all editor exits around the same live state
+
+Mount this complete hook below a **data router** (`RouterProvider`), as required
+by `useBlocker`. A plain MemoryRouter does not supply blocker support. The starter's
+reference `GuardedDraftPreview.tsx` covers pathname changes; this consumer recipe
+also treats every search change as an owner-relevant transition. Hash-only reading
+navigation is allowed. If a product intentionally retains an editor across query
+changes, define that exception at its owner instead of accidentally ignoring them.
+
+The same guard checks dirty/busy before a decision and again after the awaited
+confirmation. It discards only after a confirmed, still-valid decision. Browser
+unload uses native `beforeunload`; it cannot await the modal or guarantee custom
+warning text, and it is not durable draft storage.
+
+Explicit logout is an **upstream callback**, guarded before authentication is
+ended. There is no installed `useBeforeLogoutGuard` registry to import. Production
+application composition must route its real Sign out action through this policy;
+placing a guarded button in a feature does not automatically protect a separate
+header action, forced expiry or permission revocation. Never delay server-enforced
+session/authority loss behind a discard prompt.
+
+```ts
+// Example: src/features/requests/hooks/useDraftLeaveGuard.ts
+import { useRgoFeedback } from "@rgo-web/frontend";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useBlocker } from "react-router";
+
+import type { DraftTranslate } from "../models/draftRequestModel";
+
+type LeaveOptions = Readonly<{
+  getCurrent: () => Readonly<{ dirty: boolean; busy: boolean }>;
+  discard: () => void;
+  onLogout: () => Promise<void>;
+  onBusyLeave: () => void;
+  t: DraftTranslate;
+}>;
+
+/** Consumer-owned recipe. Mount below a data router; the app has no installed logout guard registry. */
+export function useDraftLeaveGuard(options: LeaveOptions) {
+  const feedback = useRgoFeedback();
+  const current = useRef(options);
+  useLayoutEffect(() => {
+    current.current = options;
+  }, [options]);
+  const prompt = useRef<AbortController | null>(null);
+  const logoutPending = useRef(false);
+  const logoutStarted = useRef(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const mayLeave = useCallback(
+    async (owner: AbortController) => {
+      const before = current.current.getCurrent();
+      if (before.busy) {
+        current.current.onBusyLeave();
+        return false;
+      }
+      if (!before.dirty) return !owner.signal.aborted;
+      const { t } = current.current;
+      const result = await feedback.confirm({
+        title: t("discardTitle"),
+        message: t("discardMessage"),
+        confirmLabel: t("discard"),
+        cancelLabel: t("keep"),
+        destructive: true,
+        signal: owner.signal,
+      });
+      if (owner.signal.aborted) return false;
+      const after = current.current.getCurrent();
+      if (after.busy) {
+        current.current.onBusyLeave();
+        return false;
+      }
+      if (!after.dirty) return true;
+      if (result.status !== "confirmed") return false;
+      current.current.discard();
+      return true;
+    },
+    [feedback],
+  );
+
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    const { dirty, busy } = current.current.getCurrent();
+    return (
+      (dirty || busy) &&
+      (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search)
+    );
+  });
+
+  useEffect(() => {
+    if (blocker.state !== "blocked") return;
+    if (prompt.current) {
+      blocker.reset();
+      return;
+    }
+    const owner = new AbortController();
+    prompt.current = owner;
+    void mayLeave(owner).then(allowed => {
+      if (owner.signal.aborted || prompt.current !== owner) return;
+      prompt.current = null;
+      if (allowed) blocker.proceed();
+      else blocker.reset();
+    });
+    return () => {
+      owner.abort();
+      if (prompt.current === owner) prompt.current = null;
+    };
+  }, [blocker, mayLeave]);
+
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      const { dirty, busy } = current.current.getCurrent();
+      if (!dirty && !busy) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      prompt.current?.abort();
+      prompt.current = null;
+    };
+  }, []);
+
+  const requestLogout = useCallback(async () => {
+    if (prompt.current || logoutPending.current) return;
+    const owner = new AbortController();
+    prompt.current = owner;
+    logoutPending.current = true;
+    try {
+      if (!(await mayLeave(owner)) || owner.signal.aborted || current.current.getCurrent().busy) return;
+      // Once the exit is accepted, prevent a fresh edit command while sign-out is pending.
+      logoutStarted.current = true;
+      setLoggingOut(true);
+      await current.current.onLogout();
+    } finally {
+      if (prompt.current === owner) prompt.current = null;
+      logoutPending.current = false;
+      logoutStarted.current = false;
+      if (!owner.signal.aborted) setLoggingOut(false);
+    }
+  }, [mayLeave]);
+
+  return { requestLogout, loggingOut, isLoggingOut: () => logoutStarted.current };
+}
+```
+
+Only one confirmation belongs to this editor at a time. Cleanup aborts that exact
+prompt, removes the unload listener and ignores obsolete continuations. An
+AbortController stops the caller's continuation; it does not undo a server write.
+A real logout failure remains the authentication owner's error policy.
+
+## 4. Use one form and select validation before each submission
+
+This complete component uses installed `useRgoForm` and `AppField` controls. A
+native semantic form root receives `SubmitEvent.submitter`, so both actions share
+one owner and Enter defaults to the first, complete-submit action. The native root
+is deliberate: installed `form.Form` owns its submit handler and does not accept
+an `onSubmit` replacement. `form.AppForm` still supplies the installed fields'
+context; the recipe also owns native submit prevention and first-invalid focus.
+
+The synchronous ref claims an operation before validation or any await; disabled
+buttons only expose that state visually. `canSubmitWhenInvalid` prevents old
+complete-submit errors from disabling the legal Save draft action. It does **not**
+skip validation: the selected schema still runs before `onSubmit`, and the parsed
+command is checked again before execution. Empty field maps clear earlier mapped
+field errors, including errors for controls hidden by category changes.
+
+After the first attempt, the dynamic validator reruns on change with that last
+intent. Starting either action selects its own intent and performs a full check.
+Server errors belong to the rejected value snapshot; any edit clears that
+snapshot's mapped errors, and a new command revalidates the current values.
+The post-command field errors use TanStack's `onSubmit` error slot, while schema
+errors use `onDynamic`. The installed `FormValidators` has no `onServer` validator
+option; its server-validation cause belongs to SSR/SSG, not this client command
+callback. Mapping command errors to `onSubmit` uses the actual typed API without
+casts or a fictional validator.
+Unknown field names, inactive fields and unknown machine codes are never rendered
+or assigned to arbitrary form paths.
+
+```tsx
+// Example: src/features/requests/components/DraftAndSubmitForm.tsx
+import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import { revalidateLogic, useStore } from "@tanstack/react-form";
+import { useRgoForm } from "@rgo-web/frontend";
+import { useEffect, useRef, useState } from "react";
+
+import {
+  createDraftRequestSchema,
+  DraftCommandError,
+  mapDraftServerErrors,
+  type AcceptedDraft,
+  type DraftCommand,
+  type DraftIntent,
+  type DraftMessage,
+  type DraftTranslate,
+  type DraftValues,
+} from "../models/draftRequestModel";
+import { useDraftLeaveGuard } from "../hooks/useDraftLeaveGuard";
+
+type Props = Readonly<{
+  initial: AcceptedDraft;
+  latestVersion: number;
+  maximumEquipmentQuantity: number;
+  execute: (command: DraftCommand) => Promise<AcceptedDraft>;
+  onLogout: () => Promise<void>;
+  t: DraftTranslate;
+}>;
+
+/** Complete consumer recipe: one mounted form, two command intents and one accepted editing basis. */
+export function DraftAndSubmitForm({ initial, latestVersion, maximumEquipmentQuantity, execute, onLogout, t }: Props) {
+  const [basis, setBasis] = useState(initial);
+  const [message, setMessage] = useState<DraftMessage>("idle");
+  const [pending, setPending] = useState(false);
+  const [conflicted, setConflicted] = useState(false);
+  const [outcomeUnknown, setOutcomeUnknown] = useState(false);
+  // The synchronous latch also protects event handlers before the next React render.
+  const uncertainty = useRef(false);
+  const intent = useRef<DraftIntent>("submit");
+  const commandOwner = useRef<AbortController | null>(null);
+  const focusTimer = useRef<number | undefined>(undefined);
+  const element = useRef<HTMLFormElement | null>(null);
+  const alive = useRef(true);
+
+  const form = useRgoForm({
+    defaultValues: initial.values,
+    onSubmitMeta: { intent: "submit" as DraftIntent },
+    // A previous strict validation error must not disable the legal Save draft path.
+    // TanStack still executes the selected validators before onSubmit.
+    canSubmitWhenInvalid: true,
+    validationLogic: revalidateLogic({ mode: "submit", modeAfterSubmission: "change" }),
+    validators: {
+      onDynamic: ({ value }) => {
+        const result = createDraftRequestSchema(t, { intent: intent.current, maximumEquipmentQuantity }).safeParse(
+          value,
+        );
+        if (result.success) return undefined;
+        const fields: Partial<Record<keyof DraftValues, string>> = {};
+        for (const issue of result.error.issues) {
+          const field = issue.path[0];
+          if (field === "title" || field === "quantity" || field === "softwarePurpose" || field === "category") {
+            fields[field] ??= issue.message;
+          }
+        }
+        return { fields };
+      },
+    },
+    listeners: { onChange: ({ formApi }) => formApi.setErrorMap({ onSubmit: { fields: {} } }) },
+    onSubmitInvalid: () => setMessage("invalid"),
+    onSubmit: async ({ value, formApi, meta }) => {
+      const owner = commandOwner.current;
+      if (!owner || owner.signal.aborted) return;
+      const values = createDraftRequestSchema(t, { intent: meta.intent, maximumEquipmentQuantity }).parse(value);
+      // Capture values and the SAME accepted version before awaiting. Refresh is only an observation.
+      const command: DraftCommand = { intent: meta.intent, expectedVersion: basis.version, values };
+      let accepted: AcceptedDraft;
+      try {
+        accepted = await execute(command);
+      } catch (error) {
+        if (owner.signal.aborted || commandOwner.current !== owner) return;
+        if (error instanceof DraftCommandError && error.kind === "validation") {
+          formApi.setErrorMap({ onSubmit: { fields: mapDraftServerErrors(error.fieldErrors, values, t) } });
+          setMessage("serverInvalid");
+        } else if (error instanceof DraftCommandError && error.kind === "conflict") {
+          setConflicted(true);
+          setMessage("conflict");
+        } else if (error instanceof DraftCommandError && error.kind === "rejected") {
+          setMessage("rejected");
+        } else {
+          // A lost acknowledgement, timeout, or unknown exception does NOT prove rollback.
+          uncertainty.current = true;
+          setOutcomeUnknown(true);
+          setMessage("uncertain");
+        }
+        // Neither rejection nor uncertainty is the form library's successful submit.
+        throw error;
+      }
+      if (owner.signal.aborted || commandOwner.current !== owner) return;
+      setBasis(accepted);
+      formApi.reset(accepted.values);
+      setMessage(accepted.status === "DRAFT" ? "saved" : "submitted");
+      // A later toast or cache refresh belongs outside the write-rejection catch.
+    },
+  });
+  const dirty = useStore(form.store, state => state.isDirty);
+
+  const leaveGuard = useDraftLeaveGuard({
+    getCurrent: () => ({ dirty: form.state.isDirty, busy: commandOwner.current !== null || uncertainty.current }),
+    discard: () => form.reset(),
+    onLogout,
+    onBusyLeave: () => setMessage(uncertainty.current ? "uncertain" : "busyLeave"),
+    t,
+  });
+
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      commandOwner.current?.abort();
+      commandOwner.current = null;
+      window.clearTimeout(focusTimer.current);
+    };
+  }, []);
+
+  const run = async (selectedIntent: DraftIntent) => {
+    if (
+      commandOwner.current ||
+      uncertainty.current ||
+      leaveGuard.isLoggingOut() ||
+      conflicted ||
+      basis.status === "SUBMITTED"
+    )
+      return;
+    const owner = new AbortController();
+    commandOwner.current = owner;
+    intent.current = selectedIntent;
+    setPending(true);
+    // Empty field maps clear earlier mapped field errors as well as the form summary.
+    form.setErrorMap({ onDynamic: { fields: {} }, onSubmit: { fields: {} } });
+    try {
+      await form.handleSubmit({ intent: selectedIntent });
+    } catch {
+      // The callback mapped rejection or latched uncertainty; consume the event promise without resetting either.
+    } finally {
+      if (commandOwner.current === owner) {
+        commandOwner.current = null;
+        setPending(false);
+        window.clearTimeout(focusTimer.current);
+        focusTimer.current = window.setTimeout(() => {
+          element.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+        }, 0);
+      }
+    }
+  };
+
+  return (
+    <Stack spacing={2}>
+      <Alert severity="info">{t("draftHelp")}</Alert>
+      <Typography role="status">
+        {t(outcomeUnknown ? "outcomeUnknown" : dirty ? "dirty" : "clean")} · {t("acceptedVersion")}: {basis.version} ·{" "}
+        {t("latestVersion")}: {latestVersion}
+      </Typography>
+      {latestVersion !== basis.version ? <Alert severity="warning">{t("stale")}</Alert> : null}
+      <form.AppForm>
+        <form
+          aria-label={t("formLabel")}
+          noValidate
+          onSubmit={event => {
+            event.preventDefault();
+            const submitter = (event.nativeEvent as SubmitEvent).submitter;
+            const selectedIntent =
+              submitter instanceof HTMLButtonElement && submitter.value === "draft" ? "draft" : "submit";
+            void run(selectedIntent);
+          }}
+          ref={element}
+        >
+          <Stack spacing={2}>
+            <Box
+              component="fieldset"
+              disabled={pending || outcomeUnknown || leaveGuard.loggingOut || basis.status === "SUBMITTED"}
+              sx={{ border: 0, m: 0, minWidth: 0, p: 0 }}
+            >
+              <Stack spacing={2}>
+                <form.AppField name="title">{field => <field.TextField fullWidth label={t("title")} />}</form.AppField>
+                <form.AppField
+                  name="category"
+                  listeners={{
+                    onChange: () => {
+                      form.setFieldValue("quantity", null);
+                      form.setFieldValue("softwarePurpose", "");
+                    },
+                  }}
+                >
+                  {field => (
+                    <field.SelectField
+                      fullWidth
+                      label={t("category")}
+                      getOptionValue={value => value}
+                      options={["equipment", "software"] as const}
+                      renderOption={value => t(value)}
+                    />
+                  )}
+                </form.AppField>
+                <Typography color="text.secondary">{t("categoryHelp")}</Typography>
+                <form.Subscribe selector={state => state.values.category}>
+                  {category =>
+                    category === "equipment" ? (
+                      <form.AppField name="quantity">
+                        {field => <field.NumberField fullWidth label={t("quantity")} />}
+                      </form.AppField>
+                    ) : (
+                      <form.AppField name="softwarePurpose">
+                        {field => <field.TextField fullWidth label={t("softwarePurpose")} multiline minRows={2} />}
+                      </form.AppField>
+                    )
+                  }
+                </form.Subscribe>
+              </Stack>
+            </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              <Button
+                disabled={
+                  pending || outcomeUnknown || leaveGuard.loggingOut || conflicted || basis.status === "SUBMITTED"
+                }
+                name="intent"
+                type="submit"
+                value="submit"
+                variant="contained"
+              >
+                {pending ? t("saving") : t("submit")}
+              </Button>
+              <Button
+                disabled={
+                  pending || outcomeUnknown || leaveGuard.loggingOut || conflicted || basis.status === "SUBMITTED"
+                }
+                name="intent"
+                type="submit"
+                value="draft"
+                variant="outlined"
+              >
+                {t("save")}
+              </Button>
+            </Box>
+          </Stack>
+        </form>
+      </form.AppForm>
+      <Alert severity={conflicted || outcomeUnknown ? "warning" : "info"} role="status">
+        {t(message)}
+      </Alert>
+      <Button
+        disabled={leaveGuard.loggingOut}
+        onClick={() =>
+          void leaveGuard.requestLogout().catch(() => {
+            if (alive.current) setMessage("logoutFailed");
+          })
+        }
+        sx={{ alignSelf: "flex-start" }}
+      >
+        {t("logout")}
+      </Button>
+    </Stack>
+  );
+}
+```
+
+Mount the component with a stable editor key based on the selected record/session,
+not theme, locale, query object identity or latest version. `initial` is the
+accepted editing session, not an instruction to reset every time query data
+changes. Translate all labels and messages through the owning product namespace.
+The accessible form name and status copy use the same translated message contract.
+Store message keys, rather than translated strings, so locale changes update
+status copy without resetting the draft.
+
+Supply `execute` from the feature's awaited command, with normalized errors and
+validated accepted responses. Do not pass fire-and-forget `mutate`. The command
+catch covers the write only; later toast/cache-refresh failure cannot turn an
+acknowledged save into a rejected write. A definitive typed rejected write leaves
+values, dirty state and version unchanged and never displays completion. Only
+that known rejection can expose ordinary retry. An unknown error instead latches
+uncertainty synchronously, disables input and both intents, retains the immutable
+editing basis and reports **Outcome unknown** rather than **Clean**. Native unload
+still warns; SPA/search/logout exits remain blocked as unresolved work, even if
+values happen to match the old baseline. Clearing pending state does not clear
+this latch.
+
+## 5. Accept values and version together; make conflict recovery explicit
+
+Only acknowledged success runs `form.reset(accepted.values)` and accepts the new
+version. This makes a saved incomplete draft clean without pretending it is ready
+to submit. A subsequent edit is dirty relative to that saved draft, rather than
+the original record. A successful final submit disables this sample editor.
+
+A background refresh changes `latestVersion` only. The command still carries the
+version associated with the edited values. The fixture lets the simulated server
+reject that stale command, then blocks further writes while retaining useful
+input. It deliberately does not silently reload or merge. See **Workflow commands,
+conflicts and coordinated refresh** for the complete explicit read/discard/reload
+recovery and cache projection policy. A production editor must wire that recovery
+before treating this form recipe as its finished feature.
+
+Uncertainty has a separate host replacement contract. Retain the attempted command
+identity/payload and original version; perform authoritative reconciliation using
+the backend's receipt/idempotency or record-status contract. A merely newer query
+version does not prove which command caused it. Only after the outcome is resolved
+and fresh authorized values are deliberately accepted may the consumer replace
+this editor with a new session/basis. Do not remount on an observation, toggle the
+intent, reset the form, clear a dirty flag, or use ordinary retry to erase unknown
+outcome. This focused recipe deliberately supplies no bypass/reload button for an
+unreconciled write; its workflow owner must implement that resolution protocol.
+
+Authority loss is different: clear restricted values and obsolete actions
+immediately through the owning authority/session lifecycle, even when dirty.
+Draft preservation does not grant permission to retain revoked information.
+
+## Common mistakes
+
+- Attaching the strict schema to both buttons, so Save draft can never save incomplete input.
+- Treating Save draft as a validation bypass that accepts invalid supplied values.
+- Reading a mutable intent or version after an await instead of capturing the command first.
+- Resetting on query refresh, or replacing only the hidden expected version behind old values.
+- Hiding category fields while still sending obsolete values or stale server errors.
+- Rendering server messages/field paths directly, or clearing the draft after a rejected command.
+- Using two forms, a second global draft store or a fictional installed logout registry.
+- Assuming a custom confirmation protects browser unload, unguarded header logout or forced session expiry.
+- Letting a delayed discard decision leave while a write has since started.
+- Calling an unknown exception a rejected write, or erasing uncertainty by reset, remount, background refresh or an alternate command intent.
+
+## 6. Verify the contract at each boundary
+
+From the workspace root, run the existing checks sequentially:
+
+```sh
+npm --prefix frontend run test -- tests/storybook/contacts/models/Contact.test.ts tests/storybook/contacts/components/ContactForm.test.tsx
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify
+```
+
+The Contacts tests establish the installed foundation; they do not test a consumer
+request feature that has not been implemented. Add request-owned model/form tests
+under `tests/features/requests/`, transport cases under the appropriate integration
+owner, and real backend command/authorization/concurrency tests for its contract.
+Use **Testing a feature** for fresh fixtures and boundary assertions.
+
+With the current Storybook running:
+
+```sh
+npm --prefix frontend run test:browser:storybook
+```
+
+Check empty strict submit sends no command; saving the same incomplete draft
+succeeds; correcting visible errors revalidates; category changes clear and prune;
+unknown server fields are ignored; known rejected saves retain input and retry once;
+unknown outcomes disable both intents, preserve the original version and block
+all exits even when the old form values were clean;
+accepted saves establish a clean baseline; background refresh never upgrades the
+command basis; conflict never reports success; double-click sends one command.
+Cancel SPA/search/logout decisions and retain input/URL; confirm and discard;
+refuse busy exits; verify unload warnings with a real browser gesture. Change global
+theme while typing or a prompt is open: state must survive. Check narrow screens,
+keyboard focus/error associations and both production locales. Browser fixtures
+prove local interactions, not remote persistence, authorization, transaction
+atomicity or complete assistive-technology acceptance.
+
+## Read this tutorial without Storybook
+
+All three complete recipe files are literal fenced source above. Their compiled
+counterparts live beside this MDX as `draftRequestModel.ts`,
+`useDraftLeaveGuard.ts` and `DraftAndSubmitForm.tsx`; the relative imports in the
+application fences match the proposed owner tree. Inspect the actual installed
+sources at `docs/storybook/examples/Contacts/components/ContactForm.tsx`,
+`src/app/forms/utils/buildAppEntityFormOptions.ts` and
+`docs/storybook/patterns/Forms/components/DirtyStateAndNavigationGuardPanel/GuardedDraftPreview.tsx`.
+
+```sh
+npm --prefix frontend run guide:index -- search "Draft and submit forms"
+npm --prefix frontend run guide:index -- search complete-navigation-guards
+```
+
+## Storybook fixture reference
+
+`DraftAndSubmitForms.stories.tsx` selects Overview, SaveFailure, ServerValidation
+and NavigationGuard, plus UncertainOutcome. `DraftAndSubmitFormsExample.tsx` owns an in-memory data router,
+synthetic server version, known rejection and lost-acknowledgement cases, accepted/attempted command
+observations and a 650 ms cancellable timer. Its logout callback changes only the
+private preview route. No HTTP request, application storage or real authentication
+operation is performed. It imports the reusable dynamic preview address bar and
+inherits the existing global English localization, theme and feedback providers.
+Scenario changes create a fresh session; global theme changes preserve state.
+Ending the preview disposes its router, cancels private timers/prompts and removes
+the unload listener. None of this fixture construction belongs in production
+bootstrap.

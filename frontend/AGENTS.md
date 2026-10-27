@@ -4,6 +4,16 @@ For every task, follow the root
 [mandatory development-guide workflow](../AGENTS.md#mandatory-development-guide-workflow),
 including its pattern-reuse and approval gate.
 
+Use the [Storybook Development Guide](docs/storybook/README.md) for the mandatory
+Architecture reading and task-specific routing, form and feedback tutorials.
+Read their MDX sources before planning or editing; apply every relevant rule and
+reuse the installed application interfaces and isolated Storybook references. The
+application source contains no development guide; teaching implementations,
+article readers, catalogs and guide translations belong under `docs/storybook/`.
+Keep production imports independent of `docs/` and `.storybook/`. Stories and their support files belong
+under `docs/storybook/<section>/<Tutorial>/`, outside `src/`; section-wide helpers
+belong in that section's `shared/` folder.
+
 For route and page lifecycle changes, use [app-route-pages](.agents/skills/app-route-pages/SKILL.md). For drawer, section, header, breadcrumb, and page-sidebar navigation, use [app-shell-navigation](.agents/skills/app-shell-navigation/SKILL.md). For shell appearance and preferences, use [app-shell-preferences](.agents/skills/app-shell-preferences/SKILL.md). Load the related skill when one request crosses these owners.
 
 When creating or updating a skill under `.agents/skills/`, use Start → Workflow → Finish. A bare `$skill-name` asks one short action menu with free-text input and waits; a prompt with a concrete task proceeds directly.

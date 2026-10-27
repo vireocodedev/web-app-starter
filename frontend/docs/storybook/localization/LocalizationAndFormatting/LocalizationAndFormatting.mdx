@@ -1,0 +1,276 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as LocalizationStories from "./LocalizationAndFormatting.stories";
+
+<Meta of={LocalizationStories} />
+
+# Localization and formatting
+
+Keep domain values stable and translate or format them at presentation time.
+The application owns supported locales, typed resources, live locale selection,
+MUI text and date/number formatting; a feature supplies its messages and business
+inputs. Reuse those owners rather than creating another i18n singleton.
+
+## Try it
+
+Change **Formatting locale**, currency and time zone. The same numbers and UTC
+instant acquire different displays while **Draft name** stays intact. Use the
+other stories for named interpolation, numeric plurals and a midnight boundary.
+Controls, documentation and messages remain English. The locale selector affects
+only the formatting comparison; it does not switch Storybook's language, write
+app preferences or change the document's language. The plural-category comparison
+is labelled separately from the English i18next message.
+
+<Canvas of={LocalizationStories.Overview} story={{ inline: false, height: "900px" }} sourceState="none" />
+
+## Before you start
+
+Paths below are relative to `frontend/`. Read
+`docs/architecture/en/localization-theme-and-preferences.md` and
+`docs/development-guide/en/frontend/localization/typed-resource-shapes-and-locale-switching.md`.
+Inspect the current provider/resources and the reference examples under
+`docs/storybook/patterns/Localization/`.
+
+The app supports `en` and `hr`, both LTR. Storybook tutorials use English. Adding
+a third application locale, asynchronous resource loading or RTL layouts changes
+the existing contract and is not accomplished by adding a dropdown option here.
+
+## Files and ownership
+
+```text
+src/app/localization/localeConfig.ts                       supported locales and default time zone
+src/app/localization/translations/translation.{en,hr}.ts   product resources
+docs/storybook/examples/shared/localization/development-guide.{en,hr}.ts  Storybook-only resources
+src/app/localization/types/TranslationShape.ts             matching string-leaf resource shapes
+src/app/localization/i18next.augmentation.ts               typed namespaces and keys
+src/app/localization/createAppI18n.ts                       per-provider i18next instance
+src/app/localization/components/AppLocalizationProvider.tsx  live locale, document attributes and setter
+src/app/localization/hooks/useAppLocalizationFormatters.ts active-locale formatters
+src/app/localization/formatters.ts                         pure formatting functions
+src/app/localization/localeSetup.ts                        resources and MUI locale options
+src/app/bootstrap/runtime/AppProviders.tsx                 existing provider composition
+```
+
+The localization preference belongs to `app/localization`; Settings and the
+header present it. A form draft keeps IDs, codes and numeric values, never
+translated labels as identity. Date-only values and instants have different
+domain meanings; decide that meaning before choosing a display formatter.
+
+## 1. Reuse the installed localization boundary
+
+`AppProviders.tsx` already installs one `AppLocalizationProvider` outside the
+localized theme, feedback, runtime, Query, auth and router. It calls the existing
+initial-locale resolver: explicit stored preference, supported browser choice,
+then English. Fixed application locale overrides this choice and guards setters.
+
+`createAppI18n()` creates an owned instance, initializes bundled resources
+synchronously, and registers the ordinary `translation` namespace in every
+build. `development-guide` is registered only by Storybook. Product code uses
+`useAppTranslation()`; docs-only guide examples use their local `useDevelopmentGuideTranslation()`. The production app loads no guide resources.
+Do not copy guide-only message keys into a production page.
+
+Consume this existing boundary in feature code. Do not add a provider to every
+feature, mutate i18next's global default instance, or reconstruct the runtime
+when the language changes. The provider owns document `lang`/`dir` and cleanup.
+
+## 2. Add matching typed messages
+
+Add copy under the appropriate branch of the existing English and Croatian
+resource modules. The English object defines structural keys; its Croatian
+counterpart satisfies `TranslationShape`. The docs-only guide resources use their own matching `StringLeaves` shape.
+The existing augmentation makes namespace/key usage type checked.
+
+These are the relevant English resource shapes already used by the interpolation
+examples. This is a shape illustration, not a replacement for the full catalog:
+
+```ts
+const interpolationMessages = {
+  named: { message: "Welcome, {{name}}!" },
+  plural: {
+    message_one: "{{count}} item selected",
+    message_few: "{{count}} items selected",
+    message_other: "{{count}} items selected",
+  },
+} as const;
+```
+
+Supply the parallel translated values in the Croatian resource, preserving keys
+and interpolation names. Numeric `count` lets i18next select a locale's cardinal
+form; do not concatenate an English plural suffix. The starter uses a shared
+one/few/other shape for these messages even though English does not use `few` in
+ordinary cardinal selection. Check 1, 2, 5 and 21 in both application locales.
+
+Types check shape and keys. They do not prove placeholder parity, grammar or
+translation quality. Review the actual messages too. Keep user-provided values
+as named interpolation data and render through React; the current interpolation
+configuration is not permission to inject translated text as HTML.
+
+## 3. Derive messages from live translation context
+
+This complete component uses existing **development-guide** keys, as the current
+`CardinalPluralsPreview.tsx` does. The application component equivalent uses
+`useAppTranslation()` and keys in the product resource modules.
+
+```tsx
+// docs/storybook/patterns/Localization/components/SelectionSummary.tsx
+import { Stack, Typography } from "@mui/material";
+
+import { useDevelopmentGuideTranslation } from "../../../examples/shared/localization/useDevelopmentGuideTranslation";
+
+type SelectionSummaryProps = Readonly<{ count: number; name: string }>;
+
+export function SelectionSummary({ count, name }: SelectionSummaryProps) {
+  const { t } = useDevelopmentGuideTranslation();
+  return (
+    <Stack spacing={1}>
+      <Typography>{t("localizationExamples.interpolation.named.message", { name })}</Typography>
+      <Typography>{t("localizationExamples.interpolation.plural.message", { count })}</Typography>
+    </Stack>
+  );
+}
+```
+
+Keep `count` numeric and names/record IDs stable. Recompute column headers,
+menu labels and options from the live `t` function; include it in memoization
+dependencies when building those collections. Avoid storing translated text in
+state or calculating it once with empty dependencies.
+
+An open form keeps its draft when locale changes. Deliberately rebuild/revalidate
+translated validation messages and refresh open-overlay copy under their owner;
+the provider cannot rewrite arbitrary strings already captured by a feature.
+The Entity forms tutorial covers the translated schema factory.
+
+## 4. Format numbers and instants through the owning hooks
+
+Use `useAppLocalizationFormatters()` in application components. It binds the
+active locale and defaults dates/times to `Europe/Zagreb`. Currency remains an
+explicit domain input; a language does not select the transaction's currency.
+
+This complete component uses only installed hooks and product keys:
+
+```tsx
+// Example feature component; place it with the feature that owns the amount/instant.
+import { Stack, Typography } from "@mui/material";
+
+import { useAppLocalization } from "@/app/localization/hooks/useAppLocalization";
+import { useAppLocalizationFormatters } from "@/app/localization/hooks/useAppLocalizationFormatters";
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+type LocalizedSummaryProps = Readonly<{
+  amount: number;
+  completion: number;
+  currency: string;
+  occurredAt: Date;
+  timeZone?: string;
+}>;
+
+export function LocalizedSummary({ amount, completion, currency, occurredAt, timeZone }: LocalizedSummaryProps) {
+  const { locale } = useAppLocalization();
+  const { t } = useAppTranslation();
+  const { formatCurrency, formatDateTime, formatPercentage } = useAppLocalizationFormatters();
+  return (
+    <Stack spacing={1}>
+      <Typography>{t("locale.active", { locale })}</Typography>
+      <Typography>{formatCurrency(amount, currency)}</Typography>
+      <Typography>{formatPercentage(completion, { maximumFractionDigits: 1 })}</Typography>
+      <Typography>{formatDateTime(occurredAt, { timeZone })}</Typography>
+    </Stack>
+  );
+}
+```
+
+`completion` is a ratio: `0.725` is 72.5 percent, not `72.5`. Keep numbers as
+numbers; formatting is not a localized-input parser. Supply an explicit time zone
+when the domain requires another zone. Never rely on the developer machine's
+clock zone or concatenate currency/date punctuation manually.
+
+For pure functions outside React, import from `app/localization/formatters.ts`.
+Unlike the hook, pure date/time functions require a locale **and** time zone:
+
+```ts
+import { formatCurrency, formatDateTime } from "@/app/localization/formatters";
+
+const amount = formatCurrency("en", 1450.5, "EUR");
+const timestamp = formatDateTime("en", new Date("2026-01-15T23:30:00Z"), "Europe/Zagreb");
+```
+
+That instant is on January 16 in Zagreb and January 15 in UTC. A time-zone
+override changes presentation, not the original instant or draft identity.
+
+## 5. Keep MUI text and preference policy with application composition
+
+The existing `LocalizedThemeProvider` in `AppProviders.tsx` passes
+`muiLocaleOptions[locale]` and direction into `AppThemeProvider`, together with
+fixed settings. This supplies localized MUI controls without importing locale
+objects in each feature. Application components use translated accessible names,
+pagination labels and validation messages; core MUI locale options cannot infer
+business copy or customize every external component automatically.
+
+Use `useAppLocalization()` for the application locale and its guarded `setLocale`.
+Existing Settings/header controls honor fixed-value policy. Do not add a separate
+locale preference store, reset the draft on locale changes, or imply all-tab
+synchronization: the installed provider observes its own i18next instance, not
+locale storage events from other tabs.
+
+Storybook keeps its global English boundary and global Theme toolbar. The fixture
+uses the actual pure formatter functions with an isolated local formatting
+locale. Its English interpolation demo consumes the existing English guide
+resources; it is not another application provider or a simulated global language
+switcher. This avoids writing application preferences or changing document
+attributes while preserving the real formatting/translation mechanics.
+
+## Common mistakes
+
+- Copying development-only resource keys into product code that must work in production.
+- Treating shape checking as a grammar or interpolation-placeholder test.
+- Caching `t` results forever or translating IDs/status codes before storing them.
+- Rebuilding a feature runtime or clearing a form draft when locale changes.
+- Passing 72.5 to a percent formatter when the intended ratio is 0.725.
+- Assuming currency follows language or dates follow the machine's time zone.
+- Adding per-story theme providers or persisting sandbox locale choices.
+
+## 6. Verify your implementation
+
+Run checks sequentially from the workspace root:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+```
+
+Check matching application resource keys, named interpolation, and numeric counts
+1/2/5/21. Switch real application locale and confirm labels, formatted values,
+MUI controls and document attributes update without changing domain values/drafts.
+Verify stored and fixed-locale policy through the owning application tests.
+
+For these stories, change formatting locale, currency and explicit time zone;
+confirm the same raw instant and draft remain. The messages story stays English
+while exposing another locale's plural category. Change Light → Dark → Light:
+state survives and both Docs and preview adopt the global theme. At narrow widths,
+controls and formatted results remain reachable without page-wide horizontal
+overflow. Selecting another story starts a clean preview.
+
+With the current Storybook build served, run
+`npm --prefix frontend run test:browser:storybook`; use `RGO_STORYBOOK_URL` for an
+existing server on another port. Finish the required `npm --prefix frontend run verify`.
+
+## Read this tutorial without Storybook
+
+This MDX supplies exact paths and complete component examples. Read the two
+authoritative articles above and the current provider/hook/resource sources.
+Discover them from the workspace root:
+
+```sh
+npm --prefix frontend run guide:index -- search "Localization and formatting"
+npm --prefix frontend run guide:index -- search useAppLocalizationFormatters
+```
+
+## Storybook fixture reference
+
+`LocalizationAndFormattingExample.tsx` and `LocalizationAndFormatting.stories.tsx`
+live beside this MDX under `docs/storybook/localization/LocalizationAndFormatting/`.
+Their English instructions and local locale/currency/time-zone/draft controls are
+preview policy. They import the real formatting functions and existing translation
+hook, use the global theme/provider, perform no network requests, and write no
+application storage. They neither install `AppLocalizationProvider` nor publish a
+new application API.

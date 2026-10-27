@@ -28,6 +28,10 @@ Ako workspace traži jednu tešku provjeru istodobno, koordinator serijalizira b
 
 Workflow ima tri frontend i tri backend testna sharda uz isključeni matrix fail-fast. Slotovi određuju stvarni broj istodobnih poslova; matrica određuje koliko ih čeka. Frontend shard izričito koristi jedan Vitest worker. Vitest konfiguracija u snapshotu također koristi jedan worker u CI-ju i dva lokalno.
 
+Frontend statička provjera ograničava Nodeov old-space heap na 1536 MiB. Storybook i produkcijski Docker build koriste isti heap limit te `ROLLDOWN_WORKER_THREADS=2` i `RAYON_NUM_THREADS=2`. Rolldownov runtime i Rayon imaju zasebne native thread poolove; samo ograničenje JavaScript heapa ne ograničava njihovu memoriju. Ove postavke samo za build ostavljaju prostor za native alokacije, runner i ostale procese unutar memorijskog budžeta workera. Ne mijenjaju okolinu deployane aplikacije. Vidi [Rolldownovu dokumentaciju thread poolova](https://rolldown.rs/guide/troubleshooting).
+
+Uz OOM brojače pregledaj `memory.events` i memorijski pritisak. Dugotrajni reclaim iznad `memory.high` može zaustaviti napredovanje builda i runner heartbeat bez OOM killa. Prije prijedloga većeg host limita izmjeri stvarni build s ograničenim heapom i native poolovima; lokalni RSS procesa pomoćni je dokaz, a potpuni CI run mora stati i unutar worker cgroupa.
+
 Backend kompilira cjelovite testne izvore. Inventar i stvarni testovi koriste jedan fork, a testni JVM vidi dva procesora. Spring context cache ograničen je na dva jer svaki kontekst drži server, pool i PostgreSQL resurse. Fixturei zajedničke baze ne postaju sigurni za paralelno izvršavanje samo promjenom rasporeda klasa.
 
 Build JVM ima zaseban limit:

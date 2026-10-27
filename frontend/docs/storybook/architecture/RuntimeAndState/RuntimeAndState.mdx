@@ -1,0 +1,131 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./RuntimeAndState.stories";
+
+<Meta of={Stories} />
+
+# Runtime and state ownership
+
+Choose responsibility and lifetime before adding factories, providers, Contexts or Signals. The production runtime contains infrastructure and an empty feature registry. Contacts demonstrates an injected runtime solely in Storybook.
+
+## Try it
+
+<Canvas of={Stories.Overview} story={{ inline: false, height: "720px" }} sourceState="none" />
+
+## Before you start
+
+Paths are relative to `frontend/`. Read `docs/architecture/en/runtime-providers-and-lifetimes.md`, `docs/architecture/en/apis-models-queries-and-mutations.md`, `docs/architecture/en/state-ownership-and-signal-lifecycle.md`. Inspect the current implementation and its callers before reusing a pattern. Contacts lives only under `docs/storybook/examples/Contacts/`; installed Settings and app infrastructure remain under `src/`. Consumer recipes describe explicit installation work, not APIs already registered in the app.
+
+## 1. Add a factory for a construction responsibility
+
+Read `docs/architecture/en/runtime-providers-and-lifetimes.md`, `apis-models-queries-and-mutations.md` and `state-ownership-and-signal-lifecycle.md`. Inspect current `src/app/bootstrap/runtime/createAppRuntime.ts` and `appFeatures.ts`.
+
+The complete reference factory at `docs/storybook/examples/Contacts/contacts.feature.ts` receives its collaborators:
+
+```ts
+// Reference: docs/storybook/examples/Contacts/contacts.feature.ts
+import type { QueryClient } from "@tanstack/react-query";
+import type { ContactApi } from "./api/contact.api";
+import { createContactMutation } from "./api/contact.mutation";
+import { createContactQuery } from "./api/contact.query";
+
+type CreateContactsFeatureOptions = Readonly<{ queryClient: QueryClient; api: ContactApi }>;
+export function createContactsFeature({ queryClient, api }: CreateContactsFeatureOptions) {
+  return Object.freeze({
+    ContactMutation: createContactMutation(api, queryClient),
+    ContactQuery: createContactQuery(api),
+  });
+}
+export type ContactsFeature = ReturnType<typeof createContactsFeature>;
+```
+
+`ContactsPreview.tsx` chooses a private memory adapter and fresh Query client once per preview. The retained browser-storage adapter is inert in stories. Production source does not import this factory. Installing a business owner requires a new feature registry member and typed hook; the backend-connected tutorial supplies the complete HTTP recipe.
+
+## 2. Keep construction stable and lifetime explicit
+
+```text
+Production: createAppRuntime → shared Query/HTTP/auth/fixed settings → empty AppFeatures
+Reference:  ContactsPreview → private Query client + memory API → reference factory
+Preview UI: private ContactsReferenceProvider → useContactsFeature → constructed options
+```
+
+Construct services once, outside repeated render work. Do not recreate caches when theme or language changes. A frozen object does not dispose listeners, sockets or workers: explicitly own cleanup. The preview disposes its router and cache on unmount; it makes no claim of application or database persistence.
+
+## 3. Separate provider composition from construction
+
+`src/app/bootstrap/runtime/AppProviders.tsx` owns production provider order: fixed settings, localization, theme, feedback, runtime, Query, auth and router. Each consumes required collaborators; nesting does not permit arbitrary hidden dependencies. Route providers end with their route when they need no longer lifetime. Storybook supplies a smaller English localization/theme/feedback adapter and reference-specific providers.
+
+Settings presents app-owned preferences and needs no factory, API or duplicate preference store.
+
+## 4. Give each state one owner
+
+<table style={{ width: "100%", tableLayout: "fixed" }}>
+  <caption>Choose the state owner by responsibility</caption>
+  <thead>
+    <tr>
+      <th scope="col">Need</th>
+      <th scope="col">Owner</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Temporary interaction or presentation</th>
+      <td>Closest React component</td>
+    </tr>
+    <tr>
+      <th scope="row">Values, errors and submission</th>
+      <td>Form instance and schema</td>
+    </tr>
+    <tr>
+      <th scope="row">Shareable filter/selection with Back/Forward</th>
+      <td>URL/query parameters</td>
+    </tr>
+    <tr>
+      <th scope="row">Async data, loading, errors, cache and invalidation</th>
+      <td>TanStack Query</td>
+    </tr>
+    <tr>
+      <th scope="row">Synchronous shared reactive domain state</th>
+      <td>Owned Signals</td>
+    </tr>
+    <tr>
+      <th scope="row">Reload persistence</th>
+      <td>Owned validated storage service behind the live owner</td>
+    </tr>
+  </tbody>
+</table>
+
+Contacts data remains Query-owned even when its adapter is asynchronous memory. Do not mirror records into Context or Signals. Its reference Context carries constructed options, not a second record store.
+
+For an installed application-lifetime Signal group, export its lifecycle member and register it in `src/app/bootstrap/signals/signalModules.ts`. Initialization hydrates every module before any effects and returns disposal. That registry currently contains no guide estimate module. The migrated estimate gallery uses private memory and preview-owned disposable effects.
+
+## Common mistakes
+
+- Adding factories and Contexts for presentation-only features.
+- Repeating runtime construction inside render bodies.
+- Treating docs providers as installed production APIs.
+- Duplicating Query records in another live state owner.
+- Depending on Signal registration order instead of explicit dependencies.
+
+## 5. Verify your implementation
+
+Run from the workspace root:
+
+```sh
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+npm --prefix frontend run typecheck
+```
+
+Run the owning focused tests and required final checks. Static verification checks placement, imports and declared contracts; it cannot establish product ownership, backend authority or runtime cleanup by itself.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the authoritative articles named above and the current source examples. The numbered steps and code fences are directly readable by developers and agents. Storybook is optional for reading; run it to exercise the interactive cases. Discover related guidance from the workspace root:
+
+```sh
+npm --prefix frontend run guide:index -- search "Runtime and state ownership"
+```
+
+## Storybook fixture reference
+
+`../shared/ArchitectureExample.tsx` and `../shared/architectureExamples.ts` render selected inert walkthroughs. They do not scan the filesystem or execute the snippets. This tutorial and its same-name CSF module live together outside `src/`. Contacts source is a documentation reference under `docs/storybook/examples/Contacts/`, with tests under `tests/storybook/contacts/`; production code must never import it.

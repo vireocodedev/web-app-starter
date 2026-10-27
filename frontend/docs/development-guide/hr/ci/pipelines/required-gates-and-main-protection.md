@@ -2,17 +2,17 @@
 
 Spajanje mora ovisiti o određenoj pouzdanoj provjeri i aktualnom kandidatu, ne samo o zelenom statusu poznatog naziva. Workflow i zaštita repozitorija zasebni su vlasnici s povezanim dokazima.
 
-**Ugrađeni obrazac predloška.** Politika je u `docs/github-ci.md`; rezultat proizvode `infrastructure/ci/ci_scope.py` i `.github/workflows/ci.yml`. Svaki novi projekt mora postaviti i provjeriti vlastitu zaštitu. Stvaranje iz predloška ne kopira udaljene postavke grane.
+**Ugrađeni obrazac predloška.** Politika je u `docs/template-initialization/github-ci.md`; rezultat proizvode `infrastructure/ci/ci_scope.py` i `.github/workflows/ci.yml`. Svaki novi projekt mora postaviti i provjeriti vlastitu zaštitu. Stvaranje iz predloška ne kopira udaljene postavke grane.
 
 ## Okidač, vlasnik i ugovor
 
 Primijeni pri aktivaciji projekta, promjeni naziva obveznih provjera, selektora poslova ili dijagnostici PR-a koji se može spojiti bez očekivanih dokaza. Održavatelj upravlja gate implementacijom. Administrator upravlja efektivnom zaštitom i kompatibilnim organizacijskim pravilima. Registracija runnera ostaje operaterska odgovornost.
 
-Ugovor je stroži od tvrdnje da nijedan posao nije pao. Klasifikacija i stalni portable posao moraju uspjeti. Svaki odabrani posao mora uspjeti, a svaki neodabrani mora biti preskočen. Failure, cancelled, nedostajući rezultat i neočekivano izvršavanje različita su stanja. Gate odbija ono koje ne odgovara politici.
+Ugovor je stroži od tvrdnje da nijedan posao nije pao. Klasifikacija mora uspjeti. Svaki odabrani posao mora uspjeti, a svaki neodabrani mora biti preskočen. Failure, cancelled, nedostajući rezultat i neočekivano izvršavanje različita su stanja. Gate odbija ono koje ne odgovara politici.
 
 ## Jedna obvezna provjera, izričite unutarnje obveze
 
-`CI gate` koristi `if: always()` i ovisi o klasifikaciji, portable provjeri te svim aplikacijskim/foundation poslovima. Zato izvijesti i nakon pada ranije ovisnosti. Filtri na razini cijelog workflowa ne smiju spriječiti nastanak jedinog obveznog statusa.
+`CI gate` koristi `if: always()` i ovisi o klasifikaciji te svim aplikacijskim/foundation poslovima. Zato izvijesti i nakon pada ranije ovisnosti. Filtri na razini cijelog workflowa ne smiju spriječiti nastanak jedinog obveznog statusa.
 
 Helper validira booleove izlaze prije određivanja očekivanog ishoda za svakog vlasnika. Workflow zatim provjerava shard izvješća vezana uz source/run/attempt odabranih aplikacija. Zelena testna matrica nije dovoljna ako dokaz članstva nedostaje ili potječe iz drugog pokušaja.
 
@@ -61,7 +61,7 @@ Ograničenje privatnog plana i konflikt naslijeđenih pravila nalaz su za prijav
 
 Pregledaj stvarni naziv/izvor provjere, selekciju i preskakanja, dokaz trenutnog attempta, required contexte i ažurnost grane. Read-backom potvrdi primjenu na administratore te zabranu force pusha i brisanja. Slika namjeravanih postavki nije dovoljna.
 
-Zabilježi repozitorij, reviziju, run i opaženu politiku bez tokena i bez pretvaranja numeričkih identiteta u opće zadane vrijednosti. Povijesni prihvat vrijedi za taj repozitorij. Povezane teme su **Odabir provjera prema vlasniku** i **Dokaz shardova**; stvarni aktivacijski postupak ostaje u `docs/github-ci.md`.
+Zabilježi repozitorij, reviziju, run i opaženu politiku bez tokena i bez pretvaranja numeričkih identiteta u opće zadane vrijednosti. Povijesni prihvat vrijedi za taj repozitorij. Povezane teme su **Odabir provjera prema vlasniku** i **Dokaz shardova**; stvarni aktivacijski postupak ostaje u `docs/template-initialization/github-ci.md`.
 
 ## Izvori
 

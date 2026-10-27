@@ -1,0 +1,472 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as EntityFormsStories from "./EntityForms.stories";
+
+<Meta of={EntityFormsStories} />
+
+# Entity forms
+
+Build a localized create/update form with a Zod schema factory and `useRgoForm`.
+This tutorial uses the actual Contacts form: the live example renders
+`ContactForm`, and the reference code below is its current implementation. Contacts lives only in Storybook; production source contains no guide feature.
+
+The form owns fields and validation. Its parent owns persistence, save failures,
+completion, and the decision to close or start another editing session.
+
+## Try it
+
+Submit the empty form to reveal required-field errors. Enter an invalid email,
+then correct it: validation runs on submission first and on changes afterward.
+Fill every required field and submit; **Saved payload** appears only after the
+simulated save resolves, and contains trimmed values.
+
+Open **Update** to edit an existing contact. **Save failure** rejects the first
+save and succeeds on retry without losing your input. **Slow save** makes pending
+state visible. **Mobile** stacks the fields. Change the global Theme toolbar
+while typing: your draft remains intact.
+
+<Canvas of={EntityFormsStories.Create} story={{ inline: false, height: "820px" }} sourceState="none" />
+
+## Before you start
+
+Use an initialized starter checkout with dependencies installed; see
+`frontend/README.md`. The application already provides localization, theme,
+`@rgo-web/frontend`, TanStack Form, and the shared form helpers used here.
+No new form provider, global store, or runtime factory is needed.
+
+All source paths below are relative to `frontend/`. Contacts is a removable
+example under `docs/storybook/examples/Contacts/`. Its files and translation
+keys already exist: read them as a working recipe for your own feature, rather
+than adding a second Contacts implementation.
+
+Application text stays in both application locales. Storybook and this tutorial
+remain English. The demo uses an awaited local simulation; it writes no contact
+and proves no backend contract.
+
+## Files and ownership
+
+```text
+docs/storybook/examples/Contacts/models/ContactStatus.ts   status values
+docs/storybook/examples/Contacts/models/Contact.ts         entity, defaults, schema factory
+docs/storybook/examples/Contacts/components/ContactForm.tsx fields and form lifetime
+docs/storybook/examples/Contacts/components/ContactsSidePanel.tsx parent save/close owner
+docs/storybook/examples/shared/localization/development-guide.en.ts        labels and validation messages
+docs/storybook/examples/shared/localization/development-guide.hr.ts        matching reference translations
+```
+
+Reuse these installed helpers without copying them into the feature:
+
+```text
+src/app/forms/types/AppEntityForm.ts                  explicit create/update props
+src/app/forms/utils/buildAppEntityFormOptions.ts      validation timing and awaited submission
+src/app/forms/hooks/useFormStateReporter.ts           dirty/submitting subscription
+```
+
+## 1. Add labels and validation messages
+
+Contacts uses the typed `development-guide` namespace through
+`useDevelopmentGuideTranslation`. These are the relevant keys inside
+`englishDevelopmentGuideTranslations.contacts`; preserve the other Contacts keys:
+
+```ts
+fields: {
+  email: "Email",
+  name: "Name",
+  organization: "Organization",
+  role: "Role",
+  status: "Status",
+},
+form: {
+  createAction: "Create contact",
+  createTitle: "New contact",
+  editTitle: "Edit contact",
+  updateAction: "Save changes",
+},
+save: {
+  failed: "The contact could not be saved.",
+},
+status: {
+  ACTIVE: "Active",
+  INACTIVE: "Inactive",
+},
+validation: {
+  emailInvalid: "Enter a valid email address.",
+  emailRequired: "Email is required.",
+  nameMax: "Name must contain at most {{max}} characters.",
+  nameRequired: "Name is required.",
+  organizationMax: "Organization must contain at most {{max}} characters.",
+  organizationRequired: "Organization is required.",
+  roleMax: "Role must contain at most {{max}} characters.",
+  roleRequired: "Role is required.",
+},
+```
+
+Keep the matching keys and translated values in `development-guide.hr.ts`.
+For a business feature, put its keys in the application-owned namespace and
+use its translation hook and matching `TFunction` type throughout. Do not copy
+the development-guide namespace into production feature policy.
+
+## 2. Define the model and a localized schema factory
+
+The persisted schema owns the field rules. Defaults supply a complete create
+value. The factory receives the translation method and explicit validation
+context, then customizes error messages while preserving those rules.
+
+```ts
+// docs/storybook/examples/Contacts/models/ContactStatus.ts
+import { z } from "zod";
+
+/** Status values persisted by the Contacts feature. */
+export const contactStatusSchema = z.enum(["ACTIVE", "INACTIVE"]);
+
+export type ContactStatus = z.output<typeof contactStatusSchema>;
+```
+
+```ts
+// docs/storybook/examples/Contacts/models/Contact.ts
+import type { TFunction } from "i18next";
+import { z } from "zod";
+
+import { contactStatusSchema } from "./ContactStatus";
+
+const contactNameMaxLength = 100;
+const contactTextMaxLength = 120;
+
+type LocalizedContactFieldMessages = Readonly<{
+  required: string;
+  invalid?: string;
+  max?: string;
+}>;
+
+/** Keep every field rule on the entity schema; customize only its error text. */
+function localizeContactField(schema: z.ZodString, messages: LocalizedContactFieldMessages) {
+  return schema.clone({
+    ...schema.def,
+    error: (issue: z.core.$ZodRawIssue) => {
+      if (issue.code === "too_small") return messages.required;
+      if (issue.code === "too_big") return messages.max;
+      if (issue.code === "invalid_format") return messages.invalid;
+      return undefined;
+    },
+  });
+}
+
+/** A contact persisted by the application-owned browser adapter. */
+export const contactSchema = z.object({
+  email: z.string().trim().min(1).email(),
+  id: z.string().min(1),
+  name: z.string().trim().min(1).max(contactNameMaxLength),
+  organization: z.string().trim().min(1).max(contactTextMaxLength),
+  role: z.string().trim().min(1).max(contactTextMaxLength),
+  status: contactStatusSchema,
+});
+
+export type Contact = z.output<typeof contactSchema>;
+export type ContactInput = Omit<Contact, "id">;
+export type ContactFormValue = ContactInput & Readonly<{ id?: string }>;
+
+export function buildDefaultContactInput(): ContactInput {
+  return {
+    email: "",
+    name: "",
+    organization: "",
+    role: "",
+    status: "ACTIVE",
+  };
+}
+
+/** Localized form validation is derived from, but does not replace, the persisted contact schema. */
+export const createContactValidationSchema: (
+  t: TFunction<"development-guide">,
+  context: { requiresId: boolean },
+) => z.ZodType<ContactFormValue, ContactFormValue> = (t, { requiresId }) =>
+  contactSchema.extend({
+    email: localizeContactField(contactSchema.shape.email, {
+      required: t("contacts.validation.emailRequired"),
+      invalid: t("contacts.validation.emailInvalid"),
+    }),
+    name: localizeContactField(contactSchema.shape.name, {
+      required: t("contacts.validation.nameRequired"),
+      max: t("contacts.validation.nameMax", { max: contactNameMaxLength }),
+    }),
+    organization: localizeContactField(contactSchema.shape.organization, {
+      required: t("contacts.validation.organizationRequired"),
+      max: t("contacts.validation.organizationMax", { max: contactTextMaxLength }),
+    }),
+    role: localizeContactField(contactSchema.shape.role, {
+      required: t("contacts.validation.roleRequired"),
+      max: t("contacts.validation.roleMax", { max: contactTextMaxLength }),
+    }),
+    id: requiresId ? contactSchema.shape.id : contactSchema.shape.id.optional(),
+  });
+```
+
+`t` resolves messages when the schema is built. `context` contains facts outside
+the editable fields. Here `requiresId` comes from the operation: create permits
+an absent ID, while update requires the existing ID supplied by the parent.
+The ID is not an editable field; resolve a missing update record before mounting
+the form. Do not turn a failed update load into a create form.
+
+The factory receives ordinary arguments, not React context. For rules depending
+on tenant limits, allowed choices, or another record, extend the feature's typed
+context and validate those facts at the appropriate field path. Pass fresh
+context explicitly and decide how a changed policy affects the current draft.
+Rebuilding validation must not silently replace typed values. The server still
+validates authoritative rules when executing a real command.
+
+`ContactFormValue` includes an optional ID because one form handles both modes.
+The operation context supplies the runtime distinction. `.parse()` returns
+normalized values, including trimming; send that result to persistence.
+
+`AppEntitySchemaFactory` describes the same two-argument convention for the
+application's `translation` namespace. Contacts uses an explicit equivalent
+signature for `TFunction<"development-guide">`. Do not cast between namespaces
+or change the shared factory type just to make an example compile.
+
+## 3. Build the form with the shared policy
+
+```tsx
+// docs/storybook/examples/Contacts/components/ContactForm.tsx
+import { Alert } from "@mui/material";
+import { RgoContainerGrid, RgoFormGroup, useRgoForm } from "@rgo-web/frontend";
+
+import { useFormStateReporter } from "@/app/forms/hooks/useFormStateReporter";
+import type { AppEntityFormProps } from "@/app/forms/types/AppEntityForm";
+import { buildAppEntityFormOptions } from "@/app/forms/utils/buildAppEntityFormOptions";
+import { useDevelopmentGuideTranslation } from "../../shared/localization/useDevelopmentGuideTranslation";
+
+import { buildDefaultContactInput, createContactValidationSchema, type ContactFormValue } from "../models/Contact";
+import { contactStatusSchema } from "../models/ContactStatus";
+
+type ContactFormProps = AppEntityFormProps<ContactFormValue>;
+
+/** Shared create/update form used by the page-local Contacts overlays. */
+export function ContactForm(props: ContactFormProps) {
+  const { t } = useDevelopmentGuideTranslation();
+  const isCreating = props.group === RgoFormGroup.CREATE;
+  const validationSchema = createContactValidationSchema(t, { requiresId: !isCreating });
+  const formDefaultValue: ContactFormValue =
+    props.group === RgoFormGroup.CREATE ? buildDefaultContactInput() : props.initialValue;
+  const form = useRgoForm({
+    defaultValues: formDefaultValue,
+    ...buildAppEntityFormOptions(validationSchema, props),
+  });
+  useFormStateReporter(form.store, props.onStateChange);
+
+  return (
+    <form.AppForm>
+      <form.Form>
+        <RgoContainerGrid columns={{ sm: 2, xs: 1 }} container spacing={2}>
+          {props.saveFailed ? (
+            <RgoContainerGrid size={{ sm: 2, xs: 1 }}>
+              <Alert severity="error">{t("contacts.save.failed")}</Alert>
+            </RgoContainerGrid>
+          ) : null}
+          <RgoContainerGrid size={{ sm: 1, xs: 1 }}>
+            <form.AppField name="name">
+              {field => <field.TextField autoFocus fullWidth label={t("contacts.fields.name")} required />}
+            </form.AppField>
+          </RgoContainerGrid>
+          <RgoContainerGrid size={{ sm: 1, xs: 1 }}>
+            <form.AppField name="email">
+              {field => <field.TextField fullWidth label={t("contacts.fields.email")} required type="email" />}
+            </form.AppField>
+          </RgoContainerGrid>
+          <RgoContainerGrid size={{ sm: 1, xs: 1 }}>
+            <form.AppField name="organization">
+              {field => <field.TextField fullWidth label={t("contacts.fields.organization")} required />}
+            </form.AppField>
+          </RgoContainerGrid>
+          <RgoContainerGrid size={{ sm: 1, xs: 1 }}>
+            <form.AppField name="role">
+              {field => <field.TextField fullWidth label={t("contacts.fields.role")} required />}
+            </form.AppField>
+          </RgoContainerGrid>
+          <RgoContainerGrid size={{ sm: 2, xs: 1 }}>
+            <form.AppField name="status">
+              {field => (
+                <field.SelectField
+                  fullWidth
+                  getOptionValue={option => option}
+                  label={t("contacts.fields.status")}
+                  options={contactStatusSchema.options}
+                  renderOption={option => t(`contacts.status.${option}`)}
+                />
+              )}
+            </form.AppField>
+          </RgoContainerGrid>
+          <RgoContainerGrid size={{ sm: 2, xs: 1 }} sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <form.SubmitButton variant="contained">
+              {t(isCreating ? "contacts.form.createAction" : "contacts.form.updateAction")}
+            </form.SubmitButton>
+          </RgoContainerGrid>
+        </RgoContainerGrid>
+      </form.Form>
+    </form.AppForm>
+  );
+}
+```
+
+The create/update union in `AppEntityFormProps` requires an `initialValue` only
+for `RgoFormGroup.UPDATE`. Select create defaults or the update entity explicitly;
+`initialValue?: Entity` alone does not express the operation safely.
+
+`buildAppEntityFormOptions(schema, props)` installs `revalidateLogic` with
+`mode: "submit"` and `modeAfterSubmission: "change"`, assigns the schema to
+`validators.onDynamic`, parses submitted values, awaits `props.onSubmit`, and
+then calls `props.onSaved`. Reuse that helper instead of copying a different
+validation or submission policy into each form.
+
+This helper covers one validation intent. For a form with both incomplete-draft
+saving and strict submission, follow **Draft and submit forms**: that explicit
+consumer recipe composes the same installed form mechanics with command-specific
+schemas. Do not weaken this single-intent helper or silently skip validation.
+
+`useFormStateReporter` subscribes to the actual store and reports `isDirty` and
+`isSubmitting` to the parent. Keep it alongside the form: the submission helper's
+initial pending report alone does not restore the parent's idle state after a
+failure. Pass a stable state handler when practical.
+
+`form.AppForm` supplies form context. `form.Form` owns browser submission;
+`form.AppField` binds each named value to its installed input, label, and errors.
+The select's persisted values come from `contactStatusSchema.options`; only their
+presentation is translated. `form.SubmitButton` follows the actual form state.
+`RgoContainerGrid` gives two columns on wider screens and one on mobile.
+
+## 4. Keep saving, failure, and completion in the parent
+
+The following small application owner accepts the real persistence callback.
+It is an integration example; the existing `ContactsSidePanel` performs this
+role using its feature's Query mutations, conflict presentation, and page-local
+overlay lifecycle.
+
+```tsx
+// docs/storybook/examples/Contacts/components/ContactEditor.tsx
+import { useState } from "react";
+
+import type { AppEntityFormMode, AppFormState } from "@/app/forms/types/AppEntityForm";
+
+import type { ContactFormValue } from "../models/Contact";
+import { ContactForm } from "./ContactForm";
+
+type ContactEditorProps = AppEntityFormMode<ContactFormValue> &
+  Readonly<{
+    saveContact: (value: ContactFormValue) => Promise<void>;
+    onSaved: () => void;
+    onStateChange: (state: AppFormState) => void;
+  }>;
+
+export function ContactEditor(props: ContactEditorProps) {
+  const [saveFailed, setSaveFailed] = useState(false);
+  const onSubmit = async (value: ContactFormValue) => {
+    setSaveFailed(false);
+    try {
+      await props.saveContact(value);
+    } catch (error) {
+      setSaveFailed(true);
+      throw error;
+    }
+  };
+
+  return <ContactForm {...props} onSubmit={onSubmit} saveFailed={saveFailed} />;
+}
+```
+
+The supplied `saveContact` must resolve only after the command is acknowledged.
+For a Query mutation, return or await `mutateAsync`, not the fire-and-forget
+`mutate` call. Map create values to the create input; preserve the loaded identity
+and expected version or snapshot when mapping an update, as Contacts does.
+
+A rejected save sets the parent's failure state and stays rejected, so the form
+does not call `onSaved`. Keep the mounted form and useful input for retry. Catching
+and resolving a failed request would falsely signal success. Actual known
+conflicts need their own recovery message and fresh-record decision, as in the
+existing Contacts owner.
+
+`onSaved` belongs to the parent: close the editor, navigate, or deliberately start
+a new session. A changed `initialValue` prop is not a reset protocol. Use a new
+editor session/key or the form's deliberate reset operation; guard discarding
+unsaved values and prevent close/reset while saving. Do not remount the form on
+every render, translation update, or theme change.
+
+Keep a known committed write distinct from a later notification or cache-refresh
+failure. This small example demonstrates rejected writes; it does not implement
+remote conflict reconciliation, uncertain outcomes, or a complete navigation guard.
+
+## Common mistakes
+
+- **Errors appear in the wrong language:** accept `t` in the factory and build it
+  from the correct namespace. Do not build a localized schema once at module load.
+- **An outside rule is ignored:** pass it through typed schema context and validate
+  it there; an input hint or filtered option list alone is not validation.
+- **An update becomes a create:** use the discriminated form mode and resolve
+  loading, missing, or denied records before mounting an update form.
+- **Save completes too early:** await the real submission promise. Rethrow rejected
+  saves and let `onSaved` run only after acknowledgement.
+- **The editor stays busy after a failure:** keep `useFormStateReporter` connected
+  to the form store and preserve the rejection path.
+- **Typed input disappears:** keep the editing session stable; reset only after
+  an explicit success/discard decision.
+- **The feature grows a second form framework:** reuse `useRgoForm`, the installed
+  fields, and the shared policy; keep feature schemas and API ownership local.
+
+## 5. Verify your implementation
+
+From the workspace root, run checks sequentially:
+
+```sh
+npm --prefix frontend run test -- tests/storybook/contacts/models/Contact.test.ts tests/storybook/contacts/components/ContactForm.test.tsx
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+Then run Storybook using `frontend/README.md`, open this tutorial, and verify:
+
+- Empty submission shows translated required errors and sends no save.
+- An invalid email is rejected; correcting it after the first submit updates errors.
+- Valid submission contains trimmed values and the selected persisted status.
+- The same ID-less value passes create schema context and fails update context.
+  A real update retains its loaded ID; the form never generates a replacement.
+- A pending save shows submitting state and prevents a second submission or reset.
+- Failed save preserves the draft, returns to idle, and shows no success. Retry
+  succeeds and only then triggers the completion callback.
+- An explicit new session clears prior errors, result, and dirty state.
+- Theme changes preserve typed values. Narrow screens keep fields and actions
+  reachable without horizontal page overflow.
+- Verify application labels and errors in both locales. Storybook remains English.
+
+With Storybook running, `npm --prefix frontend run test:browser:storybook` covers
+these demo interactions and the routing preview checks. `RGO_STORYBOOK_URL` selects
+another running Storybook server. Finish delivery with
+`npm --prefix frontend run verify`.
+
+## Read this tutorial without Storybook
+
+All application examples above are fenced source in this MDX file. Discover the
+current tutorial and form owner without running a browser:
+
+```sh
+npm --prefix frontend run guide:index -- search "Entity forms"
+npm --prefix frontend run guide:index -- search createContactValidationSchema
+```
+
+Read the authoritative contracts for
+[entity modes and validation policy](../../../development-guide/en/frontend/forms/entity-modes-and-validation-policy.md),
+[cross-field constraints and reset](../../../development-guide/en/frontend/forms/cross-field-constraints-and-reset.md),
+and [form ownership](../../../architecture/en/source-map-and-ownership.md).
+For advanced behaviors, the in-application Forms patterns cover dependent fields,
+async lookups, repeated fields, and navigation guards separately.
+
+## Storybook fixture reference
+
+`EntityForms.stories.tsx` selects create, update, failure/retry, slow-save, and
+mobile states. `EntityFormExample.tsx` lives alongside this MDX under
+`docs/storybook/forms/EntityForms/` and renders the real
+`docs/storybook/examples/Contacts/components/ContactForm.tsx`. It passes
+parent-owned submission and state callbacks,
+waits for a local simulated result, and displays the parsed payload only on success.
+An explicit new-session action resets the example.
+
+The preview inherits global English localization and theme providers. Its delay,
+failure switch, sample contact, state display, and result display are Storybook
+fixtures. They are not an application API or persistence adapter. The model,
+schema factory, reusable form, and shared helpers above are the application pattern.

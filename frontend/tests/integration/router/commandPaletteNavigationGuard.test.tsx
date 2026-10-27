@@ -1,7 +1,7 @@
-import { RgoFeedbackProvider } from "@rgo-web/frontend";
+import { RgoFeedbackProvider, useRgoFeedback } from "@rgo-web/frontend";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, RouterProvider, useBlocker } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { AppFixedSettingsProvider } from "@/app/bootstrap/config/AppFixedSettingsProvider";
@@ -9,7 +9,45 @@ import { noFixedAppSettings } from "@/app/bootstrap/config/fixedSettings";
 import { AppLocalizationProvider } from "@/app/localization/components/AppLocalizationProvider";
 import { AuthenticatedAppShell } from "@/app/router/components/AuthenticatedAppShell";
 import { AppThemeProvider } from "@/app/theme/components/AppThemeProvider";
-import { GuardedDraftPreview } from "@/features/development-guide/patterns/forms/components/DirtyStateAndNavigationGuardPanel/GuardedDraftPreview";
+import { useEffect, useRef, useState } from "react";
+
+/** Private domain fixture: no example feature is required by application integration tests. */
+function GuardedDraftPreview() {
+  const [title, setTitle] = useState("Saved draft");
+  const input = useRef<HTMLInputElement>(null);
+  const feedback = useRgoFeedback();
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      title !== "Saved draft" && currentLocation.pathname !== nextLocation.pathname,
+  );
+  useEffect(() => {
+    if (blocker.state !== "blocked") return;
+    const controller = new AbortController();
+    void feedback
+      .confirm({
+        title: "Discard unsaved changes?",
+        message: "Leave this draft?",
+        confirmLabel: "Discard and leave",
+        cancelLabel: "Keep editing",
+        signal: controller.signal,
+      })
+      .then(result => {
+        if (controller.signal.aborted) return;
+        if (result.status === "confirmed") blocker.proceed();
+        else {
+          blocker.reset();
+          input.current?.focus();
+        }
+      });
+    return () => controller.abort();
+  }, [blocker, feedback]);
+  return (
+    <label>
+      Draft title
+      <input ref={input} value={title} onChange={event => setTitle(event.target.value)} />
+    </label>
+  );
+}
 
 // Authentication is already established; this scenario exercises the actual router/shell/form seam.
 vi.mock("@/app/auth/components/AppAuthActions", () => ({ AppAuthActions: () => null }));

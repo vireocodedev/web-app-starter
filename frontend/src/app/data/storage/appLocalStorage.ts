@@ -5,7 +5,6 @@ import { appLocales } from "@/app/localization/localeConfig";
 export const appLocalStorageKeys = {
   colorMode: "rgo.app.color-mode",
   darkColorScheme: "rgo.app.dark-color-scheme",
-  applicationStateExample: "rgo.app.application-state-example",
   desktopTableSize: "rgo.app.desktop-table-size",
   editorPresentation: "rgo.app.editor-presentation",
   fontSize: "rgo.app.font-size",
@@ -22,10 +21,6 @@ export const appLocalStorageKeys = {
 } as const;
 
 const appLocalStorageSchema = z.object({
-  [appLocalStorageKeys.applicationStateExample]: z.object({
-    hourlyRate: z.number().finite().nonnegative(),
-    hours: z.number().finite().nonnegative(),
-  }),
   // Null means no explicit user override: MUI should use the system preference.
   [appLocalStorageKeys.colorMode]: z.enum(["light", "dark"]).nullable(),
   [appLocalStorageKeys.darkColorScheme]: z.enum(["soft-dark"]).nullable(),
@@ -45,10 +40,6 @@ const appLocalStorageSchema = z.object({
 });
 
 const appLocalStorageDefaultValues = {
-  [appLocalStorageKeys.applicationStateExample]: {
-    hourlyRate: 75,
-    hours: 8,
-  },
   [appLocalStorageKeys.colorMode]: null,
   [appLocalStorageKeys.darkColorScheme]: null,
   [appLocalStorageKeys.desktopTableSize]: null,

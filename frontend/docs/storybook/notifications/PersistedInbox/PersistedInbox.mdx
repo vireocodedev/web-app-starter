@@ -1,0 +1,404 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as InboxStories from "./PersistedInbox.stories";
+
+<Meta of={InboxStories} />
+
+# Persisted inboxes versus feedback
+
+Model an inbox as backend-owned feature data. A notification record, its recipient
+and read state survive application sessions because the backend persists them.
+`feedback.notify()` presents a temporary outcome; `durationMs: null` keeps that
+toast visible until dismissal and does not create an inbox record.
+
+This is a complete **consumer reference recipe** using the installed HTTP,
+Query, localization and feedback mechanics. The starter has no inbox endpoint,
+entity, migration or registered inbox runtime. The API below is a contract to
+implement with the backend, not an installed service or a TeamOps implementation.
+
+## Try it
+
+Mark **Equipment request approved** as read, then choose **Reload inbox client**.
+The fresh cache fetches the retained read marker from the same private server.
+Show and dismiss the persistent toast: the inbox remains unchanged. Switch the
+preview account and verify each actor sees only their messages. The ownership
+story also attempts a foreign notification ID; the private server rejects it.
+
+Read failure and rejected-marker stories preserve their recovery actions. Follow
+the related-request link and watch the address bar. Change the global Theme:
+the current account, read markers and search stay intact.
+
+<Canvas of={InboxStories.Overview} story={{ inline: false, height: "1100px" }} sourceState="none" />
+
+## Before you start
+
+Paths below are relative to `frontend/`. Read **Loading and saving feature data**,
+**Building a backend-connected feature**, **Workflow commands, conflicts and
+coordinated refresh**, **Notifications**, and the mandatory Architecture section.
+Reuse `src/app/data/http/createAppAxios.ts`, the existing auth-owned interceptors,
+`createAppQueryClient.ts`, and feature-owned query/mutation factories.
+
+These reference application files belong to the new feature you are implementing:
+
+```text
+src/features/inbox/
+├── models/InboxMessage.ts          public response shape, not a database entity
+├── api/inbox.api.ts                domain port
+├── api/inbox.api.http.ts           injected configured HTTP adapter
+├── api/inbox.querykeys.ts          viewer-scoped cache identity
+├── api/inbox.options.ts            read and mark-read options
+├── components/InboxPanel.tsx       observed rows and acknowledged actions
+├── inbox.feature.ts               stable adapter/options construction
+└── index.ts                       deliberate public UI and construction exports
+```
+
+The backend owns account lookup, recipient selection, scoped reads and database
+transactions. Existing foundations are
+`docs/development-guide/en/backend/security/live-authority-and-session-claims.md`
+and `docs/development-guide/en/backend/application-services/transactional-commands.md`.
+No new notification transport or background delivery process is required for a
+list that refreshes on page load and after actions.
+
+## 1. Agree the backend contract before writing the client
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Inbox persistence and authority contract</caption>
+  <thead>
+    <tr>
+      <th scope="col">Operation</th>
+      <th scope="col">Server responsibility</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">List and unread count</th>
+      <td>
+        Resolve the current actor from the authenticated session and return only currently permitted recipient records.
+        Rows and count use the same scope.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Mark read</th>
+      <td>
+        Look up by notification ID and current recipient together. Missing and foreign IDs return the same safe 404.
+        Repeating the operation retains the first read timestamp and succeeds idempotently.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Create mandatory inbox message</th>
+      <td>
+        Insert the business transition, required activity and recipient records in the same transaction. Failure rolls
+        back the whole mandatory command.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Open related request</th>
+      <td>
+        The destination performs its own current authorized read. Possessing a notification or request ID is not
+        authorization.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Delivery and retention</th>
+      <td>
+        Define retention and sorting explicitly. A toast/SSE hint is optional; durable inbox rows are the authoritative
+        records.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+The endpoints below are illustrative consumer endpoints relative to the existing
+`/api` base: GET `/notifications`, GET `/notifications/unread-count`, and POST
+`/notifications/{id}/read`. Neither operation accepts a caller-supplied recipient
+ID. The Query key may include viewer identity for isolation; that does not grant
+the server authority to trust an identity supplied in the URL or body.
+
+For generated multilingual notifications, prefer a bounded event code and safe
+parameters translated at render time. If the API returns a plain `message`, as
+this small recipe does, define its language policy explicitly; the client renders
+that content as text and localizes its own labels/actions. Do not promise that
+stored human-readable prose automatically changes language with the interface.
+
+## 2. Define the response schema and domain port
+
+```ts
+// Recipe: src/features/inbox/models/InboxMessage.ts
+import { z } from "zod";
+
+export const inboxMessageSchema = z.object({
+  id: z.string().min(1),
+  message: z.string().min(1).max(2000),
+  requestId: z.string().min(1),
+  createdAt: z.iso.datetime({ offset: true }),
+  readAt: z.iso.datetime({ offset: true }).nullable(),
+});
+export type InboxMessage = z.output<typeof inboxMessageSchema>;
+```
+
+```ts
+// Recipe: src/features/inbox/api/inbox.api.ts
+import type { InboxMessage } from "../models/InboxMessage";
+
+export interface InboxApi {
+  list(options?: Readonly<{ signal?: AbortSignal }>): Promise<InboxMessage[]>;
+  unreadCount(options?: Readonly<{ signal?: AbortSignal }>): Promise<number>;
+  markRead(id: string): Promise<InboxMessage>;
+}
+```
+
+The port exposes domain values and read cancellation, without Axios or Zod types.
+A production list needs a deliberate bounded result or pagination contract; the
+preview has only three synthetic records. Sort by timestamp plus ID to break
+ties. Validate the actual response shape; do not cast arbitrary JSON into rows.
+
+## 3. Inject the existing configured client into the adapter
+
+```ts
+// Recipe: src/features/inbox/api/inbox.api.http.ts
+import type { AxiosInstance } from "axios";
+import { z } from "zod";
+
+import type { InboxApi } from "./inbox.api";
+import { inboxMessageSchema } from "../models/InboxMessage";
+
+export function createInboxHttpApi(http: AxiosInstance): InboxApi {
+  return {
+    async list({ signal } = {}) {
+      const response = await http.get("/notifications", { signal });
+      return z.array(inboxMessageSchema).parse(response.data);
+    },
+    async unreadCount({ signal } = {}) {
+      const response = await http.get("/notifications/unread-count", { signal });
+      return z.object({ count: z.number().int().nonnegative() }).parse(response.data).count;
+    },
+    async markRead(id) {
+      const response = await http.post(`/notifications/${encodeURIComponent(id)}/read`, {});
+      return inboxMessageSchema.parse(response.data);
+    },
+  };
+}
+```
+
+Use the same instance that application auth configured, so the write gets fresh
+CSRF and the normal credential/expiry policy. Do not construct Axios in a row
+component, duplicate interceptors or store session tokens. The backend-connected
+feature tutorial shows the exact construction and runtime-registration changes;
+HTTP is not currently a published property on arbitrary feature consumers.
+
+Map 404 to the endpoint's hidden/missing state, retain 403 versus CSRF meaning,
+and use bounded local error messages. A network error or malformed write response
+may leave the read-marker outcome uncertain. This endpoint is deliberately
+idempotent, so a fresh read or retry of the same marker is safe; that policy does
+not authorize retrying an unrelated approval or create command.
+
+## 4. Scope keys and invalidate the actual inbox projections
+
+```ts
+// Recipe: src/features/inbox/api/inbox.querykeys.ts
+export const InboxKey = {
+  scope: (viewerId: string) => ["inbox", viewerId] as const,
+  list: (viewerId: string) => [...InboxKey.scope(viewerId), "messages"] as const,
+  unread: (viewerId: string) => [...InboxKey.scope(viewerId), "unread"] as const,
+};
+```
+
+```ts
+// Recipe: src/features/inbox/api/inbox.options.ts
+import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
+import type { InboxApi } from "./inbox.api";
+import { InboxKey } from "./inbox.querykeys";
+
+export function createInboxOptions(api: InboxApi, queryClient: QueryClient, viewerId: string) {
+  return {
+    list: () => queryOptions({ queryKey: InboxKey.list(viewerId), queryFn: ({ signal }) => api.list({ signal }) }),
+    unread: () =>
+      queryOptions({ queryKey: InboxKey.unread(viewerId), queryFn: ({ signal }) => api.unreadCount({ signal }) }),
+    markRead: () =>
+      mutationOptions({
+        mutationFn: (id: string) => api.markRead(id),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: InboxKey.scope(viewerId) }),
+      }),
+  };
+}
+```
+
+An accepted marker changes both the list row and unread count; invalidate that
+viewer scope rather than only changing a badge in React state. Other viewers and
+unrelated features remain untouched. Active observers refetch; inactive queries
+become stale. A business action creating notifications also needs the relevant
+inbox invalidation callback supplied through public composition or injection,
+as shown in the workflow tutorial. Do not deep-import another feature's private
+keys or add a second notification Signal as a competing model.
+
+This simple marker factory awaits invalidation. Acknowledgement and refresh
+remain different facts: a failed read after an accepted marker is a refresh
+problem. Do not claim every refetch succeeded because the mutation resolved.
+
+## 5. Render safe text and keep feedback separate
+
+This complete small panel receives constructed options and translated UI copy
+from its feature owner. It demonstrates rendering and acknowledged state changes;
+the full private preview additionally guards obsolete completion feedback across
+account/client changes. Application composition supplies copy from live English
+and Croatian resources and formats timestamps through the localization hook.
+
+```tsx
+// Recipe: src/features/inbox/components/InboxPanel.tsx
+import { Alert, Button, Stack, Typography } from "@mui/material";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import type { createInboxOptions } from "../api/inbox.options";
+
+type InboxCopy = Readonly<{
+  loading: string;
+  failed: string;
+  retry: string;
+  empty: string;
+  unread: string;
+  read: string;
+  markRead: string;
+  markerUnconfirmed: string;
+}>;
+
+export function InboxPanel({
+  options,
+  copy,
+}: Readonly<{
+  options: ReturnType<typeof createInboxOptions>;
+  copy: InboxCopy;
+}>) {
+  const messages = useQuery(options.list());
+  const mark = useMutation(options.markRead());
+  const [markerFailed, setMarkerFailed] = useState(false);
+  const generation = useRef(0);
+  const busy = useRef(false);
+  useEffect(
+    () => () => {
+      generation.current += 1;
+    },
+    [],
+  );
+  const markRead = async (id: string) => {
+    if (busy.current) return;
+    busy.current = true;
+    const owner = generation.current;
+    setMarkerFailed(false);
+    try {
+      await mark.mutateAsync(id);
+    } catch {
+      if (owner === generation.current) setMarkerFailed(true);
+    } finally {
+      if (owner === generation.current) busy.current = false;
+    }
+  };
+  if (messages.isPending) return <Typography role="status">{copy.loading}</Typography>;
+  if (messages.isError)
+    return (
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" onClick={() => void messages.refetch()}>
+            {copy.retry}
+          </Button>
+        }
+      >
+        {copy.failed}
+      </Alert>
+    );
+  return (
+    <Stack spacing={2}>
+      {markerFailed ? <Alert severity="warning">{copy.markerUnconfirmed}</Alert> : null}
+      {!messages.data.length ? <Typography>{copy.empty}</Typography> : null}
+      {messages.data.map(row => (
+        <Stack key={row.id} spacing={1}>
+          <Typography>{row.message}</Typography>
+          <Typography>{row.readAt === null ? copy.unread : copy.read}</Typography>
+          <Button disabled={mark.isPending || row.readAt !== null} onClick={() => void markRead(row.id)}>
+            {copy.markRead}
+          </Button>
+        </Stack>
+      ))}
+    </Stack>
+  );
+}
+```
+
+Render untrusted descriptions/messages through React text children, never
+`dangerouslySetInnerHTML`. A destination is a typed internal request route built
+from the record's ID, not an arbitrary stored URL. The destination authorizes its
+own read. Read/unread needs a visible text label, not color alone.
+
+Use `useRgoFeedback()` optionally after acknowledgement, with an operation owner
+check before showing feedback. Dismissing that toast must not delete a record or
+mark it read. A badge observes the unread query rather than the toast queue.
+Selecting another account disposes obsolete queries/drafts and must not display
+the previous viewer's rows. The installed auth runtime already clears non-auth
+query data on identity changes; new feature keys still need complete identity.
+Key this small panel by viewer identity when composing it outside that auth-owned
+remount, so a replacement account also gets a new local error/operation lifetime.
+
+## Common mistakes
+
+- Treating `durationMs: null` or a notification ID as database persistence.
+- Putting inbox rows/read state in browser storage or a second global Signal.
+- Passing a client-selected recipient as authority to a production endpoint.
+- Filtering foreign messages in React after downloading them to the wrong user.
+- Marking read optimistically without explaining failure, or retrying arbitrary non-idempotent commands.
+- Refreshing a badge while leaving the actual list stale, or invalidating every viewer's cache.
+- Rendering backend prose as HTML or treating a stored destination as a trusted external URL.
+- Claiming the preview's in-memory remount proves real database durability.
+
+## 6. Verify persistence, ownership and presentation separately
+
+From the workspace root, run the owning checks sequentially:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+```
+
+For a consumer implementation, add API contract tests for own rows/counts,
+foreign/missing IDs, idempotent read marking and unexpected/malformed responses.
+Backend integration tests prove recipient predicates and transactional message
+creation. A frontend mock cannot establish database ownership or rollback.
+
+In Storybook, mark read, cold-remount the client and verify the marker/count are
+retained. Reject a marker, verify no changed server row, then retry. Switch
+accounts and try a foreign ID: no foreign row changes. Dismiss feedback and
+confirm saved inbox state is unaffected. Retry a failed read; distinguish it
+from a successful empty result. Check related-route URLs, global themes, narrow
+Docs, keyboard names and automated accessibility.
+
+With the current Storybook served:
+
+```sh
+npm --prefix frontend run test:browser:storybook
+```
+
+Finish the required frontend verification. A real browser reload against an
+actual persisted backend remains separate from this fixture's client-remount
+demonstration.
+
+## Read this tutorial without Storybook
+
+Read this MDX and the source examples it names. The wider guide distinguishes
+database state from best-effort delivery in
+`docs/development-guide/en/backend/application-services/commit-aware-notifications.md`.
+That article's SSE reference is not needed to implement this inbox.
+
+```sh
+npm --prefix frontend run guide:index -- search "Persisted inboxes"
+```
+
+## Storybook fixture reference
+
+`inboxFixture.ts`, `PersistedInboxExample.tsx` and `PersistedInbox.stories.tsx`
+live beside this MDX in `docs/storybook/notifications/PersistedInbox/`.
+The private server persists only for this preview lifetime. Its actor selector
+is test setup; list/mark operations do not accept a recipient argument. It
+validates/clones public results and denies foreign IDs independently of UI state.
+Cold client remount discards its QueryClient while retaining that private server.
+A full browser reload starts a fresh fixture. No application storage, session,
+HTTP endpoint, database or global handler is changed. The related-request route
+is a navigation sketch, not a request-detail authorization implementation.

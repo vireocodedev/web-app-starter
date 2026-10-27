@@ -15,10 +15,11 @@ Choose a lifetime before choosing Context, a Signal, or local state.
 
 `createAppRuntime()` constructs stable infrastructure and freezes the returned
 object. It creates one Query client, one configured Axios instance, the auth
-runtime, and the feature registry. Contacts needs this construction seam because
-its Query and mutation options depend on an injected API adapter and Query
-client. Settings, Patterns, Architecture, and Handbook are presentation features and do
-not receive factories or runtime hooks merely for uniformity.
+runtime, and an empty feature registry. Settings is presentation and needs no
+factory or runtime hook. Contacts demonstrates injected Query/API dependencies
+under `docs/storybook/examples/Contacts/`, using its own preview Context and
+private memory adapter. It is not registered in the production runtime. A
+consumer must explicitly implement and register any new business feature.
 
 ## Provider order
 

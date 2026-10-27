@@ -2,7 +2,7 @@
 
 An overlay result describes how that UI session ended. It does not independently prove a server command succeeded. A dirty-exit confirmation can finish after the view changed, and an old editor can report completion after a new editor occupies the same panel. Keep transport outcome, mounted overlay, and inner view session distinct.
 
-This is **installed starter composition with the RGO overlay contract**. Contacts uses a page-local overlay provider and `useAppMultiViewOverlay`; RGO owns presentation/result lifecycle. The feature supplies leave policy and accepts editor callbacks only for the current inner session.
+This combines **installed application overlay infrastructure and a Storybook-only Contacts reference**. The current Contacts owner is `docs/storybook/examples/Contacts/`, with private preview state; it has no application route or runtime registration. Contacts uses a page-local overlay provider and `useAppMultiViewOverlay`; RGO owns presentation/result lifecycle. The feature supplies leave policy and accepts editor callbacks only for the current inner session.
 
 ## Trigger and owner
 

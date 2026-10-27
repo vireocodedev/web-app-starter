@@ -1,0 +1,19 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./ArchitectureReference.stories";
+
+<Meta of={Stories} />
+
+# Architecture reference
+
+Read all fifteen authoritative architecture articles here. This reference complements the four focused Architecture tutorials: source ownership, dependency direction, public module APIs, and runtime and state ownership.
+
+<Canvas of={Stories.Overview} />
+
+## Use this reference
+
+1. Start with Source map and ownership and Dependency boundaries and imports.
+2. Search and select the article covering the changed owner or lifetime. Read the complete article and inspect its current source examples.
+3. Follow links to another Architecture or Handbook article inside the preview. Focused tutorial links open their Docs page in the Storybook manager. The address bar follows the selected reading destination.
+4. Apply the documented contracts and choose verification by the affected boundary. A guide example never substitutes for checking current code.
+
+All fifteen English articles are selectable. The English and Croatian canonical files remain at `frontend/docs/architecture/{en,hr}/`; selection lazily loads one body. The preview uses English, global Storybook settings and its own router. The actual application's source and route graph contain no development-guide reader.

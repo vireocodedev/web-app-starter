@@ -4,73 +4,52 @@ A single-repository starter with a Java Spring Boot backend and a Vite React
 TypeScript frontend. Manual paired GHCR/Hetzner release workflows require the
 explicit operator setup below; copying this template does not deploy an app.
 
-For the journey from setup through business acceptance, follow
-[From a cloned template to a production V1](docs/v1-workflow.md). Setup uses the
-two bundled skills below. The later requirements/specification workflow remains
-to be defined separately.
+The [project lifecycle](#project-lifecycle) below connects initialization,
+business implementation and acceptance to their procedure owners.
 
 ## Create your project from this template
 
-Use GitHub's **Use this template**, create your repository, and clone it locally.
-Open the consumer as a trusted VS Code workspace, then start intake:
+Create a private consumer through GitHub's template UI, clone it and open that
+consumer folder in VS Code. Then follow the
+[complete manual initialization guide](docs/template-initialization/INIT_GUIDE.md).
+It provides numbered steps and copy-paste commands for project identity, local
+development, shared CI, staging, production, accounts and recovery. Start with
+its project values and access checklist, then work through the steps in order.
 
-```text
-$initialization-intake prepare initialization for this repository
-```
+The [initialization folder index](docs/template-initialization/README.md) lists
+the companion references and operator setup tools.
 
-The agent inspects the checkout, presents all setup questions upfront and records
-answers, missing inputs and prerequisite evidence privately in
-`.agents/skills/initialization-intake/state/intake.json`. Resume in another agent
-session with `$initialization-intake resume intake`. Detectable facts and defaults
-are proposed for review; credentials stay in protected stores, with references in
-state. Complete all applicable answers, human login/consent steps and the final
-confirmation of the resolved execution scope before starting execution.
-
-```text
-$initialization-execution initialize this repository
-```
-
-Execution first validates that intake is complete for this checkout and its
-current answers. Missing, partial, changed or mismatched intake causes an explicit
-stop directing you to `$initialization-intake`. Once valid, the agent verifies
-live readiness and executes only the confirmed scope: application identity, local
-development, shared CI, staging/production and recovery for full initialization.
-Unexpected access failures or work outside that scope remain explicit blockers.
-Known configuration questions and human prerequisites belong in intake.
-
-The [intake skill](.agents/skills/initialization-intake/SKILL.md) and
-[execution skill](.agents/skills/initialization-execution/SKILL.md) ship with the
-template; no personal/global skill or Client Discovery service is required.
-A bare invocation of either skill offers a short task menu and waits. See
-[skill registration](.agents/skills/initialization-execution/references/runbook.md#codex-skill-registration)
-if they do not appear. Agents supporting slash commands use the same skill names
-with `/` instead of `$`.
-
-See the [initialization contract](docs/initialization-contract.md) for the intake
-completion gate, authorization and resume rules, and the
-[setup entry point](docs/template-initialization.md) for procedure owners and
-consumer-specific setup. Existing credentials, data and accepted setup evidence
-are preserved. An explicit local-only scope verifies only local setup.
+Preserve existing credentials, data and verified setup evidence when resuming.
+Completing only the local-development steps establishes local setup; use the
+guide's completion checklist before reporting full initialization.
 
 A clean fresh-consumer rehearsal is still required to prove the complete
 experience without follow-up intervention. Historical template deployment
 evidence below does not prove initialization of a new consumer.
 
-The [execution package](.agents/skills/initialization-execution/) owns generic
-procedures, the documentation generator and its dependency lockfile. Its
-[dashboard verification](.agents/skills/initialization-execution/references/runbook.md#project-documentation-dashboard)
-is independent of frontend dependencies. The [project dashboard](docs/project.html)
-contains public documentation and sanitized evidence; private intake and execution
-state stay outside its inputs.
+## Project lifecycle
 
-## After initialization
+| Stage                                | Completion evidence                                                                         | Procedure owner                                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Create and open the consumer         | Private repository created through GitHub's template UI, cloned and opened in VS Code       | [Initialization prerequisites](docs/template-initialization/INIT_GUIDE.md#prerequisite-create-and-open-the-consumer-repository) |
+| Initialize the project               | Actual local, CI, deployment and recovery evidence within the authorized scope              | [Initialization checklist](docs/template-initialization/INIT_GUIDE.md#completion-checklist)                                     |
+| Agree requirements and specification | Reviewed business scope, decisions and observable acceptance criteria                       | Product/client owners; requirements workflow remains to be defined separately                                                   |
+| Implement bounded outcomes           | Reviewed changes, relevant passing checks and actual delivery evidence                      | [Agent instructions](AGENTS.md) and [Development Guide](frontend/docs/development-guide/README.md)                              |
+| Accept business V1 on staging        | Agreed journeys, roles, integrations and failures accepted on the exact candidate           | Product/client owners and [release procedure](infrastructure/release/README.md#deploy-an-initialized-project)                   |
+| Promote and hand over                | Exact accepted image pair in production, smoke/recovery evidence and operating instructions | [Release operator guide](infrastructure/release/README.md)                                                                      |
 
-Setup delivers a verified application foundation. Business requirements,
-specification, implementation and acceptance are separate stages in the
-[V1 workflow](docs/v1-workflow.md). Their replacement requirements/specification
-process is outside this initialization change. The existing
-[Discovery specification package](docs/discovery-specification.md) is a legacy
-Client Discovery integration, not a next step or a consumer of local intake state.
+Initialization delivers a verified foundation. Business V1 requires implemented
+and accepted business journeys. Before implementation, agree scope, exclusions,
+users, permissions, journeys, data rules, integrations, dependencies and acceptance
+criteria. Record unresolved product decisions with an owner and affected work.
+
+Track implementation in issue/PR records. Report local verification, remote CI,
+delivery and business acceptance separately. Record acceptance against the exact
+staging candidate; promote that frontend/backend image pair without rebuilding.
+Finish with production business smoke, current access/operating documentation,
+backup retrieval, isolated restore, the agreed backup schedule and known limits.
+Keep consumer setup evidence in the [initialization guide](docs/template-initialization/INIT_GUIDE.md#consumer-specific-setup).
+Each stage retains the task's actual execution and delivery authorization.
 
 ## Local development
 
@@ -137,7 +116,7 @@ Stopping Java does not delete or stop the PostgreSQL service.
 
 Backend tasks select the Node version declared in `frontend/.nvmrc`, using an
 existing nvm installation if VS Code's desktop PATH has an older Node. See the
-[local debugger setup](.agents/skills/initialization-execution/references/runbook.md#local-backend-debugger)
+[local debugger setup](docs/template-initialization/INIT_GUIDE.md#9-use-the-vs-code-launchers)
 for prerequisites and troubleshooting.
 
 ## Backend and authentication
@@ -184,7 +163,9 @@ explicit approval of breaking changes or removals.
 ## Verification
 
 Follow the [Development Guide](frontend/docs/development-guide/README.md) and
-current source examples when implementing frontend or backend changes.
+current source examples when implementing frontend or backend changes. The
+[Storybook guide](frontend/docs/storybook/README.md) owns all interactive teaching
+examples and article readers; application source contains no development guide.
 
 ```sh
 cd backend
@@ -227,25 +208,22 @@ This repository owns the [shared CI foundation](infrastructure/ci/README.md):
 one isolated, disposable worker pool for explicitly registered private monorepos.
 Template consumers register their repository for that pool rather than install
 another permanent runner. The
-[initialization runbook](.agents/skills/initialization-execution/references/runbook.md#5-configure-shared-ci-access)
+[initialization guide](docs/template-initialization/INIT_GUIDE.md#11-register-the-repository-with-shared-ci)
 covers the required inputs and operator handoff.
 
-The selected template host has been rebuilt, installed, and passed
-[273 current-source isolation probes](infrastructure/ci/verification/host-acceptance.json).
-The organization-owned App is authorized and the registered controller is active
-for real-job acceptance. PR/main verification has passed and main protection is
-enforced. Cross-repository shared-pool acceptance remains pending. Consumers register
-for the verified shared pool rather than rebuilding the operator's host.
+Confirm current pool capacity, repository registration and installation validation
+with the operator. The [historical host validation record](infrastructure/ci/verification/host-acceptance.json)
+describes its recorded source, configuration and boot; each consumer needs its own
+current CI and branch-protection evidence.
 
 ## PR CI and branch protection
 
 The [root CI workflow](.github/workflows/ci.yml) selects backend/frontend checks
 by changed folder, plus foundation checks for infrastructure changes. Every job
 uses the shared Hetzner pool, and the aggregate `CI gate` always reports.
-See [consumer CI/protection setup](docs/github-ci.md) for required repository
-access, exact check names, and the main-branch policy. See
-[live acceptance evidence](docs/acceptance/ci-acceptance.json); no GitHub settings are inherited automatically
-when creating a repository from this template.
+See [consumer CI/protection setup](docs/template-initialization/github-ci.md) for required repository
+access, exact check names, and the main-branch policy. Configure those settings
+explicitly for each consumer repository.
 
 ## Staging and production
 
@@ -266,11 +244,3 @@ requires `DATABASE_URL` (a JDBC PostgreSQL URL), `DATABASE_USERNAME`, and
 `DATABASE_PASSWORD`, uses Secure cookies, and never creates an initial user.
 Deploy frontend and `/api` under one HTTPS origin using a reverse proxy; the
 Vite development proxy is not part of a production build.
-
-**Verified template activation:** [staging](https://starter-staging.vireocode.com)
-and [production](https://starter.vireocode.com) run the same private immutable
-frontend/backend pair. Both manual workflows, actual browser authentication,
-production pre-migration backups, initialized backup retrieval/isolated restore,
-and the enabled daily 03:00 Europe/Zagreb production timer are recorded in
-[release acceptance](docs/acceptance/release-acceptance.json). These are the template's
-instances, not settings or credentials inherited by a new consumer.

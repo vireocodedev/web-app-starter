@@ -16,10 +16,6 @@ vi.mock("@/app/localization/hooks/useAppLocalization", () => ({
   }),
 }));
 
-vi.mock("@/app/localization/hooks/useDevelopmentGuideTranslation", () => ({
-  useDevelopmentGuideTranslation: () => ({ t: (key: string) => key }),
-}));
-
 vi.mock("@/app/localization/hooks/useAppTranslation", () => ({
   useAppTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -110,8 +106,8 @@ describe("AppShell", () => {
           children: [
             {
               Component: Outlet,
-              handle: { resolveBreadcrumbs: () => [], resolveTitle: () => "Development guide" },
-              path: "/guide",
+              handle: { resolveBreadcrumbs: () => [], resolveTitle: () => "Workspace" },
+              path: "/workspace-root",
               children: [
                 { element: <p>Choose a category</p>, index: true },
                 {
@@ -130,7 +126,7 @@ describe("AppShell", () => {
           ],
         },
       ],
-      { initialEntries: ["/guide/frontend/home"] },
+      { initialEntries: ["/workspace-root/frontend/home"] },
     );
     render(
       <AppThemeProvider>
@@ -138,37 +134,42 @@ describe("AppShell", () => {
       </AppThemeProvider>,
     );
     const header = () => within(screen.getByRole("banner"));
-    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent("Development guide");
+    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent("Workspace");
     expect(header().getByRole("heading", { level: 1 })).toHaveTextContent("Frontend");
-    expect(header().getByRole("link", { name: "Development guide" })).toHaveAttribute("href", "/guide");
-    expect(header().getByRole("link", { name: "Frontend" })).toHaveAttribute("href", "/guide/frontend");
+    expect(header().getByRole("link", { name: "Workspace" })).toHaveAttribute("href", "/workspace-root");
+    expect(header().getByRole("link", { name: "Frontend" })).toHaveAttribute("href", "/workspace-root/frontend");
 
-    await act(() => router.navigate("/guide/backend"));
+    await act(() => router.navigate("/workspace-root/backend"));
     expect(header().getByRole("heading", { level: 1 })).toHaveTextContent("Backend");
     expect(header().queryByRole("link", { name: "Backend" })).toBeNull();
     expect(header().queryByText("Frontend")).toBeNull();
 
-    fireEvent.click(header().getByRole("link", { name: "Development guide" }));
+    fireEvent.click(header().getByRole("link", { name: "Workspace" }));
     expect(await screen.findByText("Choose a category")).toBeVisible();
-    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent(/^Development guide$/);
-    expect(header().queryByRole("link", { name: "Development guide" })).toBeNull();
+    expect(header().getByRole("heading", { level: 1 })).toHaveTextContent(/^Workspace$/);
+    expect(header().queryByRole("link", { name: "Workspace" })).toBeNull();
   });
 
   it("uses the nearest nonempty section group for deep pages and inherits the outer group elsewhere", async () => {
     const outerSections: readonly AppNavigationLink[] = [
-      { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.home", to: "/guide/overview" },
+      { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.home", to: "/workspace-root/overview" },
     ];
     const workspaceSections: readonly AppNavigationLink[] = [
-      { Icon: HomeOutlinedIcon, kind: "link", labelKey: "navigation.settings", to: "/guide/workspace/settings" },
+      {
+        Icon: HomeOutlinedIcon,
+        kind: "link",
+        labelKey: "navigation.settings",
+        to: "/workspace-root/workspace/settings",
+      },
     ];
     const router = createMemoryRouter(
       [
         {
           element: <AppShell navigationItems={[]} />,
-          path: "/guide",
+          path: "/workspace-root",
           handle: { sectionNavigation: outerSections },
           children: [
-            { element: <p>Guide overview</p>, path: "overview" },
+            { element: <p>Workspace overview</p>, path: "overview" },
             {
               Component: Outlet,
               path: "workspace",
@@ -190,7 +191,7 @@ describe("AppShell", () => {
           ],
         },
       ],
-      { initialEntries: ["/guide/workspace/settings/details"] },
+      { initialEntries: ["/workspace-root/workspace/settings/details"] },
     );
     render(
       <AppThemeProvider>
@@ -201,14 +202,17 @@ describe("AppShell", () => {
     expect(screen.getByText("Workspace setting details")).toBeVisible();
     expect(sections().getByRole("link", { name: "navigation.settings" })).toHaveAttribute(
       "href",
-      "/guide/workspace/settings",
+      "/workspace-root/workspace/settings",
     );
     expect(sections().getByRole("link", { name: "navigation.settings" })).toHaveAttribute("aria-current", "page");
     expect(sections().queryByRole("link", { name: "navigation.home" })).toBeNull();
 
-    await act(() => router.navigate("/guide/overview"));
-    expect(screen.getByText("Guide overview")).toBeVisible();
-    expect(sections().getByRole("link", { name: "navigation.home" })).toHaveAttribute("href", "/guide/overview");
+    await act(() => router.navigate("/workspace-root/overview"));
+    expect(screen.getByText("Workspace overview")).toBeVisible();
+    expect(sections().getByRole("link", { name: "navigation.home" })).toHaveAttribute(
+      "href",
+      "/workspace-root/overview",
+    );
     expect(sections().getByRole("link", { name: "navigation.home" })).toHaveAttribute("aria-current", "page");
     expect(sections().queryByRole("link", { name: "navigation.settings" })).toBeNull();
   });
@@ -224,7 +228,7 @@ describe("AppShell", () => {
               handle: {
                 HeaderContext: () => <span>Parent context</span>,
                 resolveBreadcrumbs: () => [],
-                resolveTitle: () => "Guide",
+                resolveTitle: () => "Workspace",
               },
               path: "/workspace",
               children: [
@@ -259,7 +263,7 @@ describe("AppShell", () => {
       </AppThemeProvider>,
     );
     const headerContext = document.querySelector("[data-rgo-header-context]");
-    expect(headerContext).toHaveTextContent("Guide");
+    expect(headerContext).toHaveTextContent("Workspace");
     expect(headerContext).toHaveTextContent(/Frontend\s*\/\s*orion/);
     expect(headerContext).not.toHaveTextContent("Parent context");
     expect(screen.getByRole("banner").querySelector("h1")).not.toHaveTextContent("Project page");

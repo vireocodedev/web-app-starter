@@ -4,11 +4,6 @@ import { routeDestinationFromRegistry, routeIsEnabledInRegistry, type AppRouteRe
 import type { AppRouteDefinition, AppRouteTranslations } from "./types/AppRoute";
 
 function staticLabel(definition: AppRouteDefinition, translations: AppRouteTranslations): string | undefined {
-  if (definition.translationNamespace === "development-guide") {
-    if (definition.navigation) return translations.developmentGuide(definition.navigation.labelKey);
-    if (!definition.index && /[:*]/.test(definition.path)) return undefined;
-    return definition.title(translations.developmentGuide, {});
-  }
   if (definition.navigation) return translations.app(definition.navigation.labelKey);
   if (!definition.index && /[:*]/.test(definition.path)) return undefined;
   return definition.title(translations.app, {});

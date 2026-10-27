@@ -2,7 +2,7 @@
 
 Consolidate compatible CI work without turning one early failure into hidden missing evidence or leaving its processes running into the next phase. Preserve original time budgets, failure outcomes and cleanup ownership.
 
-**Source-backed consumer reference, not installed starter behavior.** This recipe comes from `client-discovery-app`'s `infrastructure/ci/utility_phase.py`, CI workflow and utility gate. The starter currently uses separate portable/static/build/foundation jobs. Do not import this helper as if the template already provides it, or replace its workflow without a reviewed migration.
+**Source-backed consumer reference, not installed starter behavior.** This recipe comes from `client-discovery-app`'s `infrastructure/ci/utility_phase.py`, CI workflow and utility gate. The starter uses separate frontend static/build, backend image/test and foundation jobs selected by change detection. Do not import this helper as if the template already provides it, or replace its workflow without a reviewed migration.
 
 ## Trigger, owner and contract
 

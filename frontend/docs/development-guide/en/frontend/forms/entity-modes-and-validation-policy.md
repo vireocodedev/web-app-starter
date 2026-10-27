@@ -10,6 +10,8 @@ Use the shared seam for ordinary entity forms that need consistent validation ti
 
 The starter exposes a schema-factory type receiving translation and explicit context. Build localized validation from that owner rather than hardcoding English strings in a generic utility. LMS's historical `useLmsForm` also injects translation, which supports the recurring requirement, but its React Hook Form wrapper is not a current starter API.
 
+The shared helper has one validation intent. For an incomplete draft plus strict final submission, follow the [Draft and submit forms reference tutorial](../../../../storybook/forms/DraftAndSubmitForms/DraftAndSubmitForms.mdx). It composes installed form mechanics with explicit command intent, conditional fields, accepted baselines and leave guards; it does not weaken the shared helper or install a second form framework.
+
 ## Make operation identity visible
 
 This is a **neutral illustration of the contract**, not the exact installed type:

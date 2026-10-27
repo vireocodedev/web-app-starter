@@ -2,15 +2,15 @@
 
 Query predmemorija ponovno koristi rezultat prema ključu, a ne URL-u koji korisnik vidi ili zaglavljima na mreži. Ako ključ izostavi korisnika, radni prostor, filtar, stranicu ili drugi ulaz koji određuje rezultat, aplikacija može koristiti pogrešnu projekciju. Svaki feature treba namjernu tvornicu ključeva, a mutacije invalidiraju projekcije koje stvarno mogu promijeniti.
 
-Ovo je **ugrađeni starter obrazac s proširenjima potkrijepljenim izvorima**. Contacts posjeduje `ContactQueryKey`, stvara Query opcije kroz injektirani API i nakon zapisivanja invalidira kolekciju. CDA pokazuje privatni opseg korisnika i projekta. LMS povijesno uključuje stranicu i filtre u ključ. Njegova zasebna dodjela signalu u jednom queryju ograničenje je za razmatranje, a ne preporuka drugog izvora udaljene istine.
+Ovo je **Storybook referentni obrazac s proširenjima potkrijepljenim izvorima**, uz ugrađenu Query infrastrukturu. Contacts živi pod `docs/storybook/examples/Contacts/`, izvan produkcijskog registra. Contacts posjeduje `ContactQueryKey`, stvara Query opcije kroz injektirani API i nakon zapisivanja invalidira kolekciju. CDA pokazuje privatni opseg korisnika i projekta. LMS povijesno uključuje stranicu i filtre u ključ. Njegova zasebna dodjela signalu u jednom queryju ograničenje je za razmatranje, a ne preporuka drugog izvora udaljene istine.
 
 ## Okidač i vlasništvo
 
 API/query feature upravlja svim cache identitetima svog resursa. Aplikacijska runtime kompozicija injektira API i QueryClient u tvornice queryja i mutacija. Stranica bira ulaze i promatra rezultat; ne treba izmišljati konkurentski zapis ključa iste kolekcije.
 
-Korijen starter ključa je `['contacts']`, a kolekcija dodaje `'collection'`. To je dovoljno za njegovu stvarnu neparametriziranu lokalnu kolekciju Contacts. Nije dokaz da svaka buduća udaljena kolekcija može izostaviti korisnika, radni prostor, filtre ili paginaciju. Ključ proširite kada ti ulazi stvarno određuju rezultat.
+Korijen ključa Contacts reference je `['contacts']`, a kolekcija dodaje `'collection'`. To je dovoljno za njegovu stvarnu neparametriziranu lokalnu kolekciju Contacts. Nije dokaz da svaka buduća udaljena kolekcija može izostaviti korisnika, radni prostor, filtre ili paginaciju. Ključ proširite kada ti ulazi stvarno određuju rezultat.
 
-Ugrađena query tvornica prosljeđuje signal Queryja u `api.findAll({ signal })`. Tvornica mutacija nakon operacija koje mijenjaju kolekciju invalidira `ContactQueryKey.collection()`. API ovisnosti su izričite, pa query opcija opisuje rad bez stvaranja nepovezanog globalnog klijenta.
+Referentna query tvornica prosljeđuje signal Queryja u `api.findAll({ signal })`. Tvornica mutacija nakon operacija koje mijenjaju kolekciju invalidira `ContactQueryKey.collection()`. API ovisnosti su izričite, pa query opcija opisuje rad bez stvaranja nepovezanog globalnog klijenta.
 
 ## Definirajte cijeli identitet rezultata
 

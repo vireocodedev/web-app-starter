@@ -1,0 +1,301 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as ConfirmationsStories from "./Confirmations.stories";
+
+<Meta of={ConfirmationsStories} />
+
+# Confirmations
+
+Await one explicit decision with `feedback.confirm()`, then execute the command
+only when its result is `confirmed` and the operation still belongs to the current
+owner. This is how Contacts handles deletion and protects unsaved editors.
+
+## Try it
+
+Open **Publish changes**, cancel or press Escape, and verify no command completes.
+Confirm it and observe completion only after the simulated save resolves.
+**Destructive** focuses the safer **Keep contact** action. **Failed action** keeps
+the contact when the simulated delete rejects. **Dirty editor** asks before
+closing edited values. **Abortable** expires the pending decision automatically.
+Try the global Theme toolbar while a dialog is open and the **Mobile** story.
+
+<Canvas of={ConfirmationsStories.Standard} story={{ inline: false, height: "500px" }} sourceState="none" />
+
+## Before you start
+
+The app already installs `RgoFeedbackProvider` after localization and theme in
+`src/app/bootstrap/runtime/AppProviders.tsx`. Consume `useRgoFeedback()` below it;
+see **Feedback → Notifications → Docs** for the complete standalone adapter and
+provider configuration. Use `frontend/README.md` for startup.
+
+Paths below are relative to `frontend/`. Examples use existing typed
+`development-guide` messages, and application text remains paired in English and
+Croatian resources. A business feature uses its application-owned translation
+namespace and matching keys. Storybook remains English.
+
+The fixture runs local simulated commands. A confirmation is consent to attempt
+an action, not proof that the server accepted it. It does not implement deletion,
+authentication, permissions, a navigation blocker, or an overlay by itself.
+
+## Files and ownership
+
+```text
+src/app/bootstrap/runtime/AppProviders.tsx                    provider configuration
+docs/storybook/examples/Contacts/hooks/useContactActions.ts       delete decisions and commands
+docs/storybook/examples/Contacts/hooks/useContactsWorkspace.ts    dirty/busy overlay policy
+docs/storybook/patterns/Forms/components/DirtyStateAndNavigationGuardPanel/GuardedDraftPreview.tsx route-blocker lifetime
+src/app/overlays/hooks/useAppMultiViewOverlay.ts              mounted view/session guard controller
+docs/storybook/feedback/Confirmations/     preview fixtures
+```
+
+The provider owns the dialog, focus, and promise settlement. The feature owns the
+meaning of the decision, the exact target, pending work, error handling and
+post-await owner checks. The route or overlay controller owns whether leaving
+that UI is actually allowed.
+
+## 1. Branch on the explicit result
+
+Inside an event handler below the provider, the installed API is:
+
+```ts
+const result = await feedback.confirm({
+  title: t("contacts.delete.title"),
+  message: t("contacts.delete.message", { name: contact.name }),
+  confirmLabel: t("contacts.delete.confirm"),
+  cancelLabel: t("contacts.delete.cancel"),
+  destructive: true,
+  signal: owner.signal,
+});
+if (result.status !== "confirmed" || owner.signal.aborted) return;
+await removeContact(contact.id);
+```
+
+This is a focused handler excerpt; the complete component follows below. The
+result is an object with `status: "confirmed"` or `status: "cancelled"`. Testing
+its truthiness would accept both outcomes. Cancel, Escape, backdrop dismissal,
+abortion, provider teardown, or a newer confirmation settle as cancelled.
+A cancellation is an ordinary decision, not a failed write.
+
+Only one confirmation is active for a provider. Opening a new one cancels the
+previous request; confirmations do not form a dialog queue. The `destructive`
+flag changes presentation and initially focuses Cancel. It performs no command.
+Name the actual action and target in translated title, message and button labels.
+
+## 2. Own the command and its lifetime
+
+This complete integration component follows the Contacts pattern. Its parent
+supplies `removeContact` using the feature's real command, such as
+`id => removeMutation.mutateAsync(id)`. Mount it with `key={contact.id}` when a
+parent can switch records, so a decision for one contact cannot act on a
+replacement record.
+
+```tsx
+// docs/storybook/examples/Contacts/components/DeleteContactButton.tsx
+import { Button } from "@mui/material";
+import { useRgoFeedback } from "@rgo-web/frontend";
+import { useEffect, useRef, useState } from "react";
+
+import { useDevelopmentGuideTranslation } from "../../shared/localization/useDevelopmentGuideTranslation";
+
+type Props = Readonly<{
+  contact: Readonly<{ id: string; name: string }>;
+  removeContact: (id: string) => Promise<void>;
+}>;
+
+export function DeleteContactButton({ contact, removeContact }: Props) {
+  const feedback = useRgoFeedback();
+  const { t } = useDevelopmentGuideTranslation();
+  const operation = useRef<AbortController | null>(null);
+  const [pending, setPending] = useState(false);
+  useEffect(() => () => operation.current?.abort(), []);
+
+  const remove = async () => {
+    if (operation.current) return;
+    const owner = new AbortController();
+    operation.current = owner;
+    try {
+      const result = await feedback.confirm({
+        title: t("contacts.delete.title"),
+        message: t("contacts.delete.message", { name: contact.name }),
+        confirmLabel: t("contacts.delete.confirm"),
+        cancelLabel: t("contacts.delete.cancel"),
+        destructive: true,
+        signal: owner.signal,
+      });
+      if (result.status !== "confirmed" || owner.signal.aborted) return;
+
+      setPending(true);
+      let failed = false;
+      try {
+        await removeContact(contact.id);
+      } catch {
+        failed = true;
+      }
+      if (owner.signal.aborted) return;
+      feedback.notify({
+        id: `contact-${contact.id}-delete-result`,
+        message: t(failed ? "contacts.delete.failed" : "contacts.delete.success", { name: contact.name }),
+        severity: failed ? "error" : "success",
+      });
+    } finally {
+      if (operation.current === owner) operation.current = null;
+      if (!owner.signal.aborted) setPending(false);
+    }
+  };
+
+  return (
+    <Button color="error" disabled={pending} onClick={() => void remove()} variant="contained">
+      {t("contacts.delete.confirm")}
+    </Button>
+  );
+}
+```
+
+The ref claims one operation synchronously, including the decision. Keep the
+opener focusable while its modal is open so cancellation can restore focus;
+disable it once the confirmed command starts, as Contacts does. After confirmation
+and after the command, the owner is checked again. Unmount aborts its dialog and suppresses stale local feedback.
+This controller does not cancel the server command or reverse a committed write.
+A reusable mounted editor that changes viewer, authority or session needs its
+feature's generation protocol, not just a mounted flag.
+
+Keep the request catch separate from success reporting. This example assumes
+`removeContact` rejects for known command failure. Actual conflict, uncertain
+receipt, or post-commit refresh failure requires the API owner's result policy.
+Success feedback follows acknowledgement; cancellation sends no command and
+shows no false success/error notification.
+
+## 3. Guard a dirty editor at the correct boundary
+
+The existing Contacts workspace places this policy in the `canLeave` callback
+passed to `useAppMultiViewOverlay`. The following is the relevant callback
+excerpt; retain that controller's existing `sameView`, `mount`, and session
+callbacks when integrating it:
+
+```ts
+canLeave: async ({ view }, signal) => {
+  if (!isEditorView(view)) return true;
+  if (editorStateRef.current.submitting) return false;
+  if (!editorStateRef.current.dirty) return true;
+  const result = await feedback.confirm({
+    cancelLabel: t("contacts.overlay.keepEditing"),
+    confirmLabel: t("contacts.overlay.discard"),
+    destructive: true,
+    message: t("contacts.overlay.discardMessage"),
+    signal,
+    title: t("contacts.overlay.discardTitle"),
+  });
+  return result.status === "confirmed" && !editorStateRef.current.submitting;
+},
+```
+
+The controller supplies the abort signal and independently rechecks current
+session identity, lifetime and abortion. The feature rechecks submitting after
+the decision, because saving may have begun while a prompt was open. These are
+separate responsibilities. Feedback alone cannot prevent route navigation or
+close a panel safely.
+
+For route navigation, `GuardedDraftPreview.tsx` connects the same confirmation API
+to `useBlocker`: confirm calls `blocker.proceed()`, cancel calls `blocker.reset()`,
+and effect cleanup aborts the owned prompt. Do not replace the existing route or
+overlay owner with a second arbitrary modal or a toast.
+
+The **Dirty editor** story models this decision with local state. It is not a full
+router blocker or the Contacts overlay controller; read those real source files
+when implementing the actual boundary.
+
+## 4. Abort the exact pending decision
+
+Pass a signal for any decision whose owner can end first. The complete component
+above uses an owned AbortController and aborts it on cleanup. Existing
+`AbortableConfirmationPreview.tsx` also demonstrates `AbortSignal.timeout(5000)`
+for an expiring request. The Storybook fixture uses a shorter 2-second owned timer
+and clears it after settlement or teardown.
+
+Aborting a completed request must not cancel a newer dialog. The installed
+provider associates the signal with that exact request. Newer requests and
+provider teardown also cancel old decisions. None of these outcomes rolls back
+a command that was already sent.
+
+## Where the app uses this
+
+- `contacts/hooks/useContactActions.ts`: single/bulk delete confirmations branch
+  on the result before awaiting mutation; cancellation returns without mutation.
+- `contacts/hooks/useContactsWorkspace.ts`: dirty-close/replacement decisions
+  reject busy leave attempts, preserve a clean exit, and recheck submitting.
+- `patterns/forms/.../GuardedDraftPreview.tsx`: route-blocker confirmation with an
+  owned abort controller and cleanup.
+- `patterns/overlays/.../GuardedClosePreview.tsx`: a frame's `beforeClose` connects
+  unsaved draft state to the shared confirmation UI.
+
+All reference paths above are beneath `docs/storybook/`; none are installed application features. A save
+result, a confirmation result, and an overlay completion result have distinct
+contracts. A confirmed discard is not an acknowledged save.
+
+## Common mistakes
+
+- **Cancel still executes the command:** branch on `result.status`, not result
+  truthiness or the fact that the promise resolved.
+- **A dangerous action runs when the dialog opens:** await confirmation first;
+  `destructive` only changes the decision's presentation.
+- **A stale dialog acts on another record:** capture the operation owner, pass its
+  signal, and recheck identity/authority after each meaningful await.
+- **Double clicks create concurrent work:** claim the operation in a synchronous
+  ref before awaiting, then expose pending state through disabled controls.
+- **A modal outlives its route/editor:** abort the owned request in cleanup. Do not
+  assume ending presentation undoes a server command.
+- **A dirty editor closes while saving:** keep the real close/navigation guard
+  and its post-confirmation submitting/current-session rechecks.
+
+## 5. Verify your implementation
+
+Run typecheck and architecture checks sequentially, then exercise the real owner:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+Verify cancel, Escape, backdrop and abort send zero commands; confirmed action
+executes once and announces success only after acknowledgement. A failed command
+retains safe state and never reports success. Destructive prompts initially focus
+the safer action, and dismissal restores meaningful focus. Dirty cancel preserves
+text; confirmed discard closes only its current, non-submitting session.
+
+Change Light → Dark → Light with a prompt open: its state and draft remain.
+Switch stories or end the owner with a prompt open: the next story is clean and
+receives no late completion. At mobile widths, dialog text/actions remain inside
+the viewport and keyboard focus remains usable. Verify both application locales
+when integrating; stories remain English.
+
+With Storybook running, use `npm --prefix frontend run test:browser:storybook`;
+`RGO_STORYBOOK_URL` selects an existing alternate server. Finish delivery with
+`npm --prefix frontend run verify`. Browser previews establish these local
+interactions, not remote persistence or complete assistive-technology acceptance.
+
+## Read this tutorial without Storybook
+
+Read the complete command-owner component and the explicitly labeled integration
+excerpts directly from this MDX. Find them and the current owners using:
+
+```sh
+npm --prefix frontend run guide:index -- search "Confirmations"
+npm --prefix frontend run guide:index -- search useContactsWorkspace
+```
+
+Authoritative lifetime and session guidance lives in
+`frontend/docs/development-guide/en/frontend/async-commands/generation-guards-after-await.md`
+and `frontend/docs/development-guide/en/frontend/overlays/guarded-command-results-and-session-identity.md`.
+The standalone provider recipe is in the adjacent `Notifications.mdx`.
+
+## Storybook fixture reference
+
+`ConfirmationsExample.tsx` and `Confirmations.stories.tsx` sit beside this MDX
+under `docs/storybook/feedback/Confirmations/`. They use the
+installed feedback provider and own their simulated command, AbortController,
+pending guard and expiry timer. Their English copy and local draft state are
+preview fixtures, not a new app guard abstraction or backend adapter.
+
+`.storybook/StorybookProviders.tsx` supplies localization → theme → feedback.
+The feedback adapter is keyed only by story identity, so theme changes preserve
+open dialogs while story switches end them. Each Docs iframe has its own real
+provider. Production application composition remains in `AppProviders.tsx`.

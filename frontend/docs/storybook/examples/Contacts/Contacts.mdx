@@ -1,0 +1,32 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./Contacts.stories";
+
+<Meta of={Stories} />
+
+# Contacts reference feature
+
+Contacts is a complete reference feature kept exclusively in Storybook. The application source and runtime contain no Contacts feature, seed data or development-guide routes. Each preview injects a private memory adapter and Query client; editing this directory never reads or writes application browser storage.
+
+## 1. Inspect the feature boundary
+
+Read `models/Contact.ts` for normalized domain data and the translated validation-schema factory, `api/contact.api.ts` for the persistence port, and `api/contact.query.ts` / `contact.mutation.ts` for query ownership and scoped invalidation. `contacts.feature.ts` receives both its adapter and Query client explicitly.
+
+## 2. Exercise the directory
+
+Create, inspect, edit, filter, select and remove contacts. The feature owns its forms, conflict handling and overlays. The browser-storage adapter is retained as an inert, tested reference implementation; these stories select `api/contact.api.memory.ts` instead.
+
+<Canvas of={Stories.Directory} story={{ inline: false, height: "850px" }} sourceState="none" />
+
+## 3. Compare a second consumer
+
+The dashboard consumes the same feature data options. Its Open contacts link navigates inside this preview router.
+
+<Canvas of={Stories.Dashboard} story={{ inline: false, height: "850px" }} sourceState="none" />
+
+## 4. Install a consumer feature deliberately
+
+Copy the needed owner into `src/features/<feature>/`, replace demo labels and data, choose the real adapter, and register its factory in `src/app/bootstrap/runtime/appFeatures.ts`. Add the canonical typed runtime hook, public exports, thin page and route registration. The Architecture tutorials explain each responsibility; Building a backend-connected feature supplies a complete HTTP installation recipe. Do not import this documentation directory from production code.
+
+## Verification
+
+`tests/storybook/contacts/` preserves model, form, adapter, mutation and component behavior checks. Preview data lasts only until the story remounts. This reference does not provide backend endpoints or persistent business data.

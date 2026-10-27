@@ -2,7 +2,7 @@
 
 Checked-in debugger treba biti ponovljiv ulaz, a dijagnoza počinje prvom palom ovisnošću. Java launch, database task i frontend terminal imaju različite preduvjete i lifetime.
 
-**Ugrađeni starter workflow.** Ponašanje definiraju `.vscode/launch.json`, `.vscode/tasks.json` i lokalni backend helperi. README i initializer runbook upravljaju pripremom. Članak produbljuje uvod **Jedan workspace, dva runtimea** konkretnim debug odlukama.
+**Ugrađeni starter workflow.** Ponašanje definiraju `.vscode/launch.json`, `.vscode/tasks.json` i lokalni backend helperi. README i `docs/template-initialization/INIT_GUIDE.md` upravljaju pripremom. Članak produbljuje uvod **Jedan workspace, dva runtimea** konkretnim debug odlukama.
 
 ## Okidač, vlasnik i ugovor
 
@@ -58,7 +58,7 @@ Local profil dopušta HTTP cookie samo lokalno. Ne koristi ga za popravak produk
 
 Zabilježi launch nazive, odabrani runtime, pre-launch autentikaciju, Java startup/breakpoint i real HTTP način. Env i login tajne ostaju privatne.
 
-Kod blokade imenuj sloj i čuvaj podatke. Debug uspjeh nije puna regresija, CI readiness ili deployment ovlast. Runbook ostaje vlasnik preduvjeta; članak ne pokreće task/debugger.
+Kod blokade imenuj sloj i čuvaj podatke. Debug uspjeh nije puna regresija, CI readiness ili deployment ovlast. Ručni vodič za inicijalizaciju ostaje vlasnik preduvjeta; članak ne pokreće task/debugger.
 
 ## Izvori
 
@@ -68,4 +68,3 @@ Kod blokade imenuj sloj i čuvaj podatke. Debug uspjeh nije puna regresija, CI r
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:backend/scripts/setup-local.mjs`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:backend/scripts/start-local.mjs`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:README.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/initialize-project/references/runbook.md`

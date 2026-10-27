@@ -1,7 +1,11 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 
-import { verifyApplicationArchitecture } from "./application-architecture-policy.mjs";
+import {
+  isSourceGuidePath,
+  isSourceStorybookPath,
+  verifyApplicationArchitecture,
+} from "./application-architecture-policy.mjs";
 
 const applicationRoot = resolve(import.meta.dirname, "..");
 
@@ -11,6 +15,13 @@ async function sourceFiles(directory) {
 
   for (const entry of entries) {
     const path = join(directory, entry.name);
+    const localPath = relative(applicationRoot, path).replaceAll("\\", "/");
+    if (isSourceStorybookPath(localPath)) {
+      throw new Error(localPath + ": Storybook stories and support directories belong under docs/storybook/<section>");
+    }
+    if (isSourceGuidePath(localPath)) {
+      throw new Error(localPath + ": development guidance belongs outside src under docs/storybook");
+    }
     if (entry.isDirectory()) {
       files.push(...(await sourceFiles(path)));
     } else if (/\.(?:ts|tsx)$/.test(entry.name)) {

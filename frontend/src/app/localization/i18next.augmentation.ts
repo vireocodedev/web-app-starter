@@ -1,15 +1,19 @@
 import "i18next";
-
-import type { englishDevelopmentGuideTranslations } from "./translations/development-guide.en";
 import type { englishTranslations } from "./translations/translation.en";
+
+export type BaseAppTranslation = typeof englishTranslations;
+// Consumer documentation may extend these open resource interfaces outside production source.
+// This named interface intentionally supports declaration merging in separate consumers.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface AppTranslationResource extends BaseAppTranslation {}
+export interface AppTranslationResources {
+  translation: AppTranslationResource;
+}
 
 declare module "i18next" {
   interface CustomTypeOptions {
     defaultNS: "translation";
-    resources: {
-      translation: typeof englishTranslations;
-      "development-guide": typeof englishDevelopmentGuideTranslations;
-    };
+    resources: AppTranslationResources;
     strictKeyChecks: true;
   }
 }

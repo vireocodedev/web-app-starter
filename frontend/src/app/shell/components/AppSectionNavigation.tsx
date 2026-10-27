@@ -16,7 +16,6 @@ import { useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { Link, useLocation } from "react-router";
 
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
-import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 import { AppBottomDrawerHandle } from "@/app/overlays/components/AppBottomDrawerHandle";
 import type { AppNavigationLink } from "@/app/router/types/AppRoute";
 import { navigationPathMatchesLocation } from "./navigationPath";
@@ -27,7 +26,6 @@ export function AppSectionNavigation({
   mobile,
 }: Readonly<{ items: readonly AppNavigationLink[]; mobile: boolean }>) {
   const { t } = useAppTranslation();
-  const { t: guideT } = useDevelopmentGuideTranslation();
   const { pathname } = useLocation();
   const containerRef = useRef<HTMLElement>(null);
   const drawerPaperRef = useRef<HTMLDivElement>(null);
@@ -41,8 +39,7 @@ export function AppSectionNavigation({
   if (menuState.mobile !== mobile) setMenuState({ mobile, anchor: null });
   const anchor = menuState.mobile === mobile ? menuState.anchor : null;
   const activeIndex = items.findIndex(item => navigationPathMatchesLocation(pathname, item.to, item.activePath));
-  const label = (item: AppNavigationLink) =>
-    item.labelNamespace === "development-guide" ? guideT(item.labelKey) : t(item.labelKey);
+  const label = (item: AppNavigationLink) => t(item.labelKey);
 
   useLayoutEffect(() => {
     if (mobile) return undefined;

@@ -32,3 +32,9 @@ prijevode, mockove, ključeve pohrane, runtime konstrukciju, Signal registraciju
 stories i poveznice. Nakon toga pretražite javni naziv i ID rute. Zadržite
 generičku infrastrukturu koju ostale značajke koriste te provjerite pokretanje,
 izravne URL-ove, Not Found i oba jezika.
+
+Dokumentacijski primjeri žive samo pod `docs/storybook/`, s referentnim testovima
+u `tests/storybook/`. Uklanjanje referentne kategorije zahvaća njezine Storybook
+čitače, galeriju, testove i poveznice; nema ugrađene aplikacijske registracije za
+uklanjanje. Sačuvajte zajednički docs prikaz i kanonske članke kada uklanjate
+samo jedan primjer.

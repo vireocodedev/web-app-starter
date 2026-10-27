@@ -59,7 +59,6 @@ export const croatianTranslations = {
     bottom: "Donja navigacija",
     breadcrumbs: "Navigacijski put",
     collapseSidebar: "Sažmi bočnu navigaciju",
-    developmentGuide: "Vodič za razvoj",
     expandSidebar: "Proširi bočnu navigaciju",
     closeNavigation: "Zatvori navigaciju",
     closeMenuTooltip: "Zatvori izbornik",

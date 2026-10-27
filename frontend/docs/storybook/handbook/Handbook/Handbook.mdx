@@ -1,0 +1,24 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as Stories from "./Handbook.stories";
+
+<Meta of={Stories} />
+
+# Handbook reference
+
+The complete handbook now lives in Storybook. Use the searchable reference below to read every frontend, backend, testing, CI, delivery, developer-workflow and agent-workflow article. Search covers English titles, descriptions, categories, topics and pinned source references. The category filter and article chooser expose the complete catalog; selecting an article loads only that body's Markdown.
+
+<Canvas of={Stories.Overview} />
+
+## Read and reuse a pattern
+
+1. Search for the behavior, owner or source path you are changing. Broaden the search and inspect the relevant categories before deciding a pattern is absent.
+2. Select an article. Read its contract, failure decisions, example and exact `project@revision:relative/path` provenance. An installed pattern and a consumer reference recipe carry different implementation obligations.
+3. Follow article and related-reading links inside the preview. Links to a focused Storybook tutorial open its Docs page in the Storybook manager. The browser-like address bar follows the selected article. English and Croatian Markdown files retain their canonical paths under `frontend/docs/development-guide/{en,hr}/`; the Storybook reader uses English.
+4. Inspect the actual current source before implementing the pattern. Pinned peer references explain the example's origin, rather than asserting that peer APIs are installed here.
+5. Use the live command-line index for full-text body search: `npm --prefix frontend run guide:index -- search session csrf`.
+
+## Implementation and verification
+
+The private catalog and locale resources live beside this story. The selected-body loaders use lazy `import.meta.glob` imports, validate paired file keys without fetching bodies, and provide retry after a failed request. Link resolution uses the complete canonical source path, preserving identically named articles in different topics and cross-links to Architecture. No application route, auth session, production runtime or network endpoint is required.
+
+Canonical content remains in the paired handbook Markdown files. This reader does not translate stories or execute documentation examples. The live index inventories the working tree without evaluating guide modules; guide verification checks all catalog entries, paired labels, provenance and Markdown links.

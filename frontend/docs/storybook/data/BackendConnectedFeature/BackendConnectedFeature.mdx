@@ -1,0 +1,586 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as BackendStories from "./BackendConnectedFeature.stories";
+
+<Meta of={BackendStories} />
+
+# Building a backend-connected feature
+
+Build a product feature around its domain port. Inject the application's shared
+HTTP client when constructing its adapter; keep endpoint serialization, schemas,
+cache identity and errors inside the feature. A thin route entry composes the
+feature's public UI.
+
+## Try it
+
+Edit **Request title**, then **Save request**. The request sequence shows a fresh
+CSRF acquisition before PATCH, an explicit editable-field projection, and scoped
+reads after acknowledgement. Validation failure keeps the draft and shows only
+the allow-listed title error. Missing record distinguishes a 404 from an empty
+collection. Malformed response commits but loses a usable acknowledgement: the
+write is blocked until **Reconcile uncertain result** reads authoritative state.
+Use **Repair simulated endpoint** before retrying a rejected command.
+
+<Canvas of={BackendStories.Overview} story={{ inline: false, height: "1150px" }} sourceState="none" />
+
+## Before you start
+
+Read Architecture, Loading and saving feature data, Authentication and HTTP
+integration, Entity forms, and Testing a feature. Paths below are relative to
+`frontend/`. The installed architecture is owned by
+`docs/architecture/en/apis-models-queries-and-mutations.md`,
+`http-query-and-browser-storage.md`, and `authentication-and-session.md`.
+
+**The following requests feature is a complete consumer recipe to create in a
+consumer app. It is not installed production source or a published backend API.**
+The tutorial's runnable implementation lives only beside this MDX. The separate
+Contacts Storybook reference uses injected private memory; its browser-storage
+adapter remains an inert, tested reference. The app's existing runtime is unchanged.
+The recipe deliberately extends the current construction seam rather than
+pretending that a feature can already obtain Axios from a hook.
+
+## 1. Agree the server contract and file owners
+
+```text
+src/features/requests/
+├── models/Request.ts
+├── api/request.api.ts
+├── api/request.api.http.ts
+├── api/request.querykeys.ts
+├── api/request.query.ts
+├── api/request.mutation.ts
+├── requests.feature.ts
+├── hooks/useRequestsFeature.ts
+├── components/RequestsFeature.tsx
+└── index.ts
+src/pages/requests/RequestsPage.tsx
+src/app/router/components/RequestsRoute.tsx
+src/app/bootstrap/runtime/{appFeatures.ts,createAppRuntime.ts}
+```
+
+Use the same ownership as Contacts, not a dependency on Contacts. Domain ports
+expose values and AbortSignal, not Axios/Zod types. HTTP adapters validate unknown
+responses. Composition owns shared-client injection. Product UI owns translated
+labels, validation and editor state; use Entity forms for a full editor.
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Consumer endpoint contract to implement and verify on the backend</caption>
+  <thead>
+    <tr>
+      <th scope="col">Endpoint relative to /api</th>
+      <th scope="col">Contract</th>
+      <th scope="col">Authority owner</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">GET /requests?page=0&amp;size=20</th>
+      <td>
+        Zero-based page; deterministic server ordering; items and total from the same authorized filter. Empty means
+        items [], total 0.
+      </td>
+      <td>Query service filters permitted records before counting and paging.</td>
+    </tr>
+    <tr>
+      <th scope="row">GET /requests/:id</th>
+      <td>Validated record from an authoritative primary read or documented 404. Never substitute an empty object.</td>
+      <td>Server rechecks visibility, including direct links. Reconciliation must not rely on a stale replica.</td>
+    </tr>
+    <tr>
+      <th scope="row">PATCH /requests/:id</th>
+      <td>
+        Only title and expectedVersion. 200 is a committed record with its new version. This recipe defines 409
+        REQUEST_REJECTED exclusively as a stale expectedVersion.
+      </td>
+      <td>
+        Transactional service checks live actor, editable state and version before commit. All competing writers use the
+        same exact monotonic version check; versions never reset and record IDs are not reused.
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">400, 403, 404, 409</th>
+      <td>
+        Installed public error envelope: code, bounded message, fieldErrors. 400 VALIDATION_FAILED permits
+        REQUIRED/TOO_LONG for title; 403 FORBIDDEN; 404/409 REQUEST_REJECTED.
+      </td>
+      <td>Endpoint contract documents whether a failure occurred before mutation. UI never renders server prose.</td>
+    </tr>
+  </tbody>
+</table>
+
+If an endpoint uses 409 for several domain conditions, publish an explicit
+machine-readable discriminator and update producer/consumer compatibility tests.
+Do not guess that every 409 means stale version. No universal conflict DTO exists
+in the starter. For transaction, revision and access rules, read the existing
+backend articles `docs/development-guide/en/backend/application-services/transactional-commands.md`,
+`data/revision-conflicts-and-shared-locks.md` and
+`security/resource-scope-and-composite-keys.md`. Implementing these endpoints,
+database changes and HTTP/database tests is future backend work, not accomplished
+by this preview.
+
+## 2. Define separate read and write schemas
+
+```ts
+// Consumer recipe: src/features/requests/models/Request.ts
+import { z } from "zod";
+
+export const requestRecordSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  version: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+});
+export const requestPageSchema = z.object({
+  items: z.array(requestRecordSchema),
+  total: z.number().int().nonnegative(),
+});
+export const requestUpdateSchema = z.object({
+  title: z.string().trim().min(1).max(80),
+  expectedVersion: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+});
+export type RequestRecord = z.infer<typeof requestRecordSchema>;
+export type RequestPage = z.infer<typeof requestPageSchema>;
+export type RequestUpdate = z.infer<typeof requestUpdateSchema>;
+```
+
+These boundary schemas define wire validity, not translated form messages. A
+form schema factory takes its translation function and outside context, as in
+Entity forms. Project only the fields the command owns even when a structural
+caller passes a larger object. A server response must never become a write by
+spreading all its properties.
+
+```ts
+// Consumer recipe: src/features/requests/api/request.api.ts
+import type { RequestPage, RequestRecord, RequestUpdate } from "../models/Request";
+
+export interface RequestApi {
+  findPage(page: number, signal?: AbortSignal): Promise<RequestPage>;
+  findById(id: string, signal?: AbortSignal): Promise<RequestRecord>;
+  update(id: string, input: RequestUpdate): Promise<RequestRecord>;
+}
+export class RequestResponseError extends Error {
+  readonly afterWrite: boolean;
+  constructor(afterWrite: boolean) {
+    super("Unexpected request response.");
+    this.afterWrite = afterWrite;
+    this.name = "RequestResponseError";
+  }
+}
+```
+
+## 3. Inject Axios and preserve the original HTTP failure
+
+```ts
+// Consumer recipe: src/features/requests/api/request.api.http.ts
+import type { AxiosInstance } from "axios";
+import { requestPageSchema, requestRecordSchema, requestUpdateSchema } from "../models/Request";
+import { RequestResponseError, type RequestApi } from "./request.api";
+
+export function createRequestHttpApi(http: AxiosInstance): RequestApi {
+  return {
+    async findPage(page, signal) {
+      if (!Number.isSafeInteger(page) || page < 0) throw new Error("Invalid request page.");
+      const response = await http.get("/requests", { params: { page, size: 20 }, signal });
+      const parsed = requestPageSchema.safeParse(response.data);
+      if (!parsed.success) throw new RequestResponseError(false);
+      return parsed.data;
+    },
+    async findById(id, signal) {
+      const response = await http.get(`/requests/${encodeURIComponent(id)}`, { signal });
+      const parsed = requestRecordSchema.safeParse(response.data);
+      if (!parsed.success || parsed.data.id !== id) throw new RequestResponseError(false);
+      return parsed.data;
+    },
+    async update(id, input) {
+      const { title, expectedVersion } = requestUpdateSchema.parse(input);
+      const response = await http.patch(`/requests/${encodeURIComponent(id)}`, { title, expectedVersion });
+      const parsed = requestRecordSchema.safeParse(response.data);
+      if (!parsed.success || parsed.data.id !== id || parsed.data.version <= expectedVersion)
+        throw new RequestResponseError(true);
+      return parsed.data;
+    },
+  };
+}
+```
+
+The app auth runtime installs CSRF/expiry interceptors once on this client. Do
+not install another interceptor per feature, add an Authorization token, or
+persist cookies/CSRF in storage. Read signals reach Axios; query cancellation is
+not write rollback. A malformed 200 after PATCH might follow a successful commit,
+so it must not be presented as a safely retryable rejected save.
+
+Classify rejected HTTP responses at the feature boundary using actual status
+and the bounded installed decoder. This complete helper projects owned fields
+without losing Axios status or inventing backend codes:
+
+```ts
+// Consumer recipe: src/features/requests/api/request.failure.ts
+import axios from "axios";
+import { decodeAppHttpError } from "@/app/data/http/appHttpError";
+import { RequestResponseError } from "./request.api";
+
+export function classifyRequestFailure(error: unknown) {
+  if (error instanceof RequestResponseError)
+    return { kind: error.afterWrite ? "uncertain" : "invalid-response" } as const;
+  const decoded = decodeAppHttpError(error, ["title"]);
+  const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+  if (status === 400 && decoded?.code === "VALIDATION_FAILED")
+    return { kind: "validation", fields: decoded.fieldErrors } as const;
+  if (status === 403 && decoded?.code === "FORBIDDEN") return { kind: "forbidden" } as const;
+  if (status === 404 && decoded?.code === "REQUEST_REJECTED") return { kind: "missing" } as const;
+  // Valid only for this explicitly agreed endpoint's 409 contract.
+  if (status === 409 && decoded?.code === "REQUEST_REJECTED") return { kind: "stale-version" } as const;
+  return { kind: "unclassified", status } as const;
+}
+```
+
+Translate REQUIRED/TOO_LONG with local resource keys; never pass arbitrary
+server field paths into `useRgoForm`. Unknown write failures require the
+endpoint's reconciliation policy. Even an HTTP 500 is not universal proof of
+rollback. Login/CSRF/session errors remain owned by auth; do not relabel an
+expired session as a missing request.
+
+For an uncertain write, retain its captured ID and expectedVersion until a
+documented authoritative observation makes replay safe to rule out. A read at
+the **same** version does not prove that the original request stopped running.
+Under the shared exact-version protocol above, a strictly newer primary version
+proves that the old expectedVersion can no longer commit. It does not prove
+that this person's command produced the newer state. Read/accept that state
+explicitly; use a server command receipt when attribution is required.
+
+```ts
+// Consumer recipe: src/features/requests/api/request.reconciliation.ts
+import type { RequestApi } from "./request.api";
+
+export async function reconcileUncertainRequest(
+  api: RequestApi,
+  basis: Readonly<{ id: string; expectedVersion: number }>,
+  signal?: AbortSignal,
+) {
+  if (!Number.isSafeInteger(basis.expectedVersion) || basis.expectedVersion < 0)
+    throw new Error("Invalid captured write basis.");
+  const fresh = await api.findById(basis.id, signal);
+  if (fresh.id !== basis.id || fresh.version <= basis.expectedVersion) return { status: "unresolved" } as const;
+  return { status: "reconciled", record: fresh } as const;
+}
+```
+
+Capture `basis` from the submitted command before awaiting the write. Keep the
+uncertain latch, original editor basis and write blockade on `unresolved` or a
+failed read; do not offer a second save just because GET succeeded. Clear it
+only for `reconciled` after accepting that newer state, or after a terminal
+server receipt resolves the exact command. Without the backend's shared version
+and primary-read guarantees, use a receipt/reconciliation endpoint instead of
+this version comparison. A missing record or same-version response is not proof
+of a safely rejected original write.
+
+## 4. Keep query identity and command acknowledgement separate
+
+```ts
+// Consumer recipe: src/features/requests/api/request.querykeys.ts
+export const RequestKeys = {
+  lists: (viewerId: string) => ["requests", viewerId, "lists"] as const,
+  page: (viewerId: string, page: number) => ["requests", viewerId, "lists", { page, size: 20 }] as const,
+  detail: (viewerId: string, id: string) => ["requests", viewerId, "detail", id] as const,
+};
+```
+
+```ts
+// Consumer recipe: src/features/requests/api/request.query.ts
+import { queryOptions } from "@tanstack/react-query";
+import type { RequestApi } from "./request.api";
+import { RequestKeys } from "./request.querykeys";
+
+export function createRequestQuery(api: RequestApi) {
+  return Object.freeze({
+    page: (viewerId: string, page: number) =>
+      queryOptions({
+        queryKey: RequestKeys.page(viewerId, page),
+        queryFn: ({ signal }) => api.findPage(page, signal),
+      }),
+    detail: (viewerId: string, id: string) =>
+      queryOptions({
+        queryKey: RequestKeys.detail(viewerId, id),
+        queryFn: ({ signal }) => api.findById(id, signal),
+      }),
+  });
+}
+```
+
+```ts
+// Consumer recipe: src/features/requests/api/request.mutation.ts
+import { mutationOptions, type QueryClient } from "@tanstack/react-query";
+import type { RequestUpdate } from "../models/Request";
+import type { RequestApi } from "./request.api";
+import { RequestKeys } from "./request.querykeys";
+
+export function createRequestMutation(api: RequestApi, queryClient: QueryClient) {
+  return Object.freeze({
+    update: () =>
+      mutationOptions({
+        mutationFn: (command: Readonly<{ id: string; input: RequestUpdate }>) => api.update(command.id, command.input),
+        retry: false,
+      }),
+    refreshAfterUpdate: async (viewerId: string, id: string) => {
+      const results = await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: RequestKeys.detail(viewerId, id) }, { throwOnError: true }),
+        queryClient.invalidateQueries({ queryKey: RequestKeys.lists(viewerId) }, { throwOnError: true }),
+      ]);
+      if (results.some(result => result.status === "rejected")) throw new Error("Affected request read failed.");
+    },
+  });
+}
+```
+
+Call `update().mutateAsync()` and record its accepted result **before** awaiting
+`refreshAfterUpdate`. Catch refresh errors separately: report “saved; refresh
+failed” and retry reads only. Inactive matching keys become stale; invalidation
+does not promise every inactive projection refetched. The workflow tutorial
+extends this to several feature owners through injected refresh callbacks.
+Viewer keys isolate cache projections, not backend permission. Include workspace,
+normalized filters and sorting when they affect the server result.
+
+## 5. Create the factory, public index and canonical hook
+
+```ts
+// Consumer recipe: src/features/requests/requests.feature.ts
+import type { AxiosInstance } from "axios";
+import type { QueryClient } from "@tanstack/react-query";
+import { createRequestHttpApi } from "./api/request.api.http";
+import { createRequestQuery } from "./api/request.query";
+import { createRequestMutation } from "./api/request.mutation";
+
+export function createRequestsFeature({
+  http,
+  queryClient,
+}: Readonly<{ http: AxiosInstance; queryClient: QueryClient }>) {
+  const api = createRequestHttpApi(http);
+  return Object.freeze({
+    RequestQuery: createRequestQuery(api),
+    RequestMutation: createRequestMutation(api, queryClient),
+  });
+}
+export type RequestsFeatureRuntime = ReturnType<typeof createRequestsFeature>;
+```
+
+```ts
+// Consumer recipe: src/features/requests/hooks/useRequestsFeature.ts
+import { useAppFeature } from "@/app/bootstrap/runtime/useAppFeature";
+export function useRequestsFeature() {
+  return useAppFeature("requests");
+}
+```
+
+```ts
+// Consumer recipe: src/features/requests/index.ts
+export { RequestsFeature } from "./components/RequestsFeature";
+export { createRequestsFeature, type RequestsFeatureRuntime } from "./requests.feature";
+export { useRequestsFeature } from "./hooks/useRequestsFeature";
+```
+
+This hook compiles only after the **next step's registry changes**. It is not
+an existing runtime key. Do not use a cast, generic escape hatch or exceptional
+cross-feature hook permission to bypass registration.
+
+## 6. Make the exact application composition changes
+
+Replace the current `appFeatures.ts` with the following consumer version. It
+extends the starter's empty feature registry with product Requests and keeps
+deliberate public-index imports. Home and Settings retain their existing page/router
+owners; Contacts remains a separate Storybook reference. Other existing consumer features must be
+retained when applying this to a personalized app.
+
+```ts
+// Consumer replacement: src/app/bootstrap/runtime/appFeatures.ts
+import type { QueryClient } from "@tanstack/react-query";
+import type { AxiosInstance } from "axios";
+import { createRequestsFeature, type RequestsFeatureRuntime } from "@/features/requests";
+
+export type AppFeatureDependencies = Readonly<{ queryClient: QueryClient; http: AxiosInstance }>;
+export function createAppFeatures(dependencies: AppFeatureDependencies) {
+  const features: AppFeatures = {
+    requests: createRequestsFeature(dependencies),
+  };
+  return Object.freeze(features);
+}
+export type AppFeatures = Readonly<{ requests: RequestsFeatureRuntime }>;
+export type AppFeatureName = keyof AppFeatures;
+export const allowedCrossFeatureHooks = {} as const satisfies Partial<
+  Record<AppFeatureName, readonly AppFeatureName[]>
+>;
+```
+
+```ts
+// Consumer replacement: src/app/bootstrap/runtime/createAppRuntime.ts
+import { createAppAxios } from "@/app/data/http/createAppAxios";
+import { createAppAuthRuntime } from "@/app/auth/createAppAuthRuntime";
+import type { AppAuthLoginAssistance } from "@/app/auth/types/AppAuthLoginAssistance";
+import type { AppConfig } from "@/app/bootstrap/config/appConfig";
+import { createAppFixedSettings } from "@/app/bootstrap/config/fixedSettings";
+import { createAppQueryClient } from "@/app/data/query/createAppQueryClient";
+import { createAppFeatures } from "./appFeatures";
+
+export function createAppRuntime(
+  config: AppConfig,
+  options: Readonly<{ loginAssistance?: AppAuthLoginAssistance }> = {},
+) {
+  const queryClient = createAppQueryClient();
+  const http = createAppAxios(config);
+  const auth = createAppAuthRuntime({ http, loginAssistance: options.loginAssistance, queryClient });
+  const features = createAppFeatures({ queryClient, http });
+  const fixedSettings = createAppFixedSettings(config);
+  return Object.freeze({ auth, features, fixedSettings, queryClient });
+}
+export type AppRuntime = ReturnType<typeof createAppRuntime>;
+```
+
+Create auth before features issue requests. The same private HTTP instance now
+reaches feature construction; it is still not exposed through a global HTTP
+hook. Update tests constructing `AppFeatureDependencies` or concrete runtime
+fixtures so they supply this collaborator. Preserve existing provider order and
+identity cleanup. There is no need to add another QueryClient or provider.
+
+## 7. Consume the public UI from a thin page
+
+This minimal read consumer demonstrates the composition seam. Extend it with
+the installed table/form components and translated resources for product UI;
+the preview's editor illustrates accepted/rejected/uncertain outcomes separately.
+
+```tsx
+// Consumer recipe: src/features/requests/components/RequestsFeature.tsx
+import { Alert, Button, Stack, Typography } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { useRequestsFeature } from "../hooks/useRequestsFeature";
+
+export function RequestsFeature({
+  viewerId,
+  copy,
+}: Readonly<{
+  viewerId: string;
+  copy: Readonly<{ loading: string; failed: string; retry: string; empty: string }>;
+}>) {
+  const { RequestQuery } = useRequestsFeature();
+  const result = useQuery(RequestQuery.page(viewerId, 0));
+  if (result.isPending) return <Typography role="status">{copy.loading}</Typography>;
+  if (result.isError)
+    return (
+      <Alert severity="error">
+        {copy.failed}
+        <Button onClick={() => void result.refetch()}>{copy.retry}</Button>
+      </Alert>
+    );
+  return (
+    <Stack spacing={1}>
+      {result.data.items.length ? (
+        result.data.items.map(record => <Typography key={record.id}>{record.title}</Typography>)
+      ) : (
+        <Typography>{copy.empty}</Typography>
+      )}
+    </Stack>
+  );
+}
+```
+
+```tsx
+// Consumer recipe: src/pages/requests/RequestsPage.tsx
+import { RequestsFeature } from "@/features/requests";
+export function RequestsPage(props: Parameters<typeof RequestsFeature>[0]) {
+  return <RequestsFeature {...props} />;
+}
+```
+
+The router already owns protected identity composition. This complete route
+adapter follows that existing boundary; product features/pages do not import
+`useAppAuth`. Local copy is supplied explicitly here to keep new resource keys
+out of a pretend installed API. Add typed English/Croatian product resources and
+translate this copy in application composition when implementing the recipe.
+
+```tsx
+// Consumer recipe: src/app/router/components/RequestsRoute.tsx
+import { useAppAuth } from "@/app/auth/hooks/useAppAuth";
+import { RequestsPage } from "@/pages/requests/RequestsPage";
+export function RequestsRoute() {
+  const auth = useAppAuth();
+  if (auth.status !== "authenticated" || !auth.user) return null;
+  return (
+    <RequestsPage
+      viewerId={auth.user.id}
+      copy={{
+        loading: "Loading requests…",
+        failed: "Requests could not be loaded.",
+        retry: "Retry",
+        empty: "No requests.",
+      }}
+    />
+  );
+}
+```
+
+Register this component as a protected standalone page through the installed
+route registry; follow Standalone pages for the complete registry, shell title,
+main-menu and breadcrumb recipe. Keep this feature below `AppAuthGate` and the
+identity-keyed provider subtree. A received same-user permission change still
+requires the feature's authority policy; a cache key is not that policy.
+
+## 8. Verify each boundary, including forbidden effects
+
+Test actual schemas, adapter serialization, Axios/auth integration, query keys,
+mutation and UI separately before assembled browser scenarios. Reuse the
+installed `tests/server.ts` lifecycle and scenario-local MSW handlers. Assert:
+
+- Reads forward AbortSignal; canceling an obsolete read cannot publish a later result.
+- Every unsafe request obtains fresh CSRF; acquisition failure sends zero writes.
+- PATCH sends exactly title/expectedVersion, even when the caller supplies response-only fields.
+- Malformed pages/records fail runtime parsing; malformed write acknowledgement blocks replay.
+- An authoritative read at the attempted version keeps uncertainty latched; only the agreed newer-version or terminal-receipt contract permits recovery.
+- 400 maps only owned title errors; 403/404/409 use their agreed status/code contracts without server prose.
+- Accepted update refreshes only this viewer's detail/lists; unrelated and other-viewer keys remain unchanged.
+- Rejected write retains the draft; accepted write plus failed refresh offers a read retry, never a second mutation.
+- Session change removes private state; late old-owner continuations cannot reset the new editor.
+
+Run coordinated checks from the repository root, sequentially:
+
+```sh
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run typecheck
+npm --prefix frontend run test:browser:storybook
+npm --prefix frontend run verify
+```
+
+Select new feature tests after creating the recipe's modules; do not claim an
+inert fenced example ran as a test. Backend HTTP/database tests must prove real
+authorization, pagination, transaction rollback and version conflicts. Storybook
+does not establish those contracts by simulating them.
+
+## Common mistakes
+
+- Leaving the factory/registry unchanged while importing a nonexistent HTTP runtime hook.
+- Creating a second Axios client and bypassing the auth-owned interceptors.
+- Letting pages or product features import auth internals, another feature's private API, or Query data through a parallel Signal store.
+- Casting responses, submitting full response objects, rendering server messages, or treating every 409 as the same business condition.
+- Refreshing a hidden version behind an older draft or retrying a write after an uncertain acknowledgement.
+- Reporting a failed refresh as a failed command, encouraging an unnecessary duplicate write.
+
+## Read this tutorial without Storybook
+
+Read all numbered steps and the current installed sources:
+`src/app/data/http/createAppAxios.ts`, `appHttpError.ts`,
+`src/app/auth/api/appAuth.api.springSession.ts`, `createAppAuthRuntime.ts`,
+`src/app/bootstrap/runtime/appFeatures.ts`, `createAppRuntime.ts`, and
+`docs/storybook/examples/Contacts/`. The adjacent workflow tutorial adds
+exact decisions and cross-owner reconciliation.
+
+```sh
+npm --prefix frontend run guide:index -- search "backend-connected feature"
+```
+
+## Storybook fixture reference
+
+`BackendConnectedFeature.stories.tsx`, `BackendConnectedFeatureExample.tsx` and
+`backendFeatureFixture.ts` are private to `docs/storybook/data/BackendConnectedFeature/`.
+They use `/tutorial/requests`, two-row pages and English copy. Each preview owns
+its QueryClient and configured Axios instance; actual auth construction installs
+interceptors once. The private adapter rejects non-2xx with an AxiosError carrying
+the original config/response. It implements fresh CSRF, exact writes, response
+parsing, cancellation and explicit failure scenarios without global handlers,
+cookies, storage or real HTTP. Teardown cancels timers/reads and clears only its
+own cache/interceptors. Theme changes retain the preview's local state. The app
+does not gain a Requests module merely by adding this tutorial.

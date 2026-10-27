@@ -24,13 +24,13 @@ const english = {
 // Call the plural message with numeric count; do not concatenate a suffix.
 ```
 
-The starter deliberately includes one/few/other shapes in both languages for relevant guide messages, allowing Croatian's cardinal forms within the shared shape. Do not assume English's everyday singular/plural distinction is every locale's complete rule. Pass a number as count and let i18next select the supported locale's form.
+The documentation-only guide resources include one/few/other shapes in both languages, allowing Croatian's cardinal forms within the shared shape. They live under `docs/storybook/` and are absent from the application resource tree. Do not assume English's everyday singular/plural distinction is every locale's complete rule. Pass a number as count and let i18next select the supported locale's form.
 
 Formatting is another boundary: number, currency, date, and time should use active locale and explicit domain inputs. `useAppLocalizationFormatters` rebuilds bound functions when locale changes and uses the application default time zone unless overridden. Currency is an explicit argument; a language does not determine the business currency.
 
 ## Preserve the provider lifetime
 
-`createAppI18n` creates an instance rather than mutating a global default. It registers ordinary application resources in every build and development-guide resources only in DEV. Initialization is synchronous for the bundled resources. Adding asynchronous loading would require a new readiness/error contract; do not assume the current provider waits for remote bundles.
+`createAppI18n` creates an instance rather than mutating a global default. It registers only ordinary application resources in every app build. Storybook separately registers guide namespaces from `docs/storybook/`; open application resource interfaces allow that documentation-only augmentation without a production import. Initialization is synchronous for the bundled resources. Adding asynchronous loading would require a new readiness/error contract; do not assume the current provider waits for remote bundles.
 
 The provider listens for language changes, updates resolved locale, and sets document `lang` and `dir`, restoring prior attributes on cleanup. Its setter persists explicit user selection and asks the instance to change language, unless locale is fixed. Browser language is an initial fallback, not an automatic ongoing override of a chosen locale.
 
@@ -53,7 +53,7 @@ Interpolation escaping is disabled in the bundled i18next setup for React render
 
 ## Acceptance scenarios
 
-A missing Croatian property is caught by shape checking. Numeric counts exercise each relevant form. Switching locale updates menus, MUI text, formatted values, and document attributes without changing draft identity. A stored explicit locale wins over browser fallback. A fixed locale cannot be changed through a shortcut. Empty-dependency cached labels are not mistaken for provider failure. Production resources do not silently acquire development-only copy.
+A missing Croatian property is caught by shape checking. Numeric counts exercise each relevant form. Switching locale updates menus, MUI text, formatted values, and document attributes without changing draft identity. A stored explicit locale wins over browser fallback. A fixed locale cannot be changed through a shortcut. Empty-dependency cached labels are not mistaken for provider failure. Application resources in development and production contain no guide copy.
 
 ## Avoid these shortcuts
 

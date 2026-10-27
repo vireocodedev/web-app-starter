@@ -7,10 +7,6 @@ import { AppRouteLayout } from "@/app/router/components/AppRouteLayout";
 import { RouteScrollContentReady } from "@/app/router/components/RouteScrollRestoration";
 import { useRouteScrollReady } from "@/app/router/hooks/useRouteScrollReady";
 
-vi.mock("@/app/localization/hooks/useDevelopmentGuideTranslation", () => ({
-  useDevelopmentGuideTranslation: () => ({ t: (key: string) => key }),
-}));
-
 vi.mock("@/app/localization/hooks/useAppTranslation", () => ({
   useAppTranslation: () => ({ t: (key: string) => key }),
 }));

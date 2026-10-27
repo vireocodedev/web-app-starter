@@ -6,7 +6,7 @@ postanu nepregledne.
 ## Rast iz kompaktnog vlasnika
 
 ```text
-src/features/development-guide/contacts/
+docs/storybook/examples/Contacts/
 ├── index.ts
 ├── contacts.feature.ts
 ├── api/
@@ -15,7 +15,8 @@ src/features/development-guide/contacts/
 └── models/
 ```
 
-To je oblik Contactsa, a ne obvezni kostur. Settings grupira imenovane
+To je oblik dokumentacijske reference Contacts, a ne obvezni kostur
+ili ugrađena produktna značajka. Settings grupira imenovane
 podsposobnosti u `sections/`; prezentacijska značajka ne treba `.feature.ts`;
 značajka bez trajnih ili udaljenih podataka ne treba `api/`.
 

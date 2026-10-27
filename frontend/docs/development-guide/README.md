@@ -1,6 +1,6 @@
 # Development guide
 
-This is the central guide for repository workflows, practices and patterns: frontend, backend, quality and verification, CI, delivery, local development and AI-agent workflow. The same articles are available in the authenticated development-only `/dev-guide` UI.
+This is the central guide for repository workflows, practices and patterns: frontend, backend, quality and verification, CI, delivery, local development and AI-agent workflow. The same articles are available through the English Handbook reader in Storybook. Application source contains no development guide, including in development builds; retired `/dev-guide` URLs resolve to Not Found.
 
 ## Mandatory agent workflow
 
@@ -8,7 +8,7 @@ Every repository task starts with discovery, including analysis, reviews, docume
 
 1. Read the applicable `AGENTS.md` files and run the overview below. Review all category/topic and source-owner groups, including cross-cutting workflow and verification guidance.
 2. Search each affected concern using domain terms, operation names and likely source paths. Follow related articles and source references. A short result list or no exact keyword match does not establish that a pattern is missing: broaden the search and inspect the relevant owner groups.
-3. Read every selected article's contract, failure cases and examples; inspect the actual implementation and public interfaces it names. English and Croatian versions represent the same article; one complete language version is sufficient. Search excerpts and metadata help select reading; they do not replace it.
+3. Read every selected article's contract, failure cases and examples; inspect the actual implementation and public interfaces it names. For frontend work, also read the complete Architecture section and every task-relevant tutorial from the mandatory [Storybook Development Guide](../storybook/README.md), directly as MDX when Storybook is not running. Apply all relevant tutorial contracts. English and Croatian versions represent the same article; one complete language version is sufficient. Search excerpts and metadata help select reading; they do not replace it.
 4. Map the intended change to the documented patterns and current owners. Reuse their infrastructure, components, APIs and lifecycle conventions. Distinguish an **installed pattern** from a **reference recipe**: a recipe describes collaborators to implement, not APIs already installed here. Pinned peer snapshots explain provenance; inspect the current source before using their examples.
 5. If the required pattern is undocumented, documentation and code disagree, or you propose a different approach, stop that affected implementation and ask Bruno to approve the specific gap or departure. Explain the searched guidance, affected owners, alternatives, tradeoffs and recommendation. Continue that portion only after explicit approval; a current instruction already approving the same departure is sufficient. Keep unrelated authorized work moving. Editing the guide, an instruction or a check cannot grant the agent its own approval.
 6. Before editing, briefly identify the applicable guide paths and existing patterns being reused. Implement the approved outcome and run the owning repository checks. In the handoff, identify the reused patterns, any explicitly approved departure and actual verification evidence. Publication, deployment and data changes retain their own authorization boundaries.
@@ -21,25 +21,62 @@ Run from the workspace root with the repository's Node 24 launcher:
 bash backend/scripts/with-local-node.sh frontend/scripts/development-guide-index.mjs
 bash backend/scripts/with-local-node.sh frontend/scripts/development-guide-index.mjs search session csrf
 bash backend/scripts/with-local-node.sh frontend/scripts/development-guide-index.mjs search forms --limit 10
+bash backend/scripts/with-local-node.sh frontend/scripts/development-guide-index.mjs search "Pages with header tabs"
 ```
 
 With Node 24 already selected, `npm --prefix frontend run guide:index -- search session csrf` is equivalent. The overview lists the current categories, topics and source groups; search returns exact paths, line excerpts and available pattern status/source references. Results report their total and any truncation. Refine truncated searches before deciding which guidance applies.
 
-The index scans the working tree on every invocation, without a generated cache. Its corpus includes both `frontend/src/features/development-guide/**` and `frontend/src/pages/development-guide/**`, the articles under `frontend/docs/development-guide/**` and `frontend/docs/architecture/**`, and development-guide translations. Newly added source files remain discoverable even before catalog registration. Reading examples never executes their code.
+The index scans the working tree on every invocation, without a generated cache. Its corpus includes the articles under `frontend/docs/development-guide/**` and `frontend/docs/architecture/**`, every file under `frontend/docs/storybook/**`, including documentation-only catalogs and translations. Storybook tutorials, stories and support live in `frontend/docs/storybook/<section>/`; the overview groups them by section. Legacy discovery of `*.mdx`, `*.stories.ts`, `*.stories.tsx` and `stories/` support under `frontend/src/` remains available to expose misplaced artifacts, not to authorize that location. Newly added files remain discoverable even before catalog registration. Reading examples never executes their code or Storybook configuration; symlinks are inventoried without following their targets.
+
+For page layouts, read the English [Navigation chooser pages tutorial](../storybook/routing/NavigationChooser/NavigationChooser.mdx), [Standalone pages tutorial](../storybook/routing/StandalonePages/StandalonePages.mdx), [Pages with header tabs tutorial](../storybook/routing/HeaderTabs/HeaderTabs.mdx) or [Pages with left navigation tutorial](../storybook/routing/LeftNavigation/LeftNavigation.mdx). Each contains application file paths, complete implementation steps, common mistakes and verification; its final section identifies the separate preview fixtures. Agents can read the MDX and source directly without running Storybook.
+
+For forms, read the English [Entity forms tutorial](../storybook/forms/EntityForms/EntityForms.mdx). It uses the actual ContactForm to explain a translated Zod schema factory with external validation context, `useRgoForm`, explicit create/update modes, validation timing, state reporting, and awaited save/failure/retry ownership.
+
+For feature data, read [Loading and saving feature data](../storybook/data/FeatureData/FeatureData.mdx): the actual Contacts port, query/mutation options, runtime access, scoped invalidation, distinct result states, retry and cancellation. Its private preview adapter does not access Contacts storage.
+
+For tables, read [Tables and collections](../storybook/collections/TablesAndCollections/TablesAndCollections.mdx): typed installed table components, client versus controlled server collection ownership, stable row IDs, filtering, sorting, pagination, selection and bulk-action scope.
+
+For localized copy and values, read [Localization and formatting](../storybook/localization/LocalizationAndFormatting/LocalizationAndFormatting.mdx): typed resource shapes, named interpolation, numeric plurals, live hooks, explicit currency/time zone and MUI integration. Story copy stays English; locale comparisons are isolated formatting inputs.
+
+For shareable filters and browser history, read [URL-backed state](../storybook/routing/UrlBackedState/UrlBackedState.mdx): reversible scalar codecs, safe defaults, atomic query updates, canonicalization and push/replace semantics with a dynamic preview URL.
+
+For synchronous shared state and storage effects, read [Signals and persistence in practice](../storybook/state/SignalsAndPersistence/SignalsAndPersistence.mdx): normalized actions, computed values, hydration ordering, storage failures and disposable lifetimes. Its preview uses private Signals and memory storage.
+
+For preference-aware presentation, read [Components that respect application settings](../storybook/settings/SettingsAwareComponents/SettingsAwareComponents.mdx): semantic theme tokens, live owner hooks, density/editor presentation, accessibility and fixed settings. Local comparisons preserve global Storybook settings.
+
+For sessions and client integration, read [Authentication and HTTP integration](../storybook/authentication/AuthenticationAndHttp/AuthenticationAndHttp.mdx): real HTTP/auth factories, fresh CSRF for writes, response/error contracts and private-cache lifetimes. Its transport stays inside the isolated preview.
+
+For feature verification, read [Testing a feature](../storybook/testing/TestingAFeature/TestingAFeature.mdx): boundary selection, model/form/cache/HTTP test recipes, fresh fixtures, deterministic async work and cleanup. Browser observations do not execute the repository test suite.
+
+For an application requiring server-derived page/action permissions, HTTP business features, incomplete drafts and workflow commands, read these complete consumer reference tutorials: [Capability-aware pages and actions](../storybook/authentication/CapabilityAwarePages/CapabilityAwarePages.mdx), [Building a backend-connected feature](../storybook/data/BackendConnectedFeature/BackendConnectedFeature.mdx), [Draft and submit forms](../storybook/forms/DraftAndSubmitForms/DraftAndSubmitForms.mdx), [Workflow commands, conflicts and coordinated refresh](../storybook/workflows/WorkflowCommands/WorkflowCommands.mdx), and [Persisted inboxes versus feedback](../storybook/notifications/PersistedInbox/PersistedInbox.mdx). They reuse installed mechanisms and explicitly identify new consumer modules, backend contracts and runtime-registration changes; they do not install those business APIs or roles in the starter. Read their backend authority/transaction references before implementing the corresponding endpoints.
+
+For feedback, read the English [Notifications tutorial](../storybook/feedback/Notifications/Notifications.mdx) and [Confirmations tutorial](../storybook/feedback/Confirmations/Confirmations.mdx). They explain the installed provider, acknowledged command feedback, actions and notification lifetimes, explicit decisions, dirty-editor policy, and cancellation, with application source references and interactive fixtures.
+
+For frontend architecture, read the English [Source ownership tutorial](../storybook/architecture/SourceOwnership/SourceOwnership.mdx), [Dependency direction tutorial](../storybook/architecture/DependencyDirection/DependencyDirection.mdx), [Public module APIs tutorial](../storybook/architecture/PublicModuleApis/PublicModuleApis.mdx), and [Runtime and state ownership tutorial](../storybook/architecture/RuntimeAndState/RuntimeAndState.mdx). They apply the existing architecture contracts to Contacts, Settings, and application composition, with file references, selected interactive walkthroughs, common mistakes, and verification limits. The architecture articles remain authoritative.
 
 Rerun discovery after guide changes or when the task expands into another concern. If Node 24 is unavailable, use `rg --files` and `rg -n` over the same corpus for equivalent inventory and full-text discovery; report that fallback instead of skipping consultation.
 
 ### Browser navigation
 
-Each topic has a browser index, article sidebar, local breadcrumbs and an article contents menu. English and Croatian content use the same stable paths. Code samples are inert documentation; reading a command does not run it. Handbook Markdown loads only for the selected article and language; indexes validate paired file keys without fetching bodies. Local failures offer a best-effort retry and page refresh if the browser retains a failed module request. Editing handbook Markdown in development reloads the page so native module caching cannot keep an old body.
+Run `npm --prefix frontend run storybook` and open **Development Guide → Handbook →
+Handbook** for the English fullstack reader or **Development Guide → Architecture →
+Architecture reference** for these architecture articles. Reader-local memory URLs,
+category/topic indexes, article sidebars, contents and metadata search belong to
+Storybook; they never register application destinations. Use the live CLI search
+above for full-text discovery and direct English/Croatian Markdown reading.
 
-Use **Find articles** on `/dev-guide` or open `/dev-guide/find` to search handbook titles, summaries, categories, topics and portable source references. Category, pattern type and size filters are URL-backed; share a view such as `/dev-guide/find?q=session&category=backend`. Results are grouped by category and capped at 30 until criteria are refined. This searches metadata, not Markdown bodies or live demos. Ctrl/Cmd+K remains the existing title-and-context page navigation, including interactive Patterns and Architecture.
+Code samples are inert documentation. Markdown bodies load only for the selected
+article; failures offer local retry. Search covers titles, summaries, categories,
+topics and source references. Reference display remains English while paired
+English/Croatian source files remain canonical and checked for completeness.
+The actual app exposes only its product routes; Ctrl/Cmd+K searches Home and
+Settings, without guide entries.
 
 ## Pattern index
 
 ### Frontend workflow patterns
 
-These source-backed recipes complement the installed interactive Patterns and Architecture tabs. Consumer-only helpers are identified explicitly; adapt the protocol in the correct owner rather than assuming those helpers are installed.
+These source-backed recipes complement the isolated Storybook Patterns and Architecture references. Consumer-only helpers are identified explicitly; adapt the protocol in the correct owner rather than assuming those helpers are installed.
 
 #### Access and authority
 
@@ -342,21 +379,28 @@ These source-backed recipes complement the installed interactive Patterns and Ar
 
 ## Existing frontend guidance
 
-- Interactive Patterns: use `/dev-guide/frontend/patterns` for i18n, Signals, Server data, Routing and URLs, Overlays, Tables and collections, Forms, and Feedback.
+- Interactive Patterns: open **Development Guide → Patterns** in Storybook for i18n, Signals, Server data, Routing and URLs, Overlays, Tables and collections, Forms, and Feedback; source lives under [patterns](../storybook/patterns/).
 - [Frontend ownership and architecture](../architecture/en/source-map-and-ownership.md) · [Hrvatski](../architecture/hr/source-map-and-ownership.md).
-- Contacts dashboard and CRUD provide complete example pages under `/dev-guide/frontend/example-pages`.
+- [Contacts](../storybook/examples/Contacts/) provides isolated dashboard and CRUD reference stories under **Development Guide → Examples → Contacts**, with injected private memory data.
 
 ## Maintain a pattern
+
+Storybook tutorials, stories and support live outside `src/`, grouped by section under `frontend/docs/storybook/`, and use English. Each tutorial's same-name folder contains its MDX, CSF and fixtures; section-wide helpers live in `shared/`. Add tutorials to the [Storybook guide entry point](../storybook/README.md). Keep implementation steps readable as MDX source, identify application files separately from preview fixtures, and include failure cases and verification. The live index reads every file in this tree; they need no bilingual handbook catalog entry.
 
 For an existing category:
 
 1. Add paired `en/<category>/<topic>/<slug>.md` and `hr/...` files.
-2. Add the article to its private [category catalog](../../src/features/development-guide/handbook/catalog), such as `handbookBackend.ts`. The category owns topic and article order.
-3. Add matching labels to its paired [category resources](../../src/app/localization/translations/handbook), such as `backend.{en,hr}.ts`, and link both articles in this index.
+2. Add the article to its private [category catalog](../storybook/handbook/Handbook/catalog), such as `handbookBackend.ts`. The category owns topic and article order.
+3. Add matching labels to its paired [category resources](../storybook/handbook/Handbook/localization/handbook), such as `backend.{en,hr}.ts`, and link both articles in this index.
 
-Keep catalog and locale modules as literal data without getters or side effects; their unused aggregates must remain removable from production. Existing-category additions leave the central aggregators unchanged. A new category also needs one bundle in `orderedHandbookCatalog`, explicit resource spreads in `development-guide-handbook.{en,hr}.ts`, and router-owned placement.
+Keep catalog and locale modules as literal data without getters or side effects; they are documentation-only and production must never import them. Existing-category additions leave the central aggregators unchanged. A new category also needs one bundle in `orderedHandbookCatalog`, explicit resource spreads in `development-guide-handbook.{en,hr}.ts`, and Storybook reader placement.
 
-The manifest generates indexes, routes, breadcrumbs, command-palette entries, sidebar links and related reading. Route policy stays in `src/app/router/handbookRoutes.tsx`; shared rendering stays in `src/app/shell/documentation`. Frontend articles keep portable `frontend/<topic>/<article>` source paths while the router mounts them under `/dev-guide/frontend/workflow-patterns`. Explicit related IDs link across topics; siblings are the default when no list is declared.
+The manifest supplies the isolated Storybook reader indexes, category/topic/article
+memory navigation, sidebars and related reading. Shared rendering lives under
+`docs/storybook/shared/documentation/`. Canonical articles keep portable
+`frontend/<topic>/<article>` source paths. Explicit related IDs link across topics;
+siblings are the default when no list is declared. Add no application route,
+namespace, startup registration or production import when maintaining guidance.
 
 A useful article states its trigger, ownership and lifetime, actual contract, minimal example, failure/recovery decisions, acceptance evidence and exact `project@revision:relative/path` sources. Keep identifiers and examples neutral. Explain a source limitation beside the recipe that depends on it.
 

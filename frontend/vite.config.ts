@@ -6,7 +6,6 @@ import { defineConfig, type Plugin } from "vite";
 
 import { signalsReactTransform } from "./config/signals-react-transform.js";
 import { rgoFrontendPeerDependencies } from "./config/rgo-frontend-peer-dependencies.js";
-import { patternExampleSource } from "./config/pattern-example-source.js";
 
 /** Retains normal public assets while removing the development-only MSW worker. */
 function excludeMockServiceWorkerFromProductionBuild(): Plugin {
@@ -33,7 +32,6 @@ export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     signalsReactTransform(),
-    patternExampleSource(),
     ...(command === "build" ? [excludeMockServiceWorkerFromProductionBuild()] : []),
   ],
   resolve: {

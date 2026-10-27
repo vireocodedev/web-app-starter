@@ -2,7 +2,7 @@
 
 Make the checked-in debugger configuration the reproducible entrypoint for local work, then diagnose its first failed dependency. A Java launch, a database task and a frontend terminal have different prerequisites and lifetimes.
 
-**Installed starter workflow.** `.vscode/launch.json`, `.vscode/tasks.json` and the backend local helpers define the behavior. The workspace README and initializer runbook own setup prerequisites. This article narrows the broader **One workspace, two runtimes** introduction into a debugging decision flow.
+**Installed starter workflow.** `.vscode/launch.json`, `.vscode/tasks.json` and the backend local helpers define the behavior. The workspace README and `docs/template-initialization/INIT_GUIDE.md` own setup prerequisites. This article narrows the broader **One workspace, two runtimes** introduction into a debugging decision flow.
 
 ## Trigger, owner and contract
 
@@ -58,7 +58,7 @@ The local profile permits HTTP cookies only for local development. Do not repair
 
 For an authorized setup task, record actual launch labels, runtime selection, successful pre-launch authentication, Java startup/breakpoint and whether the browser used real HTTP. Keep env contents and login secrets private.
 
-If blocked, name the failed layer precisely and preserve existing data. A successful debug session proves local startup, not full regression coverage, CI readiness or deployment authority. Detailed prerequisites remain in the runbook; this article executes no task or debugger.
+If blocked, name the failed layer precisely and preserve existing data. A successful debug session proves local startup, not full regression coverage, CI readiness or deployment authority. Detailed prerequisites remain in the manual initialization guide; this article executes no task or debugger.
 
 ## Source provenance
 
@@ -68,4 +68,3 @@ If blocked, name the failed layer precisely and preserve existing data. A succes
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:backend/scripts/setup-local.mjs`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:backend/scripts/start-local.mjs`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:README.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/initialize-project/references/runbook.md`

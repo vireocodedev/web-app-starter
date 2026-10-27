@@ -35,35 +35,6 @@ jobs:
           CI_FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' }}
         run: python3 -B infrastructure/ci/ci_scope.py detect
 
-  portable:
-    name: Portable initialization and documentation
-    runs-on: [self-hosted, Linux, X64, web-app-ci]
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        env:
-          RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
-        with:
-          node-version-file: .agents/skills/initialization-execution/package.json
-          package-manager-cache: false
-      - name: Verify portable discovery specification skill
-        run: npm --prefix .agents/skills/discovery-specification run verify
-      - name: Verify both initialization skills and public documentation
-        run: |
-          package=.agents/skills/initialization-execution
-          package_manager=$(node -p 'require("./.agents/skills/initialization-execution/package.json").packageManager')
-          [[ "$package_manager" =~ ^npm@[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          npm install --global --prefix "$RUNNER_TEMP/npm" "$package_manager"
-          export PATH="$RUNNER_TEMP/npm/bin:$PATH"
-          npm --prefix "$package" ci
-          export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/documentation-browsers"
-          npm --prefix "$package" run browser:install
-          npm --prefix "$package" run verify
-          npm --prefix "$package" run test:portable-install
-
   backend:
     name: Backend image and smoke verification
     needs: changes
@@ -142,6 +113,8 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Verify formatting, lint, architecture and all TypeScript projects
+        env:
+          NODE_OPTIONS: --max-old-space-size=1536
         run: npm run format:check && npm run lint && npm run verify:architecture && npm run verify:dev-guide && npm run typecheck
 
   frontend-tests:
@@ -214,6 +187,10 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Build Storybook
+        env:
+          NODE_OPTIONS: --max-old-space-size=1536
+          ROLLDOWN_WORKER_THREADS: "2"
+          RAYON_NUM_THREADS: "2"
         run: npm run build-storybook
       - name: Build and smoke-test frontend image
         working-directory: .
@@ -244,7 +221,7 @@ jobs:
 
   gate:
     name: CI gate
-    needs: [changes, portable, backend, backend-tests, frontend, frontend-tests, frontend-build, foundation]
+    needs: [changes, backend, backend-tests, frontend, frontend-tests, frontend-build, foundation]
     if: always()
     runs-on: [self-hosted, Linux, X64, web-app-ci]
     timeout-minutes: 10

@@ -1,7 +1,0 @@
-interface:
-  display_name: "Initialization execution"
-  short_description: "Execute setup after completed initialization intake"
-  default_prompt: "Use $initialization-execution to initialize or resume this consumer after checking that initialization intake is complete."
-
-policy:
-  allow_implicit_invocation: false

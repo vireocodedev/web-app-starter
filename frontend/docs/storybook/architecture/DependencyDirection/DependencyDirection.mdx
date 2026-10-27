@@ -1,0 +1,82 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./DependencyDirection.stories";
+
+<Meta of={Stories} />
+
+# Dependency direction
+
+An import creates a dependency on another owner's contract. Keep composition at the boundary that owns the decision and inject narrow collaborators.
+
+## Try it
+
+<Canvas of={Stories.Overview} story={{ inline: false, height: "720px" }} sourceState="none" />
+
+## Before you start
+
+Paths are relative to `frontend/`. Read `docs/architecture/en/dependency-boundaries-and-imports.md`, `docs/architecture/en/route-entries-and-feature-composition.md`. Inspect the current implementation and its callers before reusing a pattern. Contacts lives only under `docs/storybook/examples/Contacts/`; installed Settings and app infrastructure remain under `src/`. Consumer recipes describe explicit installation work, not APIs already registered in the app.
+
+## 1. Distinguish imports from runtime calls
+
+Read `docs/architecture/en/dependency-boundaries-and-imports.md` and `route-entries-and-feature-composition.md`. These are source dependency arrows:
+
+```text
+main.tsx              → startup and composition
+app/router            → pages and route policy
+pages                 → public feature APIs and approved app leaves
+app/bootstrap/runtime → public factories when features need construction
+feature               → its own domain, ports, UI and hooks
+```
+
+The shell renders supplied navigation and account actions. It does not import the registry, pages or authentication behavior to discover them. Generic HTTP infrastructure does not know authentication endpoints; the auth adapter owns those endpoints.
+
+## 2. Make owner crossings explicit
+
+Settings is installed. Inspect `src/pages/settings/SettingsPage.tsx` and `src/features/settings/index.ts`. Contacts is a complete reference under `docs/storybook/examples/Contacts/`, not a production dependency. A consumer installing an equivalent owner would use:
+
+```tsx
+// Excerpt: consumer page, after installing src/features/contacts/index.ts
+import { ContactsFeature } from "@/features/contacts";
+```
+
+Inside that feature, model/port/query imports stay relative. A different relative spelling does not bypass a boundary: the checker resolves targets. App capabilities expose deliberate leaf interfaces such as `@/app/forms/components/AppSingleChoiceToggleGroup`; there is no universal `app/index.ts` API.
+
+## 3. Compose before coupling features
+
+Prefer page-level public UI composition or factory injection over one feature reading another feature's private state. The current production registry in `src/app/bootstrap/runtime/appFeatures.ts` is empty. Installing a business feature requires an explicit construction/registration change; the backend-connected tutorial provides the full recipe.
+
+A direct cross-feature runtime-hook dependency is exceptional. `allowedCrossFeatureHooks` declares approved edges; currently it is empty. Edges must be named, used, known, unique, non-self and acyclic. A declaration does not grant access to private implementation or replace design approval.
+
+## 4. Trace every boundary change
+
+Inspect `AuthenticatedAppShell.tsx`, the actual shell consumers and feature registry. Identify source owner, target owner, public member, lifetime and callers before moving an import. Keep route/catalog policy with its router; pass labels, icons and destinations to generic presentation.
+
+## Common mistakes
+
+- Making presentation discover route or authentication policy.
+- Importing a documentation reference into production source.
+- Hiding an ownership violation with a barrel, relative path or alias.
+- Treating a diagram as blanket permission for every import in a directory.
+
+## 5. Verify your implementation
+
+Run from the workspace root:
+
+```sh
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+npm --prefix frontend run typecheck
+```
+
+Run the owning focused tests and required final checks. Static verification checks placement, imports and declared contracts; it cannot establish product ownership, backend authority or runtime cleanup by itself.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the authoritative articles named above and the current source examples. The numbered steps and code fences are directly readable by developers and agents. Storybook is optional for reading; run it to exercise the interactive cases. Discover related guidance from the workspace root:
+
+```sh
+npm --prefix frontend run guide:index -- search "Dependency direction"
+```
+
+## Storybook fixture reference
+
+`../shared/ArchitectureExample.tsx` and `../shared/architectureExamples.ts` render selected inert walkthroughs. They do not scan the filesystem or execute the snippets. This tutorial and its same-name CSF module live together outside `src/`. Contacts source is a documentation reference under `docs/storybook/examples/Contacts/`, with tests under `tests/storybook/contacts/`; production code must never import it.

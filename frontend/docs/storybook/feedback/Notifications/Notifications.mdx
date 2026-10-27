@@ -1,0 +1,396 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as NotificationsStories from "./Notifications.stories";
+
+<Meta of={NotificationsStories} />
+
+# Notifications
+
+Use `useRgoFeedback()` to report an acknowledged result, offer one short action,
+or keep a warning visible until dismissed. This tutorial follows the app's real
+Contacts save/delete/status operations and existing Feedback patterns.
+
+## Try it
+
+Choose **Save contact**. The success notification appears after the simulated
+save resolves. **Save failure** reports an error without increasing the successful
+save count. In **Action**, archive the local contact, then choose **Undo** in the
+notification. **Lifecycle** demonstrates persistence, dismissal, and stable-ID
+replacement. **Mobile** keeps the same controls at a narrow width.
+
+<Canvas of={NotificationsStories.Saved} story={{ inline: false, height: "500px" }} sourceState="none" />
+
+## Before you start
+
+Use the initialized starter and installed dependencies; see `frontend/README.md`.
+Application paths below are relative to `frontend/`. The app already installs
+one localized `RgoFeedbackProvider` in `src/app/bootstrap/runtime/AppProviders.tsx`,
+after localization and theme. Feature components call `useRgoFeedback()` beneath it.
+They do not create another app-wide provider or an independent toast system.
+
+The live stories use the installed provider and global Theme toolbar. Their
+commands and Undo affect local demo state only; no backend request is sent.
+Stories remain English. Application messages and action labels remain localized.
+
+## Files and ownership
+
+```text
+src/app/bootstrap/runtime/AppProviders.tsx                 app-wide provider and close label
+docs/storybook/examples/Contacts/components/ContactsSidePanel.tsx  save feedback after mutateAsync
+docs/storybook/examples/Contacts/hooks/useContactActions.ts       delete and bulk-status feedback
+docs/storybook/patterns/Feedback/components/ToastNotificationsPanel/  installed examples
+src/app/localization/translations/translation.{en,hr}.ts     application close label
+docs/storybook/examples/shared/localization/development-guide.{en,hr}.ts example messages
+```
+
+The package owns presentation, bounded queueing, timers, and confirmation state.
+The calling feature owns IDs, translated plain text, business actions, command
+results, and any local owner/session checks.
+
+## 1. Reuse the existing feedback boundary
+
+`AppProviders.tsx` already installs the equivalent of this complete minimal
+adapter. The example below is useful for a standalone host; application pages
+and features consume the existing boundary.
+
+```tsx
+// Minimal boundary for a standalone host; AppProviders already installs this in the app.
+import { RgoFeedbackProvider } from "@rgo-web/frontend";
+import type { PropsWithChildren } from "react";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+export function FeedbackBoundary({ children }: PropsWithChildren) {
+  const { t } = useAppTranslation();
+  return (
+    <RgoFeedbackProvider
+      notificationCloseLabel={t("feedback.closeNotification")}
+      slotProps={{ confirmationCancelAction: { variant: "text" } }}
+    >
+      {children}
+    </RgoFeedbackProvider>
+  );
+}
+```
+
+The localized close action is always available, including when a notification
+has its own business action. Provider-wide positioning belongs to
+`slotProps.notification.anchorOrigin`, as shown by the existing
+`ToastPositionPreview.tsx`; it does not belong in every `notify` call. Custom
+slots must preserve forwarded props/ref, live-region roles and close handlers.
+
+The public interface has exactly three methods:
+
+```text
+notify(notification)       publish or replace a caller-owned notification ID
+dismiss(id)                remove that ID; unknown valid IDs are harmless
+confirm(request)           await a confirmed/cancelled decision (separate tutorial)
+```
+
+There is no `clear()` method. IDs and messages must be non-empty plain strings;
+invalid input throws before changing state. Read the installed types under
+`node_modules/@rgo-web/frontend/dist/capabilities/Feedback/` when extending a call.
+
+## 2. Notify after the command resolves
+
+This complete integration example uses existing Contacts translation keys and
+an injected command. The parent closes over the validated input and supplies a
+promise that resolves only after acknowledgement. Existing Contacts uses
+`mutateAsync` for that command boundary.
+
+```tsx
+// docs/storybook/examples/Contacts/components/CreateContactButton.tsx
+import { Button } from "@mui/material";
+import { useRgoFeedback } from "@rgo-web/frontend";
+import { useEffect, useRef, useState } from "react";
+
+import { useDevelopmentGuideTranslation } from "../../shared/localization/useDevelopmentGuideTranslation";
+
+export function CreateContactButton({ createContact }: Readonly<{ createContact: () => Promise<void> }>) {
+  const feedback = useRgoFeedback();
+  const { t } = useDevelopmentGuideTranslation();
+  const operation = useRef<AbortController | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => () => operation.current?.abort(), []);
+
+  const save = async () => {
+    if (operation.current) return;
+    const owner = new AbortController();
+    operation.current = owner;
+    setSaving(true);
+    try {
+      let failed = false;
+      try {
+        await createContact();
+      } catch {
+        failed = true;
+      }
+      if (owner.signal.aborted) return;
+      feedback.notify({
+        id: "contact-create-result",
+        message: t(failed ? "contacts.save.failed" : "contacts.save.created"),
+        severity: failed ? "error" : "success",
+      });
+    } finally {
+      if (operation.current === owner) operation.current = null;
+      if (!owner.signal.aborted) setSaving(false);
+    }
+  };
+
+  return (
+    <Button disabled={saving} onClick={() => void save()} variant="contained">
+      {t("contacts.form.createAction")}
+    </Button>
+  );
+}
+```
+
+The synchronous operation ref blocks duplicate invocations before React paints
+the disabled button. The AbortController gates local continuation after unmount;
+it is not passed to the command and does not roll back a write. A record-changing
+parent must give the editor a new keyed session, or implement the owning
+feature's generation checks.
+
+Keep the command catch narrow. A later notification or cache-refresh failure does
+not mean a known committed write failed. Likewise a lost response can leave the
+outcome uncertain: use the API's receipt/reconciliation contract instead of
+claiming every rejected promise means nothing was written. The simple injected
+command here assumes its rejection contract represents a known failure.
+
+Choose where recovery belongs. ContactForm keeps validation and save errors by
+the form; its owner reports success after saving. The Contacts action hook uses
+error notifications for delete and bulk-action failures. A toast alone should not
+replace useful field errors, a retained draft, or a persistent conflict message.
+
+## 3. Offer an owned action
+
+The installed action example shows the exact action API:
+
+```tsx
+// docs/storybook/patterns/Feedback/components/ToastNotificationsPanel/ActionNotificationPreview.tsx
+import { Button } from "@mui/material";
+import { useRgoFeedback } from "@rgo-web/frontend";
+import { useDevelopmentGuideTranslation } from "../../../../examples/shared/localization/useDevelopmentGuideTranslation";
+
+const notificationId = "example-action-notification";
+
+export function ActionNotificationPreview() {
+  const feedback = useRgoFeedback();
+  const { t } = useDevelopmentGuideTranslation();
+  const showActionNotification = () => {
+    feedback.notify({
+      action: {
+        label: t("feedback.examples.action.undo"),
+        onClick: () => {
+          feedback.notify({
+            id: notificationId,
+            message: t("feedback.examples.action.undoneMessage"),
+            severity: "success",
+          });
+        },
+      },
+      id: notificationId,
+      message: t("feedback.examples.action.message"),
+      severity: "info",
+    });
+  };
+  return (
+    <Button color="info" onClick={showActionNotification} variant="contained">
+      {t("feedback.examples.action.action")}
+    </Button>
+  );
+}
+```
+
+Here the existing example changes the message; the Storybook **Action** fixture
+also restores its local contact state. In an application, Undo must execute the
+real supported recovery command. `action.onClick` is a synchronous callback, not
+an awaited transaction: an async Undo owner must handle its own pending state,
+errors, lifetime, and acknowledgement before announcing success.
+
+Action notifications remain visible by default until their action or close is
+chosen. Closing a notification dismisses presentation; it does not invoke Undo.
+Do not offer Undo for a command that has no supported reversal.
+
+## 4. Persist, dismiss, and replace by ID
+
+The following complete installed examples use `durationMs: null` to persist a
+warning and reuse one ID to update a notification in place:
+
+Here, persistence means visible toast lifetime only. For database-backed recipient
+records, unread counts and saved read markers, use **Notifications → Persisted
+inboxes versus feedback**. Dismissing a toast does not change those records.
+
+```tsx
+// docs/storybook/patterns/Feedback/components/ToastNotificationsPanel/PersistentNotificationPreview.tsx
+import { Button, Stack } from "@mui/material";
+import { useRgoFeedback } from "@rgo-web/frontend";
+import { useDevelopmentGuideTranslation } from "../../../../examples/shared/localization/useDevelopmentGuideTranslation";
+
+const notificationId = "example-persistent-notification";
+
+export function PersistentNotificationPreview() {
+  const feedback = useRgoFeedback();
+  const { t } = useDevelopmentGuideTranslation();
+  const showPersistentNotification = () => {
+    feedback.notify({
+      durationMs: null,
+      id: notificationId,
+      message: t("feedback.examples.persistent.message"),
+      severity: "warning",
+    });
+  };
+  return (
+    <Stack
+      direction={{ sm: "row", xs: "column" }}
+      sx={{
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 1.5,
+        width: "100%",
+      }}
+    >
+      <Button color="warning" onClick={showPersistentNotification} variant="contained">
+        {t("feedback.examples.persistent.action")}
+      </Button>
+      <Button onClick={() => feedback.dismiss(notificationId)}>{t("feedback.examples.persistent.dismiss")}</Button>
+    </Stack>
+  );
+}
+```
+
+```tsx
+// docs/storybook/patterns/Feedback/components/ToastNotificationsPanel/ReplacementNotificationPreview.tsx
+import { Button, Stack } from "@mui/material";
+import { useRgoFeedback } from "@rgo-web/frontend";
+import { useDevelopmentGuideTranslation } from "../../../../examples/shared/localization/useDevelopmentGuideTranslation";
+
+const notificationId = "example-replacement-notification";
+
+export function ReplacementNotificationPreview() {
+  const feedback = useRgoFeedback();
+  const { t } = useDevelopmentGuideTranslation();
+  return (
+    <Stack
+      direction={{ sm: "row", xs: "column" }}
+      sx={{
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 1.5,
+        width: "100%",
+      }}
+    >
+      <Button
+        onClick={() =>
+          feedback.notify({
+            id: notificationId,
+            message: t("feedback.examples.replacement.initialMessage"),
+            severity: "info",
+          })
+        }
+        variant="contained"
+      >
+        {t("feedback.examples.replacement.initialAction")}
+      </Button>
+      <Button
+        onClick={() =>
+          feedback.notify({
+            id: notificationId,
+            message: t("feedback.examples.replacement.updatedMessage"),
+            severity: "success",
+          })
+        }
+        variant="outlined"
+      >
+        {t("feedback.examples.replacement.updatedAction")}
+      </Button>
+    </Stack>
+  );
+}
+```
+
+The installed provider displays notifications FIFO, bounds its queue to ten
+entries, and replaces a matching ID without moving its queue position. A visible
+replacement restarts its timer. Ordinary notifications default to 5 seconds;
+action notifications default to persistent unless you explicitly set a duration.
+Do not call several different IDs for successive phases of the same status.
+
+`success` and `info` expose a polite `status` live region; `warning` and `error`
+expose `alert`. Clickaway does not dismiss a notification. Its close action,
+Escape, expiration where configured, or `dismiss(id)` can remove it.
+
+## Where the app uses this
+
+- `contacts/components/ContactsSidePanel.tsx`: the editor awaits create/update
+  `mutateAsync`, then sends a success notification. Form errors stay inline.
+- `contacts/hooks/useContactActions.ts`: single and bulk deletion require a
+  confirmation; deletion/status results publish caller-owned success/error IDs.
+- `patterns/feedback/components/ToastNotificationsPanel/`: success, error,
+  actions, persistence, replacement and provider positioning examples.
+
+These reference paths are beneath `docs/storybook/`; none are installed application features. The notification
+owner is separate from overlay completion: a successful toast does not itself
+close an editor or prove the overlay's guarded exit succeeded.
+
+## Common mistakes
+
+- **Hook throws about its provider:** keep it below the existing app boundary;
+  supply the deliberate minimal boundary in a standalone host.
+- **Success appears before saving:** return or await `mutateAsync`; do not use
+  a fire-and-forget command as acknowledgement.
+- **Repeated progress messages stack:** reuse the same caller-owned ID.
+- **A warning never disappears:** persistent and action notifications need an
+  accessible close/action or an explicit `dismiss(id)`.
+- **Undo only changes the toast:** the feature must perform real reversal and
+  handle its result; the feedback capability owns no business rollback.
+- **A cancelled or stale operation reports success:** recheck its actual owner
+  after meaningful awaits, and distinguish confirmation, command and UI outcomes.
+
+## 5. Verify your implementation
+
+Run checks sequentially from the workspace root:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+In Storybook, verify success only follows acknowledgement, failed save keeps the
+successful count unchanged, Undo restores local state, persistent dismissal works,
+and replacement leaves the latest message at the same ID. Change Light → Dark →
+Light while a notification is open: it keeps its state and updates presentation.
+Switch stories with a persistent toast open: the next story starts clean.
+At narrow widths, message, action and close control remain reachable without
+horizontal overflow. Check both application locales when integrating real copy;
+Storybook remains English.
+
+With Storybook running, `npm --prefix frontend run test:browser:storybook` checks
+these flows using installed Chrome and one worker. Set `RGO_STORYBOOK_URL` for
+another existing server. Finish with `npm --prefix frontend run verify`.
+
+## Read this tutorial without Storybook
+
+Complete adapter, command-owner and installed component examples are fenced in
+this MDX file. Discover the current source with:
+
+```sh
+npm --prefix frontend run guide:index -- search "Notifications"
+npm --prefix frontend run guide:index -- search useContactActions
+```
+
+Provider order remains owned by
+`frontend/docs/architecture/en/runtime-providers-and-lifetimes.md`; command outcome
+limits are described in
+`frontend/docs/development-guide/en/frontend/async-commands/committed-writes-and-observer-failures.md`.
+Use **Feedback → Confirmations → Docs** for decisions and dirty-editor guards.
+
+## Storybook fixture reference
+
+`NotificationsExample.tsx` and `Notifications.stories.tsx` live beside this MDX
+under `docs/storybook/feedback/Notifications/`. Their simulated
+save, local archive state, and English demonstration text belong only to Storybook.
+The global `.storybook/StorybookProviders.tsx` installs the real localized feedback
+provider inside the existing theme provider, keyed by story identity. Theme changes
+preserve open feedback; selecting another story ends that provider and clears its
+queue. Each Docs iframe has its own boundary. The fixtures cancel their own pending
+work on teardown; provider cleanup alone does not cancel a business request.

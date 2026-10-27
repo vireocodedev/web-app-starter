@@ -1,0 +1,474 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as FeatureDataStories from "./FeatureData.stories";
+
+<Meta of={FeatureDataStories} />
+
+# Loading and saving feature data
+
+Keep domain validation, persistence, cache identity and presentation in their
+existing owners. Components observe Query options from a stable feature runtime;
+they do not create adapters or maintain a second copy of fetched data.
+
+This tutorial follows the Storybook-only Contacts reference implementation. Its browser-storage adapter is retained as an inert, tested reference; live previews inject private memory adapters. The production application has no Contacts owner, routes, runtime registration or seed data.
+
+## Try it
+
+Wait for the initial collection, edit **Contact name**, then choose **Save
+contact**. The activity list shows the write acknowledgement followed by the
+collection read caused by targeted invalidation. The new contact appears without
+manually appending it to component state.
+
+Use **Read failure and retry** to distinguish a failed read from an empty
+collection. **Save rejection and retry** rejects the first write before changing
+any data and keeps your draft. **Empty collection** starts with no records but
+can create its first contact. In **Cancel an obsolete read**, choose **Hide
+collection** during loading: removing the last observer aborts that unfinished
+read. Choose **Show collection** to start another read. Change the global Theme
+while editing: the draft and cache remain intact.
+
+<Canvas of={FeatureDataStories.Overview} story={{ inline: false, height: "1000px" }} sourceState="none" />
+
+## Before you start
+
+All application paths below are relative to `frontend/`. Read the mandatory
+Architecture tutorials first. The authoritative contracts are
+`docs/architecture/en/apis-models-queries-and-mutations.md` and
+`docs/architecture/en/http-query-and-browser-storage.md`. The application already
+provides one QueryClient, an empty feature registry, localization, forms and feedback. The Contacts preview supplies a separate private reference runtime.
+Do not add a second application cache or global state owner.
+
+These existing files form one working feature; use their structure for your
+own resource rather than installing another Contacts implementation:
+
+```text
+docs/storybook/examples/Contacts/
+├── models/Contact.ts                    domain schema, types and defaults
+├── api/contact.api.ts                   domain persistence port
+├── api/contact.api.browser-storage.ts   inert reference adapter
+├── api/contact.storage.ts               validated owned storage
+├── api/contact.querykeys.ts             result identity
+├── api/contact.query.ts                 cancellable read options
+├── api/contact.mutation.ts              write options and invalidation
+├── contacts.feature.ts                  adapter/options construction
+├── hooks/useContactsFeature.ts          typed runtime access
+├── components/ContactsTable.tsx         reads and collection presentation
+└── components/ContactsSidePanel.tsx     editor save/failure ownership
+```
+
+Shared infrastructure stays in `src/app/data/query/createAppQueryClient.ts`,
+`src/app/data/http/createAppAxios.ts` and `src/app/bootstrap/runtime/`. Models,
+keys, endpoints and resource-specific errors belong to the feature. Storybook
+copy is English; application states and recovery actions use both application
+locales.
+
+## 1. Define domain values before the transport
+
+`models/Contact.ts` owns `contactSchema`, `Contact`, `ContactInput` and the
+localized form schema factory. `ContactInput` deliberately omits the persisted
+ID. Parse data at input boundaries; a TypeScript annotation alone does not
+validate a server response or browser-stored JSON.
+
+The complete reference port is below. It exposes domain operations and
+`AbortSignal`, with no Axios or Zod dependency:
+
+```ts
+// docs/storybook/examples/Contacts/api/contact.api.ts
+import type { Contact, ContactInput } from "../models/Contact";
+import type { ContactStatus } from "../models/ContactStatus";
+
+export type ContactRequestOptions = Readonly<{ signal?: AbortSignal }>;
+
+export class ContactConflictError extends Error {
+  constructor(contactId: string) {
+    super(`Contact ${contactId} changed since editing began.`);
+    this.name = "ContactConflictError";
+  }
+}
+
+export type ContactUpdate = Readonly<{ contact: Contact; expected: Contact }>;
+export type ContactStatusUpdate = Readonly<{ ids: readonly string[]; status: ContactStatus }>;
+
+export interface ContactApi {
+  create(contact: ContactInput, options?: ContactRequestOptions): Promise<Contact>;
+  findAll(options?: ContactRequestOptions): Promise<Contact[]>;
+  remove(contactId: string, options?: ContactRequestOptions): Promise<void>;
+  removeMany(contactIds: readonly string[], options?: ContactRequestOptions): Promise<void>;
+  update(update: ContactUpdate, options?: ContactRequestOptions): Promise<Contact>;
+  updateStatusMany(update: ContactStatusUpdate, options?: ContactRequestOptions): Promise<Contact[]>;
+}
+```
+
+Full updates carry the original `expected` snapshot. Partial status commands
+carry only IDs and the status they intend to change. A form submits parsed
+values; it must not quietly replace an existing ID or overwrite a concurrent
+edit with an old complete record. The Entity forms tutorial covers fields,
+translated validation and explicit create/update modes.
+
+## 2. Implement the selected adapter at that boundary
+
+The retained reference `ContactApiBrowserStorage` implements this port using the feature's
+validated storage service. Its read checks the signal before and after reading,
+then returns fresh object snapshots. Its mutation queue reads the latest stored
+collection for each operation and checks cancellation immediately before commit.
+A failed operation does not poison the FIFO queue. The update operation compares
+the stored contact with `expected` and throws `ContactConflictError` on conflict.
+Inspect the complete adapter and its tests before changing those guarantees.
+
+A future HTTP adapter would implement this same port, receive the app-owned
+Axios instance through deliberate construction, forward the signal to requests,
+and parse transport responses into domain values. **No Contacts HTTP adapter or
+backend endpoint is installed here.** Adding one requires tracing the actual
+endpoint, response/error contract and factory callers; changing only an import
+is not a completed migration.
+
+Continue with **Building a backend-connected feature** for a complete consumer
+recipe, including the required HTTP injection and runtime-registration edits.
+That tutorial adds no production endpoint or adapter to Contacts itself.
+
+Never access native browser storage from the component, put secrets in storage,
+or let a query callback become a second persistence writer. An abort after a
+write has committed cannot undo it.
+
+## 3. Put cache identity beside query options
+
+These are the complete existing key and query modules:
+
+```ts
+// docs/storybook/examples/Contacts/api/contact.querykeys.ts
+const contactQueryKeyRoot = ["contacts"] as const;
+
+export const ContactQueryKey = {
+  all: contactQueryKeyRoot,
+  collection: () => [...contactQueryKeyRoot, "collection"] as const,
+} as const;
+```
+
+```ts
+// docs/storybook/examples/Contacts/api/contact.query.ts
+import { queryOptions } from "@tanstack/react-query";
+
+import type { ContactApi } from "./contact.api";
+import { ContactQueryKey } from "./contact.querykeys";
+
+export function createContactQuery(api: ContactApi) {
+  return Object.freeze({
+    findAll: () =>
+      queryOptions({
+        queryFn: ({ signal }) => api.findAll({ signal }),
+        queryKey: ContactQueryKey.collection(),
+      }),
+  });
+}
+
+export type ContactQuery = ReturnType<typeof createContactQuery>;
+```
+
+The signal must reach the adapter. Query manages request and observer lifetimes;
+one closing editor should not globally cancel a read still needed by another
+observer. The cancellation story removes the **last observer in its isolated
+preview cache**. Its teardown cancels that preview's remaining work; that is not
+a production instruction to cancel all application queries when a page unmounts.
+
+Contacts has one unparameterized local collection, so this key is sufficient
+for its actual contract. For paged or private remote data, include every input
+that changes the projection: normalized filters, sort, page, page size, workspace
+and viewer when relevant. Do not put credentials into keys. The migrated Server
+Data example shows normalized filters and `keepPreviousData` in
+`docs/storybook/patterns/ServerData/api/serverData.query.ts`;
+its fixture is also local, not a production backend.
+
+## 4. Give mutations their affected read models
+
+This is the complete existing mutation factory:
+
+```ts
+// docs/storybook/examples/Contacts/api/contact.mutation.ts
+import { mutationOptions, type QueryClient } from "@tanstack/react-query";
+
+import type { ContactApi, ContactStatusUpdate, ContactUpdate } from "./contact.api";
+import { ContactQueryKey } from "./contact.querykeys";
+import type { ContactInput } from "../models/Contact";
+
+export function createContactMutation(api: ContactApi, queryClient: QueryClient) {
+  const refreshContacts = () => queryClient.invalidateQueries({ queryKey: ContactQueryKey.collection() });
+
+  return Object.freeze({
+    create: () =>
+      mutationOptions({
+        mutationFn: (contact: ContactInput) => api.create(contact),
+        onSuccess: refreshContacts,
+      }),
+    remove: () =>
+      mutationOptions({
+        mutationFn: (contactId: string) => api.remove(contactId),
+        onSuccess: refreshContacts,
+      }),
+    removeMany: () =>
+      mutationOptions({
+        mutationFn: (contactIds: readonly string[]) => api.removeMany(contactIds),
+        onSuccess: refreshContacts,
+      }),
+    update: () =>
+      mutationOptions({
+        mutationFn: (update: ContactUpdate) => api.update(update),
+        onSuccess: refreshContacts,
+      }),
+    updateStatusMany: () =>
+      mutationOptions({
+        mutationFn: (update: ContactStatusUpdate) => api.updateStatusMany(update),
+        onSuccess: refreshContacts,
+      }),
+  });
+}
+
+export type ContactMutation = ReturnType<typeof createContactMutation>;
+```
+
+The returned invalidation promise keeps mutation pending while its active
+collection refresh settles. Matching inactive collections become stale; they do
+not necessarily refetch immediately. No unrelated feature key is invalidated.
+Do not append a parallel local list or invalidate the entire app cache to make
+the visible row update.
+
+**Acknowledgement and refresh are different outcomes.** The reference factory
+awaits invalidation but does not implement a durable-command receipt protocol or
+observer-failure isolation. Query refetch errors normally remain in the query
+state with the default invalidation options; mutation success is not proof that
+every subsequent read succeeded. A failed list refresh after an accepted write
+calls for retrying the read, not submitting the write again. Uncertain remote
+outcomes need the endpoint's reconciliation contract. The preview's Save
+rejection scenario specifically fails before commit; it does not simulate lost
+acknowledgements, conflicts or observer failures.
+
+## 5. Construct once, then consume through the owned runtime hook
+
+This is the current complete feature factory:
+
+```ts
+// docs/storybook/examples/Contacts/contacts.feature.ts
+import type { QueryClient } from "@tanstack/react-query";
+
+import type { ContactApi } from "./api/contact.api";
+import { createContactMutation } from "./api/contact.mutation";
+import { createContactQuery } from "./api/contact.query";
+
+type CreateContactsFeatureOptions = Readonly<{ queryClient: QueryClient; api: ContactApi }>;
+
+export function createContactsFeature({ queryClient, api }: CreateContactsFeatureOptions) {
+  return Object.freeze({
+    ContactMutation: createContactMutation(api, queryClient),
+    ContactQuery: createContactQuery(api),
+  });
+}
+
+export type ContactsFeature = ReturnType<typeof createContactsFeature>;
+```
+
+The reference factory receives both its API adapter and Query client. `ContactsPreview.tsx` constructs these once, selects private memory data and supplies a docs-only provider. Production `appFeatures.ts` is empty. Installing a consumer feature requires explicit registration and a canonical generic-runtime hook; see Building a backend-connected feature for complete application modules.
+
+The complete owned lookup wrapper is:
+
+```ts
+// docs/storybook/examples/Contacts/hooks/useContactsFeature.ts
+import { useContext } from "react";
+import { ContactsReferenceContext } from "./ContactsReferenceContext";
+
+export function useContactsFeature() {
+  const value = useContext(ContactsReferenceContext);
+  if (!value) throw new Error("Contacts needs its Storybook reference provider.");
+  return value;
+}
+```
+
+Within the feature, components use relative imports of this wrapper, then call
+`useQuery(ContactQuery.findAll())` or
+`useMutation(ContactMutation.create())`. See `ContactsTable.tsx` and
+`ContactsSidePanel.tsx` for complete reference consumers. Pages consume the
+public feature UI; they do not deep-import API internals. Documentation fixtures
+may import the implementation being taught without publishing those paths as
+application interfaces.
+
+## 6. Connect the form to an awaited command and render distinct states
+
+The following complete small component is an **integration recipe within the
+Contacts owner**, not a replacement for its existing overlay/session owner:
+
+```tsx
+// Example: docs/storybook/examples/Contacts/components/ContactCreateExample.tsx
+import { useState } from "react";
+import { RgoFormGroup } from "@rgo-web/frontend";
+import { useMutation } from "@tanstack/react-query";
+
+import type { AppFormState } from "@/app/forms/types/AppEntityForm";
+
+import { ContactForm } from "./ContactForm";
+import { useContactsFeature } from "../hooks/useContactsFeature";
+import type { ContactFormValue, ContactInput } from "../models/Contact";
+
+type ContactCreateExampleProps = Readonly<{
+  onSaved: () => void;
+  onStateChange: (state: AppFormState) => void;
+}>;
+
+export function ContactCreateExample({ onSaved, onStateChange }: ContactCreateExampleProps) {
+  const { ContactMutation } = useContactsFeature();
+  const createContact = useMutation(ContactMutation.create());
+  const [saveFailed, setSaveFailed] = useState(false);
+
+  const onSubmit = async (value: ContactFormValue) => {
+    setSaveFailed(false);
+    const input: ContactInput = {
+      name: value.name,
+      email: value.email,
+      organization: value.organization,
+      role: value.role,
+      status: value.status,
+    };
+    try {
+      await createContact.mutateAsync(input);
+    } catch (error) {
+      setSaveFailed(true);
+      throw error;
+    }
+  };
+
+  return (
+    <ContactForm
+      group={RgoFormGroup.CREATE}
+      onSaved={onSaved}
+      onStateChange={onStateChange}
+      onSubmit={onSubmit}
+      saveFailed={saveFailed}
+    />
+  );
+}
+```
+
+`ContactForm` already owns localized schema validation and awaited submission.
+Returning `mutate()` from that callback would finish too early: use
+`mutateAsync()`. A rejected command stays rejected, preserving the mounted
+draft and preventing `onSaved`. The existing `ContactsSidePanel` additionally
+handles explicit update mapping, conflicts, editor generation and close policy;
+reuse it when those contracts apply. The simple recipe assumes the reference
+Contacts error contract and does not classify arbitrary remote uncertainty.
+
+For reads, choose presentation deliberately:
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Feature data states and recovery</caption>
+  <thead>
+    <tr>
+      <th scope="col">State</th>
+      <th scope="col">Presentation and recovery</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Initial pending, no data</th>
+      <td>Loading state; do not say there are no contacts</td>
+    </tr>
+    <tr>
+      <th scope="row">Failed initial read</th>
+      <td>Error with a named retry action</td>
+    </tr>
+    <tr>
+      <th scope="row">Successful empty result</th>
+      <td>Empty state with create action</td>
+    </tr>
+    <tr>
+      <th scope="row">Successful records</th>
+      <td>Render the Query result directly</td>
+    </tr>
+    <tr>
+      <th scope="row">Background fetching</th>
+      <td>Keep compatible rows and mark refreshing if useful</td>
+    </tr>
+    <tr>
+      <th scope="row">Background error</th>
+      <td>
+        Deliberately show retained rows with a warning, or the feature's error view; never call it a successful empty
+        result
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Rejected write</th>
+      <td>Preserve draft; show the relevant error/recovery</td>
+    </tr>
+  </tbody>
+</table>
+
+The preview demonstrates retained rows; the reference `ContactsTable` chooses an
+error view whenever its query is in error. That is a presentation difference,
+not a new shared policy. `isPending` describes initial query status;
+`isFetching` also covers background work. A canceled obsolete read normally
+needs no error notification. Read errors must not be caught and converted to
+an empty array. Keep labels and feedback localized in the real application.
+
+## Common mistakes
+
+- Creating QueryClient, adapters or feature options on every render.
+- Copying Query data into Signals, Context or component state as another live model.
+- Using a cache key that omits a result-defining input or private scope.
+- Ignoring Query's signal or canceling a shared request when only one observer closes.
+- Treating pending, failed, empty and retained-refresh states as the same state.
+- Returning fire-and-forget `mutate` from a form submission callback.
+- Calling a committed write failed merely because a later list refresh failed.
+- Introducing an uninstalled HTTP adapter, runtime option or helper as if it already exists.
+- Giving runtime options one QueryClient and mounted consumers a different one.
+
+## 7. Verify your implementation
+
+Run from the workspace root, sequentially:
+
+```sh
+npm --prefix frontend run test -- tests/storybook/contacts/api/contact.api.browser-storage.test.ts tests/storybook/contacts/api/contact.mutation.test.ts
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+Verify initial loading, empty, read failure/retry, accepted write/targeted refresh,
+and pre-commit rejection with the same draft. Start a slow read, remove its final
+observer, and verify its signal is aborted and obsolete data cannot arrive.
+Keep another observer mounted when reviewing shared-request lifetime. Verify
+fresh snapshots, update conflicts and queue recovery in adapter tests. Check
+the actual query keys and unrelated cache entries when reviewing invalidation.
+
+With Storybook running, the repository's
+`npm --prefix frontend run test:browser:storybook` covers the tutorial interactions.
+Theme changes must preserve drafts and data; narrow screens must keep controls
+reachable without horizontal page overflow. Application locale/error-contract
+checks remain necessary: the isolated preview does not verify HTTP, authority,
+production persistence, uncertain writes, or every observer lifetime.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the listed current source files and the authoritative contracts.
+The related articles explain scope and stronger command semantics:
+
+- Query-key scope and invalidation: `docs/development-guide/en/frontend/collections/query-key-scope-and-invalidation.md`.
+- Owned reads and shared subscriptions: `docs/development-guide/en/frontend/async-commands/owned-reads-and-shared-subscriptions.md`.
+- Committed writes and observer failures: `docs/development-guide/en/frontend/async-commands/committed-writes-and-observer-failures.md`.
+
+```sh
+npm --prefix frontend run guide:index -- search "Loading and saving feature data"
+npm --prefix frontend run guide:index -- search createContactMutation
+```
+
+## Storybook fixture reference
+
+`FeatureData.stories.tsx` selects five deterministic scenarios.
+`FeatureDataExample.tsx` constructs one isolated preview QueryClient, API and
+real query/mutation options per scenario lifetime, observes the collection and
+drives one valid create input. Its single-name control is only for tracing data
+flow; use the complete Entity forms pattern for application editors.
+`featureDataFixture.ts` implements the ContactApi port entirely in memory,
+returns fresh snapshots, honors read cancellation, and supports cleanup of its
+pending timers. No application storage, full app runtime or HTTP request is used.
+
+All three files live beside this MDX under `docs/storybook/data/FeatureData/`.
+The preview inherits the global English localization/theme/feedback providers.
+Its deterministic no-retry override is fixture policy; production retry behavior
+remains owned by `createAppQueryClient.ts`. Changing scenario intentionally
+starts a new fixture. Theme updates do not. Preview teardown cancels its owned
+queries/timers and clears its cache; do not copy that broad teardown into a
+production component that shares the application's QueryClient.

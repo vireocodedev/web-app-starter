@@ -10,7 +10,8 @@ ENV VITE_API_BASE_URL=/api \
     VITE_API_WITH_CREDENTIALS=true \
     VITE_API_MODE=http \
     VITE_APP_ENV=production
-RUN npm run build
+RUN NODE_OPTIONS=--max-old-space-size=1536 \
+    ROLLDOWN_WORKER_THREADS=2 RAYON_NUM_THREADS=2 npm run build
 
 FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:782bb89768cc87b7f95c18b95baa1af250e5d451f26794f59363540161147c01
 USER 0

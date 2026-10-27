@@ -1,102 +1,84 @@
 # Separate setup readiness from accepted business V1
 
-Coordinate setup, agreed requirements, implementation and release without
-confusing one stage's evidence with another's. A deployed skeleton is setup
-progress; an accepted business product requires implemented and verified journeys.
+Coordinate setup, agreed requirements, implementation and release while keeping
+each stage's evidence explicit. A deployed skeleton establishes setup progress;
+an accepted business product requires implemented and verified journeys.
 
-**Documented starter workflow.** `docs/v1-workflow.md` coordinates the stages.
-The current setup owners are `.agents/skills/initialization-intake/SKILL.md` and
-`.agents/skills/initialization-execution/SKILL.md`; detailed procedures remain with
-those packages and the CI/release owners. This article adds no execution authority.
+**Documented starter workflow.** The root `README.md` section **Project lifecycle**
+coordinates the stages. The numbered manual procedure in
+`docs/template-initialization/INIT_GUIDE.md` owns setup,
+including prerequisites, copy-paste commands and completion evidence. CI and
+release operator guides own their infrastructure. This article adds no execution
+authority. The numbered scripts load a private values env file and hash-bound verification observations. This is independent of the retired agent-skill/intake workflow.
 
 ## Trigger, owner and invariant
 
 Use when planning a consumer, resuming partial setup or deciding whether V1 is
-complete. The developer/operator owns setup within confirmed scope. Product/client
+complete. The developer/operator owns setup within authorized scope. Product/client
 owners agree requirements and accept delivered business behavior. Implementers
 own bounded outcomes; release operators own promotion and recovery.
 
-Intake completion, execution acceptance, business agreement and business acceptance
-are independent states. Completing one does not imply the others.
+Chosen setup inputs, verified initialization, business agreement and business
+acceptance are independent states. Completing one does not imply the others.
 
 ```text
-checkout -> upfront intake -> confirmed, saved answers
-                         -> gated initialization -> verified setup
+consumer checkout -> project values + access -> numbered manual setup
+                                            -> verified initialization
 
 agreed business requirements -> bounded implementation -> staging acceptance
-                         -> exact-pair production promotion + handoff
+                             -> exact-pair production promotion + handoff
 ```
 
-## Establish the consumer and finish intake
+## Establish the consumer and follow the setup guide
 
-Inspect actual Git origin, identity, local work and compatible packages. Preserve
-existing data, credentials, initialization receipts and private resume state.
-Adoption needs both complete skills, not a copied helper without its references.
+Create the private consumer through GitHub's template UI, clone it and open its
+folder in VS Code before starting the initialization guide. No local template
+checkout is required. Inspect actual Git origin, identity and local changes. Preserve existing data,
+credentials and verified setup evidence. Follow `docs/template-initialization/INIT_GUIDE.md`
+in order, beginning with project values and access. Keep credentials in protected
+stores and record only nonsecret setup decisions and remaining blockers in the
+guide's consumer-specific setup section.
 
-A bare skill invocation offers a short action menu and waits. A concrete request
-such as `$initialization-intake prepare initialization for this repository` starts
-intake directly. The agent presents all known questions upfront, proposes detected
-facts for review and resolves human service-access prerequisites before execution.
+When resuming, check completed evidence against the actual checkout and
+environments, then continue the missing steps. Full initialization requires
+consumer evidence for local development, CI/protection, staging, production and
+initialized recovery. Explicit local-only scope establishes only local setup.
+Unresolved access, configuration or authority blocks the affected step.
 
-Answers, unknowns and prerequisite evidence live in the Git-ignored
-`.agents/skills/initialization-intake/state/intake.json`. Keep nonsecret values and
-protected references there. Another agent session can resume with
-`$initialization-intake resume intake`, preserving answered questions and showing
-what remains. Completion binds the user's confirmation to the resolved scope and
-current state; answer changes invalidate it.
-
-## Gate execution on completed intake
-
-`$initialization-execution initialize this repository` first checks intake
-completion, current answers and checkout identity. Missing, partial, changed or
-mismatched intake explicitly stops with `$initialization-intake` guidance before
-provider checks or initialization actions. Execution must not silently answer
-remaining questions or mark intake complete.
-
-Once the gate passes, verify live readiness and execute the confirmed scope using
-the execution contract/runbook. Full setup requires real consumer evidence for
-local development, CI/protection, staging, production and initialized recovery.
-Explicit local-only scope proves only local setup. Unexpected provider failures or
-scope changes can block execution; known questions belong in intake.
-
-No Client Discovery service, project UUID, export or business approval is needed
-for initialization. Preserve completed legacy evidence when adopting the skills;
-incomplete execution requires intake before continuing mutations.
+Business requirements and their approval belong to the later requirements stage;
+they are not prerequisites for the manual initialization procedure.
 
 ## Keep later requirements separate
 
-The replacement requirements/specification workflow is outside this initialization
-change and remains to be defined. No new automated specification workflow is
-installed. The existing `discovery-specification` package is a legacy app
-integration, outside the new setup path; local intake is not its business source.
+The requirements/specification workflow remains to be defined separately.
+Setup notes establish technical configuration and do not supply business requirements.
 
-Business scope still needs useful acceptance criteria, exclusions, permissions,
-journeys and owned unresolved decisions before affected implementation. Setup
-confirmation does not approve those business decisions. Track actual issue/PR
-progress independently of initialization state.
+Before affected implementation, agree business acceptance criteria, exclusions,
+permissions, journeys and owners of unresolved decisions. Setup confirmation
+does not approve these business decisions. Track issue/PR progress separately.
 
 ## Accept behavior before promoting artifacts
 
-| Stage result              | Required distinction                                                    |
-| ------------------------- | ----------------------------------------------------------------------- |
-| Intake complete           | Confirmed setup inputs, not successful setup.                           |
-| Local app starts          | Local setup, not deployed business acceptance.                          |
-| CI/protection configured  | Delivery foundation, not implemented business features.                 |
-| Reviewed implementation   | Bounded outcome with actual checks; full V1 may remain.                 |
-| Staging candidate healthy | Runtime readiness; verify agreed journeys/roles/failures separately.    |
-| Exact pair promoted       | Production identity still needs smoke, operating and recovery evidence. |
+| Stage result              | Required distinction                                        |
+| ------------------------- | ----------------------------------------------------------- |
+| Setup values chosen       | Inputs and scope still need execution evidence.             |
+| Local app starts          | Local setup; deployed business acceptance remains open.     |
+| CI/protection configured  | Delivery foundation; business features may remain.          |
+| Reviewed implementation   | Bounded outcome with actual checks; full V1 may remain.     |
+| Staging candidate healthy | Verify agreed journeys, roles and failures separately.      |
+| Exact pair promoted       | Complete production smoke, operating and recovery evidence. |
 
 Record business acceptance and blockers against the exact staging candidate.
 Production promotes that accepted frontend/backend pair without rebuilding.
-Migrations, backups, account provisioning and recovery follow their existing owners.
-Keep source identity and actual run/pair receipts intact.
+Migrations, backups, account provisioning and recovery follow their existing
+owners. Keep source identity and actual run/pair receipts intact.
 
 ## Failure and decision table
 
 | Observation                                        | Decision                                                 |
 | -------------------------------------------------- | -------------------------------------------------------- |
-| Intake missing or no longer valid                  | Stop execution and resume intake.                        |
-| Another session has answered questions             | Load saved state and continue only remaining questions.  |
+| Required setup input or access missing             | Resolve it before the affected manual step.              |
+| Earlier setup work already exists                  | Preserve it, verify evidence and continue missing steps. |
 | Setup complete, business features missing          | Continue implementation; business V1 remains incomplete. |
 | Consequential business policy unresolved           | Block affected work with an owned decision.              |
 | Staging infrastructure green, journey fails        | Business acceptance remains open.                        |
@@ -106,20 +88,16 @@ Keep source identity and actual run/pair receipts intact.
 
 Final V1 evidence includes accepted requirement coverage, exact candidate/pair
 identity, real business smoke, current operating/access docs, recovery and limits.
-Consumer setup belongs in its authoritative setup entry point. Historical template
-receipts never prove consumer acceptance. A fresh-consumer rehearsal is required
-before claiming the new setup experience needs no follow-up intervention.
+Consumer setup belongs in `docs/template-initialization/INIT_GUIDE.md`. Historical template
+receipts do not establish consumer acceptance. A fresh-consumer rehearsal is
+required before claiming the complete setup needs no follow-up intervention.
 
-The pinned references below describe historical stage/evidence contracts. Current
-intake and execution behavior is owned by the current skill paths named above.
+The pinned references below describe historical stage/evidence contracts. The
+current lifecycle overview is in the root `README.md`; the manual setup
+procedure is owned by `docs/template-initialization/INIT_GUIDE.md`.
 
 ## Source provenance
 
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:docs/v1-workflow.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:AGENTS.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/initialize-project/references/contract.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/initialize-project/references/project-status.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/references/export-contract.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/references/specification-contract.md`
-- `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:.agents/skills/discovery-specification/SKILL.md`
 - `vireocode-web-app-starter@ffa585acff758020fc7e82e501e35e50876b5316:infrastructure/release/README.md`

@@ -1,0 +1,422 @@
+import { Canvas, Meta, Source } from "@storybook/addon-docs/blocks";
+import * as HeaderTabsStories from "./HeaderTabs.stories";
+import registrySource from "./headerTabsRoutes.ts?raw";
+
+<Meta of={HeaderTabsStories} />
+
+# Pages with header tabs
+
+Build one Workspace destination with Overview and Activity pages sharing the
+application header. Each tab has a URL, and Activity stays selected on its details
+page. Use this pattern when users should be able to link to, reload, and navigate
+back to an individual section.
+
+```text
+/workspace                    → /workspace/overview
+├── /workspace/overview       Overview tab
+└── /workspace/activity       Activity tab
+    └── /workspace/activity/details
+```
+
+The router owns the hierarchy and navigation metadata. The existing shell builds
+the header tabs from that metadata. The layout renders the selected child through
+`Outlet`; each child remains an ordinary page.
+
+## Try it
+
+Choose Activity in the header, then open its details. The page changes while
+Activity stays selected. The preview address bar displays the example's URL. Open
+the canvas in a new tab for the full shell, or select **Mobile section menu** to
+try phone navigation. Use the global Theme toolbar to check all four app themes.
+Open the main menu and choose **Workspace** to return to its default Overview
+page. Workspace remains selected in that menu on Activity and its details.
+
+<Canvas of={HeaderTabsStories.DefaultChild} story={{ inline: false, height: "560px" }} sourceState="none" />
+
+## Before you start
+
+This recipe extends this starter's existing authenticated router, application
+providers, and shell. It adds no backend endpoint. Use an initialized checkout
+with dependencies installed and follow `frontend/README.md` for local startup.
+Sign in before testing these URLs in the assembled application.
+
+All paths in the implementation steps below are relative to `frontend/`. The
+example pages contain only static presentation and links. When adding business
+behavior, compose the feature's public interface from its page adapter, following
+`frontend/docs/architecture/en/route-entries-and-feature-composition.md`.
+
+## Files you will change
+
+```text
+src/pages/workspace/WorkspaceLayout.tsx             create
+src/pages/workspace/WorkspaceOverviewPage.tsx       create
+src/pages/workspace/WorkspaceActivityPage.tsx        create
+src/pages/workspace/WorkspaceActivityDetailsPage.tsx create
+src/app/localization/translations/translation.en.ts extend
+src/app/localization/translations/translation.hr.ts extend
+src/app/router/routeRegistry.tsx                    extend
+```
+
+The steps create application files. The runnable preview above uses isolated
+fixtures under `docs/storybook/routing/HeaderTabs/`; the final reference section explains
+those files separately.
+
+## 1. Add application text
+
+Add this `workspace` property inside the existing `englishTranslations` export in
+`src/app/localization/translations/translation.en.ts`. Preserve the other keys.
+
+```ts
+workspace: {
+  title: "Workspace",
+  overview: "Overview",
+  overviewDescription: "A summary of the workspace.",
+  activity: "Activity",
+  activityDescription: "Recent changes in this workspace.",
+  details: "Activity details",
+  detailsDescription: "Details of the selected activity.",
+  openActivity: "Open Activity",
+  openDetails: "Open activity details",
+  backToActivity: "Back to Activity",
+},
+```
+
+Add the same keys inside `croatianTranslations` in
+`src/app/localization/translations/translation.hr.ts`, with the application's
+translated values. You can copy these English starter values while implementing
+the route, then translate them before delivery. The application checks both
+resource shapes; this Storybook tutorial and its stories remain English-only.
+
+The following pages use `useAppTranslation()`, which reads the normal
+`translation` namespace. Their text remains available in production.
+
+## 2. Create the layout and pages
+
+Create each file at the path in its first comment. Shared content can go around
+`Outlet` in the layout. The application shell already supplies the header and
+Workspace identity.
+
+```tsx
+// src/pages/workspace/WorkspaceLayout.tsx
+import { Outlet } from "react-router";
+
+export function WorkspaceLayout() {
+  return <Outlet />;
+}
+```
+
+```tsx
+// src/pages/workspace/WorkspaceOverviewPage.tsx
+import { Button, Stack, Typography } from "@mui/material";
+import { Link } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+export function WorkspaceOverviewPage() {
+  const { t } = useAppTranslation();
+  return (
+    <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+      <Typography component="h2" variant="h5">
+        {t("workspace.overview")}
+      </Typography>
+      <Typography>{t("workspace.overviewDescription")}</Typography>
+      <Button component={Link} to="/workspace/activity" variant="outlined">
+        {t("workspace.openActivity")}
+      </Button>
+    </Stack>
+  );
+}
+```
+
+```tsx
+// src/pages/workspace/WorkspaceActivityPage.tsx
+import { Button, Stack, Typography } from "@mui/material";
+import { Link } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+export function WorkspaceActivityPage() {
+  const { t } = useAppTranslation();
+  return (
+    <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+      <Typography component="h2" variant="h5">
+        {t("workspace.activity")}
+      </Typography>
+      <Typography>{t("workspace.activityDescription")}</Typography>
+      <Button component={Link} to="/workspace/activity/details" variant="outlined">
+        {t("workspace.openDetails")}
+      </Button>
+    </Stack>
+  );
+}
+```
+
+```tsx
+// src/pages/workspace/WorkspaceActivityDetailsPage.tsx
+import { Button, Stack, Typography } from "@mui/material";
+import { Link } from "react-router";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+
+export function WorkspaceActivityDetailsPage() {
+  const { t } = useAppTranslation();
+  return (
+    <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+      <Typography component="h2" variant="h5">
+        {t("workspace.details")}
+      </Typography>
+      <Typography>{t("workspace.detailsDescription")}</Typography>
+      <Button component={Link} to="/workspace/activity" variant="outlined">
+        {t("workspace.backToActivity")}
+      </Button>
+    </Stack>
+  );
+}
+```
+
+At this point, the files export four page components. They become reachable when
+you register them in the next step.
+
+## 3. Register the parent, tabs, and details
+
+In `src/app/router/routeRegistry.tsx`, add these page and icon imports. Reuse its existing `AppRouteDefinition` type import. Add `Outlet` explicitly;
+the clean starter registry does not import it yet.
+
+```tsx
+import { Outlet } from "react-router";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+
+import { WorkspaceLayout } from "@/pages/workspace/WorkspaceLayout";
+import { WorkspaceOverviewPage } from "@/pages/workspace/WorkspaceOverviewPage";
+import { WorkspaceActivityPage } from "@/pages/workspace/WorkspaceActivityPage";
+import { WorkspaceActivityDetailsPage } from "@/pages/workspace/WorkspaceActivityDetailsPage";
+```
+
+Insert the five records below into the existing `appRouteRegistry` object,
+alongside Home and Settings. Preserve its existing records,
+`export const appRouteRegistry` declaration and route/navigation helpers. These are the complete Workspace records; they
+use the application translation keys added in step 1.
+
+```tsx
+workspace: {
+  Component: WorkspaceLayout,
+  access: "authenticated",
+  defaultChildId: "workspaceOverview",
+  headerNavigation: true,
+  navigation: { Icon: DashboardOutlinedIcon, labelKey: "workspace.title" },
+  path: "/workspace",
+  title: t => t("workspace.title"),
+},
+workspaceOverview: {
+  Component: WorkspaceOverviewPage,
+  access: "authenticated",
+  navigation: { Icon: DashboardOutlinedIcon, labelKey: "workspace.overview" },
+  parentId: "workspace",
+  path: "/workspace/overview",
+  title: t => t("workspace.overview"),
+},
+workspaceActivity: {
+  Component: Outlet,
+  access: "authenticated",
+  navigation: { Icon: TimelineOutlinedIcon, labelKey: "workspace.activity" },
+  parentId: "workspace",
+  path: "/workspace/activity",
+  title: t => t("workspace.activity"),
+},
+workspaceActivityIndex: {
+  Component: WorkspaceActivityPage,
+  access: "authenticated",
+  index: true,
+  parentId: "workspaceActivity",
+  title: t => t("workspace.activity"),
+},
+workspaceActivityDetails: {
+  Component: WorkspaceActivityDetailsPage,
+  access: "authenticated",
+  parentId: "workspaceActivity",
+  path: "/workspace/activity/details",
+  title: t => t("workspace.details"),
+},
+```
+
+The existing `appRouteRegistry` already checks its records with
+`as const satisfies Record<string, AppRouteDefinition>`. Omit
+`translationNamespace` here: its default is the application `translation`
+namespace. Keep the existing router and `AppShell` composition; registration is
+sufficient to connect these pages to the header.
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        Parent <code>headerNavigation: true</code>
+      </td>
+      <td>Enables the second header row.</td>
+    </tr>
+    <tr>
+      <td>
+        Parent <code>defaultChildId</code>
+      </td>
+      <td>Redirects /workspace to its Overview child with history replacement.</td>
+    </tr>
+    <tr>
+      <td>
+        Child <code>parentId</code>
+      </td>
+      <td>Connects each page to its layout.</td>
+    </tr>
+    <tr>
+      <td>
+        Immediate child <code>navigation</code>
+      </td>
+      <td>Makes Overview and Activity header tabs, in registry order.</td>
+    </tr>
+    <tr>
+      <td>
+        Child <code>path</code>
+      </td>
+      <td>Uses the complete application path beneath the parent.</td>
+    </tr>
+    <tr>
+      <td>
+        Activity <code>Component: Outlet</code> and its index child
+      </td>
+      <td>Renders the Activity page at /workspace/activity and replaces it with details at the deeper URL.</td>
+    </tr>
+  </tbody>
+</table>
+
+Only Overview and Activity are immediate children with navigation metadata.
+Details remains under Activity, so it keeps that tab active. A nested group with
+its own `headerNavigation` supplies its own row. Default descendant matching
+already covers this example; `navigation.activePath` is needed only for a
+different match, with `/*` when that pattern includes descendants.
+
+## 4. Add the drawer destination when needed
+
+The parent navigation metadata provides its label and icon. Drawer membership is
+explicit. In the same file, extend the existing list if Workspace belongs in the
+main drawer:
+
+```tsx
+export const appNavigationItems = [
+  homeNavigationItem,
+  navigationLink(appRouteRegistry.workspace),
+] satisfies readonly AppNavigationItem[];
+```
+
+Keep any other destinations already in that list. This uses the file's existing
+`navigationLink` helper and `AppNavigationItem` import. It does not add a mobile
+bottom-navigation shortcut; that list is a separate product choice. Without the
+drawer entry, the registered Workspace URLs still work when opened directly or
+through a normal router link.
+
+The preview supplies Workspace to `AppShell.navigationItems`, so you can try the
+main-menu entry as well as the header tabs. Its parent destination uses the same
+default-child redirect shown in the recipe.
+
+## Common mistakes
+
+- **URL changes, child stays blank:** render `Outlet` in the parent layout and
+  in any intermediate route, such as `workspaceActivity`, that owns children.
+- **No header tabs:** set `headerNavigation` on the parent and `navigation` on
+  its immediate children. A deeper child does not become a top-level tab.
+- **Route validation fails:** each `parentId` must name a registered route, child
+  access must equal parent access, and complete child paths must be beneath
+  their parent. Use `/workspace/activity`, rather than `activity`, in this registry.
+- **Conflicting default page:** use either `defaultChildId` or an index child
+  for a particular parent. This example uses a redirect for Workspace and an
+  index child for Activity; the two choices belong to different parents.
+- **Keys appear instead of labels:** add the keys to both application locale
+  resources and use `useAppTranslation`. Keep production text in the normal
+  namespace; the fixture's `storybook.*` keys are registered only by Storybook.
+- **Workspace is reachable but missing from the drawer:** add its explicit
+  `appNavigationItems` entry from step 4.
+
+## 5. Verify your implementation
+
+From the workspace root, run the checks sequentially:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+```
+
+Expect both to exit successfully. Typechecking catches missing components and
+translation keys or shapes. The architecture check covers import and ownership
+rules. These checks do not prove browser navigation.
+
+Start the application using `frontend/README.md`, sign in, and check:
+
+- Open `/workspace`: the URL becomes `/workspace/overview` and Overview is active.
+- Open `/workspace/activity` directly: Activity renders with Activity active.
+- Open its details: the URL becomes `/workspace/activity/details`, details render,
+  and Activity still has `aria-current="page"`.
+- Use Back and Forward: the URL, content, and selected tab stay aligned. Reload a
+  child URL and confirm it opens the same page after normal authentication.
+- On a narrow screen, use More sections to change page. Reopen it and press
+  Escape; it closes and restores focus to its trigger.
+- Use the keyboard, switch the application's language, and check each theme.
+  The route and active tab should survive presentation changes.
+
+Use the existing route and shell tests as examples when adding automated
+coverage: `frontend/tests/app/router/routeHierarchy.test.tsx` and
+`frontend/tests/app/shell/components/AppShell.test.tsx`. Complete repository verification
+with `npm --prefix frontend run verify` before delivery. A successful Storybook
+build alone does not establish application deep-link or authentication behavior.
+
+## Read this tutorial without Storybook
+
+Agents and developers can read this MDX directly from the checkout. The complete
+application steps above are fenced code; they require no browser or MDX execution.
+Find the tutorial and current fixture source from the workspace root:
+
+```sh
+npm --prefix frontend run guide:index -- search "Pages with header tabs"
+npm --prefix frontend run guide:index -- search headerTabsRegistry
+```
+
+The live index includes MDX, story modules, and support files in
+`frontend/docs/storybook/`. Follow the file paths returned by search and read
+their current contents. The routing contract remains authoritative at
+`frontend/docs/architecture/en/router-and-shell-responsibilities.md`.
+
+## Storybook fixture reference
+
+The preview demonstrates the same routing metadata with English guide resources.
+Its support code stays under `frontend/docs/storybook/routing/HeaderTabs/`:
+
+- `headerTabsRoutes.ts` defines `headerTabsRegistry` and the isolated memory-router
+  factory shown below.
+- `HeaderTabsExample.tsx` contains the preview shell, explicit Workspace menu
+  entry, layout, and pages.
+- `../shared/StorybookBrowserFrame.tsx` shares the preview viewport between the address bar
+  and shell, allowing long content to scroll normally.
+- `../shared/StorybookAddressBar.tsx` supplies the shared browser-style address bar above
+  the shell. It reads the preview router's pathname, query, and fragment.
+- `HeaderTabsPreview.tsx` owns the memory router for the mounted example and
+  disposes it on unmount; changing the entry path creates fresh history.
+- `HeaderTabs.stories.tsx` selects default entry, direct Activity, details, and
+  mobile states. `HeaderTabs.mdx` is this tutorial.
+
+<Source code={registrySource} language="tsx" />
+
+Application implementation uses the step 1–4 files and the existing application
+router. The memory-router factory, preview shell, and guide-only translations
+belong to Storybook. Wrap the preview's `AppShell` in `StorybookBrowserFrame`
+inside the story's router. It includes the address bar, which follows that router
+without URL props. The actual browser address bar identifies the story. Real
+deep-link reloads and authentication are verified in the assembled application.
+
+Global Storybook providers supply the real application theme and fixed English
+localization, including guide resources in static builds. All examples inherit
+the Theme toolbar's System, Light, Dark, and Soft dark choices. Theme changes
+preserve the selected route. The preview starts no authentication, Query runtime,
+or backend requests.

@@ -14,8 +14,7 @@ import {
 } from "@/app/router/routeHierarchy";
 
 const translate = ((key: string) => key) as unknown as TFunction<"translation">;
-const guideTranslate = ((key: string) => key) as unknown as TFunction<"development-guide">;
-const translations: AppRouteTranslations = { app: translate, developmentGuide: guideTranslate };
+const translations: AppRouteTranslations = { app: translate };
 
 function EmptyPage() {
   return null;
@@ -346,36 +345,6 @@ describe("application route hierarchy", () => {
         to: "/workspace/activity/details?filter=recent",
       },
       { label: "Details" },
-    ]);
-  });
-
-  it("resolves mixed application and guide route titles from their declared namespaces", () => {
-    const registry = {
-      app: {
-        Component: WorkspaceLayout,
-        access: "authenticated",
-        path: "/app",
-        title: t => t("navigation.home"),
-      },
-      guide: {
-        Component: EmptyPage,
-        access: "authenticated",
-        parentId: "app",
-        path: "/app/guide",
-        title: t => t("navigation.contacts"),
-        translationNamespace: "development-guide",
-      },
-    } as const satisfies AppRouteRegistry;
-    const route = createAppRouteObjects(registry, "authenticated", { isDevelopment: true })[0]?.children?.[0];
-    if (!route?.handle) throw new Error("Expected guide route");
-
-    const app = ((key: string) => `app:${key}`) as unknown as TFunction<"translation">;
-    const developmentGuide = ((key: string) => `guide:${key}`) as unknown as TFunction<"development-guide">;
-    const translators = { app, developmentGuide };
-    expect(route.handle.resolveTitle(translators, {})).toBe("guide:navigation.contacts");
-    expect(route.handle.resolveBreadcrumbs(translators, {})).toEqual([
-      { label: "app:navigation.home", to: "/app" },
-      { label: "guide:navigation.contacts" },
     ]);
   });
 
@@ -710,7 +679,7 @@ describe("application route hierarchy", () => {
     ).toThrow('Route "brokenPublicRoute" references unknown parent "unknownPublicParent"');
   });
 
-  it("derives a documentation default from direct children without traversing unvalidated ancestry", () => {
+  it("derives a navigation default from direct children without traversing unvalidated ancestry", () => {
     const registry = {
       cyclicFirst: {
         Component: EmptyPage,
@@ -737,21 +706,19 @@ describe("application route hierarchy", () => {
       examples: {
         Component: EmptyPage,
         access: "authenticated",
-        path: "/dev-guide/frontend/patterns",
+        path: "/workspace/patterns",
         title: () => "Patterns",
       },
       firstPattern: {
         Component: EmptyPage,
         access: "authenticated",
         parentId: "examples",
-        path: "/dev-guide/frontend/patterns/first",
+        path: "/workspace/patterns/first",
         title: () => "First pattern",
       },
     } as const satisfies AppRouteRegistry;
 
-    expect(directChildRouteIdForDestination(registry, "examples", "/dev-guide/frontend/patterns/first")).toBe(
-      "firstPattern",
-    );
+    expect(directChildRouteIdForDestination(registry, "examples", "/workspace/patterns/first")).toBe("firstPattern");
     expect(() => routeDestinationFromRegistry(registry, "cyclicFirst")).toThrow(
       'Route "cyclicFirst" forms a destination parent cycle: cyclicFirst -> cyclicSecond -> cyclicFirst',
     );

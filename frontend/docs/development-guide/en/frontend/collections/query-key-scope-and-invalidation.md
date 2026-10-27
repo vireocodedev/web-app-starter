@@ -2,13 +2,13 @@
 
 A query cache reuses results by key, not by the URL the person sees or the headers sent on the wire. If the key omits viewer, workspace, filter, page, or another result-defining input, the application can reuse the wrong projection. Give each feature a deliberate key factory and make mutations invalidate the read models they can actually change.
 
-This is an **installed starter pattern with source-backed extensions**. Contacts owns `ContactQueryKey`, creates Query options through an injected API, and invalidates its collection after writes. CDA demonstrates viewer/project private scope. LMS historically includes page and filters in its collection key. Its separate signal assignment in one query is a limitation to examine, not a recommendation for a second source of remote truth.
+This is a **Storybook reference pattern with source-backed extensions**, using installed Query infrastructure. Contacts lives under `docs/storybook/examples/Contacts/`, outside the production registry. Contacts owns `ContactQueryKey`, creates Query options through an injected API, and invalidates its collection after writes. CDA demonstrates viewer/project private scope. LMS historically includes page and filters in its collection key. Its separate signal assignment in one query is a limitation to examine, not a recommendation for a second source of remote truth.
 
 ## Trigger and ownership
 
 The API/query feature owns all cache identities for its resource. Application runtime composition injects the API and QueryClient into the query/mutation factories. A page chooses inputs and observes the result; it should not invent a competing key spelling for the same collection.
 
-The starter's key root is `['contacts']`, and its collection key adds `'collection'`. That is enough for its actual unparameterized local Contacts collection. It is not evidence that every future remote collection can omit viewer, workspace, filters, or pagination. Expand the key only when those inputs genuinely determine the result.
+The Contacts reference key root is `['contacts']`, and its collection key adds `'collection'`. That is enough for its actual unparameterized local Contacts collection. It is not evidence that every future remote collection can omit viewer, workspace, filters, or pagination. Expand the key only when those inputs genuinely determine the result.
 
 The installed query factory passes Query's signal into `api.findAll({ signal })`. Its mutation factory invalidates `ContactQueryKey.collection()` after operations that can change that collection. API dependencies are explicit, so the query option describes work without creating an unrelated global client.
 

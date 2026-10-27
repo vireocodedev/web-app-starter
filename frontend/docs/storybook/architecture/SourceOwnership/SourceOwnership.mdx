@@ -1,0 +1,179 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./SourceOwnership.stories";
+
+<Meta of={Stories} />
+
+# Source ownership
+
+Find the capability responsible for a change before choosing a folder. The app contains stable infrastructure, Settings and thin route entries. Complete Contacts examples live only in Storybook.
+
+## Try it
+
+Compare Contacts, Settings and verification ownership. These selected cases explain responsibilities; they do not install any feature.
+
+<Canvas of={Stories.Overview} story={{ inline: false, height: "720px" }} sourceState="none" />
+
+## Before you start
+
+Paths are relative to `frontend/`. Read `docs/architecture/en/source-map-and-ownership.md`, `docs/architecture/en/feature-anatomy-filenames-and-public-interfaces.md`. Inspect the current implementation and its callers before reusing a pattern. Contacts lives only under `docs/storybook/examples/Contacts/`; installed Settings and app infrastructure remain under `src/`. Consumer recipes describe explicit installation work, not APIs already registered in the app.
+
+## 1. Choose the owner
+
+Read `docs/architecture/en/source-map-and-ownership.md` and `feature-anatomy-filenames-and-public-interfaces.md` first. Paths here are relative to `frontend/`.
+
+```text
+src/app/             stable infrastructure and application composition
+src/features/        installed product behavior (currently Settings)
+src/pages/           thin route entries
+src/main.tsx         startup
+
+docs/storybook/examples/Contacts/  complete reference feature, outside the app
+docs/storybook/patterns/           focused interactive reference panels
+```
+
+<table style={{ width: "100%", tableLayout: "fixed" }}>
+  <caption>Choose the owner for the change</caption>
+  <thead>
+    <tr>
+      <th scope="col">Change</th>
+      <th scope="col">Owner</th>
+      <th scope="col">Current example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Configure a shared HTTP client</th>
+      <td>
+        <code>src/app/data/http/</code>
+      </td>
+      <td>
+        <code>createAppAxios.ts</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Validate and save a reference contact</th>
+      <td>
+        <code>docs/storybook/examples/Contacts/</code>
+      </td>
+      <td>
+        <code>models/Contact.ts</code>, <code>api/contact.mutation.ts</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Compose Settings for a URL</th>
+      <td>
+        <code>src/pages/settings/</code>
+      </td>
+      <td>
+        <code>SettingsPage.tsx</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Register URL, access, title and navigation</th>
+      <td>
+        <code>src/app/router/</code>
+      </td>
+      <td>
+        <code>routeRegistry.tsx</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Present application settings</th>
+      <td>
+        <code>src/features/settings/</code>
+      </td>
+      <td>
+        <code>components/AppSettingsPanel.tsx</code>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Own a reusable application form control</th>
+      <td>
+        <code>src/app/forms/components/</code>
+      </td>
+      <td>
+        <code>AppSingleChoiceToggleGroup.tsx</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+Application form mechanics live in `src/app/forms/`; feature values, validation and commands belong to their own feature. Settings presents preferences owned by app theme/localization/shell services. Do not create global `src/shared`, `src/common` or `src/utils` to postpone the ownership decision.
+
+## 2. Add only required responsibilities
+
+Contacts illustrates a feature with a persistence port, schema, data options and UI:
+
+```text
+docs/storybook/examples/Contacts/
+├── index.ts
+├── contacts.feature.ts
+├── api/
+├── components/
+├── hooks/
+└── models/
+```
+
+Its reference factory now receives both `api` and `queryClient`; its preview selects private memory data. The browser-storage adapter remains an inert, tested reference. Settings needs neither a factory nor an API folder. Avoid empty directories and factories added for symmetry.
+
+Use `PascalCase.tsx` components, `useName.ts` hooks, `<domain>.api.ts` ports, `.api.<adapter>.ts` adapters, `.query.ts`, `.mutation.ts` and `.querykeys.ts` data roles. A factory exists only when construction owns dependencies.
+
+## 3. Keep a consumer page thin
+
+This is a consumer recipe, after implementing a public feature at `src/features/contacts/`; that owner is not installed by these docs:
+
+```tsx
+// Recipe: src/pages/contacts/ContactsPage.tsx
+import { ContactsFeature } from "@/features/contacts";
+
+export function ContactsPage() {
+  return <ContactsFeature />;
+}
+```
+
+The page composes the public interface. The feature owns queries, validation and editing. The router owns URL, access, title and navigation. Installing the reference requires explicitly choosing a real adapter, runtime registration and canonical hook; see Building a backend-connected feature for a complete installation recipe.
+
+## 4. Mirror verification owners
+
+```text
+src/features/<feature>/       tests/features/<feature>/
+src/app/<capability>/         tests/app/<capability>/
+docs/storybook/examples/Contacts/  tests/storybook/contacts/
+docs/storybook/patterns/      tests/storybook/patterns/
+tests/integration/           cross-owner scenarios
+tests/browser/               assembled flows
+mocks/                       development HTTP boundary fixtures
+```
+
+Use `@/` for installed source and relative imports for documentation reference tests. Production must never import docs, tests or mocks. Keep tutorial MDX, CSF and fixtures in the same-name folder; section helpers live in `shared/`.
+
+## Common mistakes
+
+- Putting domain validation in the router or stable application shell.
+- Treating the reference Contacts tree as an installed product feature.
+- Creating a feature factory for presentation alone.
+- Moving a feature without tracing tests, registrations, routes and persistence.
+
+## 5. Verify your implementation
+
+Run from the workspace root:
+
+```sh
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+npm --prefix frontend run typecheck
+```
+
+Run the owning focused tests and required final checks. Static verification checks placement, imports and declared contracts; it cannot establish product ownership, backend authority or runtime cleanup by itself.
+
+## Read this tutorial without Storybook
+
+Read this MDX, the authoritative articles named above and the current source examples. The numbered steps and code fences are directly readable by developers and agents. Storybook is optional for reading; run it to exercise the interactive cases. Discover related guidance from the workspace root:
+
+```sh
+npm --prefix frontend run guide:index -- search "Source ownership"
+```
+
+## Storybook fixture reference
+
+`../shared/ArchitectureExample.tsx` and `../shared/architectureExamples.ts` render selected inert walkthroughs. They do not scan the filesystem or execute the snippets. This tutorial and its same-name CSF module live together outside `src/`. Contacts source is a documentation reference under `docs/storybook/examples/Contacts/`, with tests under `tests/storybook/contacts/`; production code must never import it.

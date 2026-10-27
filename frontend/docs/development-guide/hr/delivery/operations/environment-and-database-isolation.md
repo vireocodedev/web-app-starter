@@ -2,7 +2,7 @@
 
 Staging i produkcija trebaju zaseban identitet, a baze trajan lifecycle kroz aplikacijska izdanja. Zamjena para slika ne smije značiti ponovno stvaranje baze ni korištenje tuđih vjerodajnica.
 
-**Ugrađeni obrazac predloška.** `infrastructure/release/install.py`, `prepare.py` i `runtime.py` upravljaju zaštićenim postavkama, početnim database resursima i aplikacijskim Composeom. Release README je vlasnik instalacije/aktivacije; redovni release ih ne ponavlja.
+**Ugrađeni obrazac predloška.** `docs/template-initialization/scripts/14_4_install_release.py` i `14_5_prepare_release.py` upravljaju zaštićenim setupom i početnim database resursima; `infrastructure/release/runtime.py` vodi aplikacijski Compose. Release README je vlasnik instalacije/aktivacije; redovni release ih ne ponavlja.
 
 ## Okidač, vlasnik i ugovor
 
@@ -34,7 +34,7 @@ Svako okruženje dobiva drugu generiranu database lozinku i zaseban provisioning
 
 ## Preparation je čuvana jednokratna mutacija
 
-`prepare.py` provjerava bind svih loopback portova, odsutnost proxy sitea i odsutnost ciljanih database resursa. Prije stvaranja labeled mreža/volumena trajno zapisuje točnu namjeru. Mountpoint novog volumena mora biti očekivan, nesymlinkan i prazan prije promjene ownershipa.
+`14_5_prepare_release.py` provjerava bind svih loopback portova, odsutnost proxy sitea i odsutnost ciljanih database resursa. Prije stvaranja labeled mreža/volumena trajno zapisuje točnu namjeru. Mountpoint novog volumena mora biti očekivan, nesymlinkan i prazan prije promjene ownershipa.
 
 Prekid ostavlja marker koji zahtijeva inspekciju. Slijepi rerun instalacije ili brisanje markera može se sudariti s djelomičnim resursima. Slobodan port tijekom pripreme preduvjet je, ne trajna rezervacija protiv svih host procesa.
 

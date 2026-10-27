@@ -1,0 +1,342 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as AuthenticationStories from "./AuthenticationAndHttp.stories";
+
+<Meta of={AuthenticationStories} />
+
+# Authentication and HTTP integration
+
+Use the application's one configured HTTP client and session owner. A feature
+owns its domain request/response schema and data options; application auth owns
+the cookie-session protocol, CSRF acquisition, identity and expiry recovery.
+This tutorial explains the installed Spring Session contract and its limits.
+
+## Try it
+
+Sign in, cache a private sample, save a protected change and sign out. Read the
+request sequence: every unsafe request first fetches a fresh CSRF response.
+Use the other stories for wrong credentials, unavailable service, failed CSRF
+and an unexpected protected-request 401. Repair the simulated service before
+retrying; no write is retried automatically.
+
+<Canvas of={AuthenticationStories.Overview} story={{ inline: false, height: "1100px" }} sourceState="none" />
+
+## Before you start
+
+All application paths below are relative to `frontend/`. Read
+`docs/architecture/en/authentication-and-session.md`,
+`docs/architecture/en/apis-models-queries-and-mutations.md`,
+`docs/development-guide/en/backend/security/session-and-csrf-lifecycle.md`, and
+`docs/development-guide/en/quality/frontend/http-contract-mocks-and-handler-lifetimes.md`.
+The backend owns authorization and session persistence. Frontend gating and a
+cached public identity do not grant domain permission.
+
+The installed source owners are:
+
+- `src/app/bootstrap/config/appConfig.ts` and `envVariables.js`: validated public configuration.
+- `src/app/data/http/createAppAxios.ts`: base URL, credentials, timeout and JSON Accept header.
+- `src/app/auth/api/appAuth.api.springSession.ts`: endpoints, serialization, schemas and interceptors.
+- `src/app/auth/createAppAuthRuntime.ts`: session replacement and identity-bound cache cleanup.
+- `src/app/auth/api/appAuth.query.ts` and `appAuth.mutation.ts`: auth Query/mutation options.
+- `src/app/auth/components/AppAuthProvider.tsx` and `hooks/useAppAuth.ts`: observed identity and commands.
+- `src/app/auth/components/AppAuthGate.tsx` and `routing/authReturnPath.ts`: protected routes and safe return destinations.
+- `src/app/data/http/appHttpError.ts` and `src/app/auth/components/LoginForm.tsx`: bounded metadata and local messages.
+
+## 1. Reuse the configured application transport
+
+This is the complete installed `src/app/data/http/createAppAxios.ts`:
+
+```ts
+import axios, { type AxiosInstance } from "axios";
+
+import type { AppConfig } from "@/app/bootstrap/config/appConfig";
+
+/** Creates the one application-owned Axios instance from validated config. */
+export function createAppAxios(config: AppConfig): AxiosInstance {
+  return axios.create({
+    baseURL: config.VITE_API_BASE_URL,
+    headers: { Accept: "application/json" },
+    timeout: config.VITE_REQUEST_TIMEOUT_MS,
+    withCredentials: config.VITE_API_WITH_CREDENTIALS,
+  });
+}
+```
+
+`src/app/bootstrap/runtime/createAppRuntime.ts` creates that client once, then
+passes the same instance and Query client to `createAppAuthRuntime({ http,
+queryClient })`. Auth construction installs the request interceptor for unsafe
+methods and response interceptor for unexpected 401s on that instance. Construct
+it once per application runtime, before authenticated consumers issue requests.
+Do not add auth endpoint knowledge to generic Axios setup or build an independent
+Axios instance in a component that bypasses these interceptors.
+
+In local development, the Vite `/api` proxy keeps browser requests on one origin;
+read `docs/development-guide/en/developer-workflow/local-development/same-origin-session-debugging.md`
+when diagnosing cookies or proxies. Public Vite values are visible in the client
+bundle. They must not contain secrets.
+
+The Storybook Contacts reference injects a private memory adapter; its retained
+browser-storage adapter is an inert, tested reference. Its reference factory does
+not accept Axios, and the runtime does not publish an HTTP client to arbitrary
+feature consumers. Adding a product HTTP adapter requires an explicit feature
+port, factory and composition change using the shared client, with normal
+architecture review. This tutorial does not install such an adapter.
+
+## 2. Keep cookies, CSRF and endpoint schemas together
+
+With `/api` as base URL the installed external sequence is:
+
+```text
+GET  /api/auth/session → 401 maps to an anonymous session
+GET  /api/auth/csrf    → validated { headerName: "X-CSRF-TOKEN", token }
+POST /api/auth/login   → JSON credentials + fresh CSRF header → 204
+GET  /api/auth/session → validated public identity
+GET  /api/auth/csrf    → reacquired for the new session lifecycle
+POST /api/<command>   → current CSRF header + session cookie
+GET  /api/auth/csrf    → another fresh acquisition
+POST /api/auth/logout → 204; server ends session
+```
+
+The real request interceptor fetches and schema-validates a CSRF response for
+every method except GET, HEAD, OPTIONS and TRACE. Login is public but still needs
+CSRF. The parser accepts only the expected header name and a nonempty token.
+Acquisition failure or malformed shape rejects the original command before its
+POST is submitted. It does not fall back to a missing or remembered token.
+
+The backend rotates session identity and invalidates the earlier CSRF token
+on login, then explicitly persists the security context. A fresh token is fetched
+on the next unsafe request. Auth JavaScript never reads the HTTP-only session
+cookie, keeps a bearer token, or stores passwords/session tokens in Signals or
+localStorage. Credentials only live transiently in the form and request.
+
+`parseSpringSessionUser()` validates the public DTO with
+`src/app/auth/models/AppAuthUser.ts`; the schema requires a nonempty ID,
+display name and valid email, stripping unrelated response properties. The login
+serializer projects only username and password. A TypeScript interface or cast
+does not validate an HTTP response, and spreading a response object into a write
+can send fields the command does not own.
+
+## 3. Consume the actual auth provider and commands
+
+The app's `AppProviders.tsx` nests Query and auth under the stable runtime; use
+that installed provider tree. The complete example below is an **auth-owned
+consumer recipe**, not a replacement provider or an export for product features.
+It demonstrates awaiting the provider command and using local translation keys.
+The actual `LoginForm.tsx` also uses `useRgoForm`, `appLoginCredentialsSchema`,
+server field-error mapping and post-submit validation; reuse that form for login.
+
+```tsx
+// Auth-owned example consumer; compose under the existing AppAuthProvider.
+import { Alert, Button, Stack } from "@mui/material";
+import { useState } from "react";
+
+import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
+import { appHttpErrorMessageKey, decodeAppHttpError } from "@/app/data/http/appHttpError";
+import { AppInvalidCredentialsError } from "@/app/auth/api/appAuth.api";
+import { useAppAuth } from "@/app/auth/hooks/useAppAuth";
+import { appLoginCredentialsSchema, type AppLoginCredentials } from "@/app/auth/models/AppLoginCredentials";
+
+export function SessionCommandExample({ credentials }: Readonly<{ credentials: AppLoginCredentials }>) {
+  const auth = useAppAuth();
+  const { t } = useAppTranslation();
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  async function signIn() {
+    setPending(true);
+    setMessage(null);
+    try {
+      await auth.login(appLoginCredentialsSchema.parse(credentials));
+    } catch (error) {
+      const key =
+        error instanceof AppInvalidCredentialsError
+          ? "authentication.invalidCredentials"
+          : appHttpErrorMessageKey(decodeAppHttpError(error));
+      setMessage(t(key ?? "authentication.signInFailed"));
+    } finally {
+      setPending(false);
+    }
+  }
+  return (
+    <Stack spacing={2}>
+      {message ? <Alert severity="error">{message}</Alert> : null}
+      <Button disabled={pending || auth.status !== "anonymous"} onClick={() => void signIn()}>
+        {t("authentication.signIn")}
+      </Button>
+    </Stack>
+  );
+}
+```
+
+The runtime constructs `mutation.login` and `mutation.logout`; the provider
+passes these to `useMutation`. Login awaits the login request **and** a validated
+authenticated session response before replacement. A 204 login with no accepted
+identity still rejects. Logout publishes anonymous state only after its request
+succeeds. Mutations have no automatic retry.
+
+`query.session()` uses the auth key `['app-auth', 'session']`, a 30-second stale
+time and no retry. The provider derives loading/anonymous/authenticated from
+this observed query; do not maintain another global authenticated boolean.
+
+## 4. Preserve the identity boundary and understand cancellation limits
+
+Login, successful logout and unexpected session expiry cancel an older session
+query and cancel/remove non-auth Query data before publishing replacement
+identity. An accepted anonymous session or different user ID performs the
+identity-bound cleanup too. The provider keys its child lifetime by user ID, so
+different identities remount the protected subtree. Same-user refresh retains
+feature state. Failed background refresh retains an already accepted identity;
+startup failure without an accepted session reaches the app render boundary.
+
+Query cancellation is not server rollback. The installed auth session query
+does **not** forward a Query `AbortSignal` to its HTTP call, so cancelling its
+observer does not prove the underlying HTTP request stopped. Query cancellation
+and the runtime's generation guards prevent obsolete accepted transitions from
+winning; feature adapters still need to forward read cancellation and guard
+their own late work. Cancellation/removal does not cancel running mutation
+requests or undo server side effects. A feature must not republish obsolete
+identity-bound results through an unrelated continuation.
+
+The installed cleanup targets every Query key whose first member is not
+`app-auth`; it is intentionally broad, not a tenant-scoped cache protocol.
+There is no installed tenant authorization, all-tab broadcast synchronization,
+or universal domain permission checker. A later accepted session refresh can
+observe a changed shared cookie, but this is not an immediate cross-tab signal.
+
+## 5. Gate routes and validate return destinations
+
+Keep protected routes beneath the existing `AppAuthGate` in router composition.
+The gate shows loading, sends anonymous users to `/login` with replacement and
+preserves pathname, query and hash in `location.state.from`. Shell presentation
+gets account actions from the router-owned `AuthenticatedAppShell`; the shell
+does not discover auth or route policy itself.
+
+`src/pages/LoginPage.tsx` applies the installed
+`resolveAuthReturnPath()` before giving a destination to LoginForm. The helper
+rejects external/protocol-relative URLs, backslashes, control characters and
+login loops. Use the helper at that ingress, rather than navigating to arbitrary
+`location.state` data. A successful LoginForm submit navigates with replacement.
+Gating changes the UI; the backend must still authorize each protected operation.
+
+## 6. Classify failures without trusting server prose
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Session failure classification and recovery</caption>
+  <thead>
+    <tr>
+      <th scope="col">Failure</th>
+      <th scope="col">Installed interpretation</th>
+      <th scope="col">Recovery owner</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">GET session 401</th>
+      <td>Anonymous identity</td>
+      <td>Provider and gate</td>
+    </tr>
+    <tr>
+      <th scope="row">POST login 401 + AUTHENTICATION_FAILED</th>
+      <td>AppInvalidCredentialsError</td>
+      <td>Form keeps draft and allows correction</td>
+    </tr>
+    <tr>
+      <th scope="row">503 or network failure</th>
+      <td>Availability failure; never wrong credentials</td>
+      <td>Local message and deliberate retry</td>
+    </tr>
+    <tr>
+      <th scope="row">403 CSRF_INVALID or FORBIDDEN</th>
+      <td>Token/permission failure; no blanket replay</td>
+      <td>Check the actual cause and whether a write could have committed</td>
+    </tr>
+    <tr>
+      <th scope="row">Unexpected protected request 401</th>
+      <td>Expire session and remove private Query data</td>
+      <td>Provider/gate plus the original rejected caller</td>
+    </tr>
+    <tr>
+      <th scope="row">Malformed success response</th>
+      <td>Runtime schema rejection</td>
+      <td>Adapter contract and safe local fallback</td>
+    </tr>
+  </tbody>
+</table>
+
+Only a failed original `POST /auth/login` with compatible decoded
+`AUTHENTICATION_FAILED` maps to invalid credentials. A failed CSRF acquisition
+does not become a login rejection just because login was the user's intent.
+The expiry observer excludes login and session endpoints. It preserves the
+original rejection for its caller while telling the runtime to expire identity.
+
+`decodeAppHttpError()` validates compatible status/code pairs, bounds the
+message to 512 characters and field errors to 32, and returns only permitted
+metadata. Allow-list form field names, translate recognized keys locally, and
+use a caller-owned fallback for unknown errors. Never render returned message
+prose, dump Axios headers/body, or insert server field paths into a form without
+checking ownership. Decoding does not replace the original Axios error.
+
+<Canvas of={AuthenticationStories.CsrfFailure} story={{ inline: false, height: "1100px" }} sourceState="none" />
+
+## Common mistakes
+
+- Creating a second HTTP client or repeatedly constructing the auth runtime, duplicating or bypassing interceptors.
+- Keeping credentials, CSRF or bearer tokens in application storage or Signal state.
+- Reusing the anonymous token after login, or issuing a command after token acquisition failed.
+- Treating all login failures as wrong credentials, or treating a 403 as proof that retry is safe.
+- Casting HTTP payloads, echoing backend prose or replaying an uncertain mutation automatically.
+- Assuming cancelled Query work cancels all transport/mutations or proves backend rollback.
+- Treating a Storybook adapter's simulated session as real cookie, server authority or database evidence.
+
+## 7. Verify the real boundaries
+
+Run from the workspace root after selecting coordinated checks:
+
+```sh
+npm --prefix frontend run guide:index -- search "session" "csrf"
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run typecheck
+npm --prefix frontend run test:browser:storybook
+```
+
+Inspect `tests/integration/auth/api/appAuth.api.springSession.test.ts`,
+`appAuth.contractCompatibility.test.ts`,
+`tests/integration/auth/createAppAuthRuntime.test.ts`,
+`tests/integration/auth/components/AppAuthFlow.test.tsx` and
+`tests/app/auth/routing/authReturnPath.test.ts` for focused test selection.
+They exercise actual API factories with scenario-owned MSW handlers, CSRF counts,
+schema rejection, safe error projection, identity changes and late responses.
+
+Acceptance includes fresh CSRF on login/logout/other writes, zero protected
+submissions after acquisition failure, 503 distinct from invalid credentials,
+validated public identity, safe internal return paths, and cleared private data
+after expiry/change of actor. For cookie flags, session rotation, context
+persistence and actual permissions, use backend HTTP/database tests such as
+`backend/src/test/java/com/vireocode/backend/AuthIntegrationTests.java` and the
+approved same-origin real backend flow. Browser mocks cannot prove those claims.
+
+## Read this tutorial without Storybook
+
+Read this MDX plus the named application files. Continue with **Loading and saving
+feature data** for domain ports/Query options, **Entity forms** for schema-driven
+submission and **Testing a feature** for choosing evidence by boundary. These
+are source-readable tutorials; a running Storybook is optional for learning.
+
+## Storybook fixture reference
+
+`AuthenticationAndHttp.stories.tsx`, `AuthenticationAndHttpExample.tsx` and
+`authenticationFixture.ts` live only in
+`docs/storybook/authentication/AuthenticationAndHttp/`. Each preview owns a
+fresh Query client, `createAppAxios()` instance, actual `createAppAuthRuntime()`,
+`AppAuthProvider` and `useAppAuth()` consumer. Its private Axios adapter rejects
+non-2xx statuses with an AxiosError carrying the original config and response,
+so the real auth classification/interceptors run. Unknown requests fail visibly.
+
+The adapter simulates only a synthetic server identity and token sequence. It
+does not install global MSW handlers or touch browser cookies, storage or the
+application session. Its `/tutorial/*` endpoints and cache entry are teaching
+fixtures, not installed product APIs. Teardown aborts the private transport,
+cancels/clears its Query client and clears only its owned interceptor chains.
+The application runtime currently exposes no corresponding disposal API.
+
+The credential controls/log live above the real auth provider's identity
+remount. Global theme changes retain them. These compact controls deliberately
+show protocol behavior separately from the complete application LoginForm.

@@ -2,8 +2,17 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/browser",
-  testIgnore: ["documentation.development.spec.ts"],
-  grepInvert: /Contacts|creates the first contact/,
+  testIgnore: [
+    "documentation.development.spec.ts",
+    "storybook-preview.spec.ts",
+    "storybook-forms.spec.ts",
+    "storybook-feedback.spec.ts",
+    "storybook-architecture.spec.ts",
+    "storybook-data-collections-localization.spec.ts",
+    "storybook-platform-testing.spec.ts",
+    "storybook-workflow-recipes.spec.ts",
+    "storybook-migrated-guide.spec.ts",
+  ],
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "list" : "html",

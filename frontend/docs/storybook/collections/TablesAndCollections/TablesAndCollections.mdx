@@ -1,0 +1,474 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as TablesAndCollectionsStories from "./TablesAndCollections.stories";
+
+<Meta of={TablesAndCollectionsStories} />
+
+# Tables and collections
+
+Use `RgoDesktopTable` for presentation. The feature owns the collection, request
+inputs, selection scope, command results and recovery. Choose client or server
+processing according to whether the supplied rows are the complete collection.
+
+## Try it
+
+In **Client collection**, sort Project, move to another page, select rows on
+several pages and archive them. **Select current page** affects just the visible
+rows; the count and archive action include explicit selected IDs across pages.
+Changing the filter clears selection and returns to page one. Sorting and changing
+page size also return to page one. Archiving the final row on a page clamps the
+page to the remaining result.
+
+**Server collection** has the same interactions with controlled server mode. Its
+local simulation filters and sorts the entire fixture before returning a page:
+search for `Fjord` while on the first page to find a record originally on the
+third. **Empty**, **Initial loading**, and **Read failure and retry** distinguish
+successful absence, a pending first read and a failed refresh with stale retained
+rows. Retry resolves the same simulated request. No demo calls a backend or writes
+application storage. Change the global theme: collection state remains intact.
+
+<Canvas
+  of={TablesAndCollectionsStories.ClientCollection}
+  story={{ inline: false, height: "760px" }}
+  sourceState="none"
+/>
+
+## Before you start
+
+All application paths below are relative to `frontend/`. Read these authoritative
+source documents before implementing the collection:
+
+- `docs/development-guide/en/frontend/collections/client-and-server-table-ownership.md`
+- `docs/development-guide/en/frontend/collections/filter-prerequisites-and-result-states.md`
+- `docs/development-guide/en/frontend/collections/query-key-scope-and-invalidation.md`
+
+Their remote examples are reference recipes. The installed starter has the
+current `RgoDesktopTable`, a complete browser-storage Contacts collection and
+local server-mode simulations. It has no Projects HTTP endpoint to call.
+
+Application labels belong in both locales. This Storybook tutorial and its
+preview labels remain English. Use the **Loading and saving feature data**
+tutorial for API ports, Query options, cancellation, writes and invalidation;
+this tutorial focuses on collection presentation and interaction ownership.
+
+## Files and ownership
+
+```text
+docs/storybook/examples/Contacts/
+├── components/ContactsTable.tsx              read owner, filters and selection
+├── components/ContactsToolbar.tsx            supplied filter controls
+├── components/ContactsBulkActions.tsx        selected command controls
+├── hooks/useContactTableColumns.tsx          columns and accessible checkboxes
+├── hooks/useContactActions.ts                awaited business commands
+└── models/ContactFilters.ts                  normalized client filtering
+
+docs/storybook/patterns/TablesAndCollections/
+├── models/TableExamples.ts                  complete bounded sample collection
+├── models/TableUrlState.ts                  validated URL state and page clamp
+└── components/
+    ├── SortingAndPaginationPanel/            local and controlled server examples
+    ├── RowSelectionAndBulkActionsPanel/      explicit selection examples
+    ├── LoadingEmptyAndErrorPresentationPanel/ loading, empty and retained errors
+    └── UrlBackedFiltersPanel/                URL-owned collection inputs
+
+docs/storybook/examples/shared/localization/development-guide.en.ts
+docs/storybook/examples/shared/localization/development-guide.hr.ts
+```
+
+## 1. Decide which owner processes the collection
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Client and server collection ownership</caption>
+  <thead>
+    <tr>
+      <th scope="col">Mode</th>
+      <th scope="col">Supply to the table</th>
+      <th scope="col">Collection owner supplies</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Local/client</th>
+      <td>Complete bounded collection after feature filtering</td>
+      <td>Filter values, selection policy, commands; optional controlled table state</td>
+    </tr>
+    <tr>
+      <th scope="row">Server</th>
+      <td>Only the resolved page</td>
+      <td>Full request, total matching count, controlled state, fetch lifecycle and recovery</td>
+    </tr>
+  </tbody>
+</table>
+
+The actual local mode value is `"local"`, and it is the default. Local pagination
+is opt-in through `pagination`. A local `compare` function enables sorting.
+Server mode requires `mode="server"`, `state`, `onStateChange`, `totalCount` and
+pagination labels. Its sortable columns use `serverField`; that marks a supported
+sort control, but performs no request. Translate the emitted `sort.columnId` to
+an allowed API sort field in the feature's request owner.
+
+Never pass a remote page into local mode and describe its sort/filter as global.
+Remote sorting, filtering, totals and paging need one coherent backend contract.
+Validate allowed fields and limits on the server and use a stable tie-breaker.
+
+## 2. Define typed columns and localized presentation
+
+The following complete application integration example can live inside the
+existing tables-and-collections owner. It reuses its installed model and labels.
+It is a small adaptation of `LocalSortingPreview.tsx` and
+`ControlledServerPreview.tsx`, rather than an installed public component.
+
+```tsx
+// docs/storybook/patterns/TablesAndCollections/components/ProjectCollectionTable.tsx
+import { RgoDesktopTable, type RgoDesktopTableState, type TableColumnDef } from "@rgo-web/frontend";
+import { useMemo } from "react";
+
+import { useDevelopmentGuideTranslation } from "../../../examples/shared/localization/useDevelopmentGuideTranslation";
+
+import type { TableExampleRecord } from "../models/TableExamples";
+
+type CollectionProps = Readonly<{ rows: readonly TableExampleRecord[] }> &
+  (
+    | Readonly<{ server?: undefined }>
+    | Readonly<{
+        server: Readonly<{
+          state: RgoDesktopTableState;
+          totalCount: number;
+          onStateChange: (state: RgoDesktopTableState) => void;
+        }>;
+      }>
+  );
+
+export function ProjectCollectionTable({ rows, server }: CollectionProps) {
+  const { t } = useDevelopmentGuideTranslation();
+  const isServer = server !== undefined;
+  const columns = useMemo<readonly TableColumnDef<TableExampleRecord>[]>(
+    () => [
+      {
+        id: "name",
+        header: t("tablesExamples.shared.columns.name"),
+        renderCell: ({ row }) => row.name,
+        rowHeader: true,
+        sort: isServer
+          ? { serverField: "name" }
+          : { compare: (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id) },
+      },
+      {
+        id: "owner",
+        header: t("tablesExamples.shared.columns.owner"),
+        renderCell: ({ row }) => row.owner,
+        sort: isServer
+          ? { serverField: "owner" }
+          : { compare: (a, b) => a.owner.localeCompare(b.owner) || a.id.localeCompare(b.id) },
+      },
+      {
+        id: "status",
+        header: t("tablesExamples.shared.columns.status"),
+        renderCell: ({ row }) => t(`tablesExamples.shared.status.${row.status}`),
+      },
+    ],
+    [isServer, t],
+  );
+  const shared = {
+    columns,
+    emptyContent: t("tablesExamples.shared.empty"),
+    getRowKey: (row: TableExampleRecord) => row.id,
+    pagination: {
+      getItemAriaLabel: (type: "first" | "last" | "next" | "previous") => t(`tablesExamples.shared.pagination.${type}`),
+      labelDisplayedRows: ({ count, from, to }: { count: number; from: number; to: number }) =>
+        t("tablesExamples.shared.pagination.displayed", { count, from, to }),
+      labelRowsPerPage: t("tablesExamples.shared.pagination.rowsPerPage"),
+      rowsPerPageOptions: [2, 4, 6],
+    },
+    rows,
+    size: "small" as const,
+    tableLabel: t("tablesExamples.shared.tableLabel"),
+  };
+
+  return server ? (
+    <RgoDesktopTable {...shared} mode="server" {...server} />
+  ) : (
+    <RgoDesktopTable {...shared} defaultState={{ rowsPerPage: 2 }} />
+  );
+}
+```
+
+`getRowKey` uses a stable business ID, never a page index. `rowHeader` identifies
+one primary column. Persisted status values stay `active`, `paused` and `review`;
+their labels are translated. The `t` dependency refreshes memoized column labels
+when the language changes. Reuse the matching existing English/Croatian keys;
+for a business feature, add its own paired application keys instead of borrowing
+the development-guide namespace.
+
+Contacts additionally reads `desktopTableSize` from `useAppDisplayPreferences`.
+That density preference changes presentation, not query identity. Keep table
+overflow inside its own container on narrow screens; let ordinary page content
+scroll normally instead of giving both the page and a nested wrapper viewport
+heights. Avoid a per-story theme provider or hardcoded colors.
+
+## 3. Supply a complete collection in local mode
+
+This complete companion example filters the installed complete bounded fixture
+before passing it to the table above. The explicit filter-owned key resets local
+pagination and sort for a new filter; it is independent of theme and locale.
+If the product must preserve sorting across filter changes, control table state
+instead and reset only `page`, as the interactive Storybook fixture does.
+
+```tsx
+// docs/storybook/patterns/TablesAndCollections/components/ClientProjectCollection.tsx
+import { Stack, TextField } from "@mui/material";
+import { useState } from "react";
+
+import { useDevelopmentGuideTranslation } from "../../../examples/shared/localization/useDevelopmentGuideTranslation";
+
+import { tableExampleRecords } from "../models/TableExamples";
+import { ProjectCollectionTable } from "./ProjectCollectionTable";
+
+export function ClientProjectCollection() {
+  const { t } = useDevelopmentGuideTranslation();
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const rows = tableExampleRecords.filter(row =>
+    `${row.name} ${row.owner}`.toLocaleLowerCase().includes(normalizedQuery),
+  );
+  return (
+    <Stack spacing={2}>
+      <TextField
+        label={t("tablesExamples.url.filters.query")}
+        onChange={event => setQuery(event.target.value)}
+        value={query}
+      />
+      <ProjectCollectionTable key={normalizedQuery} rows={rows} />
+    </Stack>
+  );
+}
+```
+
+Actual Contacts already owns an unparameterized `ContactQuery.findAll()` result
+and filters it with `filterContacts`. It does not need a second Signal or Context
+copy of that remote-like result. When the complete bounded collection is no
+longer appropriate, introduce a deliberate paged API and query contract first.
+
+## 4. Control server state at the request owner
+
+The following complete adapter receives a resolved page and emits table state.
+Its parent must use that state in a real query key and API request. There is no
+invented fetch function inside the table. The existing `ControlledServerPreview`
+and this Storybook fixture simulate that parent locally.
+
+```tsx
+// docs/storybook/patterns/TablesAndCollections/components/ServerProjectCollection.tsx
+import type { RgoDesktopTableState } from "@rgo-web/frontend";
+
+import type { TableExampleRecord } from "../models/TableExamples";
+import { ProjectCollectionTable } from "./ProjectCollectionTable";
+
+export function clampPage(state: RgoDesktopTableState, totalCount: number): RgoDesktopTableState {
+  const lastPage = Math.max(0, Math.ceil(totalCount / state.rowsPerPage) - 1);
+  return { ...state, page: Math.min(state.page, lastPage) };
+}
+
+export function ServerProjectCollection({
+  result,
+  state,
+  onStateChange,
+}: Readonly<{
+  result: Readonly<{ rows: readonly TableExampleRecord[]; totalCount: number }>;
+  state: RgoDesktopTableState;
+  onStateChange: (next: RgoDesktopTableState) => void;
+}>) {
+  return (
+    <ProjectCollectionTable
+      rows={result.rows}
+      server={{
+        state,
+        totalCount: result.totalCount,
+        onStateChange: next => {
+          const sortChanged =
+            next.sort?.columnId !== state.sort?.columnId || next.sort?.direction !== state.sort?.direction;
+          const resetPage = sortChanged || next.rowsPerPage !== state.rowsPerPage;
+          onStateChange(resetPage ? { ...next, page: 0 } : next);
+        },
+      }}
+    />
+  );
+}
+```
+
+Use zero-based pages in table state. Reset page when committed filters, sort or
+page size change. The request identity includes every result-defining input:
+scope/viewer when applicable, normalized filters, page, page size and sort. A
+display preference such as density does not belong there. `serverField` is column
+metadata, not a substitute for constructing and validating that request.
+
+After deletion or a refreshed total makes a page impossible, use `clampPage` in
+the collection owner and request that corrected page. Do not render rows from
+the old page under a newly clamped page number. A real backend must return totals
+and rows for a coherent scope. The local fixture can recalculate both atomically
+because it owns the complete source; remote recovery requires another read.
+
+For shareable filters and Back/Forward, use the existing `TableUrlState` codecs,
+`useAppQueryParams` and `UrlControlledTablePreview` pattern. Do not create a URL
+owner and independently mirror the same request in component state.
+
+## 5. Own selection and bulk action scope explicitly
+
+Selection is an ID set owned by the feature, separate from rows, filters and table
+state. Contacts implements labeled checkboxes in `useContactTableColumns`; its
+header selects all **filtered** contacts because it has that complete collection.
+This Storybook demo deliberately selects only the **current page**, and retains
+explicit selected IDs while paging/sorting. Changing its filter clears selection.
+Neither behavior means “all records on the server.” Choose and label one policy.
+
+These complete helpers describe the fixture's bounded selection/command policy:
+
+```ts
+// Feature-owned helpers; rows here are the COMPLETE bounded collection.
+import type { TableExampleRecord } from "../models/TableExamples";
+
+export function toggleSelected(current: ReadonlySet<string>, id: string): Set<string> {
+  const next = new Set(current);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}
+
+export function reconcileSelection(rows: readonly TableExampleRecord[], selected: ReadonlySet<string>) {
+  const existingIds = new Set(rows.map(row => row.id));
+  return new Set([...selected].filter(id => existingIds.has(id)));
+}
+
+export function archiveLocalSelection(rows: readonly TableExampleRecord[], selected: ReadonlySet<string>) {
+  return rows.filter(row => !selected.has(row.id));
+}
+```
+
+Compute the indeterminate header state against its named selection scope. Render
+a unique accessible name such as **Select Atlas migration** for each checkbox,
+show the count across pages, and offer **Clear selection**. Use a new Set rather
+than mutating React state. Archive removes the selected IDs from this fixture,
+clears their selection and clamps the remaining page. Reset restores all six rows.
+
+For actual commands, capture submitted IDs, await acknowledgement, invalidate
+affected projections and clear only successfully submitted selections. Reconcile
+IDs against an authoritative **complete** collection, as Contacts does; absence
+from one remote page proves neither deletion nor loss of access. Real cross-page
+server selection needs an explicit ID or all-matches protocol, current capability
+checks and server enforcement. The local archive is no such backend contract.
+
+## 6. Render truthful result states and recovery
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Collection result states and recovery</caption>
+  <thead>
+    <tr>
+      <th scope="col">State</th>
+      <th scope="col">Presentation and action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Required input absent</th>
+      <td>Explain the missing prerequisite; do not claim zero results</td>
+    </tr>
+    <tr>
+      <th scope="row">First read pending</th>
+      <td>
+        <code>loading</code>, <code>loadingLabel</code> and <code>loadingContent</code>; no empty claim
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Successful zero matches</th>
+      <td>
+        <code>emptyContent</code> plus a clear-filter/create action where appropriate
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">Same request refreshing</th>
+      <td>Keep compatible rows with loading indication</td>
+    </tr>
+    <tr>
+      <th scope="row">Failed read or refresh</th>
+      <td>Visible error and retry; retained rows explicitly stale</td>
+    </tr>
+    <tr>
+      <th scope="row">Denied or revoked</th>
+      <td>Apply access policy; retained restricted rows are not a recovery strategy</td>
+    </tr>
+  </tbody>
+</table>
+
+See the migrated reference `InitialLoadingPreview`, `EmptyPreview`,
+`RetainedRefreshPreview` and `RecoverableErrorPreview`. Loading requires an
+accessible nonempty `loadingLabel`; `emptyAction` is caller-supplied content.
+Contacts uses `contacts.refetch()` for retry. The Storybook failed-read variant
+retains its same-request fixture, marks it stale and pauses bulk actions until
+**Retry read** resolves. Its synchronous recovery is a simulation, not network
+retry evidence. **Finish loading** deliberately resolves the initial loading
+variant without waiting on timers.
+
+Do not hide an error behind a no-matches message, or display prior-filter data as
+the new request's successful result. Keep actual read lifecycle in Query and
+command acknowledgement separate from a later failed refresh.
+
+## Common mistakes
+
+- Sorting or filtering one remote page locally while claiming global results.
+- Passing page length as `totalCount`, or omitting result inputs from query keys.
+- Using array indices as keys and losing checkbox/focus identity after sorting.
+- Calling a page checkbox “select all” without defining its scope.
+- Dropping cross-page selected IDs because they are absent from the current page.
+- Leaving an empty final page after removal or preserving a later page after filtering.
+- Turning translated status labels into persisted values or query identities.
+- Copying async collection data into a second Signal/store to make a table read it.
+
+## 7. Verify your implementation
+
+From the workspace root, run owning checks sequentially:
+
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run verify:dev-guide
+```
+
+With Storybook running, `npm --prefix frontend run test:browser:storybook`
+exercises the tutorials. Verify these feature-specific outcomes as applicable:
+
+- Sorting spans the entire complete local collection or the actual server result.
+- Filter `Fjord` finds the last-page record and starts at page one; no matches
+  shows successful emptiness rather than a failed-read message.
+- Page-size and sort changes apply the stated page-reset rule.
+- Selected IDs survive page/sort changes, counts name their scope and filter
+  changes apply the documented selection policy.
+- Archiving selected rows removes exactly those IDs, clears submitted selection
+  and leaves a valid page after removing the final row.
+- Loading differs from empty; failed reads are visible and recoverable; stale
+  retained data cannot silently become a fresh result for another request.
+- Keyboard controls, labels, pagination, both application locales, theme changes
+  and narrow screens preserve readable, reachable content. Horizontal overflow
+  stays within the table rather than overflowing the document.
+
+Finish with required repository verification. The in-memory demo proves its
+interaction policy; real endpoint pagination, allowed sorts, authorization,
+query invalidation and cancellation need their own integration evidence.
+
+## Read this tutorial without Storybook
+
+Read this MDX and the application source files listed above. The fenced examples
+are inert source and do not execute during guide discovery:
+
+```sh
+npm --prefix frontend run guide:index -- search "Tables and collections"
+npm --prefix frontend run guide:index -- search "client and server table ownership"
+```
+
+## Storybook fixture reference
+
+`TablesAndCollections.stories.tsx` selects client, simulated server, empty,
+initial-loading and retained-failure variants. `TablesAndCollectionsExample.tsx`
+uses the installed table and manages its dedicated local session.
+`collectionFixture.ts` owns six stable-ID records and the full-collection
+filter/sort/page simulation. They live together under
+`docs/storybook/collections/TablesAndCollections/` and publish no production API.
+The global Storybook adapter supplies the app theme; fixtures supply English
+labels, with no additional theme provider or application persistence.

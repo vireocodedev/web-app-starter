@@ -8,27 +8,11 @@ GitHub runner, filesystem, network namespace, and rootless Docker daemon.
 Registration and installation are operator tasks, not steps to repeat from
 every consumer's copy of this directory.
 
-**Pool status:** the six-slot pool is installed. The controller from `015d9ad`
-passed independent review, exact-source disposable repair and rollback, and full
-installed-source validation before explicit live activation on 2026-10-21.
-Each of the six live boundaries passed all 273 validation observations; the
-original migration history and four repository registrations were preserved.
-Genuine workflow and latency acceptance is recorded separately in
-[performance acceptance](../../docs/acceptance/ci-performance-acceptance.json).
-Earlier receipts certify only their exact source, configuration and boot.
-
-**Previous serial-host status:** the selected template host was rebuilt and this source passed
-273 actual current-source isolation probes, including a second fresh job and
-complete cleanup. See [host acceptance](verification/host-acceptance.json) for
-source/configuration/boot-bound evidence. The App and private template repository are registered, and the controller is
-active for controlled acceptance. Genuine template PR/main jobs and path-aware
-gate/protection acceptance passed; see [CI acceptance](../../docs/acceptance/ci-acceptance.json).
-The reviewed HTTPS memory repair subsequently passed fresh installation and
-actual predecessor-to-repair validation on a disposable host, full current live
-validation, the original polling replay and genuine post-repair jobs. See
-[current controller acceptance](../../docs/acceptance/controller-memory-acceptance.json).
-These earlier records describe the serial template host; they do not establish
-readiness for the current pool, a consumer or a different boot.
+Confirm pool capacity, repository registrations and current installation
+validation with the operator before scheduling consumer work. Validation receipts
+certify their exact source, configuration and boot. The
+[historical bootstrap record](verification/host-acceptance.json) preserves earlier
+host observations; validate the current pool and each consumer separately.
 
 The isolation machinery was extracted from the experimental
 `vireocodedev/web-app-infrastructure` source at commit
@@ -452,7 +436,7 @@ Rebuilding a server or removing old repositories requires a separate, explicit
 approval naming the resources and retention/recovery decision. These instructions
 are not a teardown authorization.
 For the provider API credential and server/SSH identity preflight, use
-[the provider-access handoff](../../docs/hetzner-provider-access.md).
+[the provider-access handoff](../../docs/template-initialization/hetzner-provider-access.md).
 
 The initial host supports Ubuntu 26.04 amd64 with systemd 259+, cgroup v2,
 AppArmor, unprivileged user namespaces, and `/dev/net/tun`. Installation requires
@@ -518,7 +502,7 @@ the current configuration, installed isolation sources, and current boot.
 ## Register a private monorepo
 
 Use the organization-owned App described in
-[GitHub CI App setup](../../docs/github-ci-app.md). It needs only repository
+[GitHub CI App setup](../../docs/template-initialization/github-ci-app.md). It needs only repository
 **Actions: read**, **Administration: write**, and automatic Metadata read,
 installed for selected private repositories. Its RSA key is stored at
 `/etc/web-app-ci/github-app.pem`, root-owned mode `0600`, and public IDs/owner
@@ -642,7 +626,7 @@ privileged deployment execution must use a separate, approved mechanism.
 
 The [root CI workflow](../../.github/workflows/ci.yml) runs the backend from
 `backend/` and frontend from `frontend/`, selects affected paths, and always
-reports `CI gate`. See [CI/protection setup](../../docs/github-ci.md) for
+reports `CI gate`. See [CI/protection setup](../../docs/template-initialization/github-ci.md) for
 consumer activation and branch policy. The inactive nested frontend workflow
 was removed to keep one authoritative monorepo configuration.
 

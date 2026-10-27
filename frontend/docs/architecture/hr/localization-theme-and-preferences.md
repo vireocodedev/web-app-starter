@@ -8,12 +8,13 @@ surađuju preko providera i malih hookova.
 `src/app/localization` posjeduje podržane jezike, stvaranje i18nexta, oblike
 prijevoda, formatere, prezentaciju lokaliteta i jezičnu postavku. Engleski i
 hrvatski objekti imaju isti tipizirani oblik u svakom prostoru imena.
-Aplikacijski tekst koristi `translation` i `useAppTranslation()`. Tekst
-razvojnog vodiča ima zasebnu ulaznu točku `development-guide` i koristi
-`useDevelopmentGuideTranslation()` u sadržaju vodiča, navigaciji i
-dokumentaciji. Prostor imena vodiča registrira se samo tijekom razvoja; njegov
-tekst nije uključen u produkcijski build. Komponente koriste hookove formattera
-umjesto izravnog uvoza objekata prijevoda. RGO aplikacije podržavaju samo LTR.
+Aplikacijski tekst u svim buildovima koristi samo `translation` i
+`useAppTranslation()`. Otvorena sučelja `AppTranslationResource` i
+`AppTranslationResources` opisuju obične resurse neovisno o konkretnoj
+implementaciji. Samo Storybook proširuje prostore imena vodiča pod
+`docs/storybook/`; produkcija ne uvozi resurse vodiča ni njihovo proširenje tipova.
+Komponente koriste hookove formattera umjesto izravnog uvoza prijevoda.
+RGO aplikacije podržavaju samo LTR.
 
 `src/app/theme` posjeduje MUI temu, zadane postavke komponenti, tipografiju,
 razmake, prijelomne točke, shemu boja i postavke prikaza. Tema prima MUI opcije
@@ -32,8 +33,8 @@ načina boja, neutralnih površina ili RGO naglaska. Provider obnavlja paletu
 tako da MUI CSS varijable i JavaScript čitanja teme koriste iste vrijednosti.
 Ovdje se nalaze i postavke pristupačnosti: kretanje prema zadanim postavkama prati sustav, a tekstne poveznice zadržavaju
 stil podcrtavanja stranice. Korisnik može smanjiti nepotrebno kretanje ili
-uvijek podcrtati poveznice u sadržaju. To uključuje poveznice putanje i
-povezanih članaka u vodiču, a ne mijenja navigaciju aplikacije ni gumbe.
+uvijek podcrtati poveznice u sadržaju. To obuhvaća poveznice u sadržaju bez promjene navigacije aplikacije ili gumba.
+Storybookovi primjeri zasebno prikazuju poveznice članaka.
 
 `src/app/shell` posjeduje privremeni ili stalni način navigacijske ladice
 na računalu, otvoreno i sažeto stanje stalne ladice te način zadržavanja

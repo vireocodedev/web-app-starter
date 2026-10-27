@@ -1,5 +1,4 @@
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
-import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
@@ -20,7 +19,7 @@ type AccountMenuState = Readonly<{
 }>;
 
 /** Header account corner with session details and route-provided account links. */
-export function AppAuthActions({ developmentGuidePath }: Readonly<{ developmentGuidePath?: string | undefined }>) {
+export function AppAuthActions() {
   const { t } = useAppTranslation();
   const { isLoggingOut, logout, user } = useAppAuth();
   const { pathname } = useLocation();
@@ -157,19 +156,6 @@ export function AppAuthActions({ developmentGuidePath }: Readonly<{ developmentG
             </ListItemIcon>
             {t("navigation.settings")}
           </MenuItem>
-          {import.meta.env.DEV && developmentGuidePath ? (
-            <MenuItem
-              component={Link}
-              onClick={event => selectDestination(event, developmentGuidePath)}
-              sx={menuActionSx}
-              to={developmentGuidePath}
-            >
-              <ListItemIcon>
-                <MenuBookOutlinedIcon fontSize="small" />
-              </ListItemIcon>
-              {t("navigation.developmentGuide")}
-            </MenuItem>
-          ) : null}
           <Divider />
           <MenuItem disabled={isLoggingOut} onClick={() => void handleLogout()} sx={menuActionSx}>
             <ListItemIcon>

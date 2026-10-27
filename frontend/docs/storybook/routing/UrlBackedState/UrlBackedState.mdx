@@ -1,0 +1,230 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as UrlBackedStateStories from "./UrlBackedState.stories";
+
+<Meta of={UrlBackedStateStories} />
+
+# URL-backed state
+
+Make shareable filters and pagination reconstructible from the address. The URL
+owns these values; components decode them through the installed typed query
+helper instead of mirroring them into React state, Signals or storage.
+
+## Try it
+
+Start on page 3, type a search and watch the address bar: the search and page reset
+commit together. Select pages, then use Back and Forward. Reset removes default
+fields while retaining `campaign=guide`. **Malformed parameters** preserves a
+valid search while independently defaulting an invalid status and page. Switch
+the global Theme without losing the current location.
+
+<Canvas of={UrlBackedStateStories.Overview} story={{ inline: false, height: "700px" }} sourceState="none" />
+
+## Before you start
+
+Paths below are relative to `frontend/`. Read
+`docs/architecture/en/state-ownership-and-signal-lifecycle.md` and
+`docs/architecture/en/router-and-shell-responsibilities.md`. Route registration
+and access still belong to `src/app/router/routeRegistry.tsx`; follow the existing
+page-layout tutorials to register a page. This tutorial changes query-state
+ownership, not route access or the shell.
+
+Inspect these installed owners:
+
+- `src/app/router/queryParams.ts`: pure parsing, validation, encoding and canonical updates.
+- `src/app/router/hooks/useAppQueryParams.ts`: React Router adapter and navigation options.
+- `docs/storybook/patterns/RoutingAndUrlState/models/SearchParameters.ts`: the worked scalar query schema.
+- `docs/storybook/patterns/RoutingAndUrlState/components/SearchParametersPanel/UrlFilterPreview.tsx`: atomic replacement of filters and page.
+- `docs/storybook/patterns/RoutingAndUrlState/components/SearchParametersPanel/UrlPaginationPreview.tsx`: intentional pushed page history.
+- `docs/storybook/patterns/TablesAndCollections/models/TableUrlState.ts`: table-specific conversions and page clamping.
+
+## 1. Choose what belongs in the URL
+
+Search, status and page identify a shareable view. Keep a modal's hover state
+local, form drafts in the form, asynchronous results in Query, and synchronous
+shared domain state in its owner. Do not place credentials, private drafts or
+secrets in an address: URLs can enter history, logs and copied links.
+
+For exact task identity, inspect the separately labelled reference recipe at
+`docs/development-guide/en/frontend/routing/typed-route-contracts.md`. Its stricter
+task parser is not installed as a starter API. The tolerant scalar filter helper
+below does not establish server authority or validate record permissions.
+
+## 2. Define a reversible scalar schema with usable defaults
+
+This is the complete installed `SearchParameters.ts`:
+
+```ts
+import { z } from "zod";
+
+const page = z.codec(z.string().regex(/^\d+$/), z.number().int().positive().max(Number.MAX_SAFE_INTEGER), {
+  decode: Number,
+  encode: String,
+});
+
+/** Filters and pagination share one URL contract and update it atomically. */
+export const searchParametersSchema = z.object({
+  q: z.string().default(""),
+  status: z.enum(["all", "active", "archived"]).default("all"),
+  page: page.default(1),
+});
+```
+
+Each field has a valid missing-value result; the object must parse `{}`. Outputs
+must be scalar strings, numbers, booleans or undefined, and encoding must produce
+strings or undefined. Use a two-way `z.codec` for numbers and booleans. A one-way
+transform or `z.coerce.number()` alone cannot supply the required string encoding.
+Keep the schema stable at module scope.
+
+Reading does not rewrite the URL. Missing or malformed fields fall back
+independently, preserving other valid fields. The first occurrence wins for a
+duplicated scalar key. Object-level validation can reject an otherwise decoded
+combination; in that case the engine returns the entire default object.
+
+## 3. Read from the router and apply one atomic update
+
+This complete application component uses the existing guide's translated keys
+and schema. Place it inside the same routing-and-URL owner; publish UI through
+that owner's public index if a page needs it. Product features define their own
+schema and English/Croatian resource keys rather than importing this guide owner.
+
+```tsx
+// Within docs/storybook/patterns/RoutingAndUrlState/components/
+import { Chip, Stack, TextField } from "@mui/material";
+import { useDevelopmentGuideTranslation } from "../../../examples/shared/localization/useDevelopmentGuideTranslation";
+import { useAppQueryParams } from "@/app/router/hooks/useAppQueryParams";
+import { searchParametersSchema } from "../models/SearchParameters";
+
+export function SearchFilters() {
+  const { t } = useDevelopmentGuideTranslation();
+  const { values, setValues } = useAppQueryParams(searchParametersSchema);
+
+  return (
+    <Stack spacing={2}>
+      <TextField
+        label={t("routingExamples.searchParams.filters.queryLabel")}
+        value={values.q}
+        onChange={event => setValues({ q: event.target.value, page: 1 }, { replace: true })}
+      />
+      <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
+        {(["all", "active", "archived"] as const).map(status => (
+          <Chip
+            key={status}
+            label={t(`routingExamples.searchParams.filters.status.${status}`)}
+            color={values.status === status ? "primary" : "default"}
+            onClick={() => setValues({ status, page: 1 }, { replace: true })}
+          />
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+```
+
+Reset page with its filter in the **same** `setValues` call. Two consecutive
+`set` calls can each read the same render's search parameters and overwrite the
+other update. The functional `setValues(current => patch)` computes from the
+current decoded snapshot; it does not queue several calls like React state.
+Keep updaters synchronous. Invalid typed patches, unknown keys and unsupported
+encodings throw before navigation; casts do not bypass runtime validation.
+
+## 4. Make push and replace deliberate
+
+This is a complete pagination control using existing translation resources:
+
+```tsx
+// Within docs/storybook/patterns/RoutingAndUrlState/components/
+import { Button, Stack, Typography } from "@mui/material";
+import { useDevelopmentGuideTranslation } from "../../../examples/shared/localization/useDevelopmentGuideTranslation";
+import { useAppQueryParams } from "@/app/router/hooks/useAppQueryParams";
+import { searchParametersSchema } from "../models/SearchParameters";
+
+export function SearchPages() {
+  const { t } = useDevelopmentGuideTranslation();
+  const { get, set } = useAppQueryParams(searchParametersSchema);
+  const page = get("page");
+  return (
+    <Stack spacing={2}>
+      <Typography>{t("routingExamples.searchParams.history.current", { page })}</Typography>
+      <Stack direction="row" spacing={1}>
+        {[1, 2, 3].map(value => (
+          <Button key={value} variant={page === value ? "contained" : "outlined"} onClick={() => set("page", value)}>
+            {value}
+          </Button>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+```
+
+Typing uses `{ replace: true }` so every keystroke does not add an entry. Page
+selection uses the default push so Back restores the previous page. A replacement
+updates the current entry; it does not preserve the previous filters as a hidden
+history entry. Choose a different policy deliberately when a committed search is
+itself a meaningful navigation.
+
+On updates, the engine encodes all owned schema fields, removes their duplicate
+occurrences and omits default/undefined values. Unknown parameters, including
+their repeated values, remain untouched. Do not replace the whole query with a
+new string and accidentally erase another owner's parameters.
+
+## 5. Adapt table and data inputs at their owner
+
+`TableUrlState.ts` keeps URL pages one-based and converts to the installed table's
+zero-based page. It validates page sizes, maps sort fields and resets the table
+page when filters change. Reuse that feature's conversion functions within its
+owner; a new feature supplies its own contract through an approved interface.
+
+A syntactically valid page may still exceed the collection's total. Clamp only
+after authoritative totals are known, using that owner's `resolveTableUrlPage`,
+then replace the impossible page. Reading a URL alone cannot discover the last
+remote page. Result-defining filter/page/sort inputs also belong in the Query
+key and API request; continue with **Data** and **Collections** tutorials for
+cancellation and client/server ownership. Do not copy the results into a Signal.
+
+## 6. Verify history, malformed input and real deep links
+
+From the workspace root, run the owning checks sequentially:
+
+```sh
+npm --prefix frontend run test -- --run tests/app/router/queryParams.test.ts
+npm --prefix frontend run verify:architecture
+npm --prefix frontend run typecheck
+```
+
+Verify defaults, reserved-character encoding, malformed numeric/enum values,
+duplicate scalar behavior, unrelated repeated parameters, rejected patches and
+atomic filter resets. Then verify Back/Forward, push versus replace and opening
+a copied URL directly in the assembled app. Reload the actual application URL
+and confirm host fallback, route access and the reconstructed view. Check narrow
+screens, keyboard operation, theme transitions and locale changes without
+changing the stable query contract.
+
+## Common mistakes
+
+- Mirroring URL filters into local state and using synchronization effects in both directions.
+- Setting a filter and its dependent page with separate router updates.
+- Assuming numeric coercion provides reversible string encoding.
+- Pushing every keystroke or replacing every meaningful navigation by accident.
+- Clearing unrelated query keys or silently repairing the initial address during render.
+- Treating tolerant presentation defaults as strict exact-task validation or authorization.
+
+## Read this tutorial without Storybook
+
+Read this MDX and the source owners above. All implementation examples are inert
+code; the schema and hook are already installed. Discover related material with:
+
+```sh
+npm --prefix frontend run guide:index -- search "queryParams" "URL"
+```
+
+## Storybook fixture reference
+
+`UrlBackedStateExample.tsx` creates an isolated MemoryRouter for each scenario,
+imports the actual query hook/schema and renders the reusable
+`../shared/StorybookAddressBar.tsx`. It has no application providers, HTTP calls,
+storage writes or internal scrolling containers. English fixture labels are
+deliberate. Theme changes preserve the router; changing scenario creates a new
+router. History controls traverse only that memory history, not the Storybook
+manager's browser history. The fixture demonstrates decoded view state, not
+collection results. It cannot prove browser reloads or server route fallback.

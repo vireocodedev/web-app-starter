@@ -2,7 +2,6 @@ import { BottomNavigation, BottomNavigationAction, Box } from "@mui/material";
 import { Link, useLocation } from "react-router";
 
 import { useAppTranslation } from "@/app/localization/hooks/useAppTranslation";
-import { useDevelopmentGuideTranslation } from "@/app/localization/hooks/useDevelopmentGuideTranslation";
 import type { AppNavigationLink } from "@/app/router/types/AppRoute";
 
 import { navigationPathMatchesLocation } from "./navigationPath";
@@ -13,7 +12,6 @@ export const mobileBottomNavigationHeight = "calc(72px + env(safe-area-inset-bot
 /** Shows the application's primary mobile shortcuts without replacing the full drawer. */
 export function AppBottomNavigation({ items }: Readonly<{ items: readonly AppNavigationLink[] }>) {
   const { t } = useAppTranslation();
-  const { t: guideT } = useDevelopmentGuideTranslation();
   const { pathname } = useLocation();
   const activeIndex = items.findIndex(item => navigationPathMatchesLocation(pathname, item.to, item.activePath));
 
@@ -39,7 +37,7 @@ export function AppBottomNavigation({ items }: Readonly<{ items: readonly AppNav
       value={activeIndex}
     >
       {items.map((item, index) => {
-        const label = item.labelNamespace === "development-guide" ? guideT(item.labelKey) : t(item.labelKey);
+        const label = t(item.labelKey);
         return (
           <BottomNavigationAction
             aria-current={index === activeIndex ? "page" : undefined}

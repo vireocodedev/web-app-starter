@@ -1,0 +1,34 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./RoutingAndUrlState.stories";
+
+<Meta of={Stories} />
+
+# Routing And Url State pattern gallery
+
+These interactive reference panels were migrated from the application development guide. They run only in Storybook, in English, with private routers and Query clients. Application source contains no guide routes or examples. Expand each code sample and follow its source link to inspect its owner.
+
+## 1. Choose a focused pattern
+
+### Nested Routes
+
+<Canvas of={Stories.NestedRoutes} story={{ inline: false, height: "900px" }} sourceState="none" />
+
+### Route Parameters And Breadcrumbs
+
+<Canvas of={Stories.RouteParametersAndBreadcrumbs} story={{ inline: false, height: "900px" }} sourceState="none" />
+
+### Route Recovery
+
+<Canvas of={Stories.RouteRecovery} story={{ inline: false, height: "900px" }} sourceState="none" />
+
+### Search Parameters
+
+<Canvas of={Stories.SearchParameters} story={{ inline: false, height: "900px" }} sourceState="none" />
+
+## 2. Adapt the contract to a real feature
+
+Keep domain rules, validation and state with their feature owner. These panels explain one mechanism at a time; the corresponding focused tutorials provide complete feature-level recipes. Copy only the responsibility you need and wire its real dependencies explicitly. Never import this documentation tree from production source.
+
+## 3. Verify behavior and cleanup
+
+The migrated checks under `tests/storybook/patterns/` retain model, API, form, query, routing and gallery behavior coverage. Exercise failure, retry, cancellation and narrow-screen states relevant to your feature. These previews do not prove backend authority or database durability.

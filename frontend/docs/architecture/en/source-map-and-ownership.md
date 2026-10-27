@@ -9,7 +9,7 @@ makes that capability easy to scan.
 ```text
 src/
 ├── app/          stable application infrastructure and composition
-├── features/     product capabilities and removable teaching examples
+├── features/     installed product capabilities (currently Settings)
 ├── pages/        route entries that compose public interfaces
 ├── main.tsx      startup and the application composition root
 └── vite-env.d.ts Vite types and application build-time declarations
@@ -28,8 +28,8 @@ and retain ownership of validation and persistence.
 
 `src/app/overlays` coordinates views within a page-local overlay. Its controller
 and `RgoOverlayProvider` must unmount together so no panel outlives its guard.
-The Contacts and Development Guide overlay hosts enable the provider's bottom
-drawer policy below the shell's 1024px breakpoint. The provider captures that
+The isolated Contacts and overlay references in Storybook demonstrate the
+provider's bottom drawer policy below the shell's 1024px breakpoint. The provider captures that
 policy when each session opens, so resizing does not remount an active editor;
 its saved presentation preference still applies to new desktop sessions.
 Bottom drawers expose a grab handle that owns downward dragging; body scrolling
@@ -39,22 +39,23 @@ mechanics and existing guarded close lifecycle. Temporary panels and bottom
 drawers fill one raised surface; the table workspace gutter belongs only to
 docked panels.
 
-The removable development guidance is grouped without merging its owners:
+All teaching implementations and readers live outside the application:
 
 ```text
-src/features/development-guide/{architecture,contacts,handbook,patterns/<category>}
-src/pages/development-guide/{architecture,contacts,handbook,patterns}
-tests/features/development-guide/{architecture,contacts,patterns/<category>}
+docs/storybook/examples/Contacts/
+docs/storybook/patterns/<Category>/
+docs/storybook/architecture/ArchitectureReference/
+docs/storybook/handbook/Handbook/
+docs/storybook/shared/documentation/
+tests/storybook/
 ```
 
-Architecture, Contacts, Handbook, and every Patterns category still have separate public
-interfaces and dependency boundaries. `development-guide` is a physical
-grouping for code omitted from production, not one broad feature boundary.
-
-The Handbook catalog owns bilingual fullstack articles under
-`docs/development-guide/`. The router composes its public manifest into category,
-topic, and article routes. Shared Markdown presentation and page navigation
-belong to `app/shell/documentation`; they do not import article catalogs.
+The Handbook catalog owns metadata and paired Markdown lookup for canonical
+articles under `docs/development-guide/{en,hr}/`. Architecture reads the canonical
+`docs/architecture/{en,hr}/` articles. Storybook owns their English readers and
+shared Markdown presentation; production imports neither catalogs nor bodies.
+There are no development-guide routes, redirects, navigation entries, namespaces
+or example registrations in `src/`, even in development builds.
 
 ## Package, test, and mock owners
 
@@ -68,14 +69,24 @@ explicit `integration/` and `browser/` areas. Top-level `mocks/` contains the
 development MSW boundary and deterministic auth fixtures. Neither belongs in
 production `src/`.
 
-## Optional examples and stable infrastructure
+Storybook tutorials, CSF stories and preview support live outside `src/`, under
+`docs/storybook/<section>/<Tutorial>/`; each tutorial has a same-name folder and
+section-wide helpers use `shared/`. The `docs/storybook/README.md` entry point
+routes mandatory architecture and task-specific reading. Documentation grouping
+does not merge the production capabilities it demonstrates.
 
-Some shipped examples are optional. Contacts is the complete feature example;
-Settings is an application-preference presentation feature; Patterns,
-Architecture, and Handbook are development guidance. Removing an example can remove its
-feature, pages, tests, routes, translations, and registrations. Stable owners
-such as `src/app/data`, `src/app/router`, and the shell remain unless the
-application no longer needs that capability.
+## References and stable infrastructure
+
+Contacts is a complete documentation reference, not an installed product feature.
+Its live preview selects an injected memory adapter and private Query client; its
+browser-storage adapter is inert unless a test explicitly constructs it. Settings
+presents application preferences. Production `appFeatures.ts` and
+`signalModules.ts` registries are empty until a consumer deliberately installs a
+feature or lifecycle module. Stable infrastructure remains in `src/app/`.
+
+Production source must not import or re-export anything under `docs/` or
+`.storybook/`, including raw Markdown and literal dynamic imports or globs.
+Documentation and tests may consume installed source through its allowed APIs.
 
 ## Avoid ownerless code
 

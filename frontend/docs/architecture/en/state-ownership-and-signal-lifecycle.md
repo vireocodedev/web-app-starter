@@ -40,6 +40,8 @@ Component effects remain in components and return their own cleanup. Route
 state should not become an application Signal just to survive a rerender; use
 the router when Back/Forward and deep links should reproduce it.
 
-Patterns includes removable Signal examples and may register its module only
-in development. Removing that category requires removing its registry entry
-and storage key while preserving the generic lifecycle for other modules.
+The production lifecycle registry is currently empty. The migrated Application
+state examples live under `docs/storybook/patterns/`; they construct private
+Signals, injected memory storage and disposable preview effects. They register
+nothing at application startup and write no application storage keys. A consumer
+adding real application-lifetime state must explicitly register its public module.

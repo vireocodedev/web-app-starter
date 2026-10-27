@@ -1,0 +1,418 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as TestingStories from "./TestingAFeature.stories";
+
+<Meta of={TestingStories} />
+
+# Testing a feature
+
+Write scenarios around the observable contract: what changes after success,
+what stays unchanged after rejection, and what stops after cleanup. Keep the real
+behavior under test and replace only its external dependencies. Contacts supplies
+working examples for schema, form, cache and persistence boundaries.
+
+## Try it
+
+Choose **Testing scenario**, then **Run boundary example**. The preview executes
+the actual Contact schema or mutation factory against synthetic data and a fresh
+private QueryClient. Accepted writes invalidate Contacts; rejected writes leave
+it fresh. Both leave the unrelated collection untouched. Repeat a scenario to
+observe a fresh cache each time. Global theme changes preserve the selected case
+and observations.
+
+These are browser-executable observations, **not a Vitest runner or coverage
+report**. The test recipes and commands below describe how to create and run
+real repository tests.
+
+<Canvas of={TestingStories.Overview} story={{ inline: false, height: "1050px" }} sourceState="none" />
+
+## Before you start
+
+Paths are relative to `frontend/`. Read the Architecture tutorials and
+`docs/architecture/en/tests-mocks-stories-and-architecture-checks.md`. Reuse the
+current feature's schema, query/mutation factories, form and public interfaces.
+The related **Forms**, **Data**, **Authentication** and **State** tutorials explain
+the contracts that their tests should protect.
+
+```text
+tests/storybook/contacts/
+├── models/Contact.test.ts                 localized schema/context/normalization
+├── api/contact.mutation.test.ts           scoped success and rejected-write effects
+├── api/contact.api.browser-storage.test.ts persistence, conflicts and cancellation
+└── components/ContactForm.test.tsx        visible validation and awaited submit/retry
+tests/integration/auth/                   real auth/client composition and HTTP mapping
+tests/integration/applicationState/       source state, persistence and effect disposal
+tests/browser/                           assembled routes, focus, layout and interactions
+tests/renderApp.tsx                       fresh QueryClient and optional runtime/router
+tests/server.ts                          initially empty MSW server
+tests/setup.ts                           DOM cleanup and handler/server lifetimes
+```
+
+## 1. Choose the smallest boundary that can prove the outcome
+
+Write a Given/When/Then scenario before selecting mocks. Include the nearest
+forbidden effect, such as no save on invalid input or no invalidation after a
+rejected write. A scenario should still detect the defect if a private helper is
+renamed or reordered.
+
+<table style={{ width: "100%", tableLayout: "fixed", overflowWrap: "anywhere" }}>
+  <caption>Match an assertion to its evidence boundary</caption>
+  <thead>
+    <tr>
+      <th scope="col">Contract</th>
+      <th scope="col">Useful boundary</th>
+      <th scope="col">Assertion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Domain validation</th>
+      <td>Real schema or pure function</td>
+      <td>Normalized output and rejected invalid values</td>
+    </tr>
+    <tr>
+      <th scope="row">Form interaction</th>
+      <td>Real form and supplied command</td>
+      <td>Visible errors, no invalid submission, retained draft on rejection</td>
+    </tr>
+    <tr>
+      <th scope="row">Cache invalidation</th>
+      <td>Real mutation options and QueryClient</td>
+      <td>Target stale, unrelated owner unchanged</td>
+    </tr>
+    <tr>
+      <th scope="row">HTTP contract</th>
+      <td>Real client/adapter with MSW transport interception</td>
+      <td>Method/path/body/headers and response parsing</td>
+    </tr>
+    <tr>
+      <th scope="row">Effect lifetime</th>
+      <td>Real initializer and owned storage seam</td>
+      <td>Updates stop persisting after disposal</td>
+    </tr>
+    <tr>
+      <th scope="row">Assembled task</th>
+      <td>Playwright browser</td>
+      <td>Routes, focus, responsive behavior and representative accessibility</td>
+    </tr>
+  </tbody>
+</table>
+
+Frontend HTTP mocks cannot prove real backend authorization or database
+persistence. jsdom cannot establish actual browser geometry. An automated axe
+scan does not replace the manual accessibility checklist. Report the evidence
+boundary with the result.
+
+## 2. Mirror source ownership and start with pure model scenarios
+
+Put focused tests under `tests/`, mirroring the source owner. Cross-owner cases
+belong in `tests/integration/`; browser scenarios belong in `tests/browser/`.
+Use `@/` to import production code and `@test/` for test support. Direct internal
+imports are appropriate when testing that implementation; they do not make it
+a public application API.
+
+This complete test recipe exercises the reference schema. Use a distinct test
+filename or extend the existing `Contact.test.ts` instead of replacing its cases:
+
+```ts
+// Example: tests/storybook/contacts/models/Contact.contract.test.ts
+import { describe, expect, it } from "vitest";
+
+import { createAppI18n } from "@/app/localization/createAppI18n";
+import { englishDevelopmentGuideTranslations } from "../../../../docs/storybook/examples/shared/localization/development-guide.en";
+import { createContactValidationSchema } from "../../../../docs/storybook/examples/Contacts/models/Contact";
+
+describe("Contact input contract", () => {
+  it("normalizes create input and requires identity only for update", () => {
+    const i18n = createAppI18n("en");
+    i18n.addResourceBundle("en", "development-guide", englishDevelopmentGuideTranslations);
+    const t = i18n.getFixedT("en", "development-guide");
+    const create = createContactValidationSchema(t, { requiresId: false });
+    const update = createContactValidationSchema(t, { requiresId: true });
+    const input = {
+      email: " alex@example.com ",
+      name: " Alex Morgan ",
+      organization: " Example Studio ",
+      role: " Designer ",
+      status: "ACTIVE" as const,
+    };
+
+    expect(create.parse(input)).toEqual({
+      email: "alex@example.com",
+      name: "Alex Morgan",
+      organization: "Example Studio",
+      role: "Designer",
+      status: "ACTIVE",
+    });
+    expect(create.safeParse({ ...input, email: "invalid" }).success).toBe(false);
+    expect(update.safeParse(input).success).toBe(false);
+    expect(update.parse({ ...input, id: "contact-example" }).id).toBe("contact-example");
+  });
+});
+```
+
+`createAppI18n()` creates an owned synchronous instance, rather than mutating an
+application singleton. The guide namespace is registered explicitly by this
+reference test, because the application no longer loads it. Use real resources when checking localized messages; a key-returning
+stub only isolates an unrelated behavior and supplies no translation evidence.
+Product features use their product namespace and matching locale resources.
+
+## 3. Assert target and unrelated cache state with fresh owners
+
+Construct a fresh QueryClient and API fixture per case. Disable automatic retries
+for deterministic rejections through `createTestQueryClient()`; test production
+retry behavior separately in its owner. Seed target and unrelated keys, execute
+the real mutation options, then inspect their actual Query state.
+
+```ts
+// Example: tests/storybook/contacts/api/contact.create-contract.test.ts
+import { MutationObserver } from "@tanstack/react-query";
+import { describe, expect, it, vi } from "vitest";
+
+import type { ContactApi } from "../../../../docs/storybook/examples/Contacts/api/contact.api";
+import { createContactMutation } from "../../../../docs/storybook/examples/Contacts/api/contact.mutation";
+import { ContactQueryKey } from "../../../../docs/storybook/examples/Contacts/api/contact.querykeys";
+import { createTestQueryClient } from "@test/renderApp";
+
+describe("Contact create cache contract", () => {
+  it.each([false, true])("keeps invalidation scoped; rejected=%s", async rejected => {
+    const queryClient = createTestQueryClient();
+    const input = {
+      email: "alex@example.com",
+      name: "Alex Morgan",
+      organization: "Example Studio",
+      role: "Designer",
+      status: "ACTIVE" as const,
+    };
+    const create = vi.fn(async () => {
+      if (rejected) throw new Error("Synthetic rejection before commit");
+      return { ...input, id: "contact-example" };
+    });
+    const api: ContactApi = {
+      create,
+      findAll: async () => [],
+      remove: async () => undefined,
+      removeMany: async () => undefined,
+      update: async ({ contact }) => contact,
+      updateStatusMany: async () => [],
+    };
+    const contactsKey = ContactQueryKey.collection();
+    const unrelatedKey = ["unrelated", "collection"] as const;
+    queryClient.setQueryData(contactsKey, []);
+    queryClient.setQueryData(unrelatedKey, ["keep"]);
+    try {
+      const mutation = new MutationObserver(queryClient, createContactMutation(api, queryClient).create());
+      if (rejected) await expect(mutation.mutate(input)).rejects.toThrow("Synthetic rejection before commit");
+      else await expect(mutation.mutate(input)).resolves.toMatchObject({ id: "contact-example" });
+
+      expect(create).toHaveBeenCalledTimes(1);
+      expect(queryClient.getQueryState(contactsKey)?.isInvalidated).toBe(!rejected);
+      expect(queryClient.getQueryState(unrelatedKey)?.isInvalidated).toBe(false);
+      expect(queryClient.getQueryData(unrelatedKey)).toEqual(["keep"]);
+    } finally {
+      await queryClient.cancelQueries();
+      queryClient.clear();
+    }
+  });
+});
+```
+
+These entries are inactive, so invalidation marks them stale without promising
+an immediate HTTP refetch. For an observed collection, verify refreshed visible
+records as well. The retained reference Contacts adapter uses async browser storage;
+this injected port fixture proves neither storage durability nor a backend.
+
+## 4. Exercise the real form through visible user behavior
+
+`renderApp()` supplies a fresh QueryClient and optional MemoryRouter/runtime. It
+does **not** install localization, theme, feedback or auth automatically. Supply
+only the additional owners your tested boundary consumes. When passing a runtime,
+use its QueryClient for mounted consumers and assertions.
+
+This complete component test recipe uses a real English localization provider
+and the reference ContactForm. The form receives a rejected command; its parent
+normally owns the save-failure UI, so this focused case asserts retained input
+and absence of completion. `ContactForm.test.tsx` also exercises the actual
+side-panel's failure message and retry coordination.
+
+```tsx
+// Example: tests/storybook/contacts/components/ContactForm.contract.test.tsx
+import type { PropsWithChildren } from "react";
+import { RgoFormGroup } from "@rgo-web/frontend";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { expect, it, vi } from "vitest";
+
+import { AppLocalizationProvider } from "@/app/localization/components/AppLocalizationProvider";
+import { ContactForm } from "../../../../docs/storybook/examples/Contacts/components/ContactForm";
+import { renderApp } from "@test/renderApp";
+
+function English({ children }: PropsWithChildren) {
+  return (
+    <AppLocalizationProvider fixedLocale="en" initialLocale="en">
+      {children}
+    </AppLocalizationProvider>
+  );
+}
+
+it("sends no invalid command and retains the draft after rejection", async () => {
+  const user = userEvent.setup();
+  const onSaved = vi.fn();
+  const onSubmit = vi.fn(async () => {
+    throw new Error("Synthetic write rejection");
+  });
+  const { queryClient } = renderApp(
+    <ContactForm
+      group={RgoFormGroup.CREATE}
+      onSaved={onSaved}
+      onStateChange={vi.fn()}
+      onSubmit={onSubmit}
+      saveFailed={false}
+    />,
+    { provider: English },
+  );
+  try {
+    await user.click(screen.getByRole("button", { name: "Create contact" }));
+    expect(await screen.findByText("Name is required.")).toBeVisible();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await user.type(screen.getByRole("textbox", { name: "Name" }), "Alex Morgan");
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "alex@example.com");
+    await user.type(screen.getByRole("textbox", { name: "Organization" }), "Example Studio");
+    await user.type(screen.getByRole("textbox", { name: "Role" }), "Designer");
+    await user.click(screen.getByRole("button", { name: "Create contact" }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Create contact" })).toBeEnabled());
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Alex Morgan");
+    expect(onSaved).not.toHaveBeenCalled();
+  } finally {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+  }
+});
+```
+
+Use `userEvent`, roles and accessible names. Await visible results or owned
+callbacks instead of sleeping. Test completion only after the real submission
+promise resolves. Retained input, no success feedback, and a retry with the same
+draft protect different parts of the failure contract.
+
+## 5. Intercept HTTP when serialization and response mapping are the subject
+
+Keep the real Axios factory and auth adapter; add only scenario-specific handlers
+to `@test/server`. `tests/setup.ts` already starts MSW with
+`onUnhandledRequest: "error"`, resets handlers after each test and closes the
+server after the suite. Do not start another server in the test.
+
+This complete recipe verifies the negative CSRF prerequisite:
+
+```ts
+// Example: tests/integration/auth/api/csrf-prerequisite.test.ts
+import { http, HttpResponse } from "msw";
+import { expect, it } from "vitest";
+
+import { createSpringSessionAppAuthApi } from "@/app/auth/api/appAuth.api.springSession";
+import { createAppAxios } from "@/app/data/http/createAppAxios";
+import { server } from "@test/server";
+
+it("does not send credentials after failed CSRF acquisition", async () => {
+  const baseURL = "https://api.example.invalid";
+  let loginWrites = 0;
+  server.use(
+    http.get(`${baseURL}/auth/csrf`, () => new HttpResponse(null, { status: 503 })),
+    http.post(`${baseURL}/auth/login`, () => {
+      loginWrites += 1;
+      return new HttpResponse(null, { status: 204 });
+    }),
+  );
+  const client = createAppAxios({
+    VITE_API_BASE_URL: baseURL,
+    VITE_API_MODE: "http",
+    VITE_APP_ENV: "test",
+    VITE_API_WITH_CREDENTIALS: true,
+    VITE_REQUEST_TIMEOUT_MS: 1000,
+  });
+  const api = createSpringSessionAppAuthApi(client);
+
+  await expect(api.login({ username: "synthetic-user", password: "synthetic-value" })).rejects.toMatchObject({
+    response: { status: 503 },
+  });
+  expect(loginWrites).toBe(0);
+});
+```
+
+A handler reset does not reset a fixture's mutable store or settle already-held
+requests. Use fresh stores and explicit started/release gates for races. Observe
+the old read starting, change owner, release it last, and assert the current
+owner stays authoritative even if the fixture ignores cancellation. Inspect
+`tests/integration/auth/createAppAuthRuntime.test.ts` for installed examples.
+Use `try/finally` to release held work even after a failing assertion. Restore
+fake timers/spies and dispose Signal effects; test disposal by changing state
+afterward and asserting that no new persistence occurs.
+
+## Common mistakes
+
+- Replacing the schema, HTTP client or mutation factory whose behavior the test claims to verify.
+- Checking only a mocked call count when target and unrelated outcomes matter.
+- Sharing one mutable QueryClient, first-failure counter or Signal singleton across unrelated cases.
+- Assuming React cleanup resets storage, handlers' mutable state or pending promises.
+- Giving the mounted tree and runtime different caches, or nesting two routers.
+- Returning a catch-all successful MSW response that hides unexpected requests.
+- Using sleeps to establish request ordering or checking abort without releasing the late result.
+- Presenting a Storybook interaction, test source inspection or build as a completed test suite.
+
+## 6. Run the owning checks and state their limits
+
+Run commands sequentially from the workspace root. These paths are existing
+tests; any copied recipes above are additional files only after you create them.
+
+```sh
+npm --prefix frontend run test -- tests/storybook/contacts/models/Contact.test.ts tests/storybook/contacts/api/contact.mutation.test.ts tests/storybook/contacts/components/ContactForm.test.tsx
+npm --prefix frontend run test -- tests/integration/auth/api/appAuth.api.springSession.test.ts
+npm --prefix frontend run verify
+```
+
+With the current Storybook running, browser coverage is separate:
+
+```sh
+npm --prefix frontend run test:browser:storybook
+```
+
+`RGO_STORYBOOK_URL` selects another existing Storybook server. Ordinary
+`test:browser` targets the assembled application through its configured build
+and preview server; it is not interchangeable with this Storybook command.
+Inspect scripts before execution because `verify` includes types, tests,
+production and Storybook builds. Follow the workstation's single-heavy-command
+rule; do not run suites concurrently.
+
+Report the candidate, exact command/result and relevant evidence limits.
+Browser checks cover selected scenarios, viewport sizes and automated
+accessibility rules. Real backend security/database contracts and manual
+accessibility remain separate evidence. Source review identifies intended tests;
+it does not establish they passed on the current candidate.
+
+## Read this tutorial without Storybook
+
+Read the MDX, exact source examples above, and these authoritative articles:
+
+- `docs/development-guide/en/quality/test-design/assert-boundary-outcomes.md`.
+- `docs/development-guide/en/quality/test-design/deterministic-fixtures-and-clock-ownership.md`.
+- `docs/development-guide/en/quality/frontend/fresh-runtime-and-query-fixtures.md`.
+- `docs/development-guide/en/quality/frontend/http-contract-mocks-and-handler-lifetimes.md`.
+- `docs/development-guide/en/quality/frontend/async-generation-and-stale-result-scenarios.md`.
+- `docs/development-guide/en/quality/frontend/signal-effect-disposal-and-storage-failures.md`.
+
+```sh
+npm --prefix frontend run guide:index -- search "Testing a feature"
+npm --prefix frontend run guide:index -- search assert-boundary-outcomes
+```
+
+## Storybook fixture reference
+
+`TestingAFeature.stories.tsx`, `TestingAFeatureExample.tsx` and `testingFixture.ts`
+live beside this MDX in `docs/storybook/testing/TestingAFeature/`. Every example
+run owns its cache, synthetic complete ContactApi port and counters. It executes
+the real schema/mutation factories, reports observed conditions and clears the
+private cache in `finally`. It performs no HTTP request or application storage
+write and installs no new theme, locale or runtime provider. Its no-retry choice
+is fixture policy, not a change to production retry behavior. Global theme updates
+preserve selection/results; ending the preview prevents late UI updates.

@@ -63,7 +63,7 @@ A pinned Action still downloads runtime artifacts; genuine runner acceptance nee
 
 Inspect application declarations, lockfiles, selected runtime output, job-local installation paths and exact Action commits. Confirm Java compilation and runtime stages remain compatible. Check that no global host install or retained checkout credential was introduced.
 
-Record the source revision and actual tools observed in authorized CI evidence. Link operational setup to `docs/github-ci.md` and the pool guide rather than duplicating host installation commands here. The related **Resource budgets** pattern explains why selecting the right version still requires bounded worker behavior.
+Record the source revision and actual tools observed in authorized CI evidence. Link operational setup to `docs/template-initialization/github-ci.md` and the pool guide rather than duplicating host installation commands here. The related **Resource budgets** pattern explains why selecting the right version still requires bounded worker behavior.
 
 ## Source provenance
 
