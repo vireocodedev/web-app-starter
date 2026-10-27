@@ -535,10 +535,13 @@ def verify_tools():
         (['python3', '--version'], r'Python 3\.(?:1[1-9]|[2-9][0-9])\.'),
         (['gh', '--version'], None), (['java', '-version'], r'(?:version|openjdk) "?21[.\s"]'),
         (['node', '--version'], r'^v24\.'), (['npm', '--version'], r'^12\.'),
-        (['docker', 'version'], None), (['docker', 'compose', 'version'], r'v?2\.')]
+        (['docker', 'version'], None),
+        (['docker', 'compose', 'version'], r'^Docker Compose version v?5\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\s*$')]
     for command, pattern in checks:
         result = run(command, capture=True, timeout=30)
         if pattern and not re.search(pattern, result.stdout + result.stderr):
+            if command[:2] == ['docker', 'compose']:
+                raise InitError('Unsupported Docker Compose version; require Docker Compose 5.x.')
             raise InitError(f'Unsupported {command[0]} version; review the guide pins.')
     return {'tools': 'matching workstation versions and Docker access'}
 

@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import time
 from types import SimpleNamespace
@@ -38,6 +39,31 @@ class InitializationEnvironmentTests(unittest.TestCase):
             'verifier_sha256':shared.verifier_hash(), 'scope':'full', 'mode':'new', 'verified_at':time.time()}
         data.update(extra)
         shared._write_json(self.directory / 'verification.json', data)
+
+    def test_prepare_values_creates_private_file_for_new_or_existing_directory(self):
+        for existing in (False, True):
+            with self.subTest(existing_directory=existing):
+                destination = self.directory / str(existing) / 'values.env'
+                if existing:
+                    destination.parent.mkdir(mode=0o700)
+                result = subprocess.run([
+                    sys.executable, '-B', str(SCRIPTS / '1_1_prepare_values.py'),
+                    '--env', str(destination),
+                ], capture_output=True, text=True, umask=0)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(destination.read_bytes(), (SCRIPTS.parent / '.env.example').read_bytes())
+                self.assertEqual(destination.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(destination.parent.stat().st_mode & 0o777, 0o700)
+
+    def test_prepare_values_preserves_existing_private_file(self):
+        original = self.env.read_bytes()
+        result = subprocess.run([
+            sys.executable, '-B', str(SCRIPTS / '1_1_prepare_values.py'),
+            '--env', str(self.env),
+        ], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('Values already exist', result.stderr)
+        self.assertEqual(self.env.read_bytes(), original)
 
     def test_data_is_not_shell_and_unknown_duplicates_rejected(self):
         for line in ('PROJECT_SLUG=$(touch /tmp/no)', 'PROJECT_SLUG=valid;whoami',
@@ -423,6 +449,40 @@ class InitializationEnvironmentTests(unittest.TestCase):
             with self.assertRaises(shared.InitError) as caught:
                 shared.run(['gh','api','user'],capture=True)
             self.assertNotIn('SECRET',str(caught.exception))
+
+
+class WorkstationToolsTests(unittest.TestCase):
+    def verify_compose_output(self, output):
+        versions = {
+            ('python3', '--version'): 'Python 3.12.12',
+            ('java', '-version'): 'openjdk version "21.0.9"',
+            ('node', '--version'): 'v24.10.0',
+            ('npm', '--version'): '12.0.0',
+            ('docker', 'compose', 'version'): output,
+        }
+
+        def run(command, **kwargs):
+            return subprocess.CompletedProcess(command, 0, stdout=versions.get(tuple(command), ''), stderr='')
+
+        with patch.object(shared.shutil, 'which', return_value='/usr/bin/tool'), \
+                patch.object(shared, 'run', side_effect=run):
+            return shared.verify_tools()
+
+    def test_workstation_accepts_compose_5(self):
+        for version in ('v5.6.0', '5.6.0', 'v5.6.0-desktop.1'):
+            with self.subTest(version=version):
+                self.assertEqual(self.verify_compose_output('Docker Compose version ' + version + '\n'),
+                    {'tools': 'matching workstation versions and Docker access'})
+
+    def test_workstation_rejects_other_compose_majors(self):
+        for major in (1, 2, 3, 4, 6, 12, 15, 25, 50, 52):
+            with self.subTest(major=major), self.assertRaisesRegex(shared.InitError, 'Docker Compose 5.x'):
+                self.verify_compose_output(f'Docker Compose version v{major}.6.0\n')
+
+    def test_workstation_rejects_invalid_compose_output(self):
+        for output in ('', 'Docker Compose version v5.not-a-version', 'unrelated tool v5.6.0'):
+            with self.subTest(output=output), self.assertRaisesRegex(shared.InitError, 'Docker Compose 5.x'):
+                self.verify_compose_output(output)
 
 
 if __name__=='__main__':

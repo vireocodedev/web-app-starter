@@ -85,6 +85,14 @@ characters. Use the same display name across locales unless you deliberately
 supply localized names. A username such as `admin` still has only the starter's
 installed `USER` authority.
 
+For full/deployment setup, before setting the four ports, follow the host command
+block above the port entries in [.env.example](.env.example). Connect to the
+operator host and run the Python block there as root, omitting its comment
+prefixes. It prints four candidate assignments after checking TCP listeners and
+all deployment runtime reservations, including stopped environments. Copy those
+assignments into your actual `.template-initialization/values.env`; the example
+numbers are not promised free. Step 2.4 rechecks availability without reserving it.
+
 Settle the following before remote work:
 
 | Prerequisite     | What to obtain                                                                                                                                                                                                                                                                                                                           |
@@ -116,9 +124,11 @@ Step 2.4 performs functional verification after the tools are installed.
 
 ## 2. Prepare your workstation
 
-Install Git, Bash, Python 3.11+, ripgrep (`rg`), GitHub CLI, JDK 21, Docker with Compose v2, and Node
+Install Git, Bash, Python 3.11+, ripgrep (`rg`), GitHub CLI, JDK 21, Docker with Compose 5.x, and Node
 24/npm 12 through your normal workstation tools. Use the included Gradle wrapper;
-a system Gradle install is unnecessary. For an existing nvm installation:
+a system Gradle install is unnecessary. The `rg` command comes from the `ripgrep`
+package. On Ubuntu/Debian, run `sudo apt update`, then `sudo apt install ripgrep`,
+and confirm `rg --version` before step 2.2. For an existing nvm installation:
 
 ### 2.1 Prepare Node with an existing nvm installation
 
@@ -138,6 +148,10 @@ Expected development majors: Java 21, Node 24, npm 12. Check current pins in
 `backend/build.gradle`, `frontend/.nvmrc` and `frontend/package.json`. Docker must
 be usable by your user for PostgreSQL, Testcontainers and image checks. Install
 `dig` for DNS inspection. For VS Code use the recommended extensions later.
+
+Docker Compose 5.x is required. Its version is independent of Docker Engine's
+version. An `Unsupported Docker Compose version` error refers to the Compose
+plugin; the check verifies Engine/daemon access separately.
 
 Authenticate with the intended GitHub account; retain an existing working login:
 
