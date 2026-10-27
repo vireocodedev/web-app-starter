@@ -15,6 +15,9 @@ python3 -B docs/template-initialization/scripts/1_1_prepare_values.py
 
 Edit `.template-initialization/values.env`, following [.env.example](../.env.example).
 Its `GH_ORG` and `PROJECT_SLUG` must match that existing consumer's origin.
+For full setup, step `1_2_select_deployment_ports.py` uses the existing attested
+SSH connection to select/save unused ports before verification; it never resets
+recorded state or reserves ports.
 After preparing the section 2 tools and intended GitHub login, verify the values:
 
 ```bash

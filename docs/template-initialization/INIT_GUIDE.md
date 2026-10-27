@@ -89,13 +89,22 @@ characters. Use the same display name across locales unless you deliberately
 supply localized names. A username such as `admin` still has only the starter's
 installed `USER` authority.
 
-For full/deployment setup, before setting the four ports, follow the host command
-block above the port entries in [.env.example](.env.example). Connect to the
-operator host and run the Python block there as root, omitting its comment
-prefixes. It prints four candidate assignments after checking TCP listeners and
-all deployment runtime reservations, including stopped environments. Copy those
-assignments into your actual `.template-initialization/values.env`; the example
-numbers are not promised free. Step 2.4 rechecks availability without reserving it.
+### 1.2 Select available deployment ports
+
+After editing the other values, run this on your **workstation** for full setup.
+Python, Git and SSH with the existing attested operator host key/root access are
+required here; local-only setup skips this remote step.
+
+```bash
+python3 -B docs/template-initialization/scripts/1_2_select_deployment_ports.py
+```
+
+It reads TCP listeners and all runtime port reservations, including stopped
+projects, then saves four available ports in your protected values file. Available
+selected ports are preserved. An existing deployment namespace or recorded
+verification/progress blocks reassignment for deliberate reconciliation. Other
+values and file permissions are preserved. This reserves nothing; step 2.4
+rechecks availability.
 
 Settle the following before remote work:
 

@@ -47,18 +47,20 @@ Create the protected file without overwriting an existing one.
 python3 -B docs/template-initialization/scripts/1_1_prepare_values.py
 ```
 
-### 1.B Select free deployment ports — manual, operator host
+### 1.B Edit the project values — manual, workstation
 
-Run the port-selection block above the four ports in [.env.example](.env.example)
-as root, removing its comment prefixes. It checks listeners and stopped-project
-reservations; keep the four printed assignments for the values file.
+Edit `.template-initialization/values.env`: existing owner/slug, display name,
+Java package, PWA short name, maintainer/account identity, two unused hostnames
+and protected DNS credential-file path. Keep credentials outside this file.
 
-### 1.C Edit the project values — manual, workstation
+### 1.2 Select available deployment ports — workstation
 
-Edit `.template-initialization/values.env`: match the existing repository owner/slug;
-set display name, dotted lowercase Java package, PWA name (≤12 characters),
-maintainer/account identity, two unused hostnames, four selected ports and the
-protected DNS credential-file path. Keep credentials themselves out of this file.
+After editing values, use existing attested SSH/root access to check listeners
+and reservations and save four free ports. Skip for local-only setup.
+
+```bash
+python3 -B docs/template-initialization/scripts/1_2_select_deployment_ports.py
+```
 
 ## 2. Prepare your workstation
 
