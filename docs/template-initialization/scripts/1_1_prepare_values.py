@@ -23,7 +23,8 @@ def main():
     info = path.parent.lstat()
     if path.parent.is_symlink() or info.st_uid != os.getuid() or info.st_mode & 0o777 != 0o700:
         raise InitError('Values directory must be owned by you with mode0700.')
-    with path.open('x', encoding='utf-8', opener=lambda filename, flags: os.open(filename, flags, 0o600)) as stream:
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, 'w', encoding='utf-8') as stream:
         stream.write((ROOT / 'docs/template-initialization/.env.example').read_text())
     print(f'Created {path}. Edit the nonsecret values, then validate them; never source this file.')
 
