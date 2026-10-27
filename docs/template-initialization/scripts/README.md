@@ -84,3 +84,8 @@ observed `--expected-config-sha256` remains available for operator reconciliatio
 Step 7.1 checks protected backend env identity/password bounds and local database
 binding ownership automatically without printing secrets or resetting volumes.
 An existing same-checkout Compose binding is accepted; step 8.1 checks real auth.
+
+Steps 15.3/17.2 automatically identify a unique run from the bounded recorded
+dispatch window and exact source/workflow/actor identity, then persist its ID and
+attempt before waiting. `--run-id` remains available for ambiguous/older intents;
+`--reconcile-only` never dispatches or waits for completion.

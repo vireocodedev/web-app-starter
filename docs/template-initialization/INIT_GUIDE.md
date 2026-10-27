@@ -899,13 +899,15 @@ Once both names are clear, dispatch from your **workstation**:
 python3 -B docs/template-initialization/scripts/15_2_dispatch_staging.py
 ```
 
-Choose the actual run matching source SHA, branch, actor and dispatch time;
-newest does not necessarily mean yours. Pass the exact observed ID, inspect and wait:
+The watch step identifies the unique run matching the recorded repository, source
+SHA, branch, actor, workflow and bounded dispatch time automatically. It records
+the exact run/attempt before watching. Multiple matches stop for inspection;
+`--run-id ACTUAL_RUN_ID` remains available for deliberate reconciliation.
 
 ### 15.3 Watch the exact staging run
 
 ```bash
-python3 -B docs/template-initialization/scripts/15_3_watch_staging.py --run-id ACTUAL_RUN_ID
+python3 -B docs/template-initialization/scripts/15_3_watch_staging.py
 ```
 
 The workflow verifies both apps, builds/smoke-tests the pair, publishes private
@@ -929,7 +931,7 @@ active state before retrying. A mutation may have completed despite a timeout;
 never restore a database/edit active pointers merely to make a workflow green.
 The dispatch script records its intent before contacting GitHub and blocks a
 second dispatch while that outcome is unresolved. Use step 15.3 with
-`--run-id ACTUAL_RUN_ID --reconcile-only` to record the exact run's current state
+`--reconcile-only` to identify and record the exact run's current state
 without waiting or dispatching again. Only an explicitly reconciled, completed
 unsuccessful run permits a deliberate new dispatch; successful runs remain recorded.
 Use the [release failure procedure](../../infrastructure/release/README.md#failure-and-recovery)
@@ -980,17 +982,20 @@ source SHA from step 15 before dispatching:
 python3 -B docs/template-initialization/scripts/17_1_promote_production.py
 ```
 
-Select the matching run ID, inspect and wait:
+The watch step selects the exact production run automatically using the same
+source-bound dispatch identity and ambiguity guards as staging.
 
 ### 17.2 Watch and verify the exact production run
 
 ```bash
-python3 -B docs/template-initialization/scripts/17_2_watch_production.py --run-id ACTUAL_RUN_ID
+python3 -B docs/template-initialization/scripts/17_2_watch_production.py
 ```
 
 Production uses the same dispatch-intent protection as staging. After a lost
-response, use step 17.2 with `--run-id ACTUAL_RUN_ID --reconcile-only` to inspect
+response, use step 17.2 with `--reconcile-only` to identify, inspect
 and record the original run before deciding whether another dispatch is allowed.
+For ambiguous or older intents without a bounded window, inspect the exact run
+and add `--run-id ACTUAL_RUN_ID`; never redispatch an uncertain request.
 
 Production promotes the exact staging frontend/backend digests without rebuilding,
 requires its durable host receipt, and takes a verified backup before backend

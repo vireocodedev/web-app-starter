@@ -2,7 +2,7 @@
 
 Importing this module performs no provider, host or repository operation.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import os
@@ -14,6 +14,7 @@ import stat
 import subprocess
 import sys
 import time
+from urllib.parse import urlencode
 
 from _shared import InitError, load_context, parser, read_state, require_consumer, run, update_state
 
@@ -528,8 +529,9 @@ def begin_dispatch(ctx, environment):
         raise InitError('Inspect the invalid dispatch history before continuing.')
     if previous:
         history = [*history, previous]
+    started = datetime.now(timezone.utc).replace(microsecond=0)
     intent = dict(dispatch_identity(ctx, environment, state), state='unresolved',
-                  created_after=datetime.now(timezone.utc).replace(microsecond=0).isoformat())
+                  created_after=started.isoformat(), created_before=(started + timedelta(minutes=5)).isoformat())
     update_state(ctx, **{environment + '_dispatch_intent': intent,
                          environment + '_dispatch_history': history,
                          environment + '_dispatch_after': intent['created_after'],
@@ -575,19 +577,21 @@ def dispatch_staging(args):
     begin_dispatch(ctx, 'staging')
     execute(['gh', 'workflow', 'run', 'deploy-staging.yaml', '--repo', ctx.values['REPOSITORY'],
              '--ref', ctx.values['RELEASE_BRANCH']], display=True)
-    execute(['gh', 'run', 'list', '--repo', ctx.values['REPOSITORY'], '--workflow', 'deploy-staging.yaml', '--limit', '10'], display=True)
-    print('Select the actual matching dispatch run ID for step 15.3; newest is not necessarily yours.')
+    print('Run step 15.3 to identify and watch the unique source-bound staging dispatch automatically.')
 
 
-def observe_run(ctx, environment, run_id, *, completed=False):
+def observe_run(ctx, environment, run_id, *, completed=False, allow_attempt_change=False):
     run_id = positive(run_id, 'workflow run ID')
     observed = gh_json(ctx, '/actions/runs/' + str(run_id))
     state = read_state(ctx)
     intent = recorded_dispatch(ctx, environment, state)
     expected_workflow = state.get(environment + '_workflow_id')
-    created = datetime.fromisoformat(observed.get('created_at', '').replace('Z', '+00:00'))
     try:
+        created = datetime.fromisoformat(observed.get('created_at', '').replace('Z', '+00:00'))
         dispatched = datetime.fromisoformat(intent['created_after'])
+        before = datetime.fromisoformat(intent['created_before']) if 'created_before' in intent else None
+        if created.tzinfo is None or dispatched.tzinfo is None or (before is not None and before.tzinfo is None):
+            raise ValueError('Timezone required')
     except (KeyError, TypeError, ValueError):
         raise InitError('No source-bound dispatch intent exists; inspect the actual workflow before resuming.') from None
     if (observed.get('id') != run_id or observed.get('repository', {}).get('full_name', '').lower() != ctx.values['REPOSITORY'].lower()
@@ -598,12 +602,89 @@ def observe_run(ctx, environment, run_id, *, completed=False):
             or observed.get('workflow_id') != positive(expected_workflow, 'observed workflow ID')
             or observed.get('actor', {}).get('login', '').lower() != ctx.values['MAINTAINER_LOGIN'].lower()
             or intent.get('run_id') not in (None, run_id)
-            or created < dispatched):
+            or created < dispatched or (before is not None and created > before)):
         raise InitError('Run repository/source/branch/actor/workflow/dispatch identity mismatch.')
     if completed and (observed.get('status') != 'completed' or observed.get('conclusion') != 'success'):
         raise InitError('The complete exact workflow run has not succeeded.')
     positive(observed.get('run_attempt'), 'workflow attempt')
+    if (not allow_attempt_change and intent.get('run_id') is not None
+            and observed['run_attempt'] != intent.get('run_attempt')):
+        raise InitError('Recorded workflow attempt changed; inspect it and explicitly select --run-id to acknowledge the new attempt.')
     return observed
+
+
+def matching_dispatch_runs(ctx, environment, intent):
+    try:
+        lower = datetime.fromisoformat(intent['created_after'])
+        upper = datetime.fromisoformat(intent['created_before'])
+        if lower.tzinfo is None or upper.tzinfo is None or not 0 < (upper - lower).total_seconds() <= 300:
+            raise ValueError('Invalid dispatch window')
+    except (KeyError, TypeError, ValueError):
+        raise InitError('This older dispatch has no bounded selection window. Inspect its exact run and supply --run-id; do not redispatch.') from None
+    query = {'event': 'workflow_dispatch', 'head_sha': intent['source_sha'], 'branch': intent['branch'],
+             'actor': intent['actor'], 'created': lower.isoformat() + '..' + upper.isoformat(), 'per_page': 100}
+    matches = []
+    seen = set()
+    inventory_total = None
+    for page in range(1, 11):
+        response = gh_json(ctx, '/actions/workflows/' + str(intent['workflow_id']) + '/runs?'
+                           + urlencode(dict(query, page=page)))
+        rows, total = response.get('workflow_runs'), response.get('total_count')
+        if (not isinstance(rows, list) or type(total) is not int or not 0 <= total < 1000
+                or len(rows) > 100 or (not rows and total > len(seen))):
+            raise InitError('Workflow inventory is incomplete or exceeds the bounded selection limit; inspect exact runs before retrying.')
+        if inventory_total is None:
+            inventory_total = total
+        elif total != inventory_total:
+            raise InitError('Workflow inventory changed during pagination; retry the read-only watch step.')
+        for row in rows:
+            run_id = positive(row.get('id'), 'workflow run ID')
+            if run_id in seen:
+                raise InitError('Workflow inventory changed during pagination; retry the read-only watch step.')
+            seen.add(run_id)
+            try:
+                created = datetime.fromisoformat(row.get('created_at', '').replace('Z', '+00:00'))
+            except (TypeError, ValueError):
+                raise InitError('Workflow inventory contains an invalid creation time.') from None
+            if (created.tzinfo is not None and lower <= created <= upper
+                    and row.get('repository', {}).get('full_name', '').lower() == intent['repository']
+                    and row.get('head_sha') == intent['source_sha'] and row.get('head_branch') == intent['branch']
+                    and row.get('event') == 'workflow_dispatch'
+                    and row.get('path') == '.github/workflows/deploy-' + environment + '.yaml'
+                    and row.get('workflow_id') == intent['workflow_id']
+                    and row.get('actor', {}).get('login', '').lower() == intent['actor']):
+                matches.append(run_id)
+        if len(rows) < 100:
+            if total != len(seen):
+                raise InitError('Workflow inventory changed or was truncated; retry the read-only watch step.')
+            return matches
+    raise InitError('Workflow inventory exceeded bounded pagination; inspect exact runs before retrying.')
+
+
+def select_dispatch_run(ctx, environment, explicit=None):
+    intent = recorded_dispatch(ctx, environment, read_state(ctx))
+    if explicit is not None:
+        observed = observe_run(ctx, environment, explicit, allow_attempt_change=True)
+    elif intent.get('run_id') is not None:
+        observed = observe_run(ctx, environment, positive(intent['run_id'], 'recorded workflow run ID'))
+        if observed['run_attempt'] != intent.get('run_attempt'):
+            raise InitError('Recorded workflow attempt changed; inspect it and explicitly select --run-id to acknowledge the new attempt.')
+    else:
+        deadline = time.monotonic() + 300
+        while True:
+            matching = matching_dispatch_runs(ctx, environment, intent)
+            if len(matching) > 1:
+                raise InitError('Multiple runs match this dispatch intent; inspect them and supply the exact --run-id. No run was selected.')
+            if matching:
+                observed = observe_run(ctx, environment, matching[0])
+                break
+            if time.monotonic() >= deadline:
+                raise InitError('No matching dispatch run appeared within five minutes. Inspect Actions and retry this read-only step; do not redispatch.')
+            print('Waiting for the source-bound dispatch run to appear (up to five minutes)...', flush=True)
+            time.sleep(10)
+    record_dispatch_observation(ctx, environment, observed)
+    print('Selected exact ' + environment + ' run/attempt: ' + str(observed['id']) + '/' + str(observed['run_attempt']))
+    return observed['id']
 
 
 def watch_release(ctx, environment, run_id):
@@ -622,15 +703,16 @@ def watch_release(ctx, environment, run_id):
 
 def watch_staging(args):
     ctx = context(args, consumer=True)
+    run_id = select_dispatch_run(ctx, 'staging', args.run_id)
     if args.reconcile_only:
-        reconcile_dispatch(ctx, 'staging', args.run_id)
+        reconcile_dispatch(ctx, 'staging', run_id)
         return
-    observed = watch_release(ctx, 'staging', args.run_id)
+    observed = watch_release(ctx, 'staging', run_id)
     # Use the canonical bounded artifact verifier; never trust arbitrary zip members.
     sys.path.insert(0, str(ctx.root / 'infrastructure/release'))
     from protocol import GitHub, decode, pair
     token = execute(['gh', 'auth', 'token'])
-    raw = GitHub(token).artifact(ctx.values['REPOSITORY'], args.run_id,
+    raw = GitHub(token).artifact(ctx.values['REPOSITORY'], run_id,
                                 'release-pair-' + str(observed['run_attempt']), 'release-pair.json')
     accepted = pair(decode(raw), ctx.values['REPOSITORY'], observed['head_sha'])
     update_state(ctx, staging_pair=accepted)
@@ -666,15 +748,16 @@ def promote_production(args):
     begin_dispatch(ctx, 'production')
     execute(['gh', 'workflow', 'run', 'deploy-production.yaml', '--repo', ctx.values['REPOSITORY'],
              '--ref', ctx.values['RELEASE_BRANCH'], '-f', 'staging_run_id=' + str(run_id)], display=True)
-    execute(['gh', 'run', 'list', '--repo', ctx.values['REPOSITORY'], '--workflow', 'deploy-production.yaml', '--limit', '10'], display=True)
+    print('Run step 17.2 to identify and watch the unique source-bound production dispatch automatically.')
 
 
 def watch_production(args):
     ctx = context(args, consumer=True)
+    run_id = select_dispatch_run(ctx, 'production', args.run_id)
     if args.reconcile_only:
-        reconcile_dispatch(ctx, 'production', args.run_id)
+        reconcile_dispatch(ctx, 'production', run_id)
         return
-    watch_release(ctx, 'production', args.run_id)
+    watch_release(ctx, 'production', run_id)
     public_health(ctx, 'production')
 
 
@@ -780,7 +863,7 @@ def cli(action):
         arguments.add_argument('--absence-confirmed', action='store_true',
                                help='Operator confirmed unresolved names are absent and may be created in organization package inventory.')
     if action in ('watch_staging', 'watch_production'):
-        arguments.add_argument('--run-id', type=int, required=True, help='Actual selected matching workflow run; never inferred from newest.')
+        arguments.add_argument('--run-id', type=int, help='Explicit matching run override; otherwise select the unique recorded dispatch identity, never the newest run.')
         arguments.add_argument('--reconcile-only', action='store_true',
                                help='Read and record the exact matching run after an uncertain dispatch, without dispatching or waiting.')
     if action == 'retrieve_backup':

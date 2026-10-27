@@ -578,18 +578,13 @@ Dispatch the exact selected release source after package checks succeed.
 python3 -B docs/template-initialization/scripts/15_2_dispatch_staging.py
 ```
 
-### 15.B Select the exact staging run — manual
-
-Match source SHA, branch, actor and dispatch time; put its observed run ID below.
-After an uncertain dispatch, inspect/reconcile that run before dispatching again.
-
 ### 15.3 Watch the exact staging run — workstation
 
-Require complete workflow and actual host deployment success; use
-`--reconcile-only` after a lost response to record the selected run without redispatch.
+Automatically select the unique source-bound run and wait for real deployment.
+Ambiguity stops; `--reconcile-only` records an uncertain result without redispatch.
 
 ```bash
-python3 -B docs/template-initialization/scripts/15_3_watch_staging.py --run-id ACTUAL_RUN_ID
+python3 -B docs/template-initialization/scripts/15_3_watch_staging.py
 ```
 
 ### 15.4 Verify staging TLS and health — workstation
@@ -643,17 +638,13 @@ Promote the exact immutable pair without rebuilding.
 python3 -B docs/template-initialization/scripts/17_1_promote_production.py
 ```
 
-### 17.B Select the exact production run — manual
-
-Match source SHA, branch, actor and dispatch time; put its observed run ID below.
-
 ### 17.2 Watch and verify production — workstation
 
-Wait for actual promotion success; use `--reconcile-only` after a lost response
-before considering another dispatch.
+Automatically select the unique source-bound production run and verify success.
+Ambiguity stops; use `--reconcile-only` to inspect an uncertain dispatch.
 
 ```bash
-python3 -B docs/template-initialization/scripts/17_2_watch_production.py --run-id ACTUAL_RUN_ID
+python3 -B docs/template-initialization/scripts/17_2_watch_production.py
 ```
 
 ### 17.C Transfer production observations — manual
