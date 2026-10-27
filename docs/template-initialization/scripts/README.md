@@ -98,3 +98,8 @@ Initial step 11.1 upload first grants/read-backs existing shared CI App access
 for the verified consumer only; completed retries preserve identical state.
 Return-progress performs no App mutation. Step 2.3 checks the required read:user
 scope and uses `--login` for explicit interactive authorization when missing.
+
+Step 18.5 verifies protected installed source/configuration and the effective
+production timer/service, then records active/enabled state, next firing,
+persistence and the reviewed hardcoded 30-day retention policy. Restore/review
+gates remain required; the first actual scheduled execution stays pending.

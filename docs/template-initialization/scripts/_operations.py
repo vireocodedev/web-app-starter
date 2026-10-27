@@ -847,10 +847,21 @@ def enable_backup_schedule(args):
             or not state.get('restored_backup_sha256')
             or state.get('restored_backup_sha256') != state.get('retrieved_backup_sha256')):
         raise InitError('Require retrieved-copy restore evidence and the deliberate same-server risk/schedule decision first.')
-    unit = 'web-app-backup-' + ctx.values['PROJECT_SLUG'] + '.timer'
+    from _backup_schedule import installed_policy, inspect_units
+    source = protected_source(ctx.values['RELEASE_SOURCE'])
+    policy = installed_policy(ctx, source, state, execute, protected_file_digest)
+    unit = inspect_units(ctx, execute, protected_file_digest)['timer']
     execute(['systemctl', 'enable', '--now', unit], display=True)
-    execute(['systemctl', 'list-timers', unit, '--no-pager'], display=True)
-    print('Inspect 03:00 Europe/Zagreb, persistence and 30-day retention. A future scheduled execution is still pending.')
+    # Recheck source/configuration after activation and record only immediate
+    # observed policy/state, never a future scheduled execution result.
+    if installed_policy(ctx, source, state, execute, protected_file_digest) != policy:
+        raise InitError('Backup installation changed during activation; inspect the actual timer and source.')
+    observed = inspect_units(ctx, execute, protected_file_digest, active=True)
+    evidence = dict(policy, **observed, checked_at=datetime.now(timezone.utc).isoformat())
+    update_state(ctx, backup_schedule=evidence)
+    print('Verified daily 03:00 Europe/Zagreb, persistence, reviewed 30-day production retention and unscheduled staging.')
+    print('Next observed timer firing: ' + observed['next_fire'])
+    print('A future scheduled execution is still pending and must be observed separately.')
 
 
 def cli(action):

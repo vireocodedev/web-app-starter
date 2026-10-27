@@ -1082,9 +1082,12 @@ decision, **operator host**:
 python3 -B docs/template-initialization/scripts/18_5_enable_backup_schedule.py --reviewed
 ```
 
-Confirm **03:00 Europe/Zagreb**, persistent scheduling and 30-day production
-retention. Staging stays unscheduled. Record the next firing and observe its
-actual result later; do not claim a future scheduled run passed. Changing the
+The script verifies reviewed installed source/configuration, the effective
+**03:00 Europe/Zagreb** daily timer, persistence, exact production backup service
+and 30-day retention implementation, with staging unscheduled. It enables the
+timer, reads back active/enabled state and the next firing, and records those
+immediate observations. Observe the first actual scheduled result later; that
+future execution remains explicitly pending. Changing the
 time/timezone/destination requires reviewed operator work, not an installer flag.
 Same-server backups do not survive server loss.
 

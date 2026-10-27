@@ -714,16 +714,17 @@ Arrange reviewed changes if these defaults are insufficient.
 
 ### 18.5 Enable reviewed backup schedule — operator host, RELEASE_SOURCE checkout
 
-Enable only after the preceding recovery/risk review.
+After recovery/risk review, verify installed source, schedule, persistence and
+30-day retention; enable and record active state plus next firing automatically.
 
 ```bash
 python3 -B docs/template-initialization/scripts/18_5_enable_backup_schedule.py --env /root/PROJECT_SLUG-initialization/values.env --reviewed
 ```
 
-### 18.D Record timer state and observe its first result — manual
+### 18.D Observe the first scheduled result — manual, later
 
-Confirm persistent scheduling, retention and the next firing. Record the first
-scheduled outcome when it actually occurs; leave that observation pending until then.
+Record the first actual scheduled outcome after the printed next firing. Leave
+that future execution pending until it occurs; immediate timer checks are automatic.
 
 ## 19. Record the result
 
