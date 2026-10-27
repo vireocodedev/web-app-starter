@@ -497,51 +497,92 @@ The existing shared-pool operator performs this at an agreed idle maintenance
 point. Registration affects the shared controller; coordinate other consumers.
 Do not install a new pool or app-specific permanent runner.
 
-In the organization's existing GitHub App installation, add this exact repository
-to **selected repositories**, preserving existing selections. The App retains
-Actions read, Administration write and automatic Metadata read. Its private key
-stays on the controller host, never in this checkout or Actions secrets.
+### 11.1 Verify GitHub App access and transfer the initialization state
 
-**Operator host:** use the canonical reviewed root-controlled CI source checkout,
-not a consumer fork. `CI_SOURCE` comes from the verified values file. On the
-operator host, place the same mode `0600` `values.env`, `verification.json` and
-`progress.json` files in a root-only directory; use `--env` to name that copy.
-Preserve the env bytes so its hash still matches. Use root ownership and mode `0600` for all three files, under a mode `0700` directory. Keep private credentials in
-existing protected stores, and independently inspect the actual host before any
-operator mutation:
+On your **workstation**, complete this check in GitHub for each new consumer,
+before stopping the shared controller:
 
-### 11.1 Prepare this consumer registration
+- [ ] Open the existing [VireoCode Shared CI installation](https://github.com/organizations/vireocodedev/settings/installations/171464279).
+- [ ] Under **Repository access**, keep **Only select repositories** and confirm
+  that the exact consumer repository (`GH_ORG/PROJECT_SLUG` from `values.env`)
+  is selected. If it is missing, add it and **Save**, preserving all existing
+  repository selections. If it is already selected, verify it and continue.
+- [ ] Confirm the App retains **Actions: Read-only**, **Administration: Read and
+  write**, and automatic **Metadata: Read-only**. The
+  [GitHub App reference](github-ci-app.md#register-and-verify-a-consumer) owns the
+  installation requirements. Its private key stays on the controller host,
+  never in this checkout or Actions secrets.
+
+Missing repository access blocks registration even if the state transfer succeeds.
+
+Then, from your **workstation's consumer repository root**:
 
 ```bash
-python3 -B docs/template-initialization/scripts/11_1_prepare_registration.py
+python3 -B docs/template-initialization/scripts/11_1_transfer_state.py
+```
+
+This reads `PROJECT_SLUG` and `OPERATOR_SSH` from the verified values, then copies
+only `values.env`, `verification.json` and `progress.json` to
+`/root/PROJECT_SLUG-initialization/` on the host. It preserves the exact bytes and
+creates root-owned `0600` files under a `0700` directory. Referenced credential
+files are not copied. The host's canonical reviewed `CI_SOURCE` checkout must
+include this transfer helper and match the receipt's verifier code. Use the
+existing verified SSH host key; resolve an SSH failure before continuing.
+
+An identical upload retry changes nothing. A differing, incomplete or unsafe
+existing destination stops the transfer for inspection; preserve its observations
+and reconcile them before retrying. This upload is the initial section 11 handoff,
+not a way to overwrite newer host progress during later setup.
+
+The command prints all four operator commands for steps 11.2–11.5 with your exact
+host `--env` path. Copy those printed commands; supply the observed configuration
+hash for step 11.4 after inspecting step 11.3. The examples below use
+`PROJECT_SLUG` as a placeholder for your actual slug. On the **operator host**,
+run from the canonical reviewed root-controlled `CI_SOURCE` checkout,
+not a consumer fork. Keep private credentials in existing protected stores, and
+independently inspect the actual host before any operator mutation.
+
+### 11.2 Prepare this consumer registration
+
+```bash
+python3 -B docs/template-initialization/scripts/11_2_prepare_registration.py --env /root/PROJECT_SLUG-initialization/values.env
 ```
 
 Inspect an existing registration file instead of overwriting it. Confirm current
 installed-source/boot/isolation prerequisites, then:
 
-### 11.2 Stop and inspect the shared controller
+### 11.3 Stop and inspect the shared controller
 
 ```bash
-python3 -B docs/template-initialization/scripts/11_2_stop_and_inspect_ci.py
+python3 -B docs/template-initialization/scripts/11_3_stop_and_inspect_ci.py --env /root/PROJECT_SLUG-initialization/values.env
 ```
 
 Inspect service/worker/job/recovery state. Registration requires stopped,
-disabled, idle execution, no jobs and no residual boundary mounts. Supply the reported current `configuration_sha256` as the argument below:
+disabled, idle execution, no jobs and no residual boundary mounts. Supply the
+reported current `configuration_sha256` as the argument below:
 
-### 11.3 Register and validate the consumer
+### 11.4 Register and validate the consumer
+
+**Allow several minutes for this command.** After registration it runs full
+isolation and Docker validation for every configured worker slot, followed by
+cross-slot checks. The terminal can stay quiet while these checks run. Keep it
+open and wait for successful completion before activation. Ctrl+C interrupts validation and can leave registration
+committed while completion evidence is still missing. After an interruption,
+inspect the existing registration and follow the [CI operator guide](../../infrastructure/ci/README.md#register-a-private-monorepo)
+to resume validation.
 
 ```bash
-python3 -B docs/template-initialization/scripts/11_3_register_and_validate_ci.py --expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256
+python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env --expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256
 ```
 
 Registration preserves other projects and leaves the controller disabled.
 Validation must establish a fresh source/configuration/boot-bound receipt. After
 operator review/approval:
 
-### 11.4 Activate the reviewed CI controller
+### 11.5 Activate the reviewed CI controller
 
 ```bash
-python3 -B docs/template-initialization/scripts/11_4_activate_ci.py --reviewed
+python3 -B docs/template-initialization/scripts/11_5_activate_ci.py --env /root/PROJECT_SLUG-initialization/values.env --reviewed
 ```
 
 On interrupted registration preserve its recovery ledger and use the CI owner's
@@ -550,10 +591,15 @@ deletion. Required transport/isolation repairs must already be installed; upgrad
 are separate reviewed work. The [CI operator guide](../../infrastructure/ci/README.md#register-a-private-monorepo)
 owns detailed host acceptance and exceptional recovery.
 
-Return the operator's updated `progress.json` to the workstation's protected
-values directory before continuing; preserve the matching env/receipt identity.
-When switching contexts again later, copy the current observations in the same
-way. Never copy provider tokens, App keys, provisioning credentials or dumps into
+Return to your **workstation** and run
+`python3 -B docs/template-initialization/scripts/11_1_transfer_state.py --return-progress`
+before continuing. Use the same local `--env` argument if you selected a custom
+values location in step 11.1. This retrieves only the operator's updated
+`progress.json`, verifies the matching env/receipt identity, and stops if any
+local observations would be lost or changed. It preserves the local values and
+verification files. When switching contexts again later, transfer the current
+observations deliberately; the initial upload refuses differing host files.
+Never copy provider tokens, App keys, provisioning credentials or dumps into
 this state file.
 
 **Done:** exact consumer registration and current host validation pass, and the

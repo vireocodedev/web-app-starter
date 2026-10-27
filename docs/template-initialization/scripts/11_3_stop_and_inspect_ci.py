@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialization 11 2 stop_and_inspect_ci; run explicitly from the guide."""
+"""Initialization 11 3 stop_and_inspect_ci; run explicitly from the guide."""
 from _operations import cli
 
 if __name__ == '__main__':
