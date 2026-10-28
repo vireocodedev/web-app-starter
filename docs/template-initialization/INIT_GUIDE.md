@@ -1138,6 +1138,70 @@ The report collects source-bound observations without declaring unobserved
 human acceptance or future scheduled runs complete. Maintain the actual evidence
 and remaining limitations below.
 
+### 19.2 Validate and record full completion
+
+Plain `result.json` is a partial observation report. It cannot authorize the
+project-deletion workflow. Full completion requires the actual source-bound
+staging and production controller receipts, provisioning receipts, HTTPS checks,
+restored-copy checksum and active production backup schedule. Reconcile the final
+operator progress into the workstation copy first, preserving its existing local
+observations and protected modes.
+
+Create this nonsecret acceptance template beside the protected values file. The
+command refuses to replace an existing file. Its unverified defaults deliberately
+cannot pass completion. These fields constitute schema version 1; do not add
+secrets, raw logs, cookie/CSRF values or provisioning credentials.
+
+```bash
+python3 -B docs/template-initialization/scripts/19_2_finalize_initialization.py --prepare-acceptance
+```
+
+Review both environments' actual protected controller
+`/var/lib/web-app-deploy/PROJECT_SLUG/requests/RUN_ID-RUN_ATTEMPT.json` records.
+Project only `state`, `environment`, `run_id`, `run_attempt` and `pair` into
+`deployment_receipt`; each must be `success` and match that environment's recorded
+run and the exact same immutable staging pair. Production uses its request journal,
+not the staging-only `receipts` directory. From each successful
+`/var/lib/web-app-deploy/PROJECT_SLUG/ENVIRONMENT/provision-*.json` record, project
+only `state` and `backend` into `provisioning_receipt`. A successful section 16/17
+provisioning record proves both initial creation and its matching repeat.
+
+Set each HTTPS flag to `true` only after its real check at that environment origin
+and recorded run/attempt. Record the actual observation time with timezone.
+`login`, `session_persistence` and `logout` represent real account behavior;
+`secure_cookie`, `http_only_cookie` and `fresh_csrf` represent the actual session
+cookie flags and fresh CSRF handling. Never copy the underlying values.
+
+For `manual`, use `local_application.status: passed`; `ide.status: passed` or
+`not-applicable`; and `artwork.status: accepted` or `deferred`. Every entry requires
+an explanatory `evidence` string of 1–800 characters. State the reason for an
+exception or deferral. Earlier local/IDE observations can be carried forward only
+with their actual scope stated; this does not claim they were rerun at a later
+release SHA. An unresolved local application check cannot pass completion.
+Keep `acceptance.json` mode `0600` within its existing `0700` private directory.
+
+After completing the checklist from actual evidence, run this on the workstation.
+Use the absolute path printed by preparation if the private directory differs:
+
+```bash
+python3 -B docs/template-initialization/scripts/19_2_finalize_initialization.py --acceptance-file "$PWD/.template-initialization/acceptance.json"
+```
+
+The validated `result.completion` marker records schema version 1, state
+`complete`, the exact source SHA, the SHA-256 of the current **progress file
+bytes**, and the bounded acceptance input. Missing checks, mixed image pairs,
+wrong runs, mismatched restoration or a different backup schedule stop without
+replacing the prior result. The scheduled policy must be daily 03:00
+Europe/Zagreb, persistent, with 30-day production retention and staging
+unscheduled. A future scheduled execution may remain explicitly pending.
+
+Later progress changes invalidate completion for deletion; deliberately rerun
+19.2 after reconciling and reviewing those changes. Completion is an explicit
+operator evidence assertion checked against its archived inputs, not a signature
+or proof of business acceptance. Archive the protected values, verification,
+progress and validated result through the [project-deletion workflow](../project-deletion/DELETE_GUIDE.md)
+before removing a project.
+
 ## Consumer-specific setup
 
 This template has no consumer-specific initialization evidence. In your consumer,

@@ -24,7 +24,7 @@ Historical acceptance does not certify this modified source.
 ## Interface and ownership
 
 The public lifecycle interface is [manage.py](manage.py): `inspect`, `install`,
-`prepare-app-auth`, `register`, `recover-registration`, and an explicitly
+`prepare-app-auth`, `register`, `unregister`, `recover-registration`, and an explicitly
 unsupported general `upgrade`, the narrow `repair-postgres-readiness-v1`,
 plus the versioned `migrate-pool`,
 `rollback-pool`, `repair-pool-dispatch-v1` and `rollback-pool-dispatch-v1` operations
@@ -578,6 +578,63 @@ After a reboot or configuration/isolation-source change, stop and disable the
 controller and establish a fresh full receipt before activation. `upgrade`
 currently performs no mutation and exits `2`; use a separately reviewed migration
 instead of editing a live installation in place.
+
+## Remove one consumer registration
+
+Project deletion uses the guarded `unregister` operation before removing its
+GitHub repository. Prepare a root-owned mode `0600` JSON file with the exact
+registered `slug` and `repository`, using the same schema as registration.
+Use [deletion step 5.1](../../docs/project-deletion/DELETE_GUIDE.md#51-remove-only-this-consumer-and-revalidate-the-shared-pool)
+for the mechanical admission barrier, drain, guarded unregister and validation.
+An idle observation alone cannot close admission. The barrier pins the reviewed
+dispatcher, waits for busy workers, invalidates admission receipts while the idle
+parent is frozen, then stops and disables that verified parent. A protected
+`frozen-recovery-required` outcome requires reconciliation before retry.
+
+The low-level API below requires admission already closed and the controller
+stopped and disabled. Retain the original protected configuration SHA-256 and
+use a new journal path in a root-owned mode `0700` directory:
+
+```sh
+python3 -B infrastructure/ci/manage.py inspect
+python3 -B infrastructure/ci/manage.py unregister \
+  --project /root/project-deletion/project.json \
+  --expected-config-sha256 ORIGINAL_CONFIG_SHA256 \
+  --journal /root/project-deletion/ci-unregister.json
+```
+
+The root-controlled source, lifecycle lock, stopped/disabled controller, every
+idle worker, empty pool reservations and absence of pending registration proof
+are required. The operation removes only the exact slug/repository pair,
+preserves every other project and setting, and makes no GitHub requests. It
+invalidates and fsyncs every slot and pool validation receipt before atomically
+publishing the changed protected configuration. It never enables the controller
+or changes the shared App, worker isolation, units or limits.
+
+The root-only journal records the exact removed identity, predecessor and
+candidate configuration hashes, predecessor configuration snapshot and
+`started`/`verified` phase. Durable intent precedes mutation. Keep this journal
+outside resources that later deletion steps remove. After interruption, repeat
+the identical command with the **original** hash and same journal: it recognizes
+only that exact predecessor or its own exact candidate configuration, including
+an atomic replacement whose acknowledgement was lost. Unrelated config drift,
+changed identity and reuse for another removal are rejected; do not delete or
+edit the journal to force a retry.
+
+For remaining consumers, run full installed-source validation and inspect the
+fresh receipt before explicitly activating the shared controller:
+
+```sh
+python3 -B /usr/local/lib/web-app-ci/controller.py validate
+systemctl enable --now web-app-ci-controller.service
+```
+
+When `empty_pool` is true, there are no remaining consumers. Leave the controller
+disabled with the empty configuration and invalid receipts; normal validation
+and admission require a registered project. This does not authorize deleting the
+shared runner foundation or App. Revalidate under the registration workflow
+before any later activation. Privileged lifecycle changes still require
+independent review and source-bound disposable-host validation before use.
 
 ## Interrupted-job recovery
 

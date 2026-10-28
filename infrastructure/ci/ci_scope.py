@@ -8,10 +8,12 @@ import subprocess
 
 def scope(paths, force=False):
     shared = force or any(path.startswith(('.github/', '.vscode/', 'infrastructure/release/',
-                                          'docs/template-initialization/scripts/'))
+                                          'docs/template-initialization/scripts/',
+                                          'docs/project-deletion/scripts/'))
                           or path in ('infrastructure/ci/ci_scope.py', 'infrastructure/ci/test_shards.py',
                                       'infrastructure/ci/test-timings.json',
                                       'docs/template-initialization/.env.example',
+                                      'docs/project-deletion/.env.example',
                                       'infrastructure/ci/tests/test_ci_shards.py') for path in paths)
     return {
         'backend': shared or any(path.startswith('backend/') for path in paths),

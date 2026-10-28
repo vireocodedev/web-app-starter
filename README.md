@@ -29,6 +29,14 @@ A clean fresh-consumer rehearsal is still required to prove the complete
 experience without follow-up intervention. Historical template deployment
 evidence below does not prove initialization of a new consumer.
 
+## Remove an initialized project
+
+Follow the [project deletion guide](docs/project-deletion/DELETE_GUIDE.md), or its
+[compact command guide](docs/project-deletion/DELETE_GUIDE_COMPACT.md), to remove a
+consumer from the operator host and GitHub. The workflow imports its initialization
+evidence, verifies the exact resource identities, and records a resumable deletion
+plan. It preserves the shared CI pool, GitHub App, DNS zone and other projects.
+
 ## Project lifecycle
 
 | Stage                                | Completion evidence                                                                         | Procedure owner                                                                                                                 |
