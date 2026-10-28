@@ -160,7 +160,11 @@ subset of the original recorded inodes and never a replacement or new file.
 python3 -B docs/project-deletion/scripts/5_1_unregister_ci.py --env "$HOME/.local/share/project-deletion/values.env" --plan-sha256 "$DELETION_PLAN_SHA256"
 ```
 
-Wait for all shared jobs to become idle, then stop/disable the shared controller.
+The script closes admission through the reviewed dispatcher barrier, waits for
+busy workers to finish and stops/disables only the verified idle parent after
+durably invalidating admission receipts. A frozen recovery outcome preserves its
+private journal and requires reconciliation before retry. The original activation
+intent is retained across interruption.
 Invoke canonical `manage.py unregister` under its lifecycle lock with the exact
 observed configuration hash and a protected resume journal. Preserve every other
 project and setting. For a nonempty pool, run full installed validation to create

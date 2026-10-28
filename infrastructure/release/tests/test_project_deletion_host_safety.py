@@ -152,6 +152,22 @@ class MountBoundaryTests(unittest.TestCase):
                     host.docker(value)
 
 
+class TaskArtifactIdentityTests(unittest.TestCase):
+    def extra(self, path):
+        return {'path': path, 'kind': 'task-artifact', 'evidence_sha256': 'a' * 64, 'fingerprint': None}
+
+    def test_reviewed_artifact_accepts_uppercase_created_suffix(self):
+        path = '/root/sample-app-source-upgrade-7XWovUa7'
+        self.assertEqual(host.extra_paths({'slug': 'sample-app'}, [self.extra(path)]), [(path, 0)])
+
+    def test_artifact_rejects_foreign_root_child_dots_and_descendants(self):
+        for path in ('/root/neighbor-app-source-upgrade-7XWovUa7', '/root/sample-application-source',
+                     '/root/sample-app-source.upgrade', '/root/sample-app-source/child',
+                     '/root/sample-app-source/../foreign', '/root/sample-app-source//child'):
+            with self.subTest(path=path), self.assertRaises(host.Error):
+                host.extra_paths({'slug': 'sample-app'}, [self.extra(path)])
+
+
 class CIUnregisterBarrierTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()

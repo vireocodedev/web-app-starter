@@ -168,7 +168,7 @@ def extra_paths(value, extras):
                 or '..' in Path(path).parts or str(Path(path)) != path):
             raise Error('Extra resource identity or reviewed evidence invalid.')
         if kind == 'task-artifact':
-            if not re.fullmatch('/root/' + re.escape(value['slug']) + r'-[a-z0-9_-]+', path):
+            if not re.fullmatch('/root/' + re.escape(value['slug']) + r'-[A-Za-z0-9_-]+', path):
                 raise Error('Task artifact must be an explicitly reviewed project-scoped direct root child.')
             owner = 0
         elif kind == 'orphan-ssh-key':

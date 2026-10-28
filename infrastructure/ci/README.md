@@ -583,13 +583,19 @@ instead of editing a live installation in place.
 
 Project deletion uses the guarded `unregister` operation before removing its
 GitHub repository. Prepare a root-owned mode `0600` JSON file with the exact
-registered `slug` and `repository`, using the same schema as registration. Drain
-all CI jobs, then stop and disable the controller. Retain the original protected
-configuration SHA-256 and use a new journal path in a root-owned mode `0700`
-directory:
+registered `slug` and `repository`, using the same schema as registration.
+Use [deletion step 5.1](../../docs/project-deletion/DELETE_GUIDE.md#51-remove-only-this-consumer-and-revalidate-the-shared-pool)
+for the mechanical admission barrier, drain, guarded unregister and validation.
+An idle observation alone cannot close admission. The barrier pins the reviewed
+dispatcher, waits for busy workers, invalidates admission receipts while the idle
+parent is frozen, then stops and disables that verified parent. A protected
+`frozen-recovery-required` outcome requires reconciliation before retry.
+
+The low-level API below requires admission already closed and the controller
+stopped and disabled. Retain the original protected configuration SHA-256 and
+use a new journal path in a root-owned mode `0700` directory:
 
 ```sh
-systemctl disable --now web-app-ci-controller.service
 python3 -B infrastructure/ci/manage.py inspect
 python3 -B infrastructure/ci/manage.py unregister \
   --project /root/project-deletion/project.json \
