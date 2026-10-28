@@ -253,15 +253,16 @@ class InitializationEnvironmentTests(unittest.TestCase):
             shared.verify_environment(self.ctx,'full','resume')
 
     def test_failed_full_preflight_leaves_no_receipt_or_new_repository_binding(self):
-        self.receipt()
-        with patch.object(shared,'require_consumer'), patch.object(shared,'verify_tools'), \
-                patch.object(shared,'github_api',side_effect=self.github), \
-                patch.object(shared,'verify_ssh',return_value={'verified':True}), \
-                patch.object(shared,'verify_dns',side_effect=shared.InitError('DNS failure')):
-            with self.assertRaises(shared.InitError):
-                shared.verify_environment(self.ctx,'full','new')
-        self.assertFalse((self.directory/'verification.json').exists())
-        self.assertFalse((self.directory/'progress.json').exists())
+        for prepare in (False, True):
+            self.receipt()
+            with patch.object(shared,'require_consumer'), patch.object(shared,'verify_tools'), \
+                    patch.object(shared,'github_api',side_effect=self.github), \
+                    patch.object(shared,'verify_ssh',return_value={'verified':True}), \
+                    patch.object(shared,'verify_dns',side_effect=shared.InitError('DNS failure')):
+                with self.subTest(prepare=prepare), self.assertRaises(shared.InitError):
+                    shared.verify_environment(self.ctx,'full','new', prepare_dns_intake=prepare)
+            self.assertFalse((self.directory/'verification.json').exists())
+            self.assertFalse((self.directory/'progress.json').exists())
 
     def test_every_scope_and_mode_rejects_template_or_wrong_origin_before_probes(self):
         for scope in ('local','full'):
@@ -321,6 +322,135 @@ class InitializationEnvironmentTests(unittest.TestCase):
                 shared.verify_dns(self.ctx,'resume')
             shared.update_state(self.ctx,dns_hostnames=[self.ctx.values['STAGING_HOSTNAME'],self.ctx.values['PRODUCTION_HOSTNAME']])
             shared.verify_dns(self.ctx,'resume')
+
+    def intake_preflight(self, *, mode='new', prepare=True, rrsets=None, query=None):
+        with patch.object(shared, 'require_consumer'), patch.object(shared, 'verify_tools'), \
+                patch.object(shared, 'github_api', side_effect=self.github), \
+                patch.object(shared, 'verify_ssh', return_value={'verified':True}), \
+                patch.object(shared, 'dns_api', side_effect=lambda *a:self.dns_api(*a, rrsets=rrsets)), \
+                patch.object(shared, 'dns_query', side_effect=query or self.dns_query):
+            return shared.verify_environment(self.ctx, 'full', mode, prepare_dns_intake=prepare)
+
+    def matching_dns_records(self):
+        return [{'name':self.ctx.values[key].removesuffix('.vireocode.com'), 'type':'A',
+            'records':[{'value':self.ctx.values['OPERATOR_IPV4']}]} for key in
+            ('STAGING_HOSTNAME', 'PRODUCTION_HOSTNAME')]
+
+    def matching_dns_query(self, name, kind, server=None):
+        if server and kind == 'A' and name in (
+                self.ctx.values['STAGING_HOSTNAME'], self.ctx.values['PRODUCTION_HOSTNAME']):
+            return [(name, 'A', self.ctx.values['OPERATOR_IPV4'])]
+        return self.dns_query(name, kind, server)
+
+    def test_dns_intake_is_atomic_protected_bound_absence_evidence_and_safe_to_repeat(self):
+        self.intake_preflight()
+        progress = shared.read_state(self.ctx)
+        claim = progress['dns_intake']
+        self.assertEqual(claim['repository_id'], 123)
+        self.assertEqual(claim['env_sha256'], shared.env_hash(self.env))
+        self.assertEqual(claim['hostnames'], [self.ctx.values['STAGING_HOSTNAME'], self.ctx.values['PRODUCTION_HOSTNAME']])
+        self.assertEqual(claim['zone_id'], '1423739')
+        self.assertEqual(claim['zone'], 'vireocode.com')
+        self.assertEqual(claim['operator_ipv4'], '46.224.72.162')
+        self.assertEqual(claim['verifier_sha256'], shared.verifier_hash())
+        self.assertTrue(claim['producer'])
+        self.assertLessEqual(claim['observed_at'], time.time())
+        self.assertEqual((self.directory/'progress.json').stat().st_mode & 0o777, 0o600)
+        shared.update_state(self.ctx, source_sha='a'*40)
+        self.intake_preflight()
+        self.assertEqual(shared.read_state(self.ctx)['dns_intake'], claim)
+        self.assertEqual(shared.read_state(self.ctx)['source_sha'], 'a'*40)
+        # A receipt interrupted after the atomic progress write can be regenerated.
+        (self.directory/'verification.json').unlink()
+        self.intake_preflight()
+        self.assertEqual(shared.read_state(self.ctx)['dns_intake'], claim)
+
+    def test_dns_intake_cannot_adopt_existing_records_or_skip_full_new_checks(self):
+        for scope, mode in (('local','new'), ('local','resume'), ('full','resume')):
+            self.receipt()
+            with patch.object(shared, 'verify_tools') as tools:
+                with self.subTest(scope=scope,mode=mode), self.assertRaises(shared.InitError):
+                    shared.verify_environment(self.ctx, scope, mode, prepare_dns_intake=True)
+                tools.assert_not_called()
+            self.assertFalse((self.directory/'verification.json').exists())
+        with self.assertRaises(shared.InitError):
+            self.intake_preflight(rrsets=self.matching_dns_records())
+        self.assertFalse((self.directory/'progress.json').exists())
+        self.assertFalse((self.directory/'verification.json').exists())
+
+    def test_dns_intake_resumes_after_days_and_across_hosts_with_fresh_full_checks(self):
+        original_time = time.time()
+        with patch.object(shared.time, 'time', return_value=original_time):
+            self.intake_preflight()
+        original_claim = shared.read_state(self.ctx)['dns_intake']
+        with patch.object(shared.time, 'time', return_value=original_time + 3*86400), \
+                patch.object(shared.socket, 'gethostname', return_value='another-workstation'):
+            with self.assertRaises(shared.InitError):
+                shared.load_context(self.args)
+            receipt = self.intake_preflight(mode='resume', prepare=False,
+                rrsets=self.matching_dns_records(), query=self.matching_dns_query)
+            self.assertEqual(receipt['verified_at'], original_time + 3*86400)
+            self.assertEqual(shared.load_context(self.args).mode, 'resume')
+            self.assertEqual(shared.read_state(self.ctx)['dns_intake'], original_claim)
+        # New mode never turns historical absence into permission to adopt records.
+        with self.assertRaises(shared.InitError):
+            self.intake_preflight(rrsets=self.matching_dns_records(), query=self.matching_dns_query)
+        self.assertFalse((self.directory/'verification.json').exists())
+        self.assertEqual(shared.read_state(self.ctx)['dns_intake'], original_claim)
+
+    def test_dns_intake_rejects_malformed_foreign_changed_or_future_claims(self):
+        self.intake_preflight()
+        progress = shared.read_state(self.ctx)
+        changes = ({'schema':2}, {'schema':True}, {'repository':'other/project'},
+            {'repository_id':456}, {'repository_id':True}, {'env_sha256':'other'},
+            {'zone_id':'123'}, {'zone':'other.zone'}, {'hostnames':['other.vireocode.com']},
+            {'operator_ipv4':'127.0.0.1'}, {'verifier_sha256':'other'}, {'producer':''},
+            {'producer':'bad\nproducer'}, {'observed_at':time.time()+86400},
+            {'observed_at':True}, {'observed_at':float('nan')}, {'observed_at':float('inf')},
+            {'observed_at':-1}, {'observed_at':None})
+        for changed in changes:
+            shared._write_json(self.directory/'progress.json', progress | {'dns_intake':progress['dns_intake'] | changed})
+            self.receipt()
+            with self.subTest(changed=changed), self.assertRaises(shared.InitError):
+                self.intake_preflight(mode='resume', prepare=False, rrsets=self.matching_dns_records())
+            self.assertFalse((self.directory/'verification.json').exists())
+        for claim in (None, [], {}, {'schema':1}):
+            shared._write_json(self.directory/'progress.json', progress | {'dns_intake':claim})
+            with self.subTest(claim=claim), self.assertRaises(shared.InitError):
+                self.intake_preflight(mode='resume', prepare=False)
+        shared._write_json(self.directory/'progress.json', progress)
+        self.env.write_text(self.text + '\n# changed bytes\n')
+        with self.assertRaises(shared.InitError):
+            self.intake_preflight(mode='resume', prepare=False)
+
+    def test_dns_intake_never_bypasses_fresh_access_resources_or_dns_conflicts(self):
+        self.intake_preflight()
+        original = (self.directory/'progress.json').read_bytes()
+        for probe in ('verify_tools', 'verify_github', 'verify_ssh', 'verify_dns'):
+            self.receipt()
+            with patch.object(shared, 'require_consumer'), patch.object(shared, 'verify_tools'), \
+                    patch.object(shared, 'verify_github', return_value={'repository_id':123}), \
+                    patch.object(shared, 'verify_ssh'), patch.object(shared, 'verify_dns'), \
+                    patch.object(shared, probe, side_effect=shared.InitError('fresh check failed')):
+                with self.subTest(probe=probe), self.assertRaises(shared.InitError):
+                    shared.verify_environment(self.ctx, 'full', 'resume')
+            self.assertFalse((self.directory/'verification.json').exists())
+            self.assertEqual((self.directory/'progress.json').read_bytes(), original)
+        relative = self.ctx.values['STAGING_HOSTNAME'].removesuffix('.vireocode.com')
+        for conflict in ({'name':'*','type':'A','records':[{'value':'46.224.72.162'}]},
+                {'name':relative,'type':'A','records':[{'value':'127.0.0.1'}]},
+                {'name':relative,'type':'AAAA','records':[{'value':'::1'}]},
+                {'name':relative,'type':'CNAME','records':[{'value':'other.example.'}]}):
+            with self.subTest(conflict=conflict), self.assertRaises(shared.InitError):
+                self.intake_preflight(mode='resume', prepare=False, rrsets=[conflict])
+        def wrong_answer(name, kind, server=None):
+            if server and kind == 'A' and name == self.ctx.values['STAGING_HOSTNAME']:
+                return [(name, 'A', '127.0.0.1')]
+            return self.matching_dns_query(name, kind, server)
+        with self.assertRaises(shared.InitError):
+            self.intake_preflight(mode='resume', prepare=False,
+                rrsets=self.matching_dns_records(), query=wrong_answer)
+        self.assertEqual((self.directory/'progress.json').read_bytes(), original)
 
     def test_dns_cname_ancestor_or_subzone_is_not_available(self):
         self.ctx.values['PRODUCTION_HOSTNAME']='app.tools.vireocode.com'

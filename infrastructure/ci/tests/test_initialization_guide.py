@@ -9,6 +9,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest import mock
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[3]
 DIRECTORY = ROOT / 'docs/template-initialization'
@@ -62,6 +63,25 @@ class InitializationGuideTests(unittest.TestCase):
         example = subprocess.run(['git', 'check-ignore', '--quiet', 'docs/template-initialization/.env.example'], cwd=ROOT)
         self.assertEqual(actual.returncode, 0)
         self.assertEqual(example.returncode, 1)
+
+    def test_shipped_skill_and_initialization_entrypoints_have_resolvable_local_links(self):
+        skill = ROOT / '.agents/skills/template-initialization/SKILL.md'
+        self.assertTrue(skill.is_file())
+        ignored = subprocess.run(['git', 'check-ignore', '--quiet', str(skill.relative_to(ROOT))], cwd=ROOT)
+        self.assertEqual(ignored.returncode, 1, 'Fresh consumers must receive the repository skill')
+        documents = [skill, ROOT / 'AGENTS.md', ROOT / 'README.md', DIRECTORY / 'README.md',
+                     DIRECTORY / 'INIT_GUIDE.md', DIRECTORY / 'INIT_GUIDE_COMPACT.md', SCRIPTS / 'README.md']
+        for document in documents:
+            for href in re.findall(r'\[[^\]]+\]\(([^)]+)\)', document.read_text()):
+                url = urlsplit(href)
+                if url.scheme or url.netloc:
+                    continue
+                destination = (document.parent / unquote(url.path)).resolve() if url.path else document
+                self.assertTrue(destination.exists(), f'{document.relative_to(ROOT)}: {href}')
+                if url.fragment and destination.suffix == '.md':
+                    headings = re.findall(r'^#{1,6}\s+(.+)$', destination.read_text(), re.M)
+                    anchors = {re.sub(r'\s+', '-', re.sub(r'[^\w\s-]', '', heading.lower())) for heading in headings}
+                    self.assertIn(unquote(url.fragment), anchors, f'{document.relative_to(ROOT)}: {href}')
 
     def test_result_records_only_explicit_nonsecret_observations(self):
         spec = importlib.util.spec_from_file_location('initialization_result', SCRIPTS / '19_1_record_result.py')

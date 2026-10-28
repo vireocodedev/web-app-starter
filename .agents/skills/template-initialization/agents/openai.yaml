@@ -1,0 +1,3 @@
+interface:
+  display_name: "Template Initialization"
+  short_description: "Prepare and complete a cloned template consumer"

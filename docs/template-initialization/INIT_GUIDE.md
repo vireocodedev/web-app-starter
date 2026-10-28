@@ -64,6 +64,66 @@ initialization requires every applicable step and the completion checklist.
 When resuming, verify the same repository/identity and continue at the first
 unfinished step. Preserve existing environment files, databases and evidence.
 
+## Agent-assisted initialization
+
+The template ships [template-initialization](../../.agents/skills/template-initialization/SKILL.md).
+After creating/cloning/opening the consumer, invoke it with a project name, such
+as `$template-initialization Inventory Portal`. The skill owns name-based
+suggestions and the agreed maintainer/account defaults; this guide owns the
+numbered procedure and its evidence. Inspect the actual consumer origin before
+creating even private inputs; never initialize the canonical template.
+
+The agent-assisted sequence deliberately moves DNS preparation and acceptance
+ahead of personalization:
+
+1. Run 1.1, fill valid project/account values, then run 1.2. The origin repository
+   determines the slug. Preserve existing private files, progress and resources
+   on resume. Values are literal data; quotation marks are not dotenv syntax here.
+2. Check tools/access through 2.1–2.3, then run 2.4 with
+   `--scope full --mode new --prepare-dns-intake` while both DNS names are unused.
+   All normal checks must pass. Only private observation files are written;
+   existing DNS and infrastructure remain untouched.
+3. Use 1.1 `--show-values` to display all 22 validated nonsecret inputs and print
+   both exact DNS A records pointing to `OPERATOR_IPV4`, TTL 300 where supported.
+   Print protected credential paths only. Request one explicit confirmation that
+   values are correct, DNS is configured and full initialization may proceed.
+4. Disclose the scope before waiting: local verification, scoped GitHub/CI work,
+   commits/pushes, clean PR merges after green checks and required review,
+   staging/production, account provisioning, backup/retrieval/restore and the
+   final handoff. The approved defaults retain artwork with branding deferred,
+   accept same-server backup loss risk under the section 18 policy, and explicitly
+   waive debugger acceptance while requiring real GUI journeys in all three
+   environments. Missing credentials, policy rights or other human-only blockers
+   require their exact intervention; DNS is not guaranteed to be the only one.
+5. Record the actual confirmation and decisions in a protected `agent-decisions.json`
+   beside the values, bound to repository name/numeric ID and exact input SHA-256.
+   Include the actual reply/time, full execution scope, artwork deferral, backup
+   policy/risk and debugger waiver. Preserve this authorization on interruption;
+   a repeated name, changed input or elapsed time is not approval. These notes do
+   not replace verification or acceptance evidence.
+6. After confirmation, run fresh full 2.4 in resume mode and 13.2 early. The
+   protected intake observation allows only exact matching records for previously
+   checked names even after several days; readiness still expires after 24 hours.
+   Follow sections 3–19 afterward, retaining lettered actions and all other gates.
+   Section 13 rechecks existing owned DNS without another provider write.
+
+Run each action separately in its real workstation/operator context. The agent
+may perform supported lettered actions through GitHub, SSH and browser tooling
+within the confirmed scope. Review requirements and shared-pool idle/ownership
+checks still apply before activation. Use current protected state and the owning
+recovery procedure after a partial result; never edit verification timestamps,
+repository IDs or DNS claims by hand. Changed bound inputs stop for deliberate
+reconciliation and renewed confirmation. Private notes/files must stay `0600`
+beneath owned `0700` storage outside tracked content.
+
+The skill uses terminal-started frontend/backend and real GUI login, navigation,
+reload/session persistence and logout locally, then the same real journeys and
+all HTTPS checks on staging/production. Mock or API-only checks are insufficient.
+Section 9.1 still checks IDE configuration. The explicit debugger exception is
+recorded as the IDE-only authorized waiver described in section 19.2. Completion
+requires the validated marker and current consumer documentation delivered through
+green CI; business acceptance and the first future scheduled backup remain distinct.
+
 ## 1. Choose project values and access
 
 Create the private values file, then edit every project-specific input there.
@@ -88,6 +148,13 @@ lowercase, valid non-keyword identifiers. Keep the PWA short name at most 12
 characters. Use the same display name across locales unless you deliberately
 supply localized names. A username such as `admin` still has only the starter's
 installed `USER` authority.
+
+For a safe chat preview after editing and validation, print only parsed known
+nonsecret fields; unknown or invalid input is rejected before anything prints:
+
+```bash
+python3 -B docs/template-initialization/scripts/1_1_prepare_values.py --show-values
+```
 
 ### 1.2 Select available deployment ports
 
@@ -214,6 +281,24 @@ fresh collision checks. This is an observation, not a reservation or permission
 to mutate the infrastructure. Selected-repository App grants and branch protection remain
 an explicit requirement of its later stage.
 
+For the agent-assisted DNS-first intake, prepare its durable absence observation
+before asking the developer to configure records:
+
+```bash
+python3 -B docs/template-initialization/scripts/2_4_verify_values.py --scope full --mode new --prepare-dns-intake
+```
+
+This option is valid only for full/new verification. It records `progress.dns_intake`
+only after all normal probes succeed with unused names, bound to exact repository
+numeric identity, input bytes, zone/hosts/IP, verifier code and the actual producer
+and observation time. It reserves nothing. A matching historical claim is durable
+across a multi-day wait and approved workstation changes; a fresh full resume
+verification rechecks all live prerequisites and creates a normal 24-hour receipt.
+Unclaimed/conflicting DNS, malformed/foreign claims, changed inputs and future
+observations remain errors. Wildcards, delegation, aliases and unexpected AAAA
+records remain rejected. The later 13.2 check still verifies every authoritative
+server and public answers before recording normal `dns_hostnames` evidence.
+
 **Done:** matching tools, Docker and intended GitHub access work.
 
 ## 3. Inspect the consumer checkout and begin initialization
@@ -310,14 +395,14 @@ or password reset is not the repair.
 python3 -B docs/template-initialization/scripts/5_1_edit_frontend_identity.py
 ```
 
-| File                                     | Change                                                                                                                                                                               |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `frontend/package.json`                  | `name` → `<slug>-frontend`.                                                                                                                                                          |
-| `frontend/package-lock.json`             | Top-level `name` and `packages[""].name` → same name. Preserve graph/integrity data.                                                                                                 |
-| `frontend/index.html`                    | `<title>` → HTML-escaped display name.                                                                                                                                               |
-| `frontend/public/manifest.json`          | `name`/`short_name` → selected names. Preserve `id`, `start_url`, `scope`, icon references.                                                                                          |
-| `frontend/src/app/localization/translations/translation.{en,hr}.ts` | `navigation.shellTitle` → selected display name; preserve translation keys and localized page labels.                                                                                |
-| Root/frontend README                     | Consumer title/introduction; root **Project identity** with slug, display name, Java namespace and short name. Retain setup instructions and framework provenance. |
+| File                                                                | Change                                                                                                                                                             |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `frontend/package.json`                                             | `name` → `<slug>-frontend`.                                                                                                                                        |
+| `frontend/package-lock.json`                                        | Top-level `name` and `packages[""].name` → same name. Preserve graph/integrity data.                                                                               |
+| `frontend/index.html`                                               | `<title>` → HTML-escaped display name.                                                                                                                             |
+| `frontend/public/manifest.json`                                     | `name`/`short_name` → selected names. Preserve `id`, `start_url`, `scope`, icon references.                                                                        |
+| `frontend/src/app/localization/translations/translation.{en,hr}.ts` | `navigation.shellTitle` → selected display name; preserve translation keys and localized page labels.                                                              |
+| Root/frontend README                                                | Consumer title/introduction; root **Project identity** with slug, display name, Java namespace and short name. Retain setup instructions and framework provenance. |
 
 The script applies the listed metadata, translations and README identity fields
 automatically while preserving dependency data, framework provenance and artwork.
@@ -456,7 +541,13 @@ python3 -B docs/template-initialization/scripts/8_4_stop_database.py
 
 ## 9. Use the VS Code launchers
 
-Open the repository root as a trusted workspace, install recommended extensions
+For the approved agent-assisted workflow, Bruno explicitly waived launching the
+VS Code debugger and observing a breakpoint. Keep the real terminal-started GUI
+acceptance from section 8, run 9.1, and record the authorized IDE waiver in 19.2.
+Do not describe an unperformed debugger check as passed or inapplicable.
+
+For manual initialization without an explicit waiver, open the repository root
+as a trusted workspace, install recommended extensions
 from `.vscode/extensions.json`, and wait for Java/Gradle import. Stop terminal
 instances that occupy the same ports first.
 
@@ -705,6 +796,10 @@ python3 -B docs/template-initialization/scripts/12_3_prepare_release_branch.py
 an exact release source is selected.
 
 ## 13. Configure DNS for both environments
+
+Agent-assisted intake has already configured and verified these exact records.
+Reinspect/recheck them here; preserve matching DNS and do not request another UI
+write. The manual sequence configures DNS for the first time below.
 
 Obtain the actual host IPv4 from the operator. Inspect the existing authoritative
 zone and records:
@@ -1172,10 +1267,14 @@ and recorded run/attempt. Record the actual observation time with timezone.
 `secure_cookie`, `http_only_cookie` and `fresh_csrf` represent the actual session
 cookie flags and fresh CSRF handling. Never copy the underlying values.
 
-For `manual`, use `local_application.status: passed`; `ide.status: passed` or
-`not-applicable`; and `artwork.status: accepted` or `deferred`. Every entry requires
-an explanatory `evidence` string of 1–800 characters. State the reason for an
-exception or deferral. Earlier local/IDE observations can be carried forward only
+For `manual`, use `local_application.status: passed`; `ide.status: passed`,
+`not-applicable`, or explicitly authorized `waived`; and `artwork.status: accepted`
+or `deferred`. Every entry requires an explanatory `evidence` string of 1–800
+characters. For an IDE waiver only, also require exact boolean `user_authorized: true`.
+For example, use `manual.ide` equal to `{"status":"waived","evidence":"Bruno explicitly waived debugger acceptance; actual terminal-started GUI acceptance is recorded separately.","user_authorized":true}`.
+Record the actual instruction; a missing or false authorization cannot waive it.
+Other items retain their exact two-field shape and cannot be waived. State the
+reason for an exception or deferral. Earlier local/IDE observations can be carried forward only
 with their actual scope stated; this does not claim they were rerun at a later
 release SHA. An unresolved local application check cannot pass completion.
 Keep `acceptance.json` mode `0600` within its existing `0700` private directory.
@@ -1226,7 +1325,7 @@ CI runs, releases and recovery. Keep credentials in protected stores.
 
 - [ ] Identity agrees across Java, Gradle, Compose, frontend metadata, titles and docs.
 - [ ] Existing resources preserved; credential/data/artwork decisions recorded.
-- [ ] Real local login/reload/logout works; intended terminal/IDE launch verified.
+- [ ] Real local GUI login/reload/logout works; terminal launch verified and IDE acceptance observed, genuinely inapplicable or explicitly waived with authorization.
 - [ ] Required local checks pass for the recorded candidate; omissions visible.
 - [ ] Shared CI registration/current validation and genuine consumer jobs pass.
 - [ ] Effective main policy read back; missing/failing versus green behavior proved.
@@ -1239,7 +1338,7 @@ CI runs, releases and recovery. Keep credentials in protected stores.
 
 ## Procedure owners
 
-This file owns manual initialization. The [workspace README](../../README.md) owns
+This file owns initialization, including its agent-assisted ordering. The [workspace README](../../README.md) owns
 ongoing local commands; the [CI operator guide](../../infrastructure/ci/README.md),
 [consumer CI contract](github-ci.md) and [release operator guide](../../infrastructure/release/README.md)
 own technical interfaces/exceptional recovery. Inspect their current source

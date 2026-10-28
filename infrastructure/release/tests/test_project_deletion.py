@@ -187,6 +187,25 @@ class HistoricalImportTests(unittest.TestCase):
             self.import_initialization()
         self.assertFalse(self.args.env.parent.exists())
 
+    def test_explicit_ide_waiver_remains_valid_on_import_and_snapshot_load(self):
+        waived = {'status': 'waived', 'evidence': 'Developer explicitly waived VS Code debugger acceptance.',
+                  'user_authorized': True}
+        self.result['completion']['acceptance']['manual']['ide'] = waived
+        state.write(self.initial / 'result.json', self.result)
+        self.import_initialization()
+        directory, snapshot = self.load_snapshot()
+        archived = state.read(directory / 'initialization/result.json')
+        self.assertEqual(archived['completion']['acceptance']['manual']['ide'], waived)
+        self.assertEqual(snapshot['identity']['repository_id'], 101)
+
+    def test_ide_waiver_without_user_authorization_cannot_authorize_deletion(self):
+        self.result['completion']['acceptance']['manual']['ide'] = {
+            'status': 'waived', 'evidence': 'Debugger acceptance was omitted.'}
+        state.write(self.initial / 'result.json', self.result)
+        with self.assertRaises(state.Error):
+            self.import_initialization()
+        self.assertFalse(self.args.env.parent.exists())
+
     def test_invalid_complete_acceptance_is_rejected_before_any_writes(self):
         self.result['completion']['acceptance']['environments']['production']['https']['checks']['login'] = False
         state.write(self.initial / 'result.json', self.result)

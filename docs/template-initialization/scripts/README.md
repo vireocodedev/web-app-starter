@@ -2,7 +2,9 @@
 
 Each public script uses `X_Y_name.ext`, matching subsection `X.Y` in
 [INIT_GUIDE.md](../INIT_GUIDE.md). Run only the chosen step from that guide;
-there is no command that runs the whole initialization automatically.
+there is no command that runs the whole initialization automatically. The
+[template-initialization skill](../../../.agents/skills/template-initialization/SKILL.md)
+coordinates these entrypoints after its explicit values/DNS/scope confirmation.
 
 Begin in the consumer checkout already created through GitHub's template UI,
 cloned locally and opened in VS Code; follow the guide's
@@ -14,6 +16,10 @@ python3 -B docs/template-initialization/scripts/1_1_prepare_values.py
 ```
 
 Edit `.template-initialization/values.env`, following [.env.example](../.env.example).
+`1_1_prepare_values.py --check` validates syntax without network probes;
+`--show-values` prints all 22 parsed, validated nonsecret fields. It rejects
+unknown/invalid data before printing, never follows credential paths, and changes
+no files. These read-only inspection options are mutually exclusive.
 Its `GH_ORG` and `PROJECT_SLUG` must match that existing consumer's origin.
 For full setup, step `1_2_select_deployment_ports.py` uses the existing attested
 SSH connection to select/save unused ports before verification; it never resets
@@ -47,6 +53,16 @@ coherence gate; known neutral references need no manual classification. Both
 same entrypoints; artwork review remains a separate manual action.
 Step 7.2 formats the frontend identity files with the installed pinned Prettier
 after its existing dependency installation, including wrapped long title values.
+
+For DNS-first agent intake, full/new verification also accepts
+`--prepare-dns-intake`. After all normal checks succeed with unused names it
+records protected historical absence evidence bound to repository numeric ID,
+exact inputs, zone/hosts/IP and verifier identity. The normal full/resume path
+can then recognize only matching A records for those prepared names, even after
+several days; unclaimed records/conflicts are still errors. All live prerequisites
+are rechecked, and 13.2 still verifies authoritative/public DNS. Do not edit claims
+or timestamps manually. Follow the [agent-assisted ordering](../INIT_GUIDE.md#agent-assisted-initialization)
+for the confirmation gate, interruption and state preservation.
 
 The verification receipt is bound to the env bytes and verifier code, expires
 after 24 hours and records its scope and producer. It does not reserve names or
@@ -108,7 +124,6 @@ production timer/service, then records active/enabled state, next firing,
 persistence and the reviewed hardcoded 30-day retention policy. Restore/review
 gates remain required; the first actual scheduled execution stays pending.
 
-
 Step 19.1 without flags writes a partial observation report, preserving its
 existing behavior. Step 19.2 with `--prepare-acceptance` creates only an exclusive
 private unverified template beside the values file, without writing completion
@@ -121,7 +136,10 @@ restoration and the production backup policy. The acceptance file must be mode
 The original `19_1_record_result.py --complete --acceptance-file` option remains
 available for existing callers. The private `_completion.py` validator is shared
 with project deletion; only its
-explicit validated completion marker qualifies. Exact progress-byte changes
+explicit validated completion marker qualifies. The only new waiver is
+`manual.ide.status: waived` with bounded explanation and exact boolean
+`user_authorized: true`. Existing statuses stay compatible; local application,
+HTTPS/security, source/pair and recovery requirements remain mandatory. Exact progress-byte changes
 invalidate that marker until deliberate revalidation. A future scheduled backup
 can remain pending; neither plain reporting nor completion invents an observed
 scheduled execution or business acceptance.

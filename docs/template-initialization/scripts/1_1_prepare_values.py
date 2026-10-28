@@ -8,11 +8,18 @@ from _shared import InitError, ROOT, parser, private_file, require_private_input
 
 def main():
     command = parser(__doc__)
-    command.add_argument('--check', action='store_true', help='Validate existing input syntax; no network probes or receipt.')
+    inspection = command.add_mutually_exclusive_group()
+    inspection.add_argument('--check', action='store_true', help='Validate existing input syntax; no network probes or receipt.')
+    inspection.add_argument('--show-values', action='store_true',
+        help='Print all validated known nonsecret inputs; never print arbitrary file contents or credential files.')
     args = command.parse_args()
-    if args.check:
-        validate_values(read_values(args.env))
-        print('Input syntax is valid. Run 2_4_verify_values.py for functional verification.')
+    if args.check or args.show_values:
+        values = read_values(args.env)
+        validate_values(values)
+        if args.show_values:
+            print('\n'.join(f'{key}={value}' for key, value in values.items()))
+        else:
+            print('Input syntax is valid. Run 2_4_verify_values.py for functional verification.')
         return
     path = require_private_inputs(args.env)
     if path.exists() or path.is_symlink():

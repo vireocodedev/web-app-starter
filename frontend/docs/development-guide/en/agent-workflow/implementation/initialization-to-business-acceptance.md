@@ -9,7 +9,7 @@ coordinates the stages. The numbered manual procedure in
 `docs/template-initialization/INIT_GUIDE.md` owns setup,
 including prerequisites, copy-paste commands and completion evidence. CI and
 release operator guides own their infrastructure. This article adds no execution
-authority. The numbered scripts load a private values env file and hash-bound verification observations. This is independent of the retired agent-skill/intake workflow.
+authority. The numbered scripts load a private values env file and hash-bound verification observations. The repository-shipped `template-initialization` skill coordinates the same guide with an explicit values/DNS/scope confirmation and protected DNS preparation; it does not replace these contracts or establish business acceptance.
 
 ## Trigger, owner and invariant
 

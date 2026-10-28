@@ -158,6 +158,66 @@ class CompletionTests(unittest.TestCase):
                 with self.assertRaises(InitError):
                     self.validate()
 
+    def test_explicit_user_authorization_can_waive_only_the_ide_check(self):
+        waived = {'status': 'waived', 'evidence': 'Developer explicitly waived the VS Code debugger acceptance check.',
+                  'user_authorized': True}
+        self.report['completion']['acceptance']['manual']['ide'] = waived
+        self.assertEqual(self.validate()['acceptance']['manual']['ide'], waived)
+        for key in ('local_application', 'artwork'):
+            for extra in ({}, {'user_authorized': True}):
+                with self.subTest(key=key, extra=extra):
+                    self.refresh()
+                    self.report['completion']['acceptance']['manual'][key] = {
+                        'status': 'waived', 'evidence': waived['evidence'], **extra}
+                    with self.assertRaises(InitError):
+                        self.validate()
+
+    def test_ide_waiver_requires_bounded_evidence_and_exact_true_authorization(self):
+        base = {'status': 'waived', 'evidence': 'Developer explicitly waived debugger acceptance.',
+                'user_authorized': True}
+        cases = [dict(base, evidence=value) for value in ('', '   ', 'x' * 801, 'waived\nby developer', None)]
+        cases += [dict(base, user_authorized=value) for value in (False, None, 1, 'true')]
+        cases += [{key: value for key, value in base.items() if key != missing}
+                  for missing in ('evidence', 'user_authorized')]
+        for item in cases:
+            with self.subTest(item=item):
+                self.refresh()
+                self.report['completion']['acceptance']['manual']['ide'] = item
+                with self.assertRaises(InitError):
+                    self.validate()
+
+    def test_ide_waiver_does_not_waive_local_application_or_https_checks(self):
+        self.acceptance['manual']['ide'] = {
+            'status': 'waived', 'evidence': 'Developer explicitly waived debugger acceptance.',
+            'user_authorized': True}
+        self.refresh()
+        self.report['completion']['acceptance']['manual']['local_application']['status'] = 'pending'
+        with self.assertRaises(InitError):
+            self.validate()
+        for environment in ('staging', 'production'):
+            for check in completion.CHECKS:
+                for missing in (True, False):
+                    with self.subTest(environment=environment, check=check, missing=missing):
+                        self.refresh()
+                        checks = self.report['completion']['acceptance']['environments'][environment]['https']['checks']
+                        if missing:
+                            checks.pop(check)
+                        else:
+                            checks[check] = False
+                        with self.assertRaises(InitError):
+                            self.validate()
+
+    def test_existing_ide_statuses_keep_their_original_fields(self):
+        for status in ('passed', 'not-applicable'):
+            with self.subTest(status=status):
+                self.refresh()
+                item = self.report['completion']['acceptance']['manual']['ide']
+                item['status'] = status
+                self.assertEqual(self.validate()['state'], 'complete')
+                item['user_authorized'] = True
+                with self.assertRaises(InitError):
+                    self.validate()
+
     def test_restore_requires_exact_checksum_and_true_retrieved_copy(self):
         for key, value in (('retrieved_backup_sha256', 'bad'), ('restored_backup_sha256', '9' * 64),
                            ('retrieved_copy_restored', 1)):

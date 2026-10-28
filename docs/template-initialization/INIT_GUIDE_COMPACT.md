@@ -1,7 +1,18 @@
 # Initialize a project — compact guide
 
-Follow steps in order. Numbers match [INIT_GUIDE.md](INIT_GUIDE.md); lettered steps
-are manual. Use the full guide for explanations, conflicts and recovery.
+Follow steps in order, with the explicit agent-assisted exception below. Numbers
+match [INIT_GUIDE.md](INIT_GUIDE.md); lettered steps identify actions without a
+numbered helper. An authorized agent may perform them with real evidence.
+Use the full guide for explanations, conflicts and recovery.
+
+For Codex, invoke the [shipped skill](../../.agents/skills/template-initialization/SKILL.md)
+with your project name. Its [agent-assisted sequence](INIT_GUIDE.md#agent-assisted-initialization)
+is: 1.1 → fill valid values → 1.2 → 2.1–2.4 with DNS preparation → display all
+22 values/two A records → wait for values/DNS/full-scope confirmation → fresh full
+resume verification + early 13.2 → remaining sections 3–19. Preserve the normal
+24-hour receipt expiry across the DNS wait. Existing artwork is deferred; record
+backup-risk acceptance and the explicit IDE debugger waiver. Real local, staging
+and production GUI journeys and every other completion gate remain required.
 
 ## Before section 1
 
@@ -52,6 +63,10 @@ python3 -B docs/template-initialization/scripts/1_1_prepare_values.py
 Edit `.template-initialization/values.env`: existing owner/slug, display name,
 Java package, PWA short name, maintainer/account identity, two unused hostnames
 and protected DNS credential-file path. Keep credentials outside this file.
+For agent-led intake, validate and print all known nonsecret fields with
+`1_1_prepare_values.py --show-values` (same script path as 1.1). The fixed skill
+defaults are `MAINTAINER_LOGIN=brunotot`, `INITIAL_EMAIL=brunotot1000@gmail.com`
+and the existing initial account names; the full skill supplies name suggestions.
 
 ### 1.2 Select available deployment ports — workstation
 
@@ -103,6 +118,17 @@ Repeat verification after input changes or the receipt's 24-hour expiry.
 ```bash
 python3 -B docs/template-initialization/scripts/2_4_verify_values.py --scope full --mode new
 ```
+
+For DNS-first agent intake, use this full/new variant before the DNS request:
+
+```bash
+python3 -B docs/template-initialization/scripts/2_4_verify_values.py --scope full --mode new --prepare-dns-intake
+```
+
+Wait for explicit values/DNS/scope confirmation. Then rerun full resume
+verification and step 13.2 before section 3. The durable intake observation is
+not a reservation or an extension of readiness. Unknown existing records and
+ownership conflicts remain errors; preserve bound state when reconciling changes.
 
 ## 3. Inspect the consumer and begin initialization
 
@@ -255,6 +281,12 @@ python3 -B docs/template-initialization/scripts/8_4_stop_database.py
 
 ## 9. Verify VS Code launchers
 
+The approved agent-assisted workflow explicitly waives debugger/breakpoint
+acceptance. Run 9.1, retain real terminal-started GUI acceptance from section 8,
+and record `manual.ide.status: waived` with the developer's actual instruction
+and `user_authorized: true` in 19.2. Other workflows use the launchers below unless
+an explicit waiver or genuine inapplicability is recorded.
+
 ### 9.A Exercise the debugger — manual
 
 Trust the workspace, install `.vscode/extensions.json` recommendations and wait
@@ -264,7 +296,8 @@ as inapplicable if using another editor.
 
 ### 9.1 Inspect IDE configuration — workstation
 
-Check configuration; actual debugger acceptance remains the preceding manual step.
+Check configuration. The preceding actual debugger check applies unless its
+explicit waiver or genuine inapplicability is recorded.
 
 ```bash
 python3 -B docs/template-initialization/scripts/9_1_check_ide_configuration.py
@@ -424,6 +457,9 @@ python3 -B docs/template-initialization/scripts/12_3_prepare_release_branch.py
 ```
 
 ## 13. Configure DNS
+
+Agent-assisted intake already verified the two owned records. Reinspect/recheck
+them here; no second provider write or confirmation is required.
 
 ### 13.1 Inspect existing DNS — workstation
 
@@ -755,7 +791,10 @@ python3 -B docs/template-initialization/scripts/19_2_finalize_initialization.py 
 Fill the protected template with actual staging/production deployment and
 provisioning receipts, HTTPS checks and local/IDE/artwork observations following
 the full guide's [acceptance schema](INIT_GUIDE.md#192-validate-and-record-full-completion).
-Keep future scheduled execution pending until observed. Plain 19.1 reporting is partial.
+For the explicitly waived debugger check use the IDE-only authorized waiver
+from the full schema; local GUI and every HTTPS/security check still require
+actual evidence. Keep future scheduled execution pending until observed. Plain
+19.1 reporting is partial.
 
 Validate acceptance and bind the complete result to exact progress bytes.
 
