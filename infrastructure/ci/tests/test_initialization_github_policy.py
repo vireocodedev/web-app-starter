@@ -110,6 +110,10 @@ class FakeGitHub:
                             'nodes': [{'state': 'APPROVED'}] if self.approvals else []}}}}}
         if route == '/branches/main/protection':
             if method == 'PUT':
+                checks = body.get('required_status_checks') or {}
+                if 'contexts' in checks and 'checks' in checks:
+                    # GitHub rejects overlapping legacy and App-bound request schemas.
+                    return 422, {'message': 'Invalid request. More than one subschema in "oneOf" matched.'}
                 if not self.stale_readback:
                     signatures = (self.protection or {}).get('required_signatures')
                     self.protection = copy.deepcopy(body)
@@ -279,6 +283,25 @@ class GitHubPolicyTests(unittest.TestCase):
                 self.assertNotIn('reviewers', body)
                 self.assertNotIn('wait_timer', body)
         self.assertEqual(self.github.state['github_policy_settings']['state'], 'verified')
+
+    def test_serializes_app_bound_checks_without_legacy_contexts(self):
+        self.configure()
+        requests = [body['required_status_checks'] for method, path, body in self.github.writes
+                    if method == 'PUT' and path == '/branches/main/protection']
+        self.assertEqual(requests, [{'strict': True, 'checks': [{'context': 'CI gate', 'app_id': 77}]}])
+        # Response contexts are read-only aliases; a resumed setup must remain idempotent.
+        self.assertEqual(self.github.protection['required_status_checks']['contexts'], ['CI gate'])
+        self.github.writes.clear()
+        self.configure()
+        self.assertEqual(self.github.writes, [])
+
+    def test_preserves_legacy_contexts_when_upgrading_to_app_bound_checks(self):
+        self.configure()
+        self.github.protection['required_status_checks'] = {
+            'strict': False, 'contexts': ['Legacy security check']}
+        self.configure()
+        self.assertEqual(self.github.protection['required_status_checks']['checks'], [
+            {'context': 'CI gate', 'app_id': 77}, {'context': 'Legacy security check', 'app_id': -1}])
 
     def test_source_or_attempt_race_cannot_authorize_protection_write(self):
         for field, value in (('source_sha', 'e' * 40), ('run_attempt', 2), ('app_id', 900)):

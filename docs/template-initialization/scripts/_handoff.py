@@ -1,4 +1,4 @@
-"""Explicit section-11 private-state transport; never copies credential files."""
+"""Bounded initialization-state transport; never copies referenced credentials."""
 import base64
 import binascii
 import json
@@ -10,13 +10,26 @@ import sys
 import tempfile
 from types import SimpleNamespace
 
-from _operations import ci_source, context, execute, positive, ssh_arguments
+from _operations import ci_source, context, execute, observed_sha, positive, ssh_arguments
 from _github_bootstrap import ensure_ci_app_access
 from _shared import InitError, load_context, parser, private_file, read_state, require_private_location
 
 FILES = {'values.env': 65536, 'verification.json': 65536, 'progress.json': 262144}
 MAX_ENVELOPE = 600000
 HOST_ROOT = Path('/root')
+
+
+class ProgressConflict(InitError):
+    def __init__(self, fields):
+        self.fields = sorted({key if safe_field(key) else '<nonstandard field>' for key in fields})
+        if len(self.fields) > 64:
+            raise InitError('Too many conflicting progress fields; inspect both protected copies.')
+        super().__init__('Progress conflicts in fields: ' + ', '.join(self.fields)
+                         + '. Preserve both copies and reconcile them.')
+
+
+def safe_field(value):
+    return isinstance(value, str) and len(value) <= 64 and value.isascii() and value.isidentifier()
 
 
 def read_private(path, limit):
@@ -150,17 +163,118 @@ def check_return(expected, state, actual, observed):
         raise InitError('Host progress conflicts with workstation observations; reconcile both copies.')
 
 
+def release_state(ctx, state):
+    """Require the exact workstation observations consumed by release setup."""
+    sha = observed_sha(state.get('source_sha'))
+    if state.get('release_branch') != ctx.values['RELEASE_BRANCH']:
+        raise InitError('Release branch observation must match verified RELEASE_BRANCH; complete step 12.3.')
+    for environment in ('staging', 'production'):
+        positive(state.get(environment + '_workflow_id'), environment + ' workflow ID from step 14.1')
+    return sha
+
+
+def equal_json(left, right):
+    # JSON's bool/int distinction must survive Python's True == 1 behavior.
+    return json.dumps(left, sort_keys=True, allow_nan=False) == json.dumps(right, sort_keys=True, allow_nan=False)
+
+
+def merge_progress(expected, state, actual, observed):
+    if any(actual[name] != expected[name] for name in ('values.env', 'verification.json')):
+        raise InitError('Host values or verification differ; preserve both copies and reconcile them.')
+    conflicts = sorted(key for key in state.keys() & observed.keys()
+                       if not equal_json(state[key], observed[key]))
+    if conflicts:
+        # Only field names are diagnostics: private observations may hold secrets.
+        raise ProgressConflict(conflicts)
+    merged = {**observed, **state}
+    result = dict(actual)
+    if not equal_json(merged, observed):
+        result['progress.json'] = (json.dumps(merged, indent=2, sort_keys=True, allow_nan=False) + '\n').encode()
+    return result
+
+
+def sync_private_directory(path):
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        info = os.fstat(descriptor)
+        if (not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) != 0o700):
+            raise InitError('Backup directories must remain owned and private (0700).')
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+def replace_progress(env_path, original, actual, *, backup=False):
+    """Replace only progress, after durable private backups and a final snapshot CAS."""
+    if snapshot(env_path) != original:
+        raise InitError('Initialization state changed during transfer; progress was not replaced.')
+    if original['progress.json'] == actual['progress.json']:
+        # Also finish durability after a previous replacement lost its acknowledgement.
+        sync_private_directory(env_path.parent)
+        return
+    if backup:
+        directory = Path(tempfile.mkdtemp(prefix='.release-context-backup-', dir=env_path.parent))
+        directory.chmod(0o700)
+        for name, data in original.items():
+            exclusive_write(directory / name, data)
+        # Retain both the backup's entries and its link before replacing evidence.
+        sync_private_directory(directory)
+        sync_private_directory(env_path.parent)
+    target = env_path.parent / 'progress.json'
+    descriptor, temporary = tempfile.mkstemp(prefix='.progress.json.', dir=target.parent)
+    try:
+        with os.fdopen(descriptor, 'wb') as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            stream.write(actual['progress.json'])
+            stream.flush()
+            os.fsync(stream.fileno())
+        private_file(target)
+        if snapshot(env_path) != original:
+            raise InitError('Initialization state changed during transfer; progress was not replaced.')
+        os.replace(temporary, target)
+        try:
+            sync_private_directory(target.parent)
+        except (OSError, InitError):
+            raise InitError('Progress was replaced but its directory durability is uncertain; '
+                            'preserve both copies and rerun the transfer to reconcile.') from None
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def reconcile_release(expected):
+    """Canonical receiver: retain all compatible observations from both contexts."""
+    ctx, state = validate_bundle(expected, operator=True)
+    release_state(ctx, state)
+    ci_source(ctx)
+    env_path = destination(ctx) / 'values.env'
+    original = snapshot(env_path)
+    _, observed = validate_bundle(original, operator=True)
+    actual = merge_progress(expected, state, original, observed)
+    merged_ctx, merged = validate_bundle(actual, operator=True)
+    release_state(merged_ctx, merged)
+    replace_progress(env_path, original, actual, backup=True)
+    return actual
+
+
 def remote_main(action):
     """Called only through canonical root-controlled host code, with captured I/O."""
     try:
-        if action not in ('upload', 'return'):
+        if action not in ('upload', 'return', 'reconcile-release'):
             raise InitError('Unknown initialization transfer action.')
         bundle = decode(sys.stdin.read(MAX_ENVELOPE + 1))
         if action == 'upload':
             receive(bundle)
             print('Initialization state accepted.')
-        else:
+        elif action == 'return':
             print(encode(return_bundle(bundle)))
+        else:
+            print(encode(reconcile_release(bundle)))
+    except ProgressConflict as error:
+        if action == 'reconcile-release':
+            print(json.dumps({'schema': 1, 'error': 'progress_conflict', 'fields': error.fields}))
+        else:
+            raise SystemExit(1) from None
     except Exception:
         # No raw exception, input, path contents, or subprocess diagnostics to SSH.
         print('Initialization state transfer rejected; preserve both copies and inspect protected inputs and canonical source.', file=sys.stderr)
@@ -191,38 +305,58 @@ remote_main(sys.argv[2])
     return ssh_arguments(ctx, ['python3', '-I', '-B', '-c', bootstrap, ctx.values['CI_SOURCE'], action])
 
 
+def release_response(text):
+    """Admit only bounded conflict field names; never forward host diagnostics."""
+    if len(text) > MAX_ENVELOPE:
+        raise InitError('Invalid or oversized initialization transfer envelope.')
+    try:
+        response = json.loads(text, object_pairs_hook=_unique)
+    except (ValueError, TypeError):
+        raise InitError('Invalid initialization release response.') from None
+    if isinstance(response, dict) and 'error' in response:
+        fields = response.get('fields')
+        if (set(response) != {'schema', 'error', 'fields'}
+                or type(response['schema']) is not int or response['schema'] != 1
+                or response['error'] != 'progress_conflict'
+                or not isinstance(fields, list) or not 1 <= len(fields) <= 64
+                or any(not safe_field(field) and field != '<nonstandard field>' for field in fields)):
+            raise InitError('Invalid initialization release conflict response.')
+        raise ProgressConflict(fields)
+    return decode(text)
+
+
 def transfer(args):
     ctx = context(args, consumer=True)
     original = snapshot(ctx.env_path)
     snapshot_ctx, state = validate_bundle(original)
     if snapshot_ctx.values != ctx.values:
         raise InitError('Workstation values changed during validation; state was not transferred.')
-    if not args.return_progress:
+    release_context = getattr(args, 'release_context', False)
+    if release_context:
+        release_state(ctx, state)
+    if not args.return_progress and not release_context:
         ensure_ci_app_access(ctx)
         original = snapshot(ctx.env_path)
         snapshot_ctx, state = validate_bundle(original)
         if snapshot_ctx.values != ctx.values:
             raise InitError('Workstation values changed during App verification; state was not transferred.')
-    if args.return_progress:
-        actual = decode(execute(remote_arguments(ctx, 'return'), input=encode(original)))
-        _, observed = validate_bundle(actual)
+    if args.return_progress or release_context:
+        action = 'reconcile-release' if release_context else 'return'
+        response = execute(remote_arguments(ctx, action), input=encode(original))
+        actual = release_response(response) if release_context else decode(response)
+        actual_ctx, observed = validate_bundle(actual)
         check_return(original, state, actual, observed)
-        target = ctx.env_path.parent / 'progress.json'
-        descriptor, temporary = tempfile.mkstemp(prefix='.progress.json.', dir=target.parent)
-        try:
-            with os.fdopen(descriptor, 'wb') as stream:
-                os.fchmod(stream.fileno(), 0o600)
-                stream.write(actual['progress.json'])
-                stream.flush()
-                os.fsync(stream.fileno())
-            private_file(target)
-            if snapshot(ctx.env_path) != original:
-                raise InitError('Workstation state changed during transfer; local progress was not replaced.')
-            os.replace(temporary, target)
-        finally:
-            if os.path.exists(temporary):
-                os.unlink(temporary)
-        print('Returned host progress to the workstation; values and verification bytes are unchanged.')
+        if release_context:
+            sha = release_state(actual_ctx, observed)
+        replace_progress(ctx.env_path, original, actual, backup=release_context)
+        if release_context:
+            print('Reconciled release observations on both contexts; original changed copies have private backups.')
+            print('On the operator host, run:')
+            script = Path(ctx.values['CI_SOURCE']) / 'docs/template-initialization/scripts/14_2_prepare_release_source.py'
+            path = '/root/' + ctx.values['PROJECT_SLUG'] + '-initialization/values.env'
+            print(shlex.join(['python3', '-B', str(script), '--env', path, '--source-sha', sha]))
+        else:
+            print('Returned host progress to the workstation; values and verification bytes are unchanged.')
     else:
         execute(remote_arguments(ctx, 'upload'), input=encode(original))
         path = '/root/' + ctx.values['PROJECT_SLUG'] + '-initialization/values.env'
@@ -241,8 +375,11 @@ def transfer(args):
 
 def cli():
     arguments = parser('Transfer this consumer initialization state to the operator host, or return its updated progress.')
-    arguments.add_argument('--return-progress', action='store_true',
-                           help='Return only updated progress after section 11; preserve local values and verification.')
+    modes = arguments.add_mutually_exclusive_group()
+    modes.add_argument('--release-context', action='store_true',
+                       help='Reconcile release observations for step 14.A, preserving private backups and both contexts.')
+    modes.add_argument('--return-progress', action='store_true',
+                       help='Return only updated progress after section 11; preserve local values and verification.')
     args = arguments.parse_args()
     try:
         transfer(args)

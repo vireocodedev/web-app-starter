@@ -22,24 +22,40 @@ class InitializationGuideTests(unittest.TestCase):
         public = {p.name for p in SCRIPTS.iterdir() if re.fullmatch(r'\d+_\d+_[a-z0-9_]+\.(py|sh)', p.name)}
         calls = set()
         section = step = None
+        release_handoff_calls = 0
         for line in guide.splitlines():
             heading = re.match(r'^## (\d+)\.', line)
-            subheading = re.match(r'^### (\d+)\.(\d+) ', line)
+            subheading = re.match(r'^### (\d+)\.(\d+|[A-Z]) ', line)
             if heading:
                 section, step = int(heading[1]), None
             if subheading:
                 self.assertEqual(int(subheading[1]), section)
-                step = int(subheading[2])
+                step = subheading[2]
             call = re.match(r'^(?:python3 -B|bash) docs/template-initialization/scripts/(\d+)_(\d+)_([a-z0-9_]+\.(?:py|sh))', line)
             if call:
-                self.assertEqual((int(call[1]), int(call[2])), (section, step))
+                if (section, step) == (14, 'A'):
+                    self.assertEqual(line, 'python3 -B docs/template-initialization/scripts/11_1_transfer_state.py --release-context')
+                    release_handoff_calls += 1
+                else:
+                    self.assertTrue(step and step.isdigit(), 'A reused script needs an explicit guide contract')
+                    self.assertEqual((int(call[1]), int(call[2])), (section, int(step)))
                 calls.add(call[1] + '_' + call[2] + '_' + call[3])
         self.assertEqual(calls, public)
+        self.assertEqual(release_handoff_calls, 1)
         for fence in re.findall(r'^```[^\n]*\n(.*?)^```', guide, re.M | re.S):
             lines = fence.strip().splitlines()
             self.assertEqual(len(lines), 1, 'Guide contains an embedded program or command recipe')
             self.assertRegex(lines[0], r'^(python3 -B|bash) docs/template-initialization/scripts/\d+_\d+_')
         self.assertNotRegex(guide, r'(?m)^export [A-Z]')
+
+    def test_release_handoff_command_agrees_in_both_guides(self):
+        command = 'python3 -B docs/template-initialization/scripts/11_1_transfer_state.py --release-context'
+        for name in ('INIT_GUIDE.md', 'INIT_GUIDE_COMPACT.md'):
+            guide = (DIRECTORY / name).read_text()
+            step = re.search(r'^### 14\.A [^\n]+\n(.*?)(?=^### |^## |\Z)', guide, re.M | re.S)
+            self.assertIsNotNone(step, name)
+            self.assertIn('workstation', step[0].lower(), name)
+            self.assertEqual(re.findall(r'^```bash\n(.*?)\n```', step[1], re.M | re.S), [command], name)
 
     def test_actual_values_are_ignored_but_example_is_not(self):
         actual = subprocess.run(['git', 'check-ignore', '--quiet', '.template-initialization/values.env'], cwd=ROOT)

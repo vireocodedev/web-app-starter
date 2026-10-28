@@ -457,12 +457,17 @@ Record actual IDs bound to this consumer.
 python3 -B docs/template-initialization/scripts/14_1_observe_repository_ids.py
 ```
 
-### 14.A Reconcile state on the operator host — manual
+### 14.A Transfer release observations — workstation
 
-Transfer current `values.env`, `verification.json` and `progress.json` to the
-protected operator directory, preserving bytes and observations: root-owned
-0600 files in a 0700 directory. Reconcile differing progress first; the initial
-11.1 upload intentionally refuses to overwrite newer host state.
+First update the operator's reviewed `CI_SOURCE` checkout to include
+`--release-context` support.
+Back up and combine nonconflicting progress in both protected copies; resolve
+reported conflicts before retrying. Copy the printed 14.2 command with its actual
+`--env` path and release SHA.
+
+```bash
+python3 -B docs/template-initialization/scripts/11_1_transfer_state.py --release-context
+```
 
 ### 14.2 Prepare exact release source — operator host, reviewed CI_SOURCE checkout
 
