@@ -5,6 +5,10 @@ production deployments, initial accounts, and verified recovery. This is the
 numbered procedure for developers and agents. Each script performs one explicit
 step; invoking a later script does not approve an earlier or unrelated action.
 
+For short step descriptions and commands, use [INIT_GUIDE_COMPACT.md](INIT_GUIDE_COMPACT.md).
+It follows the same procedure; this full guide owns explanations, recovery and
+consumer-specific evidence.
+
 ## Prerequisite: create and open the consumer repository
 
 Complete these steps before starting section 1:
@@ -38,8 +42,8 @@ second CI foundation, existing-consumer renames, password resets and live databa
 restores are separate work.
 
 Use Python 3.11+ and Bash. Each public script is named `X_Y_name.ext`, matching
-section `X` and subsection `X.Y` below. Private `_shared.py`, `_local.py` and
-`_operations.py` modules support those entrypoints; they are not standalone steps.
+section `X` and subsection `X.Y` below. The [script index](scripts/README.md) lists
+private supporting modules; they are not standalone steps.
 
 The selected values live in ignored `.template-initialization/values.env`, copied
 from [.env.example](.env.example). Scripts parse this file as data and never source
@@ -85,13 +89,22 @@ characters. Use the same display name across locales unless you deliberately
 supply localized names. A username such as `admin` still has only the starter's
 installed `USER` authority.
 
-For full/deployment setup, before setting the four ports, follow the host command
-block above the port entries in [.env.example](.env.example). Connect to the
-operator host and run the Python block there as root, omitting its comment
-prefixes. It prints four candidate assignments after checking TCP listeners and
-all deployment runtime reservations, including stopped environments. Copy those
-assignments into your actual `.template-initialization/values.env`; the example
-numbers are not promised free. Step 2.4 rechecks availability without reserving it.
+### 1.2 Select available deployment ports
+
+After editing the other values, run this on your **workstation** for full setup.
+Python, Git and SSH with the existing attested operator host key/root access are
+required here; local-only setup skips this remote step.
+
+```bash
+python3 -B docs/template-initialization/scripts/1_2_select_deployment_ports.py
+```
+
+It reads TCP listeners and all runtime port reservations, including stopped
+projects, then saves four available ports in your protected values file. Available
+selected ports are preserved. An existing deployment namespace or recorded
+verification/progress blocks reassignment for deliberate reconciliation. Other
+values and file permissions are preserved. This reserves nothing; step 2.4
+rechecks availability.
 
 Settle the following before remote work:
 
@@ -153,7 +166,10 @@ Docker Compose 5.x is required. Its version is independent of Docker Engine's
 version. An `Unsupported Docker Compose version` error refers to the Compose
 plugin; the check verifies Engine/daemon access separately.
 
-Authenticate with the intended GitHub account; retain an existing working login:
+Authenticate with the intended GitHub account; retain an existing working login.
+The App repository inventory needs `read:user` in addition to `repo` and
+`read:org`. If reported missing, rerun step 2.3 with `--login` and complete the
+interactive authorization; the script verifies the same account afterward:
 
 ### 2.3 Authenticate the intended GitHub account
 
@@ -230,19 +246,22 @@ edits. The inventory command needs Node 24 but no application dependencies.
 
 ## 4. Personalize the backend before starting PostgreSQL
 
-There is no installed personalization CLI. Edit these exact fields. Keep physical
-`frontend/` and `backend/` folders, versions/dependencies, `/api`, auth contracts,
+The scripts apply the verified consumer identity to the fields listed below.
+Keep physical `frontend/` and `backend/` folders, versions/dependencies, `/api`, auth contracts,
 and Flyway migration filenames/SQL unchanged. Avoid global text replacement.
 
-### 4.1 Edit the backend identity fields
+### 4.1 Apply the backend identity fields
 
 ```bash
 python3 -B docs/template-initialization/scripts/4_1_edit_backend_identity.py
 ```
 
-The edit scripts list the exact values from the verified env and open the
-existing files when an editor is available. Use another editor if needed; review
-the same fields below. They do not perform a global replacement. Add `--open` to the edit-script invocation to open the listed files in VS Code.
+The personalization scripts apply values from the verified env automatically.
+Each step checks every target before writing, accepts recognized template or
+already-selected values, and preserves unrelated content. Missing, ambiguous or
+foreign identity fields stop the step for inspection. A completed retry makes no
+changes. Optional `--open` opens the affected files for inspection after applying
+the changes; an editor is not required.
 
 | File                                          | Value using the example identity                                                                                                       |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -260,8 +279,8 @@ syntax. Preserve datasource placeholders and security/session configuration.
 
 Refactor **both** main/test Java package roots from `com.vireocode.backend` to
 `$JAVA_PACKAGE`, preserving all relative subpackages (`auth`, `user`, `http`, etc.)
-and `BackendApplication`. Use IDE package refactoring or this command for a fresh,
-still-template-named consumer:
+and `BackendApplication`. Run the package-refactoring step after applying the
+backend identity:
 
 ### 4.2 Refactor the Java package roots
 
@@ -269,8 +288,11 @@ still-template-named consumer:
 python3 -B docs/template-initialization/scripts/4_2_refactor_java_packages.py
 ```
 
-Inspect the diff; do not rerun over a partially moved tree. Moving packages does
-not change schema/table names or authorization contracts.
+The script moves both roots and updates Java code references while preserving
+comments, string fixtures and unrelated packages. A completed retry verifies the
+selected roots and makes no changes; mixed or partially moved trees stop for
+inspection. Moving packages does not change schema/table names or authorization
+contracts.
 
 For existing `.env`/database resources, resolve identity first. A changed Compose
 name creates a different namespace; it does not migrate a volume. Changed DB
@@ -282,7 +304,7 @@ or password reset is not the repair.
 
 ## 5. Personalize the frontend and documentation
 
-### 5.1 Edit frontend metadata and names
+### 5.1 Apply frontend metadata and names
 
 ```bash
 python3 -B docs/template-initialization/scripts/5_1_edit_frontend_identity.py
@@ -294,11 +316,13 @@ python3 -B docs/template-initialization/scripts/5_1_edit_frontend_identity.py
 | `frontend/package-lock.json`             | Top-level `name` and `packages[""].name` → same name. Preserve graph/integrity data.                                                                                                 |
 | `frontend/index.html`                    | `<title>` → HTML-escaped display name.                                                                                                                                               |
 | `frontend/public/manifest.json`          | `name`/`short_name` → selected names. Preserve `id`, `start_url`, `scope`, icon references.                                                                                          |
-| Both application translation files above | `navigation.shellTitle` → selected display name; preserve translation keys and localized page labels.                                                                                |
-| Root/frontend README                     | Consumer title/introduction; root **Project identity** with slug, display name, Java namespace and short name. Update identity-dependent JAR examples, retaining setup instructions. |
+| `frontend/src/app/localization/translations/translation.{en,hr}.ts` | `navigation.shellTitle` → selected display name; preserve translation keys and localized page labels.                                                                                |
+| Root/frontend README                     | Consumer title/introduction; root **Project identity** with slug, display name, Java namespace and short name. Retain setup instructions and framework provenance. |
 
-Update title suffix expectations in these tests, preserving translated page
-titles and mock credentials:
+The script applies the listed metadata, translations and README identity fields
+automatically while preserving dependency data, framework provenance and artwork.
+It records retained branding for later visual review. Then update the actual title
+assertion suffixes automatically, preserving page-title prefixes and mock credentials:
 
 ### 5.2 Update the title expectations
 
@@ -316,7 +340,8 @@ framework attribution/licenses.
 
 ## 6. Audit the personalization
 
-Search owned source/config without reading secret or generated files:
+Verify the selected backend/frontend fields, title expectations and Java package
+identity automatically, without reading secret or generated files:
 
 ### 6.1 Audit the identity changes
 
@@ -324,11 +349,13 @@ Search owned source/config without reading secret or generated files:
 python3 -B docs/template-initialization/scripts/6_1_audit_identity.py
 ```
 
-No matches is `rg` exit status 1, which is expected. Classify remaining matches:
-reference examples, fixtures, attribution and retained artwork can be intentional.
-Unexplained application-identity leftovers are unfinished. Preserve mock identities.
+This read-only gate checks coherence and whitespace, classifies known retained
+reference examples, fixtures, attribution and artwork automatically, and fails on
+unexpected application-identity leftovers. It names the affected path/field and
+repair step; routine initialization needs no manual reference classification.
 
-**Done:** intended diff only, with every residual identity reference explained.
+**Done:** selected identity fields, Java packages and title expectations agree;
+intentional neutral references remain preserved.
 
 ## 7. Set up the local environment
 
@@ -341,9 +368,12 @@ python3 -B docs/template-initialization/scripts/7_1_prepare_backend_env.py
 ```
 
 This creates ignored `backend/.env`, mode `0600`, with random passwords and
-preserves an existing file. Open it privately. Before the first backend startup,
-confirm project/database names and local initial-user identity. Keep the generated
-passwords (minimum 12 characters, maximum 72 UTF-8 bytes).
+preserves an existing file. The script checks owner-only permissions, selected
+project/database/account identity, password lengths (12 characters minimum,
+72 UTF-8 bytes maximum), and the local PostgreSQL binding. A busy port is accepted
+only for this checkout's exact running Compose PostgreSQL service; foreign or
+ambiguous ownership stops setup. It prints a nonsecret result. No credentials or
+volumes are reset. Actual database password authentication happens at step 8.1.
 
 ### 7.2 Prepare frontend dependencies and HTTP settings
 
@@ -351,7 +381,9 @@ passwords (minimum 12 characters, maximum 72 UTF-8 bytes).
 python3 -B docs/template-initialization/scripts/7_2_prepare_frontend_env.py
 ```
 
-For existing `.env.local`, the frontend setup script merges the known settings and preserves unrelated values:
+After installing locked dependencies, this step automatically formats only the
+frontend identity files with the installed pinned Prettier. Long or escaped names
+need no manual formatting. Existing `.env.local` keeps unrelated values.
 
 The frontend setup script merges these public settings into `.env.local`: `VITE_API_BASE_URL=/api`, `VITE_API_MODE=http`, `VITE_API_WITH_CREDENTIALS=true` and `VITE_APP_ENV=development`.
 
@@ -499,21 +531,14 @@ Do not install a new pool or app-specific permanent runner.
 
 ### 11.1 Verify GitHub App access and transfer the initialization state
 
-On your **workstation**, complete this check in GitHub for each new consumer,
-before stopping the shared controller:
-
-- [ ] Open the existing [VireoCode Shared CI installation](https://github.com/organizations/vireocodedev/settings/installations/171464279).
-- [ ] Under **Repository access**, keep **Only select repositories** and confirm
-  that the exact consumer repository (`GH_ORG/PROJECT_SLUG` from `values.env`)
-  is selected. If it is missing, add it and **Save**, preserving all existing
-  repository selections. If it is already selected, verify it and continue.
-- [ ] Confirm the App retains **Actions: Read-only**, **Administration: Read and
-  write**, and automatic **Metadata: Read-only**. The
-  [GitHub App reference](github-ci-app.md#register-and-verify-a-consumer) owns the
-  installation requirements. Its private key stays on the controller host,
-  never in this checkout or Actions secrets.
-
-Missing repository access blocks registration even if the state transfer succeeds.
+On your **workstation**, this step grants the existing shared CI App access to the
+exact verified consumer using your authenticated organization-owner account.
+It preserves all selected repositories, verifies the App's identity and required
+Actions/Administration/Metadata permissions, and reads access back before upload.
+The installation remains limited to selected repositories. Its private key stays
+on the host. Missing authority or policy conflicts stop before the controller is
+stopped; no App permissions or organization policy are expanded. See the
+[GitHub App reference](github-ci-app.md#register-and-verify-a-consumer).
 
 Then, from your **workstation's consumer repository root**:
 
@@ -535,8 +560,8 @@ and reconcile them before retrying. This upload is the initial section 11 handof
 not a way to overwrite newer host progress during later setup.
 
 The command prints all four operator commands for steps 11.2–11.5 with your exact
-host `--env` path. Copy those printed commands; supply the observed configuration
-hash for step 11.4 after inspecting step 11.3. The examples below use
+host `--env` path. Copy those printed commands; step 11.3 captures the configuration
+hash used automatically by step 11.4. The examples below use
 `PROJECT_SLUG` as a placeholder for your actual slug. On the **operator host**,
 run from the canonical reviewed root-controlled `CI_SOURCE` checkout,
 not a consumer fork. Keep private credentials in existing protected stores, and
@@ -558,8 +583,10 @@ python3 -B docs/template-initialization/scripts/11_3_stop_and_inspect_ci.py --en
 ```
 
 Inspect service/worker/job/recovery state. Registration requires stopped,
-disabled, idle execution, no jobs and no residual boundary mounts. Supply the
-reported current `configuration_sha256` as the argument below:
+disabled, idle execution, no jobs and no residual boundary mounts. Step 11.3 captures the current `configuration_sha256` in protected progress,
+bound to this consumer, canonical source and host boot. Step 11.4 uses it
+automatically; the canonical registration command still rejects a stale hash
+under its lock. Reinspect after any configuration/source/boot change.
 
 ### 11.4 Register and validate the consumer
 
@@ -572,7 +599,7 @@ inspect the existing registration and follow the [CI operator guide](../../infra
 to resume validation.
 
 ```bash
-python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env --expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256
+python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env
 ```
 
 Registration preserves other projects and leaves the controller disabled.
@@ -607,8 +634,11 @@ controller is deliberately active.
 
 ## 12. Prove CI and configure GitHub policy
 
-In consumer **Settings → Actions → General**, permit the checked-in pinned Actions
-and read-only repository tokens. Preserve runner labels
+Step 12.1 configures and reads back repository Actions permissions automatically:
+it enables the checked-in pinned Actions, preserves compatible existing allowlists
+and organization restrictions, sets read-only default tokens and disables token
+PR approvals. Access/organization conflicts stop with an actionable error; no
+organization policy is changed. Preserve runner labels
 `[self-hosted, Linux, X64, web-app-ci]`. Keep deployment/registry credentials out
 of PR CI. An idle disposable pool may show no online runners; verify real jobs.
 
@@ -620,38 +650,55 @@ On your **workstation**, open and watch the initialization PR:
 python3 -B docs/template-initialization/scripts/12_1_open_initialization_pr.py
 ```
 
+This step creates the PR only when no matching open PR exists; rerun the same
+command to resume after an interruption or timeout. It waits up to five minutes
+for GitHub to create the matching CI workflow run, then prints its URL and status
+while waiting up to one hour for completion. An empty check list during startup
+is expected. Only a successful complete run with its successful `CI gate` counts.
+A changed PR source or workflow attempt stops observation; rerun to select the
+current source/attempt. Authentication/API failures stop immediately. If no run
+appears, inspect Actions policy, workflow triggers and access. A failed/cancelled
+run remains failed: fix its cause and **rerun all jobs**, then resume this step.
+The script prints a resume command with your selected `--env` path.
+
 Observe the actual `CI gate` name/source App, run URL and Hetzner runner identity.
 Exercise task-owned backend-only, frontend-only, both-owner and documentation-only
 PR changes; record selected/skipped lanes. Remove temporary failure fixtures
 before merging. After failure use **rerun all jobs**: complete shard proof must
 come from one workflow attempt.
 
-Once genuine `CI gate` succeeds, configure **Settings → Branches → protection for
-main** (or the organization-approved equivalent):
+### 12.2 Configure and verify GitHub policy
 
-1. Require a PR; required approving reviews **0**; no code-owner/last-push approval
-   unless stronger organization policy applies.
-2. Require observed **CI gate**, bound to its observed **GitHub Actions** source.
-3. Require up-to-date branches and enforce protection for administrators.
-4. Block force pushes/deletion; preserve stronger compatible organization rules.
-
-Read back effective policy. Use a task-owned validation PR to prove a missing/
-failing check blocks merging and corrected green permits it with zero approvals.
-Never merge the failing fixture. Resolve private-plan/access limitations directly;
-do not make the repository public or weaken checks as a workaround.
-
-Create **staging** and **production** in **Settings → Environments**. Leave required
-reviewers/wait timers unset and allow the selected release branch; main-only
-restriction is not required. When using an API, omit unused reviewer/wait fields
-rather than submitting an empty reviewers list that can request paid protection.
-
-Merge the clean green initialization PR normally. Then preserve an exact release
-commit on a branch that will remain unchanged through promotion:
-
-### 12.2 Preserve the exact release source
+On your **workstation**, run this after step 12.1 succeeds:
 
 ```bash
-python3 -B docs/template-initialization/scripts/12_2_prepare_release_branch.py
+python3 -B docs/template-initialization/scripts/12_2_configure_github_policy.py --verify-protection
+```
+
+Use the same `--env /absolute/path/values.env` argument if you selected a custom
+values location. The script uses your verified repository and selected release
+branch, checks admin access and current successful App-bound CI, then configures
+`main` protection plus **staging** and **production** according to the
+[consumer CI policy](github-ci.md#protect-main-after-successful-ci).
+It reads settings back, preserves stronger compatible rules, and stops on access,
+plan or policy conflicts instead of weakening protection.
+
+Allow several minutes for two additional CI runs. The script opens one temporary
+validation PR, proves a real failing gate blocks merging, removes its failing
+fixture, and requires corrected green CI with the allowed merge state. It closes
+that PR and removes only its owned branch; it never merges the fixture. Rerun the
+same command after an interruption: protected progress records its exact owned
+resources and evidence. Do not edit or merge the temporary validation branch.
+Resolve any reported stronger-policy conflict before continuing.
+
+Merge the clean green **initialization PR** normally after this step completes.
+Then preserve an exact release commit on a branch that will remain unchanged
+through promotion:
+
+### 12.3 Preserve the exact release source
+
+```bash
+python3 -B docs/template-initialization/scripts/12_3_prepare_release_branch.py
 ```
 
 **Done:** real consumer CI and merge policy are proved, environments exist, and
@@ -851,13 +898,15 @@ Once both names are clear, dispatch from your **workstation**:
 python3 -B docs/template-initialization/scripts/15_2_dispatch_staging.py
 ```
 
-Choose the actual run matching source SHA, branch, actor and dispatch time;
-newest does not necessarily mean yours. Pass the exact observed ID, inspect and wait:
+The watch step identifies the unique run matching the recorded repository, source
+SHA, branch, actor, workflow and bounded dispatch time automatically. It records
+the exact run/attempt before watching. Multiple matches stop for inspection;
+`--run-id ACTUAL_RUN_ID` remains available for deliberate reconciliation.
 
 ### 15.3 Watch the exact staging run
 
 ```bash
-python3 -B docs/template-initialization/scripts/15_3_watch_staging.py --run-id ACTUAL_RUN_ID
+python3 -B docs/template-initialization/scripts/15_3_watch_staging.py
 ```
 
 The workflow verifies both apps, builds/smoke-tests the pair, publishes private
@@ -881,7 +930,7 @@ active state before retrying. A mutation may have completed despite a timeout;
 never restore a database/edit active pointers merely to make a workflow green.
 The dispatch script records its intent before contacting GitHub and blocks a
 second dispatch while that outcome is unresolved. Use step 15.3 with
-`--run-id ACTUAL_RUN_ID --reconcile-only` to record the exact run's current state
+`--reconcile-only` to identify and record the exact run's current state
 without waiting or dispatching again. Only an explicitly reconciled, completed
 unsuccessful run permits a deliberate new dispatch; successful runs remain recorded.
 Use the [release failure procedure](../../infrastructure/release/README.md#failure-and-recovery)
@@ -932,17 +981,20 @@ source SHA from step 15 before dispatching:
 python3 -B docs/template-initialization/scripts/17_1_promote_production.py
 ```
 
-Select the matching run ID, inspect and wait:
+The watch step selects the exact production run automatically using the same
+source-bound dispatch identity and ambiguity guards as staging.
 
 ### 17.2 Watch and verify the exact production run
 
 ```bash
-python3 -B docs/template-initialization/scripts/17_2_watch_production.py --run-id ACTUAL_RUN_ID
+python3 -B docs/template-initialization/scripts/17_2_watch_production.py
 ```
 
 Production uses the same dispatch-intent protection as staging. After a lost
-response, use step 17.2 with `--run-id ACTUAL_RUN_ID --reconcile-only` to inspect
+response, use step 17.2 with `--reconcile-only` to identify, inspect
 and record the original run before deciding whether another dispatch is allowed.
+For ambiguous or older intents without a bounded window, inspect the exact run
+and add `--run-id ACTUAL_RUN_ID`; never redispatch an uncertain request.
 
 Production promotes the exact staging frontend/backend digests without rebuilding,
 requires its durable host receipt, and takes a verified backup before backend
@@ -1030,9 +1082,12 @@ decision, **operator host**:
 python3 -B docs/template-initialization/scripts/18_5_enable_backup_schedule.py --reviewed
 ```
 
-Confirm **03:00 Europe/Zagreb**, persistent scheduling and 30-day production
-retention. Staging stays unscheduled. Record the next firing and observe its
-actual result later; do not claim a future scheduled run passed. Changing the
+The script verifies reviewed installed source/configuration, the effective
+**03:00 Europe/Zagreb** daily timer, persistence, exact production backup service
+and 30-day retention implementation, with staging unscheduled. It enables the
+timer, reads back active/enabled state and the next firing, and records those
+immediate observations. Observe the first actual scheduled result later; that
+future execution remains explicitly pending. Changing the
 time/timezone/destination requires reviewed operator work, not an installer flag.
 Same-server backups do not survive server loss.
 

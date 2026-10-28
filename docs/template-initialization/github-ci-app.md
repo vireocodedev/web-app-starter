@@ -102,8 +102,11 @@ is required by this interface.
 
 ## Register and verify a consumer
 
-Before registration, grant this App installation access to the consumer's
-private repository, preserving existing selections. The consumer owner must
+Step 11.1 of the [initialization guide](INIT_GUIDE.md#111-verify-github-app-access-and-transfer-the-initialization-state)
+grants and reads back this App installation's access to the exact consumer,
+preserving existing selections. The authenticated organization owner needs
+`repo`, `read:org` and `read:user`; step 2.3 handles explicitly authorized login/
+scope refresh. Unsupported token/access or policy conflicts stop for resolution. The consumer owner must
 match this pool's configured organization; other organizations need their own
 installation/pool or a separately implemented multi-installation adapter.
 

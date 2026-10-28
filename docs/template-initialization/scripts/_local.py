@@ -5,14 +5,18 @@ Public entrypoints load the same verified env and prove consumer identity first.
 """
 from __future__ import annotations
 
+import errno
 import json
 import os
 import re
 import shutil
+import socket
+import stat
 import tempfile
 from pathlib import Path
 
 from _shared import InitError, load_context, parser, require_consumer, run
+import _personalization as personalization
 
 
 HTTP_VALUES = {
@@ -21,7 +25,6 @@ HTTP_VALUES = {
     "VITE_API_WITH_CREDENTIALS": "true",
     "VITE_APP_ENV": "development",
 }
-JAVA_KEYWORDS = set("abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while true false null _ record sealed permits var yield".split())
 
 
 def entry(action, description, *, editor=False, browser=False):
@@ -47,100 +50,50 @@ def regular(path):
     return path
 
 
-def fields(ctx, args, changes):
-    for relative, change in changes:
-        regular(ctx.root / relative)
-        print(f"{relative}: {change}")
-    if args.open:
-        if shutil.which("code") is None:
-            raise InitError("VS Code command 'code' is unavailable; edit the listed files in your editor.")
-        run(["code", *[str(ctx.root / relative) for relative, _ in changes]], cwd=ctx.root)
+def inspect_personalized_files(ctx, args, plans):
+    if not getattr(args, "open", False):
+        return
+    if shutil.which("code") is None:
+        print("Identity applied. VS Code command 'code' is unavailable; inspect the diff in your editor.")
+        return
+    try:
+        result = run(["code", *[str(ctx.root / plan.relative) for plan in plans]], cwd=ctx.root, check=False)
+    except (OSError, InitError):
+        print("Identity applied; the optional editor could not open. Inspect the diff in your editor.")
+        return
+    if result.returncode:
+        print("Identity applied; the optional editor could not open. Inspect the diff in your editor.")
 
 
 def edit_backend_identity(ctx, args):
-    v = ctx.values
-    fields(ctx, args, [
-        ("backend/settings.gradle", f"rootProject.name = {v['PROJECT_SLUG'] + '-backend'!r}"),
-        ("backend/build.gradle", f"group = {v['JAVA_PACKAGE']!r}; description = {v['DISPLAY_NAME'] + ' backend'!r}"),
-        ("backend/src/main/resources/application.yaml", f"spring.application.name: {v['PROJECT_SLUG']}-backend"),
-        ("backend/compose.yaml", f"top-level name: {v['COMPOSE_PROJECT_NAME']}"),
-        ("backend/.env.example", f"COMPOSE_PROJECT_NAME={v['COMPOSE_PROJECT_NAME']}; POSTGRES_DB/POSTGRES_USER={v['DATABASE_NAME']}; keep passwords empty"),
-        ("backend/scripts/start-local.mjs", f"fallback Compose project: {v['COMPOSE_PROJECT_NAME']}"),
-        (".vscode/launch.json", f"backend mainClass: {v['JAVA_PACKAGE']}.BackendApplication"),
-    ])
-    print("Edit only these fields. Escape values for their destination syntax. Keep dependencies, /api, auth, datasource placeholders and Flyway SQL unchanged.")
+    plans = personalization.backend_plan(ctx)
+    personalization.commit(plans)
+    print("Applied backend identity fields; dependencies, authentication, database data and SQL are preserved.")
+    inspect_personalized_files(ctx, args, plans)
 
 
 def refactor_java_packages(ctx, args=None):
-    old, new = "com.vireocode.backend", ctx.values["JAVA_PACKAGE"]
-    if not re.fullmatch(r"[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+", new) or any(part in JAVA_KEYWORDS for part in new.split(".")):
-        raise InitError("Use dotted lowercase Java identifiers without keywords.")
-    if new == old or new.startswith(old + ".") or old.startswith(new + "."):
-        raise InitError("Use IDE refactoring for unchanged or overlapping package roots.")
-    plans, roots = [], []
-    for source in (ctx.root / "backend/src/main/java", ctx.root / "backend/src/test/java"):
-        origin, target = source / old.replace(".", "/"), source / new.replace(".", "/")
-        if not origin.is_dir() or origin.is_symlink() or target.exists() or target.is_symlink():
-            raise InitError("Expected fresh main/test package roots; inspect before resuming.")
-        if any(parent.is_symlink() for parent in origin.parents if parent != ctx.root.parent):
-            raise InitError("Package roots must not traverse symbolic links.")
-        # Preflight the whole move before writing either main or test source.
-        for parent in (target, *target.parents):
-            if parent == source:
-                break
-            if parent.is_symlink():
-                raise InitError("Target package roots must not traverse symbolic links.")
-        roots.append(origin)
-        for path in origin.rglob("*"):
-            if path.is_symlink() or (path.is_file() and path.suffix != ".java"):
-                raise InitError("Unexpected package content; use IDE refactoring.")
-            if path.is_file():
-                plans.append((path, target / path.relative_to(origin), path.read_text().replace(old, new)))
-    for origin, target, contents in plans:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        with target.open("x") as stream:
-            stream.write(contents)
-        origin.unlink()
-    for origin in roots:
-        for directory in sorted((path for path in origin.rglob("*") if path.is_dir()), key=lambda path: len(path.parts), reverse=True):
-            directory.rmdir()
-        origin.rmdir()
-    print("Moved both Java roots; review declarations, imports and launch.json. Do not rerun a partially moved tree.")
+    personalization.refactor_java(ctx)
 
 
 def edit_frontend_identity(ctx, args):
-    v = ctx.values
-    fields(ctx, args, [
-        ("frontend/package.json", f"name: {v['PROJECT_SLUG']}-frontend"),
-        ("frontend/package-lock.json", f"top-level name and packages[''].name: {v['PROJECT_SLUG']}-frontend; preserve dependency/integrity graph"),
-        ("frontend/index.html", f"HTML-escaped title: {v['DISPLAY_NAME']!r}"),
-        ("frontend/public/manifest.json", f"name: {v['DISPLAY_NAME']!r}; short_name: {v['PWA_SHORT_NAME']!r}; preserve id/start_url/scope/icons"),
-        ("frontend/src/app/localization/translations/translation.en.ts", f"navigation.shellTitle: {v['DISPLAY_NAME']!r}; preserve localized page labels"),
-        ("frontend/src/app/localization/translations/translation.hr.ts", f"navigation.shellTitle: {v['DISPLAY_NAME']!r}; preserve localized page labels"),
-        ("README.md", f"Project identity: slug={v['PROJECT_SLUG']}, display={v['DISPLAY_NAME']!r}, Java={v['JAVA_PACKAGE']}, short={v['PWA_SHORT_NAME']!r}; update identity-dependent JAR examples"),
-        ("frontend/README.md", f"Consumer title/introduction: {v['DISPLAY_NAME']!r}; preserve setup instructions"),
-    ])
-    print("Inspect AppShell.tsx artwork references, favicon and both PWA icons in light/dark. Retained RGO artwork keeps accurate alt='RGO', attribution and recorded branding deferral.")
+    plans = personalization.frontend_plan(ctx)
+    personalization.commit(plans)
+    print("Applied frontend identity and recorded deferred custom branding; retained artwork keeps its accurate RGO accessibility name.")
+    inspect_personalized_files(ctx, args, plans)
 
 
 def edit_title_expectations(ctx, args):
-    fields(ctx, args, [(path, f"title suffix: {ctx.values['DISPLAY_NAME']!r}; preserve translated page titles and mock credentials") for path in (
-        "frontend/tests/integration/auth/components/AppAuthFlow.test.tsx",
-        "frontend/tests/browser/application.spec.ts",
-        "frontend/tests/browser/documentation.development.spec.ts",
-    )])
+    plans = personalization.titles_plan(ctx)
+    personalization.commit(plans)
+    print("Updated title expectations; localized page prefixes and mock credentials are preserved.")
+    inspect_personalized_files(ctx, args, plans)
 
 
 def audit_identity(ctx, args=None):
-    result = run([
-        "rg", "-n", r"com\.vireocode\.backend|rgo-frontend-template|vireocode-backend|vireocode-web-app-starter-local|RGO application|RGO aplikacija",
-        "backend/src", "backend/settings.gradle", "backend/build.gradle", "backend/compose.yaml", "backend/.env.example", "backend/scripts", ".vscode", "frontend/src", "frontend/tests", "frontend/package.json", "frontend/package-lock.json", "frontend/index.html", "frontend/public/manifest.json", "README.md", "frontend/README.md",
-    ], cwd=ctx.root, check=False)
-    if result.returncode not in (0, 1):
-        raise InitError("Identity search failed; inspect the listed owned source paths.")
+    personalization.audit(ctx)
     run(["git", "diff", "--check"], cwd=ctx.root)
-    run(["git", "diff", "--stat"], cwd=ctx.root)
-    print("Classify every residual match; unexplained application identity is unfinished. Preserve reference fixtures, attribution, retained artwork and mock identities.")
+    print("Identity audit and whitespace checks passed; no manual residual-match classification is required.")
 
 
 def read_literal_env(path):
@@ -207,6 +160,9 @@ def backend_identity(ctx):
 def checked_backend_env(ctx):
     path = ctx.root / "backend/.env"
     values = read_literal_env(path)
+    info = path.stat()
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
+        raise InitError("backend/.env must be owned by you with mode 0600; inspect privately before continuing.")
     mismatches = [key for key, expected in backend_identity(ctx).items() if values.get(key) != expected]
     if mismatches:
         raise InitError("Existing backend/.env identity differs for " + ", ".join(mismatches) + "; preserve credentials/volumes and reconcile privately before startup.")
@@ -219,6 +175,43 @@ def checked_backend_env(ctx):
     return values
 
 
+def check_database_binding(ctx, values):
+    """A bind probe reserves nothing; only this exact checkout may own a busy port."""
+    port = int(values.get("POSTGRES_PORT", "55436"))
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.bind(("127.0.0.1", port))
+        return "available"
+    except OSError as error:
+        if error.errno != errno.EADDRINUSE:
+            raise InitError("Cannot inspect the local PostgreSQL binding; resolve local socket permissions before startup.") from None
+    project = ctx.values["COMPOSE_PROJECT_NAME"]
+    result = run(["docker", "container", "ls", "--all", "--filter", "label=com.docker.compose.project=" + project,
+                  "--filter", "label=com.docker.compose.service=postgres", "--format", "{{.ID}}"],
+                 capture=True, check=False)
+    identifiers = result.stdout.splitlines()
+    if result.returncode or len(identifiers) != 1 or not re.fullmatch("[0-9a-f]{12,64}", identifiers[0]):
+        raise InitError("POSTGRES_PORT is occupied by an unverified owner; preserve existing resources and select a free port privately.")
+    result = run(["docker", "container", "inspect", "--format",
+                  "{{json .Config.Labels}}\n{{json .NetworkSettings.Ports}}\n{{json .State.Status}}", identifiers[0]],
+                 capture=True, check=False)
+    try:
+        if result.returncode:
+            raise ValueError()
+        labels, bindings, status = [json.loads(line) for line in result.stdout.splitlines()]
+        backend = (ctx.root / "backend").resolve()
+        if (not isinstance(labels, dict) or not isinstance(bindings, dict) or status != "running"
+                or labels.get("com.docker.compose.project") != project
+                or labels.get("com.docker.compose.service") != "postgres"
+                or labels.get("com.docker.compose.project.working_dir") != str(backend)
+                or labels.get("com.docker.compose.project.config_files") != str(backend / "compose.yaml")
+                or bindings.get("5432/tcp") != [{"HostIp": "127.0.0.1", "HostPort": str(port)}]):
+            raise ValueError()
+    except (ValueError, TypeError):
+        raise InitError("POSTGRES_PORT is occupied outside this checkout's verified Compose binding; preserve resources and reconcile privately.") from None
+    return "owned by this checkout's running PostgreSQL"
+
+
 def prepare_backend_env(ctx, args=None):
     path = ctx.root / "backend/.env"
     existed = path.exists() or path.is_symlink()
@@ -227,12 +220,20 @@ def prepare_backend_env(ctx, args=None):
     run(["bash", str(ctx.root / "backend/scripts/with-local-node.sh"), str(ctx.root / "backend/scripts/setup-local.mjs")], cwd=ctx.root)
     if not existed:
         merge_literal_env(path, backend_identity(ctx))
-    checked_backend_env(ctx)
+    values = checked_backend_env(ctx)
+    binding = check_database_binding(ctx, values)
+    print("Backend identity, private permissions and password lengths verified; PostgreSQL port " + binding + ".")
+    print("Database password authentication is checked at step 8.1; existing database data was not changed.")
     print("Local backend credentials prepared; existing files and passwords are preserved. Read the ignored backend/.env privately for login.")
 
 
 def prepare_frontend_env(ctx, args=None):
     run(["npm", "--prefix", str(ctx.root / "frontend"), "ci"], cwd=ctx.root, timeout=None)
+    # npm ci installs the lockfile-pinned formatter. Invoke that local binary
+    # directly; 5.x also works before dependencies are installed.
+    for relative in personalization.FRONTEND_FORMAT_TARGETS:
+        regular(ctx.root / "frontend" / relative)
+    run(["bash", str(ctx.root / "backend/scripts/with-local-node.sh"), str(ctx.root / "frontend/node_modules/prettier/bin/prettier.cjs"), "--write", *personalization.FRONTEND_FORMAT_TARGETS], cwd=ctx.root / "frontend", timeout=None)
     path = ctx.root / "frontend/.env.local"
     if not path.exists() and not path.is_symlink():
         contents = regular(ctx.root / "frontend/.env.example").read_text()
@@ -240,7 +241,7 @@ def prepare_frontend_env(ctx, args=None):
         with os.fdopen(descriptor, "w") as stream:
             stream.write(contents)
     merge_literal_env(path, HTTP_VALUES)
-    print("Merged public HTTP development settings; other frontend values are preserved. Vite configuration is public: keep secrets out.")
+    print("Formatted the personalized frontend files and merged public HTTP development settings; other frontend values are preserved. Vite configuration is public: keep secrets out.")
 
 
 def verify_ignored_env(ctx, args=None):

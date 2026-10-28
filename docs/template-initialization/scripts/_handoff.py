@@ -11,6 +11,7 @@ import tempfile
 from types import SimpleNamespace
 
 from _operations import ci_source, context, execute, positive, ssh_arguments
+from _github_bootstrap import ensure_ci_app_access
 from _shared import InitError, load_context, parser, private_file, read_state, require_private_location
 
 FILES = {'values.env': 65536, 'verification.json': 65536, 'progress.json': 262144}
@@ -196,6 +197,12 @@ def transfer(args):
     snapshot_ctx, state = validate_bundle(original)
     if snapshot_ctx.values != ctx.values:
         raise InitError('Workstation values changed during validation; state was not transferred.')
+    if not args.return_progress:
+        ensure_ci_app_access(ctx)
+        original = snapshot(ctx.env_path)
+        snapshot_ctx, state = validate_bundle(original)
+        if snapshot_ctx.values != ctx.values:
+            raise InitError('Workstation values changed during App verification; state was not transferred.')
     if args.return_progress:
         actual = decode(execute(remote_arguments(ctx, 'return'), input=encode(original)))
         _, observed = validate_bundle(actual)
@@ -224,10 +231,10 @@ def transfer(args):
         commands = (
             ('11_2_prepare_registration.py', []),
             ('11_3_stop_and_inspect_ci.py', []),
-            ('11_4_register_and_validate_ci.py', ['--expected-config-sha256', 'CURRENT_OBSERVED_CONFIG_SHA256']),
+            ('11_4_register_and_validate_ci.py', []),
             ('11_5_activate_ci.py', ['--reviewed']),
         )
-        print('Run one guide step at a time; replace CURRENT_OBSERVED_CONFIG_SHA256 with the value reported by step 11.3.')
+        print('Run one guide step at a time; step 11.3 records the configuration hash used automatically by step 11.4.')
         for name, extra in commands:
             print(shlex.join(['python3', '-B', str(scripts / name), '--env', path, *extra]))
 

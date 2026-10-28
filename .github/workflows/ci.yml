@@ -77,6 +77,23 @@ jobs:
           java-version: "21"
       - name: Collect full JUnit inventory and execute assigned classes
         run: python3 -B infrastructure/ci/test_shards.py run backend --shard ${{ matrix.shard }} --output "$RUNNER_TEMP/backend-report"
+      - name: Collect failed backend diagnostics
+        if: failure()
+        run: |
+          mkdir -p "$RUNNER_TEMP/backend-diagnostics"
+          if [ -r "$HOME/docker.log" ]; then
+            tail -c 1048576 "$HOME/docker.log" > "$RUNNER_TEMP/backend-diagnostics/docker.log"
+          fi
+      - name: Preserve failed backend diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-diagnostics-${{ matrix.shard }}-${{ github.run_attempt }}
+          path: |
+            backend/build/test-results/test/*.xml
+            ${{ runner.temp }}/backend-diagnostics/docker.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Preserve source-bound backend inventory and execution report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

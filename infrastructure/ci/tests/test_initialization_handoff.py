@@ -26,6 +26,9 @@ finally:
 
 class InitializationHandoffTests(unittest.TestCase):
     def setUp(self):
+        app_patch = patch.object(handoff, 'ensure_ci_app_access')
+        self.app_access = app_patch.start()
+        self.addCleanup(app_patch.stop)
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
@@ -160,8 +163,14 @@ class InitializationHandoffTests(unittest.TestCase):
             with self.subTest(length=len(text)), self.assertRaises(shared.InitError):
                 handoff.decode(text)
 
+    def test_app_access_failure_prevents_upload(self):
+        self.app_access.side_effect = shared.InitError('App access unavailable')
+        with self.assertRaisesRegex(shared.InitError, 'App access unavailable'):
+            self.transfer(response='accepted')
+
     def test_upload_uses_strict_ssh_and_captured_three_file_payload(self):
         execute, output = self.transfer(response='accepted')
+        self.app_access.assert_called_once()
         arguments = execute.call_args.args[0]
         self.assertEqual(arguments[:6], ['ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
                                          'root@46.224.72.162'])
@@ -174,7 +183,8 @@ class InitializationHandoffTests(unittest.TestCase):
         for name in ('11_2_prepare_registration.py', '11_3_stop_and_inspect_ci.py',
                      '11_4_register_and_validate_ci.py', '11_5_activate_ci.py'):
             self.assertIn('/root/web-app-starter/docs/template-initialization/scripts/' + name, output)
-        self.assertIn('--expected-config-sha256 CURRENT_OBSERVED_CONFIG_SHA256', output)
+        self.assertNotIn('CURRENT_OBSERVED_CONFIG_SHA256', output)
+        self.assertIn('step 11.3 records the configuration hash', output)
         self.assertIn('--reviewed', output)
         self.assertNotIn(self.env.read_text(), output)
 
@@ -182,6 +192,7 @@ class InitializationHandoffTests(unittest.TestCase):
         self.args.return_progress = True
         actual = self.remote_progress(ci_registered=True)
         self.transfer(response=handoff.encode(actual))
+        self.app_access.assert_not_called()
         self.assertEqual(handoff.snapshot(self.env), actual)
         self.assertEqual((self.local / 'progress.json').stat().st_mode & 0o777, 0o600)
 
@@ -296,7 +307,7 @@ class InitializationHandoffTests(unittest.TestCase):
         source = self.directory / 'canonical'
         scripts = source / 'docs/template-initialization/scripts'
         scripts.mkdir(parents=True)
-        for name in ('_handoff.py', '_shared.py', '_operations.py'):
+        for name in ('_handoff.py', '_shared.py', '_operations.py', '_github_bootstrap.py'):
             shutil.copyfile(SCRIPTS / name, scripts / name)
         # Root ownership is a mocked host seam; imports and dispatch are real in
         # the isolated interpreter using the exact generated bootstrap unchanged.
