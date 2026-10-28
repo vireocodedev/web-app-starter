@@ -15,6 +15,7 @@ spec = importlib.util.spec_from_file_location('ci_capture_operations', SCRIPTS /
 operator = importlib.util.module_from_spec(spec)
 with mock.patch.object(sys, 'path', [str(SCRIPTS), *sys.path]):
     spec.loader.exec_module(operator)
+    import _ci_registration as registration
 
 
 class ConfigurationCaptureTests(unittest.TestCase):
@@ -77,7 +78,7 @@ class ConfigurationCaptureTests(unittest.TestCase):
 
     def test_registration_passes_captured_hash_to_existing_lifecycle_guard(self):
         path = mock.Mock()
-        path.lstat.return_value = SimpleNamespace(st_uid=0, st_mode=0o100600)
+        path.lstat.return_value = SimpleNamespace(st_uid=0, st_mode=0o100600, st_nlink=1)
         path.is_symlink.return_value = False
         path.read_text.return_value = json.dumps({'slug': 'fixture-app', 'repository': 'vireocodedev/fixture-app'})
         path.__str__ = mock.Mock(return_value='/root/project-registration-fixture-app.json')
@@ -85,12 +86,12 @@ class ConfigurationCaptureTests(unittest.TestCase):
                 mock.patch.object(operator, 'ci_source', return_value=self.source), \
                 mock.patch.object(operator, 'registration_configuration', return_value='d' * 64), \
                 mock.patch.object(operator, 'registration_path', return_value=path), \
-                mock.patch.object(operator, 'execute') as execute, mock.patch.object(operator, 'update_state') as update:
+                mock.patch.object(registration, 'register_and_validate') as workflow:
             operator.register_and_validate_ci(SimpleNamespace(expected_config_sha256=None))
-        self.assertIn('--expected-config-sha256', execute.call_args_list[0].args[0])
-        self.assertEqual(execute.call_args_list[0].args[0][-1], 'd' * 64)
-        self.assertEqual(execute.call_args_list[1].args[0][-1], 'validate')
-        update.assert_called_once_with(self.ctx, ci_registered=True, ci_registration_predecessor_sha256='d' * 64)
+        # The captured CAS hash is delegated to the journaled workflow; that
+        # workflow's transaction/validation behavior has real-file CI tests.
+        workflow.assert_called_once_with(self.ctx, self.source, 'd' * 64, path,
+                                         operator.ci_observation_identity)
 
 
 if __name__ == '__main__':

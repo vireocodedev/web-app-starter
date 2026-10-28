@@ -590,21 +590,37 @@ under its lock. Reinspect after any configuration/source/boot change.
 
 ### 11.4 Register and validate the consumer
 
-**Allow several minutes for this command.** After registration it runs full
-isolation and Docker validation for every configured worker slot, followed by
-cross-slot checks. The terminal can stay quiet while these checks run. Keep it
-open and wait for successful completion before activation. Ctrl+C interrupts validation and can leave registration
-committed while completion evidence is still missing. After an interruption,
-inspect the existing registration and follow the [CI operator guide](../../infrastructure/ci/README.md#register-a-private-monorepo)
-to resume validation.
+**Allow about 15–20 minutes for the current six-worker pool; host load can increase this.**
+Registration is followed by full isolation and Docker validation for every worker,
+then simultaneous cross-worker checks. The terminal can stay quiet during these
+checks. Keep it open and wait for successful completion before activation.
 
 ```bash
 python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env
 ```
 
-Registration preserves other projects and leaves the controller disabled.
-Validation must establish a fresh source/configuration/boot-bound receipt. After
-operator review/approval:
+If registration commits but validation fails, is interrupted, or loses its
+response, **rerun the same 11.4 command**. The protected `ci-registration.json`
+journal and progress attempt identify the original configuration change. A retry
+recognizes only that exact committed registration, preserves other projects, and
+runs full validation again. Completion is recorded only after the installed
+controller verifies current source/configuration/boot-bound worker and pool receipts.
+The controller remains disabled until step 11.5.
+
+On failure, read the printed operation, exit status, fresh worker-stage summary
+and private `ci-registration-failure-*.json` report path. Reports retain only
+fixed diagnostic fields; arbitrary subprocess output, API bodies and credentials
+are suppressed. A report without a fresh worker receipt cannot identify the
+underlying probe error. Keep these private reports and the journal for inspection.
+
+Preserve the original step 11.3 observation on retry. Do not recapture its hash,
+delete the journal, or edit completion flags to bypass a failure. Configuration,
+source, boot or consumer changes require operator reconciliation. An existing
+registration created before journaling support needs reviewed recovery; it is
+not adopted automatically. An uncertain permission proof still requires the
+[CI owner's recovery procedure](../../infrastructure/ci/README.md#register-a-private-monorepo).
+
+After successful validation and operator review/approval:
 
 ### 11.5 Activate the reviewed CI controller
 
