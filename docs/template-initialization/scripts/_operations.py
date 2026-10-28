@@ -24,7 +24,7 @@ def execute(arguments, *, cwd=None, input=None, timeout=120, display=False):
     """Capture subprocess diagnostics so credentials/data never leak on failure."""
     result = run(arguments, cwd=cwd, capture=True, check=False, timeout=timeout, input=input)
     if result.returncode:
-        raise InitError('Command failed; inspect its private outcome before retrying: ' + Path(arguments[0]).name)
+        raise InitError('Command failed (exit ' + str(result.returncode) + '); captured output was withheld: ' + Path(arguments[0]).name)
     if display:
         print(result.stdout, end='')
     return result.stdout.strip()
@@ -152,14 +152,13 @@ def register_and_validate_ci(args):
     expected = registration_configuration(ctx, source, args.expected_config_sha256)
     path = registration_path(ctx)
     info = path.lstat()
-    if path.is_symlink() or info.st_uid != 0 or stat.S_IMODE(info.st_mode) & 0o077:
-        raise InitError('Registration file must remain protected and root-owned.')
+    if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0
+            or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1):
+        raise InitError('Registration file must remain a protected root-owned regular file (0600).')
     if json.loads(path.read_text()) != {'slug': ctx.values['PROJECT_SLUG'], 'repository': ctx.values['REPOSITORY']}:
         raise InitError('Registration identity differs from verified project values.')
-    execute(['python3', '-B', str(source / 'infrastructure/ci/manage.py'), 'register', '--project', str(path),
-             '--expected-config-sha256', expected], timeout=900, display=True)
-    execute(['python3', '-B', '/usr/local/lib/web-app-ci/controller.py', 'validate'], timeout=3600, display=True)
-    update_state(ctx, ci_registered=True, ci_registration_predecessor_sha256=expected)
+    from _ci_registration import register_and_validate
+    register_and_validate(ctx, source, expected, path, ci_observation_identity)
 
 
 def activate_ci(args):

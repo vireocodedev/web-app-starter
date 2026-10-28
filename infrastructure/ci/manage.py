@@ -415,7 +415,9 @@ def atomic_config(config):
             temporary.unlink(missing_ok=True)
 
 
-def register(project_path, expected_sha):
+def register(project_path, expected_sha, journal_path=None):
+    if journal_path is not None:
+        return register_journaled(project_path, expected_sha, journal_path)
     root_required()
     with lifecycle_lock():
         expected_digest(expected_sha)
@@ -441,6 +443,171 @@ def register(project_path, expected_sha):
         return {'operation': 'register', 'registered': project['slug'],
                 'configuration_sha256': ctl.config_digest(), 'controller_enabled': False,
                 'full_validation_required': True}
+
+
+def registration_candidate(predecessor, project):
+    candidate = json.loads(json.dumps(ctl.validate_config(predecessor)))
+    if project['slug'] in candidate['projects']:
+        raise ctl.BoundaryError('project-already-registered')
+    candidate['projects'][project['slug']] = {'repository': project['repository']}
+    return ctl.validate_config(candidate)  # Includes case-insensitive repository uniqueness.
+
+
+def registration_journal_path(path, project_path):
+    path = Path(path)
+    # One dedicated filename outside code, credentials and lifecycle state. This
+    # also excludes initialization values/progress files in the same context.
+    if not path.is_absolute() or '..' in path.parts or path.name != 'ci-registration.json':
+        raise ctl.BoundaryError('invalid-register-journal-path')
+    forbidden = (ctl.CONFIG.parent, ctl.APP_SETTINGS.parent, ctl.BASE, ctl.POOL_BASE,
+                 SOURCE.parents[2], INSTALLED, SYSTEMD, LOCK_DIR)
+    if (path == Path(project_path) or any(path == root or root in path.parents for root in forbidden)):
+        raise ctl.BoundaryError('invalid-register-journal-path')
+    ctl.protected_path(path.parent, directory=True)
+    if path.exists() or path.is_symlink():
+        ctl.protected_path(path)
+        metadata = path.lstat()
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+            raise ctl.BoundaryError('invalid-register-journal-path')
+    return path
+
+
+def registration_journal(path, project, expected_sha):
+    if not path.exists():
+        return None
+    try:
+        value = json.loads(ctl.protected_file(path), object_pairs_hook=ctl.unique_object)
+        fields = {'schema_version', 'operation', 'phase', 'project', 'predecessor_sha256',
+                  'candidate_sha256', 'predecessor_config'}
+        if (type(value) is not dict or set(value) != fields
+                or type(value['schema_version']) is not int or value['schema_version'] != 1
+                or value['operation'] != 'register' or value['phase'] not in ('started', 'verified')
+                or value['project'] != project or value['predecessor_sha256'] != expected_sha
+                or type(value['candidate_sha256']) is not str
+                or not re.fullmatch('[0-9a-f]{64}', value['candidate_sha256'])):
+            raise ctl.BoundaryError('invalid-register-journal')
+        candidate = registration_candidate(value['predecessor_config'], project)
+        if unregister_digest(candidate) != value['candidate_sha256']:
+            raise ctl.BoundaryError('invalid-register-journal')
+    except (ValueError, TypeError, KeyError):
+        raise ctl.BoundaryError('invalid-register-journal') from None
+    return value
+
+
+def save_registration_journal(path, value):
+    # Use the same fsync + atomic publication primitive as unregister; the
+    # journal is private, bounded JSON, never executable input.
+    ctl.protected_path(path.parent, directory=True)
+    if path.exists() or path.is_symlink():
+        ctl.protected_path(path)
+        if path.lstat().st_nlink != 1:
+            raise ctl.BoundaryError('invalid-register-journal-path')
+    atomic_file(path, (json.dumps(value, sort_keys=True, indent=2) + '\n').encode(), 0o600)
+
+
+def register_journaled(project_path, expected_sha, journal_path):
+    root_required()
+    source_protected()
+    if type(expected_sha) is not str or not re.fullmatch('[0-9a-f]{64}', expected_sha):
+        raise ctl.BoundaryError('invalid-expected-configuration-sha256')
+    with lifecycle_lock():
+        project = project_input(project_path)
+        path = registration_journal_path(journal_path, project_path)
+        journal = registration_journal(path, project, expected_sha)
+        resumed = journal is not None
+        config = ctl.load_config()
+        require_idle(config)
+        require_no_ledger()
+        actual = ctl.config_digest()
+        if journal is None:
+            expected_digest(expected_sha)
+            candidate = registration_candidate(config, project)
+            journal = {'schema_version': 1, 'operation': 'register', 'phase': 'started',
+                       'project': project, 'predecessor_sha256': expected_sha,
+                       'candidate_sha256': unregister_digest(candidate), 'predecessor_config': config}
+            save_registration_journal(path, journal)  # Intent precedes the possibly uncertain JIT proof.
+        else:
+            candidate = registration_candidate(journal['predecessor_config'], project)
+        if actual not in (expected_sha, journal['candidate_sha256']):
+            raise ctl.BoundaryError('register-configuration-changed')
+        if actual == expected_sha:
+            if journal['phase'] != 'started' or config != journal['predecessor_config']:
+                raise ctl.BoundaryError('register-configuration-changed')
+            verify_permissions(registration_token(), [project['repository']])
+            expected_digest(expected_sha)
+            require_idle(config)
+            require_no_ledger()
+            invalidate_pool_receipts(config)
+            expected_digest(expected_sha)
+            atomic_config(candidate)
+        elif config != candidate:
+            raise ctl.BoundaryError('register-configuration-changed')
+        # Exact own candidate is a completed mutation, even if its acknowledgement
+        # or subsequent full validation failed. Never create another proof here.
+        if ctl.config_digest() != journal['candidate_sha256'] or ctl.load_config() != candidate:
+            raise ctl.BoundaryError('register-configuration-changed')
+        require_idle(candidate)
+        require_no_ledger()
+        if journal['phase'] != 'verified':
+            journal['phase'] = 'verified'
+            save_registration_journal(path, journal)
+        return {'operation': 'register', 'registered': project['slug'],
+                'repository': project['repository'], 'configuration_sha256': journal['candidate_sha256'],
+                'predecessor_sha256': expected_sha, 'journal': str(path), 'resumed': resumed,
+                'controller_enabled': False, 'full_validation_required': True}
+
+
+def verify_registration(project_path, expected_sha, journal_path):
+    """Verify genuine installed-source receipts, without mutation or activation."""
+    root_required()
+    source_protected()
+    if type(expected_sha) is not str or not re.fullmatch('[0-9a-f]{64}', expected_sha):
+        raise ctl.BoundaryError('invalid-expected-configuration-sha256')
+    with lifecycle_lock():
+        project = project_input(project_path)
+        path = registration_journal_path(journal_path, project_path)
+        journal = registration_journal(path, project, expected_sha)
+        if journal is None or journal['phase'] != 'verified':
+            raise ctl.BoundaryError('register-verified-journal-required')
+        candidate = registration_candidate(journal['predecessor_config'], project)
+        config = ctl.load_config()
+        require_idle(config)
+        require_no_ledger()
+        if ctl.config_digest() != journal['candidate_sha256'] or config != candidate:
+            raise ctl.BoundaryError('register-configuration-changed')
+        controller = INSTALLED / 'controller.py'
+        trusted_executable(controller)
+        content = controller.read_bytes()
+        controller_sha = hashlib.sha256(content).hexdigest()
+        boot_id = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        try:
+            module = importlib.util.module_from_spec(importlib.util.spec_from_file_location('verified_registration_controller', controller))
+            exec(compile(content, str(controller), 'exec'), module.__dict__)
+            installed_path = module.CONFIG
+            installed_config = module.load_config() if installed_path == ctl.CONFIG else None
+        except Exception:
+            # Installed controller exceptions have a different BoundaryError
+            # class; normalize them before they reach this command's handler.
+            raise ctl.BoundaryError('register-installed-controller-unavailable') from None
+        # Source-checkout defaults must not accidentally certify another config.
+        if installed_path != ctl.CONFIG or installed_config != config:
+            raise ctl.BoundaryError('register-installed-configuration-mismatch')
+        try:
+            module.verify_pool_receipts(config)
+        except Exception:
+            raise ctl.BoundaryError('register-current-validation-required') from None
+        trusted_executable(controller)
+        if controller.read_bytes() != content or Path('/proc/sys/kernel/random/boot_id').read_text().strip() != boot_id:
+            raise ctl.BoundaryError('register-validation-source-changed')
+        if ctl.config_digest() != journal['candidate_sha256'] or ctl.load_config() != candidate:
+            raise ctl.BoundaryError('register-configuration-changed')
+        require_idle(candidate)
+        require_no_ledger()
+        return {'operation': 'verify-registration', 'registered': project['slug'],
+                'repository': project['repository'], 'configuration_sha256': journal['candidate_sha256'],
+                'predecessor_sha256': expected_sha, 'controller_enabled': False,
+                'validation_verified': True, 'boot_id': boot_id,
+                'installed_controller_sha256': controller_sha}
 
 
 def unregister_candidate(predecessor, project):
@@ -1177,6 +1344,11 @@ def main(argv=None):
     registration = operations.add_parser('register')
     registration.add_argument('--project', required=True)
     registration.add_argument('--expected-config-sha256', required=True)
+    registration.add_argument('--journal')
+    verification = operations.add_parser('verify-registration')
+    verification.add_argument('--project', required=True)
+    verification.add_argument('--expected-config-sha256', required=True)
+    verification.add_argument('--journal', required=True)
     unregistration = operations.add_parser('unregister')
     unregistration.add_argument('--project', required=True)
     unregistration.add_argument('--expected-config-sha256', required=True)
@@ -1208,7 +1380,9 @@ def main(argv=None):
     elif args.operation == 'rollback-pool':
         result = rollback_pool(args.expected_config_sha256)
     elif args.operation == 'register':
-        result = register(args.project, args.expected_config_sha256)
+        result = register(args.project, args.expected_config_sha256, args.journal)
+    elif args.operation == 'verify-registration':
+        result = verify_registration(args.project, args.expected_config_sha256, args.journal)
     elif args.operation == 'unregister':
         result = unregister(args.project, args.expected_config_sha256, args.journal)
     elif args.operation == 'prepare-app-auth':

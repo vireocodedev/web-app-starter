@@ -24,7 +24,7 @@ Historical acceptance does not certify this modified source.
 ## Interface and ownership
 
 The public lifecycle interface is [manage.py](manage.py): `inspect`, `install`,
-`prepare-app-auth`, `register`, `unregister`, `recover-registration`, and an explicitly
+`prepare-app-auth`, `register`, `verify-registration`, `unregister`, `recover-registration`, and an explicitly
 unsupported general `upgrade`, the narrow `repair-postgres-readiness-v1`,
 plus the versioned `migrate-pool`,
 `rollback-pool`, `repair-pool-dispatch-v1` and `rollback-pool-dispatch-v1` operations
@@ -565,6 +565,35 @@ For that interrupted proof only, inspect the ledger and use
 `manage.py recover-registration --expected-config-sha256 CURRENT_CONFIG_SHA256`
 under the same stopped/disabled/idle guards. Recovery reconciles the exact
 registered name and ID; it is not permission to delete unrelated GitHub runners.
+
+For resumable initialization, step 11.4 uses optional `register --journal
+/root/PROJECT_SLUG-initialization/ci-registration.json` automatically. The journal
+must have that exact filename in a root-owned `0700` private directory outside
+the source, configuration, credential and worker-state trees. Its `0600` contents
+record the exact project, predecessor configuration/hash and candidate hash before
+the proof or configuration mutation. Only its own unchanged predecessor or exact
+committed candidate can resume. A committed candidate does not repeat the JIT proof
+or rewrite configuration; unrelated registrations and drift still fail closed.
+The original non-journal registration interface keeps its existing duplicate guard.
+
+After registration or recognized commit, run full installed validation. The
+read-only `verify-registration --project FILE --expected-config-sha256 ORIGINAL
+--journal FILE` operation checks the same verified journal, stopped/disabled/idle
+state, no pending proof, exact candidate configuration, current boot and every
+receipt through the protected **installed** controller. It never activates the
+service. Step 11.4 records completion only after this verification, and the same
+11.4 command resumes after failed validation or a lost registration response.
+Preserve its original observation and journal. Registrations without this journal
+need explicit reviewed recovery rather than automatic adoption.
+
+Initialization failure reports contain only fixed, bounded diagnostic fields from
+fresh worker failure receipts. Unchanged/stale receipts and arbitrary stdout,
+stderr, exception strings and worker text are excluded. These summaries may locate
+a failing stage without identifying the exact failing command. A source checkout
+update does not update the installed validator. Finer probe diagnostics require a
+separately reviewed installed-source change and source-bound disposable-host proof
+before activation; use a maintenance window to reproduce the failing probe. Do not
+add sleeps, retries or weaker isolation checks without evidence of the cause.
 
 A successful registration preserves the other projects, invalidates the previous
 receipt, and still leaves the controller disabled. Repeat full validation before
