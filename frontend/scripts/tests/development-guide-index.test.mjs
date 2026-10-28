@@ -4,7 +4,18 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 
-import { formatOverview, formatSearch, parseArguments, scanGuide, searchGuide } from "../development-guide-index.mjs";
+import {
+  createRoutes,
+  formatOverview,
+  formatRoute,
+  formatSearch,
+  listRoutes,
+  parseArguments,
+  routeGuide,
+  scanGuide,
+  searchGuide,
+  validateRoutes,
+} from "../development-guide-index.mjs";
 
 const roots = [
   "frontend/docs/storybook/handbook/Handbook",
@@ -256,4 +267,260 @@ test("arguments reject invalid options instead of silently losing scope or limit
     ["search", "x", "--limit", "1", "--limit", "2"],
   ])
     assert.throws(() => parseArguments(args));
+});
+
+test("route arguments preserve explicit concern unions and reject unsupported limits or guesses", () => {
+  assert.deepEqual(parseArguments(["route", "forms", "notifications"]), {
+    mode: "route",
+    keys: ["forms", "notifications"],
+  });
+  assert.deepEqual(parseArguments(["route", "--list"]), { mode: "routes", scope: undefined });
+  assert.deepEqual(parseArguments(["route", "--list", "frontend"]), { mode: "routes", scope: "frontend" });
+  for (const args of [
+    ["route"],
+    ["route", " "],
+    ["route", "forms", "--limit", "1"],
+    ["route", "--list", "frontend", "extra"],
+    ["route", "--list", "--unknown"],
+  ])
+    assert.throws(() => parseArguments(args));
+  assert.throws(
+    () => routeGuide(["change a form validation rule"]),
+    /Unknown route key.*broader terms.*explicit approval/,
+  );
+});
+
+test("explicit routing selects minimal styling and forms without unrelated architecture or page bundles", () => {
+  const style = routeGuide(["styling"]);
+  assert.deepEqual(
+    style.routes.map(route => route.key),
+    ["frontend-baseline"],
+  );
+  assert.match(formatRoute(style), /exact component/);
+  const forms = routeGuide(["forms"]);
+  assert.ok(forms.routes.some(route => route.key === "frontend-forms-cross-field-constraints-and-reset"));
+  assert.ok(
+    !forms.routes.some(
+      route => route.key.startsWith("architecture:") || route.key === "header-tabs" || route.key === "left-navigation",
+    ),
+  );
+  assert.ok(forms.routes.every(route => !route.path?.includes("/hr/")));
+  assert.ok(forms.routes.filter(route => route.counterpart).every(route => route.counterpart.includes("/hr/")));
+  assert.ok(!formatRoute(forms).includes("/hr/"));
+});
+
+test("routine verification selection preserves minimal styling and forms routes", () => {
+  const verification = "architecture:tests-mocks-stories-and-architecture-checks";
+  for (const concern of ["styling", "forms"]) {
+    const keys = routeGuide([concern, "verification"]).routes.map(route => route.key);
+    assert.deepEqual(
+      keys.filter(key => key.startsWith("architecture:")),
+      [verification],
+    );
+    for (const unrelated of [
+      "source-ownership-tutorial",
+      "dependency-tutorial",
+      "public-api",
+      "runtime",
+      "testing",
+      "header-tabs",
+      "left-navigation",
+      "standalone",
+      "navigation-chooser",
+    ])
+      assert.ok(!keys.includes(unrelated), `${concern}: unexpected ${unrelated}`);
+    assert.equal(keys.length, concern === "styling" ? 2 : 6);
+  }
+});
+
+test("draft forms include every prerequisite declared by the tutorial", () => {
+  const keys = routeGuide(["draft-forms"]).routes.map(route => route.key);
+  for (const required of [
+    "source-ownership-tutorial",
+    "dependency-tutorial",
+    "public-api",
+    "runtime",
+    "forms",
+    "confirmations",
+    "authentication",
+    "testing",
+    "frontend-forms-entity-modes-and-validation-policy",
+    "frontend-forms-cross-field-constraints-and-reset",
+    "frontend-editing-pinned-values-and-revisions",
+    "frontend-editing-complete-navigation-guards",
+    "frontend-async-commands-committed-writes-and-observer-failures",
+  ])
+    assert.ok(keys.includes(required), `Missing draft-form prerequisite: ${required}`);
+});
+
+test("each page layout selects matching tutorial and skills without selecting every layout", () => {
+  const layouts = ["header-tabs", "left-navigation", "standalone", "navigation-chooser"];
+  for (const selected of layouts) {
+    const keys = routeGuide([selected]).routes.map(route => route.key);
+    assert.ok(keys.includes("route-pages"));
+    for (const other of layouts.filter(key => key !== selected)) assert.ok(!keys.includes(other));
+  }
+  assert.ok(routeGuide(["header-tabs"]).routes.some(route => route.key === "shell-navigation"));
+  const url = routeGuide(["url-state"]).routes.map(route => route.key);
+  assert.ok(url.includes("architecture:state-ownership-and-signal-lifecycle"));
+});
+
+test("multi-owner CRUD concerns union recursive dependencies once with full paths/status/provenance", () => {
+  const route = routeGuide(["header-tabs", "forms", "notifications", "backend-feature", "migration", "localization"]);
+  const keys = route.routes.map(entry => entry.key);
+  assert.equal(new Set(keys).size, keys.length);
+  for (const key of [
+    "route-pages",
+    "shell-navigation",
+    "backend",
+    "endpoint",
+    "backend-data-flyway-and-schema-ownership",
+    "forms",
+    "localization",
+    "authentication",
+    "runtime",
+    "public-api",
+    "testing",
+  ])
+    assert.ok(keys.includes(key), key);
+  const output = formatRoute(route);
+  assert.match(output, /complete prerequisite union, no truncation/);
+  assert.match(output, /reference recipe/);
+  assert.ok(route.routes.some(entry => entry.provenance?.length));
+  assert.match(output, /frontend\/\.agents\/skills\/app-route-pages\/SKILL.md \[skill; procedure\]/);
+  assert.match(output, /Reroute before touching newly affected owners/);
+});
+
+test("session routing preserves cross-cutting security and runtime/public API includes full contracts", () => {
+  const session = routeGuide(["session"]).routes.map(route => route.key);
+  for (const key of [
+    "authentication",
+    "backend",
+    "backend-security-session-and-csrf-lifecycle",
+    "quality-backend-real-postgres-and-http-contracts",
+  ])
+    assert.ok(session.includes(key));
+  const runtime = routeGuide(["runtime", "public-api"]).routes.map(route => route.key);
+  for (const key of [
+    "architecture:dependency-boundaries-and-imports",
+    "architecture:feature-anatomy-filenames-and-public-interfaces",
+    "architecture:runtime-providers-and-lifetimes",
+    "architecture:state-ownership-and-signal-lifecycle",
+  ])
+    assert.ok(runtime.includes(key));
+});
+
+test("Storybook/operations routes load their owners and preserve isolation and recovery triggers", () => {
+  const storybook = formatRoute(routeGuide(["storybook"]));
+  assert.match(storybook, /frontend\/docs\/storybook\/CONTRIBUTING.md/);
+  assert.match(storybook, /guide-maintenance/);
+  const ci = routeGuide(["ci"]);
+  assert.ok(!ci.routes.some(route => route.key.startsWith("architecture:")));
+  assert.match(formatRoute(ci), /shared-pool.*independent review and fresh-host validation/);
+  const backup = formatRoute(routeGuide(["backup"]));
+  assert.match(backup, /exact frontend\/backend artifact pair/);
+  assert.match(backup, /isolated-restore-rehearsal/);
+});
+
+test("read-only routing emits check guidance without requiring suite execution; expansion unions prior concerns", () => {
+  const explanation = routeGuide(["header-tabs"]);
+  assert.ok(!explanation.routes.some(route => route.key === "testing" || route.key === "backend"));
+  assert.match(formatRoute(explanation), /read-only work does not require executing suites/);
+  const expanded = routeGuide(["header-tabs", "session"]);
+  for (const route of explanation.routes) assert.ok(expanded.routes.some(candidate => candidate.key === route.key));
+});
+
+test("unknown/ambiguous keys and empty scopes fail with broaden/search/approval guidance", () => {
+  assert.throws(() => routeGuide([]), /explicit concern key/);
+  assert.throws(() => routeGuide(["nonexistent-concern"]), /routing miss is not evidence.*explicit approval/);
+  let partialResult;
+  assert.throws(() => {
+    partialResult = routeGuide(["forms", "nonexistent-concern"]);
+  }, /Unknown route key: nonexistent-concern.*explicit approval/);
+  assert.equal(partialResult, undefined);
+  assert.throws(() => listRoutes("unrecognized-scope"), /Unknown or empty route scope/);
+  const ambiguous = [
+    { key: "one", aliases: ["shared"] },
+    { key: "two", aliases: ["shared"] },
+  ];
+  assert.throws(() => routeGuide(["shared"], ambiguous), /Ambiguous.*choose one, two/);
+  assert.throws(
+    () =>
+      routeGuide(
+        ["one"],
+        [
+          { key: "one", requires: ["two"] },
+          { key: "two", requires: ["one"] },
+        ],
+      ),
+    /dependency cycle/,
+  );
+});
+
+test("route discovery covers every existing handbook topic/article and friendly frontend keys without truncation", () => {
+  const routes = createRoutes();
+  const frontend = listRoutes("frontend", routes);
+  for (const key of [
+    "styling",
+    "forms",
+    "header-tabs",
+    "url-state",
+    "state",
+    "localization",
+    "authentication",
+    "collections",
+    "settings",
+    "workflows",
+    "inbox",
+    "testing",
+  ])
+    assert.ok(frontend.includes(key));
+  assert.match(frontend, /complete list, no truncation/);
+  const topic = routes.find(route => route.key === "topic:frontend-forms");
+  assert.ok(topic.requires.length > 0);
+  for (const key of topic.requires) assert.ok(routeGuide([topic.key], routes).routes.some(route => route.key === key));
+});
+
+test("supplemental routing derives handbook metadata from existing catalogs; related is advisory", () => {
+  const routes = createRoutes({
+    catalog,
+    supplemental: [{ key: "backend-baseline", scope: "backend", trigger: "Backend" }],
+  });
+  const route = routeGuide(["example"], routes).routes.at(-1);
+  assert.equal(route.path, articlePath);
+  assert.equal(route.status, "reference recipe");
+  assert.equal(route.provenance, catalog.articles[0].sources);
+  assert.deepEqual(route.related, ["other-example"]);
+  assert.ok(!route.requires.includes("other-example"));
+});
+
+test("route metadata integrity rejects alias collisions, cycles, missing paths and duplicate canonical owners", async () => {
+  const routes = createRoutes();
+  const changed = routes.map(route => ({ ...route }));
+  changed[0].aliases = ["backend-baseline"];
+  changed[0].requires = [changed[0].key, "missing-prerequisite"];
+  changed[0].examples = ["missing/example.ts"];
+  changed.push({
+    key: "duplicate",
+    scope: "invalid-scope",
+    kind: "invalid-kind",
+    status: "invalid-status",
+    trigger: "bad owner",
+    path: routes[0].path,
+  });
+  const problems = await validateRoutes({ routes: changed });
+  for (const diagnostic of [
+    "collision",
+    "dependency cycle",
+    "unknown prerequisite",
+    "missing path missing/example.ts",
+    "Duplicate canonical owner",
+    "invalid scope",
+    "invalid kind",
+    "invalid status",
+  ])
+    assert.ok(
+      problems.some(problem => problem.includes(diagnostic)),
+      diagnostic,
+    );
 });

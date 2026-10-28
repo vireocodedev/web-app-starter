@@ -1,29 +1,35 @@
 # Storybook Development Guide
 
-This is the source entry point for the Development Guide in Storybook. Its
-architecture decisions and implementation patterns are mandatory frontend
-guidance under the [workspace agent workflow](../../../AGENTS.md#mandatory-development-guide-workflow).
-Read the Architecture section before planning, implementing or reviewing frontend
-work, then read every tutorial relevant to the task. Apply all relevant contracts
-and inspect the current application files named by each tutorial.
+Use this router to select full tutorials for the task's contracts, including
+analysis and review. The [frontend baseline](../../AGENTS.md) applies to frontend
+work; the [guide workflow](../development-guide/README.md#mandatory-agent-workflow)
+owns classification, expansion and conflict handling. Read selected MDX and
+its authoritative articles in full, then inspect the specific current examples.
+Read one language version; Storybook tutorials themselves use English.
 
-Read the MDX directly without starting Storybook. For interactive examples, run
-`npm run storybook` from `frontend/` and open **Development Guide**. The wider
-[development-guide workflow](../development-guide/README.md#mandatory-agent-workflow)
-owns discovery, pattern reuse and conflict/approval handling. Existing architecture
-articles retain ownership of their detailed contracts; tutorials apply them with
-worked examples. A source conflict follows that workflow rather than being
-silently resolved by choosing one document.
+Architecture articles retain detailed contract ownership. Load an architecture
+tutorial when its concern is involved; an existing component's spacing change
+does not trigger all architecture tutorials. A full feature-installation recipe
+may legitimately require all four.
 
-## Architecture — required for frontend work
+For tutorial/CSF/fixture/reader/catalog/configuration edits or reorganization,
+first read [authoring conventions](CONTRIBUTING.md). Production implementation
+loads those conventions only if it also changes documentation examples.
 
-- [Source ownership](architecture/SourceOwnership/SourceOwnership.mdx): folders, files, feature
-  boundaries, thin pages and verification placement.
-- [Dependency direction](architecture/DependencyDirection/DependencyDirection.mdx): public composition,
+Read MDX directly without starting Storybook. For interactive examples, run
+`npm run storybook` from `frontend/` and open **Development Guide**. Compact
+selection is available with `guide:index -- route <keys...>`; use
+`guide:index -- route --list frontend` to discover keys.
+
+## Architecture — select by changed contract
+
+- [Source ownership](architecture/SourceOwnership/SourceOwnership.mdx): creating, moving or
+  removing owners/files, feature anatomy, thin pages and verification placement.
+- [Dependency direction](architecture/DependencyDirection/DependencyDirection.mdx): changing imports or public composition,
   router/shell boundaries, injected construction and exceptional dependencies.
-- [Public module APIs](architecture/PublicModuleApis/PublicModuleApis.mdx): named exports, private
+- [Public module APIs](architecture/PublicModuleApis/PublicModuleApis.mdx): adding/changing exports or cross-owner callers, private
   implementation and approved application interfaces.
-- [Runtime and state ownership](architecture/RuntimeAndState/RuntimeAndState.mdx): factories,
+- [Runtime and state ownership](architecture/RuntimeAndState/RuntimeAndState.mdx): adding/changing factories,
   typed runtime access, providers, state and lifetimes.
 
 ## Routing — pages, layouts, URLs or navigation
@@ -138,104 +144,3 @@ feature and Signal registries are empty. It exposes no guide routes, redirects,
 menu items, startup effects or translations, including in development builds.
 Production source imports no `docs/` or `.storybook/` modules. Documentation may
 reuse installed app APIs; private preview providers never become app registries.
-
-## File placement and imports
-
-```text
-frontend/docs/storybook/
-├── README.md
-├── examples/Contacts/       complete injected reference feature
-├── patterns/               capability-grouped panels and shared gallery
-├── handbook/Handbook/       article catalog, metadata search and reader
-├── shared/documentation/   reference-only Markdown rendering
-├── architecture/
-│   ├── ArchitectureReference/  reader for canonical architecture articles
-│   ├── SourceOwnership/       SourceOwnership.mdx and .stories.tsx
-│   ├── DependencyDirection/
-│   ├── PublicModuleApis/
-│   ├── RuntimeAndState/
-│   └── shared/                walkthrough component and selected examples
-├── routing/
-│   ├── HeaderTabs/            MDX, CSF, example, preview and routes
-│   ├── LeftNavigation/
-│   ├── StandalonePages/
-│   ├── NavigationChooser/
-│   ├── UrlBackedState/
-│   └── shared/                address bar and browser frame
-├── forms/
-│   ├── EntityForms/           MDX, CSF and form preview
-│   └── DraftAndSubmitForms/
-├── feedback/
-│   ├── Notifications/         MDX, CSF and notification preview
-│   └── Confirmations/         MDX, CSF and confirmation preview
-├── data/
-│   ├── FeatureData/           MDX, CSF and private in-memory API fixture
-│   └── BackendConnectedFeature/
-├── collections/
-│   └── TablesAndCollections/  MDX, CSF and collection preview
-├── localization/
-│   └── LocalizationAndFormatting/  MDX, CSF and formatting preview
-├── state/
-│   └── SignalsAndPersistence/     MDX, CSF and private Signal/storage fixture
-├── settings/
-│   └── SettingsAwareComponents/   MDX, CSF and local presentation comparison
-├── authentication/
-│   ├── AuthenticationAndHttp/     MDX, CSF and private HTTP transport fixture
-│   └── CapabilityAwarePages/
-├── workflows/
-│   └── WorkflowCommands/          MDX, CSF and command/reconciliation fixture
-├── notifications/
-│   └── PersistedInbox/            MDX, CSF and private retained server fixture
-└── testing/
-    └── TestingAFeature/           MDX, CSF and executable boundary observations
-```
-
-Keep same-name MDX and CSF `*.stories.ts(x)` files in their matching tutorial
-folder, along with its preview support. Helpers used by several tutorials go in
-the section's `shared/` folder. New sections get their own directory and an entry
-here. Storybook configuration,
-global providers and theme adapters stay in `frontend/.storybook/`; tests stay
-under `frontend/tests/`. Stories and support files do not belong in `src/`.
-
-Use relative imports between documentation fixtures and `@/` for actual source
-modules. A documentation fixture may import the exact implementation it teaches,
-such as the private ContactForm. This does not publish that member or authorize
-production consumers to bypass feature public indices. Production source may
-not import these fixtures or `.storybook/` support. Production also cannot import any other `docs/` content, including raw
-architecture/handbook Markdown or globs. Reader rendering is documentation-owned.
-
-Keep application paths and fenced application code separate from preview paths:
-Contacts, Patterns, article readers, catalogs and guide translations are
-documentation references outside `src/`. Application paths in consumer recipes
-name modules to implement explicitly; they are not installed merely by appearing
-in a tutorial.
-Stories remain English and inherit the global theme/localization/feedback adapter.
-Retain stable story titles and named exports when reorganizing files so existing
-Storybook URLs and browser checks continue to work.
-
-## Discovery and verification
-
-From the workspace root:
-
-```sh
-npm --prefix frontend run guide:index
-npm --prefix frontend run guide:index -- search "header tabs"
-npm --prefix frontend run verify:architecture
-npm --prefix frontend run verify:dev-guide
-```
-
-The live index reads every file in this tree without evaluating examples. Legacy
-source discovery can expose misplaced stories; it does not permit placing them
-there. Typechecking includes documentation TypeScript through
-`tsconfig.storybook.json`. The architecture check rejects source-local story
-artifacts and production dependencies on documentation fixtures.
-
-After changes, select the owning repository checks and actual Storybook browser
-coverage. With Storybook running, `npm --prefix frontend run test:browser:storybook`
-checks routing, forms, feedback, architecture, data, collections, localization,
-URL state, Signals, settings-aware presentation, authentication and testing examples.
-The advanced reference recipes add capability gates, HTTP feature contracts,
-dual-intent forms and guards, workflow conflict/refresh recovery, and inbox ownership.
-The configured checks and their
-limits are documented in
-[Tests, mocks, stories, and architecture checks](../architecture/en/tests-mocks-stories-and-architecture-checks.md).
