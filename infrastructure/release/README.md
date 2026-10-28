@@ -156,8 +156,10 @@ Consumers choose their own identity and receive new generated credentials.
 ## Manual workflow contract
 
 - [Deploy staging](../../.github/workflows/deploy-staging.yaml) uses GitHub's
-  native branch selector, verifies the exact checkout and both applications,
-  builds candidate images in a read-only-token worker, then independently
+  native branch selector, verifies the exact checkout and both applications
+  with the existing CI build limits (`NODE_OPTIONS=--max-old-space-size=1536`,
+  `ROLLDOWN_WORKER_THREADS=2`, `RAYON_NUM_THREADS=2`), builds candidate images
+  in a read-only-token worker, then independently
   smoke-tests/publishes them in a fresh worker which has not executed branch
   Gradle/npm code. It records
   `release-pair-<attempt>` with both immutable digests.

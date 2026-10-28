@@ -74,6 +74,33 @@ class ProtocolTests(unittest.TestCase):
                 if 'python3 ' in line and 'client.py' in line:
                     self.assertIn('python3 -I -S ', line)
 
+    def test_staging_full_verification_bounds_heap_and_native_pools(self):
+        workflows = Path(__file__).resolve().parents[3] / '.github/workflows'
+        staging = (workflows / 'deploy-staging.yaml').read_text()
+        verification = staging.split(
+            '      - name: Verify exact checkout and both applications\n', 1)[1].split(
+                '      - name: Build the candidate image pair\n', 1)[0]
+        environment, commands = verification.split('        run: |\n', 1)
+        self.assertIn('        env:\n', environment)
+        self.assertIn('          NODE_OPTIONS: --max-old-space-size=1536\n', environment)
+        self.assertIn('          ROLLDOWN_WORKER_THREADS: "2"\n', environment)
+        self.assertIn('          RAYON_NUM_THREADS: "2"\n', environment)
+        self.assertIn('(cd frontend && npm ci && npm run verify)', commands)
+        self.assertIn('./gradlew --no-daemon --console=plain clean test bootJar', commands)
+
+    def test_production_promotes_staging_pair_without_rebuilding(self):
+        workflows = Path(__file__).resolve().parents[3] / '.github/workflows'
+        production = (workflows / 'deploy-production.yaml').read_text()
+        self.assertIn('      staging_run_id:\n', production)
+        self.assertIn('STAGING_RUN_ID: ${{ inputs.staging_run_id }}', production)
+        self.assertIn('client.py promote --staging-run "$STAGING_RUN_ID"', production)
+        self.assertIn('client.py request --environment production', production)
+        self.assertEqual(production.count('--staging-run "$STAGING_RUN_ID"'), 2)
+        for build_command in ('npm ', 'npx ', 'tsc ', './gradlew', 'docker build',
+                              'client.py publish', 'packages: write'):
+            with self.subTest(build_command=build_command):
+                self.assertNotIn(build_command, production)
+
     def test_pair_is_strict_and_never_accepts_tags_or_another_package(self):
         self.assertEqual(pair(PAIR, REPO, SHA), PAIR)
         for change in ({'source_sha': 'd' * 40}, {'backend': 'ghcr.io/' + REPO + '-backend:latest'},
