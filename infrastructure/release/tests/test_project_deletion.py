@@ -313,6 +313,50 @@ class GitHubTests(unittest.TestCase):
             with self.assertRaises(state.Error):
                 github.package(identity(), 'sample-app-frontend', expected=401)
 
+    def test_actions_disable_sends_only_enabled_and_resume_reuses_verified_journal(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            directory.chmod(0o700)
+            plan = selected()
+            plan['github']['actions'] = {'enabled': True, 'allowed_actions': 'selected',
+                'selected_actions_url': 'https://api.github.com/repos/example-org/sample-app/actions/permissions/selected-actions',
+                'sha_pinning_required': False}
+            current = dict(plan['github']['actions'])
+            original_run = subprocess.run
+            def disable(argv, **options):
+                if argv[0] != 'gh':
+                    return original_run(argv, **options)  # Keep real private-path Git boundary checks.
+                self.assertEqual(argv, ['gh', 'api', '--hostname', 'github.com', '--method', 'PUT',
+                    'repos/example-org/sample-app/actions/permissions', '--input', '-'])
+                self.assertEqual(json.loads(options['input']), {'enabled': False})
+                current['enabled'] = False
+                return SimpleNamespace(returncode=0)
+            with mock.patch.object(github, 'authority'), mock.patch.object(github, 'repository'), \
+                 mock.patch.object(github, 'inactive', return_value=[]), \
+                 mock.patch.object(github, 'get', side_effect=lambda path: dict(current)), \
+                 mock.patch.object(github.subprocess, 'run', side_effect=disable) as request:
+                github.quiesce(directory, plan)
+                github.quiesce(directory, plan)
+            self.assertEqual(len([call for call in request.call_args_list if call.args[0][0] == 'gh']), 1)
+            self.assertEqual(state.read(directory / 'journal.json')['operations']['github-actions-disabled']['phase'], 'verified')
+
+    def test_already_disabled_actions_require_no_mutation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            directory.chmod(0o700)
+            current = {'enabled': False, 'allowed_actions': 'selected', 'sha_pinning_required': False}
+            original_run = subprocess.run
+            def private_path_checks(argv, **options):
+                self.assertNotEqual(argv[0], 'gh', 'Already-disabled Actions must not submit a GitHub request')
+                return original_run(argv, **options)
+            with mock.patch.object(github, 'authority'), mock.patch.object(github, 'repository'), \
+                 mock.patch.object(github, 'inactive', return_value=[]), \
+                 mock.patch.object(github, 'get', return_value=current), \
+                 mock.patch.object(github.subprocess, 'run', side_effect=private_path_checks) as request:
+                github.quiesce(directory, selected())
+            self.assertFalse(any(call.args[0][0] == 'gh' for call in request.call_args_list))
+            self.assertEqual(state.read(directory / 'journal.json')['operations']['github-actions-disabled']['phase'], 'verified')
+
     def test_active_deployments_are_never_cancelled(self):
         run = {'id': 701, 'repository': {'id': 101}, 'path': '.github/workflows/deploy-staging.yaml'}
         with mock.patch.object(github, 'authority'), mock.patch.object(github, 'repository'), \

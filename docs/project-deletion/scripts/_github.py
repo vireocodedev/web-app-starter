@@ -146,7 +146,7 @@ def quiesce(directory, selected):
     def disable():
         response = subprocess.run(['gh', 'api', '--hostname', 'github.com', '--method', 'PUT',
             'repos/' + identity['repository'] + '/actions/permissions', '--input', '-'],
-            input=json.dumps(dict(selected['github']['actions'], enabled=False)), capture_output=True, text=True, timeout=120)
+            input=json.dumps({'enabled': False}), capture_output=True, text=True, timeout=120)
         if response.returncode:
             raise Error('Actions disable outcome uncertain; reconcile before retry.')
     operation(directory, selected, 'github-actions-disabled', identity['repository_id'], disable,
