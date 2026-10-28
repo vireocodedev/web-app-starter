@@ -527,6 +527,36 @@ class ProviderAndOrderingTests(unittest.TestCase):
             with self.assertRaises(state.Error):
                 dns.inspect(snapshot)
 
+    def test_dns_absent_null_and_empty_comments_preserve_exact_ip_and_inherited_ttl(self):
+        snapshot = {'identity': identity()}
+        expected = identity()['operator_ipv4']
+        for optional in ({}, {'comment': None}, {'comment': ''}):
+            for ttl in (None, 300):
+                with self.subTest(optional=optional, ttl=ttl):
+                    rr = {'name': 'sample', 'type': 'A', 'records': [dict(value=expected, **optional)], 'ttl': ttl}
+                    with mock.patch.object(dns, 'records', return_value=[rr]), mock.patch.object(dns, 'api') as api:
+                        self.assertEqual(dns.inspect(snapshot), [{'name': 'sample', 'type': 'A',
+                            'records': [{'value': expected}], 'ttl': ttl}])
+                    api.assert_not_called()
+
+    def test_dns_foreign_values_types_fields_and_nonempty_comments_remain_blockers(self):
+        snapshot = {'identity': identity()}
+        expected = identity()['operator_ipv4']
+        cases = [('A', [{'value': '192.0.2.99', 'comment': ''}]),
+                 ('A', [{'value': expected, 'comment': ''}, {'value': '192.0.2.99'}]),
+                 ('AAAA', [{'value': expected, 'comment': ''}]),
+                 ('A', [{'value': expected, 'comment': '', 'unknown': None}]),
+                 ('A', [{'value': expected, 'comment': 'neighbor-owned'}]),
+                 ('A', [{'value': expected, 'comment': ' '}]),
+                 ('A', [{'value': expected, 'comment': False}])]
+        for kind, records in cases:
+            with self.subTest(kind=kind, records=records):
+                rr = {'name': 'sample', 'type': kind, 'records': records, 'ttl': None}
+                with mock.patch.object(dns, 'records', return_value=[rr]), mock.patch.object(dns, 'api') as api:
+                    with self.assertRaises(state.Error):
+                        dns.inspect(snapshot)
+                api.assert_not_called()
+
     def test_compact_and_full_guides_use_same_numbered_commands(self):
         import re
         full = (SOURCE.parent / 'DELETE_GUIDE.md').read_text()

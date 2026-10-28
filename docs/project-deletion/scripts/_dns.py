@@ -53,8 +53,9 @@ def inspect(snapshot):
             if rr.get('name') != relative:
                 continue
             if rr.get('type') != 'A' or rr.get('records') != [{'value': identity['operator_ipv4']}]:
-                # Provider may supply a null comment; normalize only this documented optional field.
-                values = [{k: v for k, v in record.items() if k != 'comment' or v is not None} for record in rr.get('records', [])]
+                # The provider represents no optional comment as missing, null or empty.
+                # Keep every other field/value so foreign ownership remains a blocker.
+                values = [{k: v for k, v in record.items() if k != 'comment' or v not in (None, '')} for record in rr.get('records', [])]
                 if rr.get('type') != 'A' or values != [{'value': identity['operator_ipv4']}]:
                     raise Error('Environment RRset contains foreign/shared values or type; preserve it.')
             result.append({'name': relative, 'type': 'A', 'records': [{'value': identity['operator_ipv4']}], 'ttl': rr.get('ttl')})
