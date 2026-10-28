@@ -9,7 +9,7 @@ zahtijeva implementirane i provjerene korisničke tokove.
 `docs/template-initialization/INIT_GUIDE.md` vodi setup,
 uključujući preduvjete, naredbe za kopiranje i dokaze dovršetka. CI i release
 operator vodiči vode svoju infrastrukturu. Članak ne daje ovlast za izvršavanje.
-Numerirane skripte učitavaju privatnu env datoteku vrijednosti i provjere vezane uz njezin hash. To je neovisno o uklonjenom agentskom skill/intake workflowu.
+Numerirane skripte učitavaju privatnu env datoteku vrijednosti i provjere vezane uz njezin hash. Repozitorij isporučuje skill `template-initialization` koji koordinira isti vodič uz izričitu potvrdu vrijednosti, DNS-a i opsega te zaštićenu pripremu DNS-a; ne zamjenjuje te ugovore niti dokazuje poslovni prihvat.
 
 ## Okidač, vlasnik i ugovor
 

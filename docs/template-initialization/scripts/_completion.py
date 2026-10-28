@@ -153,11 +153,15 @@ def validate_completion(result, values, progress, progress_sha256):
         require(all(value is True for value in https['checks'].values()), 'observed HTTPS acceptance')
     manual = acceptance['manual']
     fields(manual, ('local_application', 'ide', 'artwork'), 'manual acceptance fields')
-    for key, statuses in (('local_application', ('passed',)), ('ide', ('passed', 'not-applicable')),
+    for key, statuses in (('local_application', ('passed',)), ('ide', ('passed', 'not-applicable', 'waived')),
                           ('artwork', ('accepted', 'deferred'))):
         item = manual[key]
-        fields(item, ('status', 'evidence'), 'manual evidence fields')
+        waived = key == 'ide' and isinstance(item, dict) and item.get('status') == 'waived'
+        keys = ('status', 'evidence', 'user_authorized') if waived else ('status', 'evidence')
+        fields(item, keys, 'manual evidence fields')
         require(item['status'] in statuses and bounded(item['evidence']), 'manual acceptance status/evidence')
+        if waived:
+            require(item['user_authorized'] is True, 'explicit user authorization for IDE waiver')
     observations = result.get('observations')
     require(isinstance(observations, dict) and all(observations.get(key) == progress.get(key)
         for key in ('source_sha', 'release_source_sha', 'staging_source_sha', 'production_source_sha',

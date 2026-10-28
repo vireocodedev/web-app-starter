@@ -108,6 +108,7 @@ disposable-host validation of the exact candidate commit:
    service sources. It invalidates the old receipt before replacing the two
    files and fsyncs each replacement. It changes no config, key, unit, resource
    limit or network policy and never enables the controller.
+
 4. Run full installed-source `controller.py validate` and inspect its fresh
    current-boot/configuration/source receipt before an explicit activation.
    Repeat the original read-only memory replay and genuine jobs afterwards.
@@ -384,6 +385,7 @@ After independent review and disposable-host proof of the exact candidate:
    is invalidated before mutation; the protected config commits only after
    slot provisioning. It never activates CI. An interrupted migration is not a
    fresh-install/retry opportunity: inspect its ledger and use explicit rollback.
+
 4. Run installed `controller.py validate`. Every slot must pass all existing
    toolchain/rootless-Docker/Testcontainers/boundary/fresh-second-job probes.
    Pool validation then prepares all slots simultaneously, verifies actual

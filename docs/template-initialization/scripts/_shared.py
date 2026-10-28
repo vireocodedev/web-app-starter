@@ -213,6 +213,11 @@ def _write_json(path, value):
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
@@ -400,6 +405,37 @@ def _rr_records(rr):
     return [x['value'].rstrip('.') for x in records]
 
 
+def _dns_intake_binding(ctx, repository_id):
+    values = ctx.values
+    return {'schema': 1, 'repository': values['REPOSITORY'],
+        'repository_id': repository_id, 'env_sha256': env_hash(ctx.env_path),
+        'zone_id': values['DNS_ZONE_ID'], 'zone': values['DNS_ZONE'],
+        'hostnames': [values['STAGING_HOSTNAME'], values['PRODUCTION_HOSTNAME']],
+        'operator_ipv4': values['OPERATOR_IPV4'], 'verifier_sha256': verifier_hash()}
+
+
+def _read_dns_intake(ctx, state):
+    """Historical absence proof, never a reservation or a current verification receipt."""
+    if 'dns_intake' not in state:
+        return None
+    claim = state['dns_intake']
+    identity = state.get('repository_id')
+    if type(identity) is not int or identity <= 0 or not isinstance(claim, dict):
+        raise InitError('Invalid DNS intake identity; preserve progress and reconcile it.')
+    expected = _dns_intake_binding(ctx, identity)
+    observed = claim.get('observed_at')
+    producer = claim.get('producer')
+    if (set(claim) != set(expected) | {'observed_at', 'producer'}
+            or type(claim.get('schema')) is not int
+            or type(claim.get('repository_id')) is not int
+            or any(claim.get(key) != value for key, value in expected.items())
+            or not isinstance(producer, str) or not 1 <= len(producer) <= 253
+            or any(ord(character) < 33 or ord(character) > 126 for character in producer)
+            or type(observed) not in (int, float) or not 0 < observed <= time.time()):
+        raise InitError('DNS intake belongs to different inputs, identity, verifier or time; preserve progress and reconcile it.')
+    return claim
+
+
 def verify_dns(ctx, mode):
     values = ctx.values
     zone_id, zone_name = values['DNS_ZONE_ID'], values['DNS_ZONE']
@@ -435,6 +471,7 @@ def verify_dns(ctx, mode):
     else:
         raise InitError('DNS inventory pagination did not terminate.')
     state = read_state(ctx)
+    intake = _read_dns_intake(ctx, state)
     for hostname_key in ('STAGING_HOSTNAME', 'PRODUCTION_HOSTNAME'):
         hostname = values[hostname_key]
         relative = hostname[:-(len(zone_name) + 1)]
@@ -449,7 +486,8 @@ def verify_dns(ctx, mode):
             if name == relative:
                 matches.append(rr)
         if matches:
-            if mode != 'resume' or state.get('dns_hostnames') != [values['STAGING_HOSTNAME'], values['PRODUCTION_HOSTNAME']]:
+            if mode != 'resume' or (not intake and state.get('dns_hostnames') !=
+                    [values['STAGING_HOSTNAME'], values['PRODUCTION_HOSTNAME']]):
                 raise InitError('Environment hostname already has provider records; choose an unused name or reconcile recorded ownership.')
             if any(rr['type'] != 'A' or _rr_records(rr) != [values['OPERATOR_IPV4']] for rr in matches):
                 raise InitError('Existing hostname records do not exactly match this recorded project.')
@@ -546,15 +584,18 @@ def verify_tools():
     return {'tools': 'matching workstation versions and Docker access'}
 
 
-def verify_environment(ctx, scope, mode):
+def verify_environment(ctx, scope, mode, *, prepare_dns_intake=False):
     # Invalidate old evidence first: a failed refresh must never leave a passing receipt.
     receipt_path = ctx.env_path.parent / 'verification.json'
     if receipt_path.exists() or receipt_path.is_symlink():
         private_file(receipt_path).unlink()
+    if prepare_dns_intake and (scope != 'full' or mode != 'new'):
+        raise InitError('DNS intake preparation requires --scope full --mode new.')
     ctx.scope, ctx.mode = scope, mode
     # Initialization begins inside the already cloned consumer in every scope/mode.
     require_consumer(ctx)
-    read_state(ctx)
+    state = read_state(ctx)
+    intake = _read_dns_intake(ctx, state)
     verify_tools()
     evidence = {'tools': True}
     if scope == 'full':
@@ -562,7 +603,13 @@ def verify_environment(ctx, scope, mode):
         evidence['ssh'] = verify_ssh(ctx)
         evidence['dns'] = verify_dns(ctx, mode)
         # Bind first-time identity only after all probes pass; retries retain it.
-        update_state(ctx, repository_id=evidence['github']['repository_id'])
+        observations = {'repository_id': evidence['github']['repository_id']}
+        if prepare_dns_intake:
+            # Preserve the actual first observation across safe retries/interruption.
+            observations['dns_intake'] = intake or dict(
+                _dns_intake_binding(ctx, observations['repository_id']),
+                producer=socket.gethostname(), observed_at=time.time())
+        update_state(ctx, **observations)
     receipt = {'schema': 1, 'env_sha256': env_hash(ctx.env_path), 'repository': ctx.values['REPOSITORY'],
         'scope': scope, 'mode': mode, 'verified_at': time.time(), 'evidence': evidence,
         'verifier_sha256': verifier_hash(), 'producer': socket.gethostname()}

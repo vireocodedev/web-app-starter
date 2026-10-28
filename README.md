@@ -10,8 +10,16 @@ business implementation and acceptance to their procedure owners.
 ## Create your project from this template
 
 Create a private consumer through GitHub's template UI, clone it and open that
-consumer folder in VS Code. Then follow the
-[complete manual initialization guide](docs/template-initialization/INIT_GUIDE.md).
+consumer folder in VS Code. In Codex, invoke the repository-shipped
+[template-initialization skill](.agents/skills/template-initialization/SKILL.md)
+with a project name, for example `$template-initialization Inventory Portal`.
+It prepares private values and checks access, then displays all settings and two
+DNS records. Confirm the values, configured DNS and full execution scope before
+it continues through initialization. Existing access must work; missing
+credentials or permissions require the specific intervention reported by the agent.
+
+For manual execution, follow the
+[complete initialization guide](docs/template-initialization/INIT_GUIDE.md).
 It provides numbered steps and copy-paste commands for project identity, local
 development, shared CI, staging, production, accounts and recovery. Start with
 its project values and access checklist, then work through the steps in order.
