@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -345,11 +346,318 @@ with patch.object(Path, 'lstat', root_controlled):
                 handoff.remote_main('upload')
         self.assertNotIn(secret, errors.getvalue() + output.getvalue())
 
+    def release_inputs(self):
+        self.receive()
+        host = self.remote_progress(ci_registered=True)
+        (self.host / 'progress.json').write_bytes(host['progress.json'])
+        shared.update_state(self.ctx, source_sha='a' * 40,
+                            release_branch=self.ctx.values['RELEASE_BRANCH'],
+                            staging_workflow_id=456, production_workflow_id=789)
+        self.args.release_context = True
+        return handoff.snapshot(self.env), host
+
+    def release_response(self, *args, **kwargs):
+        return handoff.encode(handoff.reconcile_release(handoff.decode(kwargs['input'])))
+
+    def test_release_context_merges_both_contexts_with_private_original_backups(self):
+        local, host = self.release_inputs()
+        execute, output = self.transfer(effect=self.release_response)
+        merged = handoff.snapshot(self.env)
+        self.assertEqual(merged, handoff.snapshot(self.host / 'values.env'))
+        state = json.loads(merged['progress.json'])
+        self.assertIs(state['ci_registered'], True)
+        self.assertEqual(state['source_sha'], 'a' * 40)
+        self.assertEqual(state['staging_workflow_id'], 456)
+        self.assertEqual(state['production_workflow_id'], 789)
+        for directory, original in ((self.local, local), (self.host, host)):
+            backups = list(directory.glob('.release-context-backup-*'))
+            self.assertEqual(len(backups), 1)
+            self.assertEqual(backups[0].stat().st_mode & 0o777, 0o700)
+            self.assertEqual(handoff.snapshot(backups[0] / 'values.env'), original)
+            self.assertEqual({item.name for item in backups[0].iterdir()}, set(handoff.FILES))
+            self.assertTrue(all(item.stat().st_mode & 0o777 == 0o600 for item in backups[0].iterdir()))
+            self.assertFalse(list(directory.glob('.progress.json.*')))
+        self.app_access.assert_not_called()
+        self.assertEqual(shlex.split(execute.call_args.args[0][-1])[-1], 'reconcile-release')
+        self.assertIn('/root/web-app-starter/docs/template-initialization/scripts/14_2_prepare_release_source.py', output)
+        self.assertIn('--env /root/inventory-portal-initialization/values.env --source-sha ' + 'a' * 40, output)
+        self.assertNotIn(self.env.read_text(), output)
+
+    def test_release_backup_directories_are_durable_before_progress_replacement(self):
+        local, host = self.release_inputs()
+        actual = handoff.merge_progress(local, json.loads(local['progress.json']),
+                                        host, json.loads(host['progress.json']))
+        events = []
+        opens = []
+        real_fsync, real_replace, real_open = os.fsync, os.replace, os.open
+        def record_fsync(descriptor):
+            real_fsync(descriptor)
+            path = Path('/proc/self/fd/' + str(descriptor)).resolve()
+            if path == self.local:
+                events.append('progress-parent' if 'replace' in events else 'backup-parent')
+            elif path.name.startswith('.release-context-backup-'):
+                events.append('backup-directory')
+            elif path.parent.name.startswith('.release-context-backup-'):
+                events.append('backup-file')
+        def record_replace(*args):
+            events.append('replace')
+            return real_replace(*args)
+        def record_open(path, flags, *args, **kwargs):
+            if flags & os.O_DIRECTORY:
+                opens.append((Path(path), flags))
+            return real_open(path, flags, *args, **kwargs)
+        with patch.object(handoff.os, 'fsync', side_effect=record_fsync), \
+                patch.object(handoff.os, 'replace', side_effect=record_replace), \
+                patch.object(handoff.os, 'open', side_effect=record_open):
+            handoff.replace_progress(self.env, local, actual, backup=True)
+        self.assertEqual(events, ['backup-file'] * 3
+                         + ['backup-directory', 'backup-parent', 'replace', 'progress-parent'])
+        self.assertEqual(len(opens), 3)
+        self.assertTrue(all(flags & os.O_DIRECTORY and flags & os.O_NOFOLLOW for _, flags in opens))
+        backup = next(self.local.glob('.release-context-backup-*'))
+        self.assertEqual(handoff.snapshot(backup / 'values.env'), local)
+        self.assertEqual(backup.stat().st_mode & 0o777, 0o700)
+        self.assertTrue(all(path.stat().st_mode & 0o777 == 0o600 for path in backup.iterdir()))
+
+    def test_release_backup_directory_sync_failure_preserves_original_progress(self):
+        local, host = self.release_inputs()
+        actual = handoff.merge_progress(local, json.loads(local['progress.json']),
+                                        host, json.loads(host['progress.json']))
+        real_fsync = os.fsync
+        for failing in ('backup-directory', 'backup-parent'):
+            def fail_directory_sync(descriptor):
+                path = Path('/proc/self/fd/' + str(descriptor)).resolve()
+                if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+                    kind = 'backup-parent' if path == self.local else 'backup-directory'
+                    if kind == failing:
+                        raise OSError('directory fsync unavailable')
+                return real_fsync(descriptor)
+            with self.subTest(failing=failing), \
+                    patch.object(handoff.os, 'fsync', side_effect=fail_directory_sync), \
+                    patch.object(handoff.os, 'replace') as replace:
+                with self.assertRaises(OSError):
+                    handoff.replace_progress(self.env, local, actual, backup=True)
+                replace.assert_not_called()
+            self.assertEqual(handoff.snapshot(self.env), local)
+            self.assertFalse(list(self.local.glob('.progress.json.*')))
+        for backup in self.local.glob('.release-context-backup-*'):
+            self.assertEqual(handoff.snapshot(backup / 'values.env'), local)
+            self.assertEqual(backup.stat().st_mode & 0o777, 0o700)
+            self.assertTrue(all(path.stat().st_mode & 0o777 == 0o600 for path in backup.iterdir()))
+
+    def test_release_post_replace_sync_failure_reports_uncertainty_and_retry_finishes_durability(self):
+        local, host = self.release_inputs()
+        actual = handoff.merge_progress(local, json.loads(local['progress.json']),
+                                        host, json.loads(host['progress.json']))
+        replaced = False
+        real_replace, real_sync = os.replace, handoff.sync_private_directory
+        def record_replace(*args):
+            nonlocal replaced
+            real_replace(*args)
+            replaced = True
+        def fail_after_replace(path):
+            if replaced:
+                raise OSError('post-replace fsync unavailable')
+            return real_sync(path)
+        with patch.object(handoff.os, 'replace', side_effect=record_replace), \
+                patch.object(handoff, 'sync_private_directory', side_effect=fail_after_replace):
+            with self.assertRaisesRegex(shared.InitError, 'was replaced.*durability is uncertain'):
+                handoff.replace_progress(self.env, local, actual, backup=True)
+        self.assertEqual(handoff.snapshot(self.env), actual)
+        backup = next(self.local.glob('.release-context-backup-*'))
+        self.assertEqual(handoff.snapshot(backup / 'values.env'), local)
+        with patch.object(handoff, 'sync_private_directory', wraps=real_sync) as sync, \
+                patch.object(handoff.os, 'replace') as replace:
+            handoff.replace_progress(self.env, actual, actual, backup=True)
+        sync.assert_called_once_with(self.local)
+        replace.assert_not_called()
+        self.assertEqual(len(list(self.local.glob('.release-context-backup-*'))), 1)
+
+    def test_backup_directory_sync_rejects_symlink(self):
+        link = self.directory / 'unsafe-backup'
+        link.symlink_to(self.local, target_is_directory=True)
+        with self.assertRaises(OSError):
+            handoff.sync_private_directory(link)
+
+    def test_release_context_repeated_transfer_is_noop(self):
+        self.release_inputs()
+        self.transfer(effect=self.release_response)
+        before = {(directory, path.name): path.stat().st_ino
+                  for directory in (self.local, self.host) for path in directory.iterdir()}
+        self.transfer(effect=self.release_response)
+        after = {(directory, path.name): path.stat().st_ino
+                 for directory in (self.local, self.host) for path in directory.iterdir()}
+        self.assertEqual(after, before)
+
+    def test_release_context_requires_source_branch_and_actual_workflow_ids_before_ssh(self):
+        self.args.release_context = True
+        for change in ({}, {'source_sha': 'invalid'}, {'source_sha': 'a' * 40},
+                       {'source_sha': 'a' * 40, 'release_branch': 'other'},
+                       {'source_sha': 'a' * 40, 'release_branch': self.ctx.values['RELEASE_BRANCH'],
+                        'staging_workflow_id': True, 'production_workflow_id': 789},
+                       {'source_sha': 'a' * 40, 'release_branch': self.ctx.values['RELEASE_BRANCH'],
+                        'staging_workflow_id': 456, 'production_workflow_id': 0}):
+            shared._write_json(self.local / 'progress.json', json.loads(self.remote_progress(**change)['progress.json']))
+            with self.subTest(change=change), patch.object(handoff, 'execute') as execute:
+                with self.assertRaises(shared.InitError):
+                    self.transfer()
+                execute.assert_not_called()
+        self.app_access.assert_not_called()
+
+    def test_release_conflicts_preserve_both_copies_without_secret_values(self):
+        local, host = self.release_inputs()
+        for change in ({'source_sha': 'b' * 40}, {'local_checked': 1},
+                       {'repository_id': 124}, {'repository': 'other/project'}):
+            changed = dict(host)
+            state = json.loads(host['progress.json'])
+            state.update(change)
+            changed['progress.json'] = json.dumps(state).encode()
+            (self.host / 'progress.json').write_bytes(changed['progress.json'])
+            with self.subTest(change=change), self.assertRaises(shared.InitError) as error:
+                handoff.reconcile_release(local)
+            self.assertNotIn('b' * 40, str(error.exception))
+            self.assertEqual(handoff.snapshot(self.env), local)
+            self.assertEqual(handoff.snapshot(self.host / 'values.env'), changed)
+            self.assertFalse(list(self.host.glob('.release-context-backup-*')))
+        observed = json.loads(host['progress.json'])
+        expected = json.loads(local['progress.json'])
+        expected['private_observation'] = {'enabled': True}
+        observed['private_observation'] = {'enabled': 1}
+        with self.assertRaisesRegex(shared.InitError, 'private_observation'):
+            handoff.merge_progress(local, expected, host, observed)
+
+    def test_release_receipt_and_values_must_match_exact_bytes(self):
+        local, host = self.release_inputs()
+        for name in ('values.env', 'verification.json'):
+            changed = dict(host)
+            changed[name] += b'\n'
+            (self.host / name).write_bytes(changed[name])
+            with self.subTest(name=name), self.assertRaises(shared.InitError):
+                handoff.reconcile_release(local)
+            self.assertEqual(handoff.snapshot(self.env), local)
+            self.assertEqual(handoff.snapshot(self.host / 'values.env'), changed)
+            (self.host / name).write_bytes(host[name])
+
+    def test_release_rejects_unsafe_host_files_and_stale_receipt_without_backups(self):
+        local, host = self.release_inputs()
+        progress = self.host / 'progress.json'
+        progress.chmod(0o644)
+        with self.assertRaises(shared.InitError):
+            handoff.reconcile_release(local)
+        progress.chmod(0o600)
+        progress.unlink()
+        progress.symlink_to(self.local / 'progress.json')
+        with self.assertRaises(shared.InitError):
+            handoff.reconcile_release(local)
+        progress.unlink()
+        handoff.exclusive_write(progress, host['progress.json'])
+        receipt = json.loads(host['verification.json'])
+        receipt['verified_at'] = time.time() - 86401
+        shared._write_json(self.host / 'verification.json', receipt)
+        with self.assertRaises(shared.InitError):
+            handoff.reconcile_release(local)
+        self.assertFalse(list(self.host.glob('.release-context-backup-*')))
+
+    def test_release_fsync_races_do_not_overwrite_new_progress_on_either_side(self):
+        local, host = self.release_inputs()
+        real_fsync = os.fsync
+        for directory in (self.host, self.local):
+            changed = json.loads((host if directory == self.host else local)['progress.json'])
+            changed['concurrent_private_observation'] = True
+            encoded = json.dumps(changed).encode()
+            def concurrent_change(descriptor):
+                real_fsync(descriptor)
+                target = Path('/proc/self/fd/' + str(descriptor)).resolve()
+                if target.parent == directory and target.name.startswith('.progress.json.'):
+                    (directory / 'progress.json').write_bytes(encoded)
+            with self.subTest(directory=directory.name), patch.object(handoff.os, 'fsync', side_effect=concurrent_change):
+                with self.assertRaises(shared.InitError):
+                    self.transfer(effect=self.release_response)
+            self.assertEqual((directory / 'progress.json').read_bytes(), encoded)
+            self.assertFalse(list(directory.glob('.progress.json.*')))
+            # Reset only this fixture's files for the second independent race.
+            for name, data in host.items():
+                (self.host / name).write_bytes(data)
+            for name, data in local.items():
+                (self.local / name).write_bytes(data)
+
+    def test_release_interruption_after_host_commit_resumes_without_lost_observations(self):
+        local, _ = self.release_inputs()
+        def interrupted(*args, **kwargs):
+            self.release_response(*args, **kwargs)
+            raise shared.InitError('SSH response lost')
+        with self.assertRaisesRegex(shared.InitError, 'SSH response lost'):
+            self.transfer(effect=interrupted)
+        self.assertEqual(handoff.snapshot(self.env), local)
+        committed = handoff.snapshot(self.host / 'values.env')
+        host_inode = (self.host / 'progress.json').stat().st_ino
+        self.transfer(effect=self.release_response)
+        self.assertEqual(handoff.snapshot(self.env), committed)
+        self.assertEqual((self.host / 'progress.json').stat().st_ino, host_inode)
+        self.assertEqual(len(list(self.host.glob('.release-context-backup-*'))), 1)
+
+    def test_release_response_must_preserve_all_workstation_observations(self):
+        local, host = self.release_inputs()
+        with self.assertRaises(shared.InitError):
+            self.transfer(response=handoff.encode(host))
+        self.assertEqual(handoff.snapshot(self.env), local)
+        self.assertFalse(list(self.local.glob('.release-context-backup-*')))
+
+    def test_remote_release_conflict_reports_only_safe_fields_to_workstation(self):
+        local, host = self.release_inputs()
+        changed = json.loads(host['progress.json'])
+        changed['source_sha'] = 'b' * 40
+        changed['private_observation'] = 'HOST-PRIVATE-VALUE'
+        shared._write_json(self.host / 'progress.json', changed)
+        shared.update_state(self.ctx, private_observation='LOCAL-PRIVATE-VALUE')
+        local = handoff.snapshot(self.env)
+        host = handoff.snapshot(self.host / 'values.env')
+        def canonical_dispatch(*args, **kwargs):
+            with patch.object(sys, 'stdin', io.StringIO(kwargs['input'])), \
+                    contextlib.redirect_stdout(io.StringIO()) as output, \
+                    contextlib.redirect_stderr(io.StringIO()) as errors:
+                handoff.remote_main('reconcile-release')
+            self.assertEqual(errors.getvalue(), '')
+            response = output.getvalue()
+            self.assertEqual(json.loads(response), {'schema': 1, 'error': 'progress_conflict',
+                                                   'fields': ['private_observation', 'source_sha']})
+            return response
+        with self.assertRaisesRegex(shared.InitError, 'private_observation, source_sha') as error:
+            self.transfer(effect=canonical_dispatch)
+        for secret in ('b' * 40, 'HOST-PRIVATE-VALUE', 'LOCAL-PRIVATE-VALUE'):
+            self.assertNotIn(secret, str(error.exception))
+        self.assertEqual(handoff.snapshot(self.env), local)
+        self.assertEqual(handoff.snapshot(self.host / 'values.env'), host)
+        self.assertFalse(list(self.host.glob('.release-context-backup-*')))
+        self.assertFalse(list(self.local.glob('.release-context-backup-*')))
+
+    def test_release_conflict_response_rejects_unbounded_or_unrecognized_diagnostics(self):
+        valid = {'schema': 1, 'error': 'progress_conflict', 'fields': ['source_sha']}
+        invalid = [dict(valid, fields=['not a field']), dict(valid, fields=['x' * 65]),
+                   dict(valid, fields=['source_sha'] * 65), dict(valid, fields=[]),
+                   dict(valid, fields=[True]), dict(valid, fields=[{}]),
+                   dict(valid, schema=True), dict(valid, error='RAW-REMOTE-ERROR'),
+                   dict(valid, detail='PRIVATE-DIAGNOSTIC')]
+        for response in invalid:
+            with self.subTest(response=response), self.assertRaises(shared.InitError) as error:
+                handoff.release_response(json.dumps(response))
+            self.assertNotIn('PRIVATE-DIAGNOSTIC', str(error.exception))
+            self.assertNotIn('RAW-REMOTE-ERROR', str(error.exception))
+
+    def test_transfer_modes_are_mutually_exclusive(self):
+        result = subprocess.run([sys.executable, '-B', str(SCRIPTS / '11_1_transfer_state.py'),
+                                 '--release-context', '--return-progress'],
+                                capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('not allowed with argument', result.stderr)
+        self.app_access.assert_not_called()
+
     def test_cli_help_performs_no_setup(self):
         result = subprocess.run([sys.executable, '-B', str(SCRIPTS / '11_1_transfer_state.py'), '--help'],
                                 capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('--return-progress', result.stdout)
+        self.assertIn('--release-context', result.stdout)
         self.assertFalse(self.host.exists())
 
 

@@ -58,8 +58,12 @@ Section 11 starts on the workstation with `11_1_transfer_state.py`. It derives
 `/root/PROJECT_SLUG-initialization/` from the verified slug and transfers only the
 three state files over strict host-key-checked SSH. Run it with
 `--return-progress` after the operator steps to retrieve matching progress without
-losing local observations. Initial upload retries require identical host files;
-later context switches still require deliberate reconciliation. Follow the
+losing local observations. Initial upload retries require identical host files.
+At [step 14.A](../INIT_GUIDE.md#14a-transfer-the-release-observations-to-the-operator-host),
+use `--release-context` to back up both copies and combine nonconflicting release
+observations. Update the operator's reviewed canonical source first; conflicting
+values stop without selecting a winner. The command prints step 14.2 with the
+actual host `--env` path and source SHA. Follow the
 [section 11 handoff](../INIT_GUIDE.md#111-verify-github-app-access-and-transfer-the-initialization-state)
 for the host `--env` path, protected modes and operator commands.
 
@@ -96,7 +100,7 @@ selections are preserved; organization policy is never modified.
 
 Initial step 11.1 upload first grants/read-backs existing shared CI App access
 for the verified consumer only; completed retries preserve identical state.
-Return-progress performs no App mutation. Step 2.3 checks the required read:user
+Return-progress and release-context perform no App mutation. Step 2.3 checks the required read:user
 scope and uses `--login` for explicit interactive authorization when missing.
 
 Step 18.5 verifies protected installed source/configuration and the effective

@@ -758,14 +758,37 @@ The repository ID must still match step 2.4 before workflow IDs are recorded.
 If the repository was replaced, preserve the existing observations and reconcile
 its identity before continuing.
 
+### 14.A Transfer the release observations to the operator host
+
+On your **workstation**, after steps 12.3 and 14.1, run:
+
+```bash
+python3 -B docs/template-initialization/scripts/11_1_transfer_state.py --release-context
+```
+
+Use the same local `--env /absolute/path/values.env` argument if you selected a
+custom values location. First update the operator's reviewed `CI_SOURCE` checkout
+to include `--release-context` support; the receiver runs only canonical
+root-controlled code.
+The command uses the verified slug and operator SSH target, requires the recorded
+release SHA/branch and actual workflow IDs, and combines nonconflicting progress
+from both contexts. Values and verification bytes must match. It preserves
+private backups of the original three files before replacing progress, with
+`0700` directories and `0600` files; referenced credentials are never copied.
+
+Conflicting observations stop the transfer without choosing one copy over the
+other. Reconcile those fields deliberately and rerun the command; do not erase
+host state or repeat the strict initial section 11 upload. The command prints the
+exact next operator command, including its `--env` path and selected `--source-sha`.
+
 Transfer the exact clean committed source, including Git identity, to a **new
-root-controlled checkout**. For an operator who already has authorized private
-GitHub SSH access, this is one option on the **operator host**:
+root-controlled checkout**. Use authorized private GitHub SSH access on the
+**operator host** and copy the command printed by 14.A:
 
 ### 14.2 Prepare the protected exact source checkout
 
 ```bash
-python3 -B docs/template-initialization/scripts/14_2_prepare_release_source.py --source-sha EXACT_OBSERVED_RELEASE_COMMIT
+python3 -B docs/template-initialization/scripts/14_2_prepare_release_source.py --env /root/PROJECT_SLUG-initialization/values.env --source-sha EXACT_OBSERVED_RELEASE_COMMIT
 ```
 
 Use the approved GitHub SSH host identity. Do not put tokens in clone URLs. An
@@ -801,11 +824,9 @@ The following must be free for a fresh installation:
 The installer does not replace this collision inspection. Existing/partial
 resources require reconciliation; never erase them to force fresh installation.
 
-The workstation observation script saves actual numeric IDs into the private
-`progress.json`. Copy that observation file with the env and verification receipt
-to the protected operator directory. Installation uses those observed IDs and
-the selected names/ports/account identity directly. Run from the protected
-`RELEASE_SOURCE` checkout:
+The state transferred in 14.A supplies the observed numeric IDs and exact source
+selection. Installation uses those IDs and the selected names/ports/account
+identity directly. Run from the protected `RELEASE_SOURCE` checkout:
 
 ### 14.4 Install the project release configuration
 
