@@ -32,6 +32,10 @@ jobs:
           node-version-file: frontend/.nvmrc
           package-manager-cache: false
       - name: Verify exact checkout and both applications
+        env:
+          NODE_OPTIONS: --max-old-space-size=1536
+          ROLLDOWN_WORKER_THREADS: "2"
+          RAYON_NUM_THREADS: "2"
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           python3 -B -m unittest discover -s infrastructure/ci/tests -p 'test_*.py'
