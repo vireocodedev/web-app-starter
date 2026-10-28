@@ -129,7 +129,7 @@ def protection_body(current, app_id):
         review_body['dismissal_restrictions'] = {kind: actors(reviews['dismissal_restrictions'], kind)
                                                 for kind in ('users', 'teams', 'apps')}
     restriction = current.get('restrictions')
-    return {'required_status_checks': {'strict': True, 'contexts': [], 'checks': [
+    return {'required_status_checks': {'strict': True, 'checks': [
                 {'context': name, 'app_id': source if source is not None else -1}
                 for name, source in sorted(entries.items())]},
             'enforce_admins': True, 'required_pull_request_reviews': review_body,
