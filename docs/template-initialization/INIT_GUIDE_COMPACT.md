@@ -385,8 +385,9 @@ isolation prerequisites. The captured hash is supplied automatically.
 
 ### 11.4 Register and validate — operator host
 
-Allow several quiet minutes; wait for full worker/isolation/Docker validation.
-If interrupted, reconcile registration using the full guide before retrying.
+Allow about 15–20 minutes for six workers. After a failed/interrupted validation,
+rerun this same command; preserve its journal and original 11.3 observation.
+Read the printed private diagnostic report on failure.
 
 ```bash
 python3 -B docs/template-initialization/scripts/11_4_register_and_validate_ci.py --env /root/PROJECT_SLUG-initialization/values.env

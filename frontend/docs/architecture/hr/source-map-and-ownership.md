@@ -72,8 +72,8 @@ granicu i determinističke auth pripreme. Ni jedno ne pripada u produkcijski
 
 Storybookove upute, CSF primjeri i pripreme prikaza žive izvan `src/`, pod
 `docs/storybook/<sekcija>/<Upute>/`. Svake upute imaju istoimenu mapu, a zajednički
-helperi sekcije koriste `shared/`. Ulaz `docs/storybook/README.md` usmjerava obvezno
-čitanje arhitekture i uputa za zadatak. Grupiranje dokumentacije
+helperi sekcije koriste `shared/`. Ulaz `docs/storybook/README.md` usmjerava obvezno čitanje
+arhitekture i uputa prema ugovorima koje zadatak zahvaća. Grupiranje dokumentacije
 ne spaja produkcijske mogućnosti koje primjeri prikazuju.
 
 ## Reference i stabilna infrastruktura

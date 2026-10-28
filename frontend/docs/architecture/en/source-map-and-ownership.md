@@ -72,7 +72,7 @@ production `src/`.
 Storybook tutorials, CSF stories and preview support live outside `src/`, under
 `docs/storybook/<section>/<Tutorial>/`; each tutorial has a same-name folder and
 section-wide helpers use `shared/`. The `docs/storybook/README.md` entry point
-routes mandatory architecture and task-specific reading. Documentation grouping
+routes architecture and tutorial reading by the task's affected contracts. Documentation grouping
 does not merge the production capabilities it demonstrates.
 
 ## References and stable infrastructure

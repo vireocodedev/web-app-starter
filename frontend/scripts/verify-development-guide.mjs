@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { relative, resolve, sep } from "node:path";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
@@ -11,7 +11,8 @@ import {
 } from "../docs/storybook/handbook/Handbook/catalog/handbookManifest.ts";
 import { englishHandbookTranslations } from "../docs/storybook/handbook/Handbook/localization/development-guide-handbook.en.ts";
 import { croatianHandbookTranslations } from "../docs/storybook/handbook/Handbook/localization/development-guide-handbook.hr.ts";
-import { markdownHeadings } from "../docs/storybook/shared/documentation/markdownHeadings.ts";
+import { markdownHeadingId, markdownHeadings } from "../docs/storybook/shared/documentation/markdownHeadings.ts";
+import { validateRoutes } from "./development-guide-index.mjs";
 
 const frontendRoot = resolve(import.meta.dirname, "..");
 const contentRoot = resolve(frontendRoot, "docs/development-guide");
@@ -19,7 +20,7 @@ const parser = unified().use(remarkParse).use(remarkGfm);
 const problems = [];
 const sources = new Map();
 const indexLinks = new Set();
-walk(parser.parse(await readFile(resolve(contentRoot, "README.md"), "utf8")), node => {
+walk(parser.parse(await readFile(resolve(contentRoot, "CATALOG.md"), "utf8")), node => {
   if (node.type === "link" || node.type === "definition") indexLinks.add(node.url);
 });
 
@@ -197,11 +198,57 @@ for (const [path, source] of sources) {
   }
 }
 
+// The compact routers must keep the moved contracts reachable. Check their direct
+// links, not a recursively loaded documentation graph or production source tree.
+const workspaceRoot = resolve(frontendRoot, "..");
+const routingDocuments = [
+  "AGENTS.md",
+  "frontend/AGENTS.md",
+  "backend/AGENTS.md",
+  "docs/agents/engineering-workflow.md",
+  "docs/agents/context-loading-audit.md",
+  "frontend/docs/development-guide/README.md",
+  "frontend/docs/development-guide/CATALOG.md",
+  "frontend/docs/storybook/README.md",
+  "frontend/docs/storybook/CONTRIBUTING.md",
+  "frontend/docs/architecture/en/source-map-and-ownership.md",
+  "frontend/docs/architecture/hr/source-map-and-ownership.md",
+];
+for (const document of routingDocuments) {
+  const path = resolve(workspaceRoot, document);
+  try {
+    const links = [];
+    walk(parser.parse(await readFile(path, "utf8")), node => {
+      if (node.type === "link" || node.type === "definition") links.push(node.url);
+    });
+    for (const href of links) {
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue;
+      const url = new URL(href, `https://development-guide.invalid${path.split(sep).join("/")}`);
+      const destination = decodeURIComponent(url.pathname);
+      try {
+        const target = await stat(destination);
+        if (url.hash && target.isFile() && /\.(md|mdx)$/.test(destination)) {
+          const markdown = await readFile(destination, "utf8");
+          const ids = markdownHeadings(markdown).map(heading => heading.id);
+          for (const heading of markdown.matchAll(/^#\s+(.+)$/gm)) ids.push(markdownHeadingId(heading[1]));
+          requireCondition(ids.includes(decodeURIComponent(url.hash.slice(1))), `${document}: unknown section ${href}`);
+        }
+      } catch (error) {
+        problems.push(`${document}: unavailable local link ${href}: ${error.message}`);
+      }
+    }
+  } catch (error) {
+    problems.push(`${document}: ${error.message}`);
+  }
+}
+
+problems.push(...(await validateRoutes()));
+
 if (problems.length) {
   for (const problem of problems) process.stderr.write(`${problem}\n`);
   process.exitCode = 1;
 } else {
   process.stdout.write(
-    `Verified ${handbookArticles.length} paired handbook articles, ${handbookTopics.length} topics, labels, provenance, and local Markdown links.\n`,
+    `Verified ${handbookArticles.length} paired handbook articles, ${handbookTopics.length} topics, labels, provenance, local Markdown links, and route metadata integrity/coverage.\n`,
   );
 }

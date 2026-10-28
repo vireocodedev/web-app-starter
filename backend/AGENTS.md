@@ -1,28 +1,30 @@
-# Backend agent guide
+# Backend agent router
 
-For every task, follow the root
-[mandatory development-guide workflow](../AGENTS.md#mandatory-development-guide-workflow),
-including its pattern-reuse and approval gate.
+Follow [root policy](../AGENTS.md) and the
+[task-scoped guide workflow](../frontend/docs/development-guide/README.md#mandatory-agent-workflow).
+Select all affected concerns with `guide:index -- route <keys...>` through the
+root Node launcher. Read full selected contracts and current examples before
+planning their implementation; frontend tutorials load only for browser concerns.
 
-Before changing Java code, placing new feature files or adding a dependency, read
-[package organization, ownership and dependency directions](../frontend/docs/development-guide/en/backend/foundation/http-service-persistence-boundaries.md).
-That article owns feature-package placement, role naming, the current class map,
-published feature interfaces and the exact authentication lookup exception.
-Use its dependency contract when reviewing imports, method signatures and
-inferred types; Java visibility alone does not publish a feature interface.
-When an approved collaboration changes that contract, update the corresponding
-ArchUnit rule and its accepted/violation fixtures together. Use the guide's
-automated-check section to distinguish enforced bytecode rules from review duties.
+| Before this work                                                         | Required contract / route                                                                                                                                           |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Java changes, new feature files, dependencies or import/interface review | [Package/interface ownership](../frontend/docs/development-guide/en/backend/foundation/http-service-persistence-boundaries.md), `backend`                           |
+| HTTP endpoint/DTO, validation/errors or API evolution                    | `endpoint`; transport/error and compatibility contracts, plus the owning service/authority articles                                                                 |
+| Configuration or profiles                                                | [Runtime/configuration](../frontend/docs/development-guide/en/backend/foundation/runtime-and-configuration.md)                                                      |
+| Authentication, session or CSRF                                          | `session`; [session lifecycle](../frontend/docs/development-guide/en/backend/security/session-and-csrf-lifecycle.md) and current auth adapters                      |
+| Local seeding or deployed identity provisioning                          | [Account provisioning](../frontend/docs/development-guide/en/backend/security/account-provisioning.md)                                                              |
+| Persistence, Flyway, constraints or concurrent writes                    | `migration`; [schema ownership](../frontend/docs/development-guide/en/backend/data/flyway-and-schema-ownership.md) and affected transaction/query/locking contracts |
 
-For configuration or profiles, read
-[runtime and configuration ownership](../frontend/docs/development-guide/en/backend/foundation/runtime-and-configuration.md).
-For authentication changes, read
-[session and CSRF lifecycle](../frontend/docs/development-guide/en/backend/security/session-and-csrf-lifecycle.md);
-for local seeding or deployed account provisioning, read
-[account provisioning](../frontend/docs/development-guide/en/backend/security/account-provisioning.md).
-For persistence changes, read
-[Flyway and schema ownership](../frontend/docs/development-guide/en/backend/data/flyway-and-schema-ownership.md)
-and the applicable transaction/query patterns found through the live guide index.
+The package article owns feature placement, role naming, published interfaces and
+the exact authentication lookup exception. Apply it to signatures and inferred
+types, not just Java visibility. Approved collaboration changes must update the
+corresponding ArchUnit rule and positive/violation fixtures together; distinguish
+bytecode enforcement from required semantic review. Preserve applied migration
+bytes and existing data.
 
-Use the [workspace README](../README.md#local-development) for local setup and
-its [verification instructions](../README.md#verification) for backend checks.
+Services, queries, integrations, files, lifecycle, telemetry, temporal values and
+cross-stack contracts have task-specific articles: discover all applicable ones
+with `route --list backend`, topic/article keys and full-text search; follow
+indirect dependencies and negative paths. Use the [workspace README](../README.md#local-development)
+for setup and [verification](../README.md#verification) for backend checks. Keep
+secrets out of source and shared evidence.

@@ -143,3 +143,13 @@ HTTPS/security, source/pair and recovery requirements remain mandatory. Exact pr
 invalidate that marker until deliberate revalidation. A future scheduled backup
 can remain pending; neither plain reporting nor completion invents an observed
 scheduled execution or business acceptance.
+
+Step 11.4 retains an exact registration attempt in protected progress and uses
+`ci-registration.json` beside the values file. The private `_ci_registration.py`
+helper reruns full installed validation after transaction recovery, then requires
+`manage.py verify-registration` to verify the installed worker/pool receipts before
+recording completion. Retry the identical 11.4 command; keep the original 11.3
+observation and journal. Older registrations without a matching attempt/journal
+require reviewed recovery. Fixed-code `ci-registration-failure-*.json` reports
+retain the operation, status and fresh allowlisted worker diagnostics without raw
+subprocess output. A failed operation never requests controller activation.
