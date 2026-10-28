@@ -733,8 +733,6 @@ that future execution pending until it occurs; immediate timer checks are automa
 
 ## 19. Record the result
 
-### 19.A Reconcile final progress — manual
-
 Bring final operator observations back to the workstation, preserving all local
 evidence, matching env/receipt identity and protected file modes.
 
@@ -744,6 +742,25 @@ Write the private source-bound result; manual acceptance remains separately reco
 
 ```bash
 python3 -B docs/template-initialization/scripts/19_1_record_result.py
+```
+
+### 19.2 Validate full completion — workstation
+
+Create a private unverified acceptance template without replacing an existing file.
+
+```bash
+python3 -B docs/template-initialization/scripts/19_2_finalize_initialization.py --prepare-acceptance
+```
+
+Fill the protected template with actual staging/production deployment and
+provisioning receipts, HTTPS checks and local/IDE/artwork observations following
+the full guide's [acceptance schema](INIT_GUIDE.md#192-validate-and-record-full-completion).
+Keep future scheduled execution pending until observed. Plain 19.1 reporting is partial.
+
+Validate acceptance and bind the complete result to exact progress bytes.
+
+```bash
+python3 -B docs/template-initialization/scripts/19_2_finalize_initialization.py --acceptance-file "$PWD/.template-initialization/acceptance.json"
 ```
 
 ### 19.B Maintain the consumer handoff — manual

@@ -443,6 +443,100 @@ def register(project_path, expected_sha):
                 'full_validation_required': True}
 
 
+def unregister_candidate(predecessor, project):
+    # Copy through JSON so no caller can mutate the recorded predecessor.
+    candidate = json.loads(json.dumps(ctl.validate_config(predecessor)))
+    if candidate['projects'].get(project['slug']) != {'repository': project['repository']}:
+        raise ctl.BoundaryError('unregister-project-identity-mismatch')
+    del candidate['projects'][project['slug']]
+    return ctl.validate_config(candidate)
+
+
+def unregister_digest(config):
+    # Match atomic_config's exact on-disk representation, including the newline.
+    return hashlib.sha256((json.dumps(config, sort_keys=True, indent=2) + '\n').encode()).hexdigest()
+
+
+def unregister_journal(path, project, expected_sha):
+    path = Path(path)
+    if not path.is_absolute() or '..' in path.parts:
+        raise ctl.BoundaryError('protected-absolute-path-required')
+    ctl.protected_path(path.parent, directory=True)
+    if not (path.exists() or path.is_symlink()):
+        return path, None
+    value = json.loads(ctl.protected_file(path), object_pairs_hook=ctl.unique_object)
+    fields = {'schema_version', 'operation', 'phase', 'project', 'predecessor_sha256',
+              'candidate_sha256', 'predecessor_config'}
+    if (type(value) is not dict or set(value) != fields
+            or type(value['schema_version']) is not int or value['schema_version'] != 1
+            or value['operation'] != 'unregister' or value['phase'] not in ('started', 'verified')
+            or value['project'] != project or value['predecessor_sha256'] != expected_sha
+            or type(value['candidate_sha256']) is not str
+            or not re.fullmatch('[0-9a-f]{64}', value['candidate_sha256'])):
+        raise ctl.BoundaryError('invalid-unregister-journal')
+    candidate = unregister_candidate(value['predecessor_config'], project)
+    if unregister_digest(candidate) != value['candidate_sha256']:
+        raise ctl.BoundaryError('invalid-unregister-journal')
+    return path, value
+
+
+def save_unregister_journal(path, value):
+    ctl.protected_path(path.parent, directory=True)
+    if path.exists() or path.is_symlink():
+        ctl.protected_path(path)
+    atomic_file(path, (json.dumps(value, sort_keys=True, indent=2) + '\n').encode(), 0o600)
+
+
+def unregister(project_path, expected_sha, journal_path):
+    """Remove one exact registration; journal recovery never authorizes drift."""
+    root_required()
+    source_protected()
+    if type(expected_sha) is not str or not re.fullmatch('[0-9a-f]{64}', expected_sha):
+        raise ctl.BoundaryError('invalid-expected-configuration-sha256')
+    with lifecycle_lock():
+        project = project_input(project_path)
+        path, journal = unregister_journal(journal_path, project, expected_sha)
+        config = ctl.load_config()
+        require_idle(config)
+        require_no_ledger()
+        actual = ctl.config_digest()
+        if journal is None:
+            expected_digest(expected_sha)
+            candidate = unregister_candidate(config, project)
+            journal = {'schema_version': 1, 'operation': 'unregister', 'phase': 'started',
+                       'project': project, 'predecessor_sha256': expected_sha,
+                       'candidate_sha256': unregister_digest(candidate), 'predecessor_config': config}
+            save_unregister_journal(path, journal)  # Durable intent precedes receipt/config mutation.
+        else:
+            candidate = unregister_candidate(journal['predecessor_config'], project)
+        if actual not in (expected_sha, journal['candidate_sha256']):
+            raise ctl.BoundaryError('unregister-configuration-changed')
+        if actual == expected_sha:
+            if journal['phase'] != 'started' or config != journal['predecessor_config']:
+                raise ctl.BoundaryError('unregister-configuration-changed')
+            expected_digest(expected_sha)
+            require_idle(config)
+            require_no_ledger()
+            # All slot and pool receipts become invalid durably BEFORE publication.
+            invalidate_pool_receipts(config)
+            expected_digest(expected_sha)
+            atomic_config(candidate)
+        elif config != candidate:
+            raise ctl.BoundaryError('unregister-configuration-changed')
+        # A crash after replace is resumed against this operation's exact candidate.
+        if ctl.config_digest() != journal['candidate_sha256'] or ctl.load_config() != candidate:
+            raise ctl.BoundaryError('unregister-configuration-changed')
+        require_idle(candidate)
+        require_no_ledger()
+        if journal['phase'] != 'verified':
+            journal['phase'] = 'verified'
+            save_unregister_journal(path, journal)
+        return {'operation': 'unregister', 'removed': project['slug'], 'repository': project['repository'],
+                'configuration_sha256': journal['candidate_sha256'], 'controller_enabled': False,
+                'full_validation_required': bool(candidate['projects']),
+                'empty_pool': not bool(candidate['projects']), 'journal': str(path)}
+
+
 POOL_PREDECESSOR = 'bef4b3169896c259c5bcf841a2a51755d14a7160fb51ee98e5916eb14195492f'
 POOL_MIGRATION = 'serial-to-slots-v1'
 POOL_PREDECESSOR_PROBE = 'afce2ec9cde27440259a07fdf0fd97edd5bb11ef07fb741ab33b9e826dd4e44e'
@@ -1083,6 +1177,10 @@ def main(argv=None):
     registration = operations.add_parser('register')
     registration.add_argument('--project', required=True)
     registration.add_argument('--expected-config-sha256', required=True)
+    unregistration = operations.add_parser('unregister')
+    unregistration.add_argument('--project', required=True)
+    unregistration.add_argument('--expected-config-sha256', required=True)
+    unregistration.add_argument('--journal', required=True)
     auth = operations.add_parser('prepare-app-auth')
     auth.add_argument('--settings', required=True)
     auth.add_argument('--expected-config-sha256', required=True)
@@ -1111,6 +1209,8 @@ def main(argv=None):
         result = rollback_pool(args.expected_config_sha256)
     elif args.operation == 'register':
         result = register(args.project, args.expected_config_sha256)
+    elif args.operation == 'unregister':
+        result = unregister(args.project, args.expected_config_sha256, args.journal)
     elif args.operation == 'prepare-app-auth':
         result = prepare_app_auth(args.settings, args.expected_config_sha256, args.expected_controller_sha256)
     elif args.operation == 'repair-https-memory':

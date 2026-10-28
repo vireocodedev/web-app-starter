@@ -107,3 +107,21 @@ Step 18.5 verifies protected installed source/configuration and the effective
 production timer/service, then records active/enabled state, next firing,
 persistence and the reviewed hardcoded 30-day retention policy. Restore/review
 gates remain required; the first actual scheduled execution stays pending.
+
+
+Step 19.1 without flags writes a partial observation report, preserving its
+existing behavior. Step 19.2 with `--prepare-acceptance` creates only an exclusive
+private unverified template beside the values file, without writing completion
+or replacing existing evidence. Step 19.2, `19_2_finalize_initialization.py --acceptance-file
+/absolute/private/acceptance.json`, validates full scope, exact
+source/run/pair receipts, provisioning, HTTPS/manual acceptance, retrieved-copy
+restoration and the production backup policy. The acceptance file must be mode
+`0600` inside an owned `0700` private directory. Follow the full guide's
+[acceptance schema and template](../INIT_GUIDE.md#192-validate-and-record-full-completion).
+The original `19_1_record_result.py --complete --acceptance-file` option remains
+available for existing callers. The private `_completion.py` validator is shared
+with project deletion; only its
+explicit validated completion marker qualifies. Exact progress-byte changes
+invalidate that marker until deliberate revalidation. A future scheduled backup
+can remain pending; neither plain reporting nor completion invents an observed
+scheduled execution or business acceptance.
