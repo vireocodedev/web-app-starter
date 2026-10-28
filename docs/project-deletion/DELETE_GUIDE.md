@@ -120,7 +120,10 @@ Supported kinds are `task-artifact` (an exact project-scoped root child),
 `orphan-ssh-key` (the exact recorded project read-only key/private or public file,
 with its `SHA256:...` public fingerprint), and `dedicated-tls` (the exact
 hostname-specific Caddy certificate directory, with null fingerprint). The key
-must be unreferenced by SSH configuration. A TLS certificate must contain only
+must be unreferenced by SSH configuration; the static scanner permits only the
+exact root-owned distro symlink `/etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf`
+to its protected regular `/usr/lib/systemd/ssh_config.d/20-systemd-ssh-proxy.conf`
+target, revalidating both paths on every scan while rejecting other symlinks. A TLS certificate must contain only
 the one exact hostname; shared/wildcard certificates and ACME accounts remain.
 The plan seals exact owner/inode/content metadata. Unknown assets remain blockers.
 

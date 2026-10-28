@@ -162,6 +162,12 @@ SSH_CONFIG_FILE_LIMIT = 65536
 SSH_CONFIG_TOTAL_LIMIT = 1048576
 SSH_CONFIG_COUNT_LIMIT = 128
 SSH_CONFIG_DEPTH_LIMIT = 16
+# systemd installs this read-only distro fragment through an exact symlink.
+# No other config aliases or deletion-target symlinks are followed.
+SSH_DISTRO_INCLUDE_LINKS = {
+    Path('/etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf'):
+        Path('/usr/lib/systemd/ssh_config.d/20-systemd-ssh-proxy.conf'),
+}
 
 
 def ssh_config_parent(path):
@@ -171,6 +177,26 @@ def ssh_config_parent(path):
     metadata(parent, recursive=False)
     if not parent.is_dir():
         raise Error('SSH configuration ancestor must be a protected directory.')
+
+
+def ssh_config_source(path):
+    if not path.is_symlink():
+        return path
+    target = SSH_DISTRO_INCLUDE_LINKS.get(path)
+    information = path.lstat()
+    if (target is None or information.st_uid != 0 or not stat.S_ISLNK(information.st_mode)
+            or os.readlink(path) != str(target)):
+        raise Error('Unknown, non-root or retargeted SSH configuration symlink; preserve the key.')
+    # The alias parent was checked separately by visit(). Validate the exact
+    # target and its nonsymlink root-controlled ancestors through metadata().
+    # https://www.freedesktop.org/software/systemd/man/latest/systemd-ssh-proxy.html
+    ssh_config_parent(target)
+    target_information = target.lstat()
+    if (not stat.S_ISREG(target_information.st_mode)
+            or target_information.st_size > SSH_CONFIG_FILE_LIMIT):
+        raise Error('Distro SSH configuration target must remain a protected regular file within the size bound.')
+    metadata(target, recursive=False)
+    return target
 
 
 def ssh_include_paths(argument, base, user):
@@ -219,13 +245,17 @@ def require_orphan_ssh_key(value):
         ssh_config_parent(path)
         if not path.exists() and not path.is_symlink():
             return  # OpenSSH permits absent literal and empty wildcard includes.
+        source = ssh_config_source(path)
+        identities = {path, source}
+        if active.intersection(identities):
+            raise Error('Cyclic SSH Include alias prevents orphan-key deletion.')
         count += 1
-        if count > SSH_CONFIG_COUNT_LIMIT or path.lstat().st_size > SSH_CONFIG_FILE_LIMIT:
+        if count > SSH_CONFIG_COUNT_LIMIT or source.lstat().st_size > SSH_CONFIG_FILE_LIMIT:
             raise Error('SSH configuration exceeds the reviewed file/count bound.')
-        metadata(path, recursive=False)
-        if not path.is_file():
+        metadata(source, recursive=False)
+        if not source.is_file():
             raise Error('SSH Include must be a protected regular file.')
-        with path.open('rb') as stream:
+        with source.open('rb') as stream:
             raw = stream.read(SSH_CONFIG_FILE_LIMIT + 1)
         total += len(raw)
         if len(raw) > SSH_CONFIG_FILE_LIMIT or total > SSH_CONFIG_TOTAL_LIMIT or b'\0' in raw:
@@ -234,7 +264,7 @@ def require_orphan_ssh_key(value):
             text = raw.decode('utf-8')
         except UnicodeError:
             raise Error('SSH configuration encoding is ambiguous; preserve the orphan key.') from None
-        active.add(path)
+        active.update(identities)
         try:
             for line in text.splitlines():
                 if not line.strip() or line.lstrip().startswith('#'):
@@ -268,7 +298,7 @@ def require_orphan_ssh_key(value):
                 # Deliberately inspect every Host/Match branch, including exec,
                 # without evaluating conditions or executing any directive.
         finally:
-            active.remove(path)
+            active.difference_update(identities)
 
     for path, base, user in SSH_CONFIGS:
         visit(path, base, user, 0)

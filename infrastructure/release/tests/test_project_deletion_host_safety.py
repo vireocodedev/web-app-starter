@@ -210,6 +210,101 @@ class OrphanSSHConfigTests(unittest.TestCase):
         path.write_text(contents)
         path.chmod(0o600)
 
+    def distro_fixture(self, contents='Host unix/*\n ProxyCommand /usr/lib/systemd/systemd-ssh-proxy %h %p\n'):
+        alias = self.system / 'ssh_config.d/20-systemd-ssh-proxy.conf'
+        # parents=True otherwise gives intermediate directories the workstation umask.
+        vendor = self.root / 'usr-lib-systemd'
+        vendor.mkdir(mode=0o700)
+        target = vendor / 'ssh_config.d/20-systemd-ssh-proxy.conf'
+        self.config(self.system_config, 'Include ssh_config.d/*.conf\n')
+        self.config(target, contents)
+        alias.parent.mkdir(mode=0o700, exist_ok=True)
+        alias.symlink_to(target)
+        self.patches.enter_context(mock.patch.object(host, 'SSH_DISTRO_INCLUDE_LINKS', {alias: target}))
+        return alias, target
+
+    def link_owner(self, alias, uid=0, others=None):
+        original = Path.lstat
+        owners = dict(others or {}, **{})
+        owners[alias] = uid
+        def observed(path, *args, **kwargs):
+            info = original(path, *args, **kwargs)
+            if path in owners:
+                fields = list(info)
+                fields[4] = owners[path]
+                return os.stat_result(fields)
+            return info
+        return mock.patch.object(Path, 'lstat', autospec=True, side_effect=observed)
+
+    def test_exact_protected_distro_include_is_parsed_without_execution(self):
+        alias, target = self.distro_fixture()
+        with self.link_owner(alias), mock.patch.object(host, 'command') as command, \
+             mock.patch.object(host.subprocess, 'run') as run:
+            host.require_orphan_ssh_key(self.value)
+        command.assert_not_called()
+        run.assert_not_called()
+
+    def test_approved_distro_target_reference_still_preserves_key(self):
+        alias, target = self.distro_fixture('IdentityFile /root/.ssh/sample-app-readonly.pub\n')
+        with self.link_owner(alias), self.assertRaisesRegex(host.Error, 'references a project key'):
+            host.require_orphan_ssh_key(self.value)
+
+    def test_approved_distro_include_keeps_original_system_relative_base(self):
+        alias, target = self.distro_fixture('Include neighbor.conf\n')
+        self.config(self.system / 'neighbor.conf', 'IdentityFile /root/.ssh/sample-app-readonly\n')
+        self.config(target.parent / 'neighbor.conf', 'IdentityFile /root/.ssh/id_ed25519\n')
+        with self.link_owner(alias), self.assertRaisesRegex(host.Error, 'references a project key'):
+            host.require_orphan_ssh_key(self.value)
+
+    def test_distro_include_retarget_and_nonroot_link_are_rejected(self):
+        alias, target = self.distro_fixture()
+        with self.link_owner(alias, uid=1), self.assertRaises(host.Error):
+            host.require_orphan_ssh_key(self.value)
+        other = self.root / 'unapproved.conf'
+        self.config(other, 'Host *\n')
+        alias.unlink()
+        alias.symlink_to(other)
+        with self.link_owner(alias), self.assertRaisesRegex(host.Error, 'retargeted'):
+            host.require_orphan_ssh_key(self.value)
+
+    def test_distro_include_unsafe_link_or_target_parents_and_target_are_rejected(self):
+        alias, target = self.distro_fixture()
+        for unsafe in (alias.parent, target.parent, target):
+            with self.subTest(path=unsafe):
+                mode = unsafe.stat().st_mode & 0o777
+                unsafe.chmod(mode | 0o022)
+                try:
+                    with self.link_owner(alias), self.assertRaises(host.Error):
+                        host.require_orphan_ssh_key(self.value)
+                finally:
+                    unsafe.chmod(mode)
+        with self.link_owner(alias, others={target: os.getuid() + 1}), self.assertRaises(host.Error):
+            host.require_orphan_ssh_key(self.value)
+
+    def test_distro_include_chained_target_symlink_is_rejected(self):
+        alias, target = self.distro_fixture()
+        other = self.root / 'other-target.conf'
+        self.config(other, 'Host *\n')
+        target.unlink()
+        target.symlink_to(other)
+        with self.link_owner(alias), self.assertRaisesRegex(host.Error, 'protected regular file'):
+            host.require_orphan_ssh_key(self.value)
+
+    def test_distro_include_alias_and_canonical_cycles_are_rejected(self):
+        alias, target = self.distro_fixture()
+        for included in (alias, target):
+            with self.subTest(included=included):
+                self.config(target, 'Include ' + str(included) + '\n')
+                with self.link_owner(alias), self.assertRaisesRegex(host.Error, 'Cyclic'):
+                    host.require_orphan_ssh_key(self.value)
+
+    def test_oversized_distro_target_is_rejected_before_hash_metadata(self):
+        alias, target = self.distro_fixture('#' * (host.SSH_CONFIG_FILE_LIMIT + 1))
+        with self.link_owner(alias), mock.patch.object(host, 'metadata', wraps=self.fixture_metadata) as metadata:
+            with self.assertRaisesRegex(host.Error, 'regular file|size bound'):
+                host.require_orphan_ssh_key(self.value)
+        self.assertFalse(any(call.args[0] == target for call in metadata.call_args_list))
+
     def test_default_empty_system_include_and_benign_user_config_pass(self):
         self.config(self.system_config, 'Include ' + str(self.system / 'ssh_config.d/*.conf') + '\nHost *\n HashKnownHosts yes\n')
         self.config(self.user_config, 'Host neighbor\n IdentityFile ~/.ssh/id_ed25519\n')
