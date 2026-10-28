@@ -3,6 +3,7 @@ import json
 import os
 import re
 import subprocess
+import time
 from urllib.parse import quote
 from _state import Error, operation
 
@@ -104,22 +105,27 @@ def package(identity, name, *, expected=None):
     return {'name': name, 'id': item['id']}
 
 
-def selections(identity):
-    install_id = identity['app_installation_id']
-    installs = pages('orgs/' + identity['org'] + '/installations', 'installations')
-    matches = [item for item in installs if item.get('id') == install_id]
-    if (len(matches) != 1 or matches[0].get('app_id') != identity['app_id']
-            or matches[0].get('repository_selection') != 'selected'
-            or str(matches[0].get('account', {}).get('login', '')).lower() != identity['org'].lower()):
-        raise Error('Shared GitHub App installation identity changed; never uninstall it.')
-    result = pages('user/installations/' + str(install_id) + '/repositories', 'repositories')
-    return sorted(item['id'] for item in result)
+def selections(identity, read_app):
+    result = read_app(identity)
+    fields = {'schema_version', 'app_id', 'installation_id', 'owner', 'repository_selection', 'repository_ids'}
+    if (not isinstance(result, dict) or set(result) != fields or type(result['schema_version']) is not int
+            or result['schema_version'] != 1 or type(result['app_id']) is not int
+            or result['app_id'] != identity['app_id'] or type(result['installation_id']) is not int
+            or result['installation_id'] != identity['app_installation_id']
+            or not isinstance(result['owner'], str) or result['owner'].lower() != identity['org'].lower()
+            or result['repository_selection'] != 'selected' or not isinstance(result['repository_ids'], list)
+            or any(type(item) is not int or item <= 0 for item in result['repository_ids'])
+            or result['repository_ids'] != sorted(set(result['repository_ids']))):
+        raise Error('Protected App inventory identity differs; absence remains unverified.')
+    return result['repository_ids']
 
 
-def inspect(identity):
+def inspect(identity, read_app):
     authority(identity)
     current = repository(identity)
-    selected = selections(identity)
+    selected = selections(identity, read_app)
+    if not set(selected) - {identity['repository_id']}:
+        raise Error('Removing the final shared App selection requires a separate policy; planning stopped before teardown.')
     return {'repository_id': current['id'], 'actions': get('repos/' + identity['repository'] + '/actions/permissions'),
             'packages': [item for name in (identity['slug'] + '-frontend', identity['slug'] + '-backend')
                          if (item := package(identity, name)) is not None], 'app_repositories': selected,
@@ -175,7 +181,7 @@ def quiesce(directory, selected):
         raise Error('Repository still has active workflow runs.')
 
 
-def remove_resources(directory, selected):
+def remove_resources(directory, selected, read_app):
     identity = selected['identity']
     authority(identity, destructive=True)
     repository(identity)
@@ -187,22 +193,11 @@ def remove_resources(directory, selected):
             package(identity, item['name'], expected=item['id'])
             api('orgs/' + identity['org'] + '/packages/container/' + quote(item['name'], safe=''), 'DELETE')
         operation(directory, selected, 'package-' + str(item['id']), item, remove, absent)
-    original = set(selected['github']['app_repositories'])
-    def detached():
-        now = set(selections(identity))
-        if not original.difference({identity['repository_id']}) <= now:
-            raise Error('Another shared App selection disappeared; reconcile shared infrastructure.')
-        return identity['repository_id'] not in now
-    def detach():
-        before = set(selections(identity))
-        if before == {identity['repository_id']}:
-            raise Error('Removing the final shared App selection needs a separately reviewed policy; installation kept.')
-        api('user/installations/' + str(identity['app_installation_id']) + '/repositories/' + str(identity['repository_id']), 'DELETE')
-    operation(directory, selected, 'app-selection', identity['repository_id'], detach, detached)
+    verify_resources_absent(selected, read_app, allow_target=True)
 
 
 
-def verify_resources_absent(selected):
+def verify_resources_absent(selected, read_app, *, allow_target=False):
     """Read provider state without depending on a surviving consumer repository.
 
     Check both derived names even when the plan found no package. A new package
@@ -218,26 +213,48 @@ def verify_resources_absent(selected):
     if any(item['name'] in names for item in inventory):
         raise Error('Consumer package name exists or reappeared; preserve it and reconcile before deleting the repository.')
     expected = set(selected['github']['app_repositories']) - {identity['repository_id']}
-    if set(selections(identity)) != expected:
+    now = set(selections(identity, read_app))
+    permitted = (expected, expected | {identity['repository_id']}) if allow_target else (expected,)
+    if now not in permitted:
         raise Error('Shared App selections differ from the exact preserved manifest.')
+    if not set(selected['github']['preserved_repositories']) <= {item['id'] for item in repositories(identity)}:
+        raise Error('A preserved organization repository disappeared.')
+    return identity['repository_id'] not in now
 
 
-def remove_repository(directory, selected):
+APP_READBACK_ATTEMPTS = 6
+APP_READBACK_DELAY = 2
+
+
+def remove_repository(directory, selected, read_app):
     identity = selected['identity']
     authority(identity, destructive=True)
     def absent():
-        return repository(identity, allow_absent=True) is None
+        if repository(identity, allow_absent=True) is not None:
+            verify_resources_absent(selected, read_app, allow_target=True)
+            return False
+        # Repository deletion removes it from the selected installation. Poll
+        # only readbacks; never reissue DELETE to make App inventory converge.
+        for attempt in range(APP_READBACK_ATTEMPTS):
+            if verify_resources_absent(selected, read_app, allow_target=True):
+                return True
+            if attempt + 1 < APP_READBACK_ATTEMPTS:
+                time.sleep(APP_READBACK_DELAY)
+                if repository(identity, allow_absent=True) is not None:
+                    raise Error('A deleted repository reappeared; preserve it and reconcile.')
+        raise Error('Repository is absent but App selection readback is pending; rerun the same journaled step.')
     def remove():
         repository(identity)
+        verify_resources_absent(selected, read_app, allow_target=True)
         api('repos/' + identity['repository'], 'DELETE')
     operation(directory, selected, 'repository', identity['repository_id'], remove, absent)
 
 
-def verify(selected):
+def verify(selected, read_app):
     identity = selected['identity']
     authority(identity, destructive=True)
     if repository(identity, allow_absent=True) is not None:
         raise Error('Consumer repository still exists.')
-    verify_resources_absent(selected)
+    verify_resources_absent(selected, read_app)
     if not set(selected['github']['preserved_repositories']) <= {item['id'] for item in repositories(identity)}:
         raise Error('A preserved organization repository disappeared.')

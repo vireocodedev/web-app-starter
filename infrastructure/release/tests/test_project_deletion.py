@@ -326,22 +326,21 @@ class GitHubTests(unittest.TestCase):
 
     def test_repository_delete_is_journaled_after_exact_id_readback(self):
         with mock.patch.object(github, 'authority'), mock.patch.object(github, 'repository', side_effect=[{'id': 101}, {'id': 101}]), \
-             mock.patch.object(github, 'api') as api, mock.patch.object(github, 'operation') as operation:
-            github.remove_repository(Path('/private'), selected())
+             mock.patch.object(github, 'api') as api, mock.patch.object(github, 'operation') as operation, \
+             mock.patch.object(github, 'verify_resources_absent', return_value=True):
+            github.remove_repository(Path('/private'), selected(), mock.Mock())
             args = operation.call_args.args
             self.assertEqual(args[2:4], ('repository', 101))
             args[4]()
             api.assert_called_once_with('repos/example-org/sample-app', 'DELETE')
 
-    def test_final_app_selection_is_not_uninstalled(self):
-        plan = selected()
-        plan['github']['packages'] = []
+    def test_final_app_selection_blocks_planning_before_any_mutation(self):
         with mock.patch.object(github, 'authority'), mock.patch.object(github, 'repository'), \
              mock.patch.object(github, 'selections', return_value=[101]), \
              mock.patch.object(github, 'operation') as operation, mock.patch.object(github, 'api') as api:
-            github.remove_resources(Path('/private'), plan)
-            with self.assertRaises(state.Error):
-                operation.call_args.args[4]()
+            with self.assertRaisesRegex(state.Error, 'planning stopped before teardown'):
+                github.inspect(identity(), mock.Mock())
+            operation.assert_not_called()
             api.assert_not_called()
 
 

@@ -124,6 +124,15 @@ def host(snapshot, action, selected=None, extras=None):
         raise Error('Operator response was malformed; no absence receipt recorded.') from None
 
 
+
+def app_reader(snapshot, selected=None):
+    def read_app(value):
+        if value != snapshot['identity']:
+            raise Error('App inventory identity differs from the historical snapshot.')
+        return host(snapshot, 'app-inventory', selected)
+    return read_app
+
+
 def inspect_and_plan(args):
     directory, snapshot = load(args)
     with locked(directory):
@@ -143,7 +152,7 @@ def inspect_and_plan(args):
             extras = manifest['resources']
         observed_host = host(snapshot, 'inspect', extras=extras)
         selected = {'schema_version': 1, 'identity': snapshot['identity'], 'host': observed_host,
-                    'github': github.inspect(snapshot['identity']), 'dns': dns.inspect(snapshot), 'extras': extras,
+                    'github': github.inspect(snapshot['identity'], app_reader(snapshot)), 'dns': dns.inspect(snapshot), 'extras': extras,
                     'policy': 'purge-host-and-github-preserve-local', 'tool': observed_host['tool']}
         write(target, selected)
     print('Inspect protected plan: ' + str(target))
@@ -181,18 +190,18 @@ def perform(args, action):
             receipt(directory, selected, 'unregister')
             host(snapshot, 'verify', selected)
             dns.remove(directory, selected, snapshot)
-            github.remove_resources(directory, selected)
+            github.remove_resources(directory, selected, app_reader(snapshot, selected))
             result = {'verified': True}
         elif action == 'repository':
             receipt(directory, selected, 'providers')
             host(snapshot, 'verify', selected)
             dns.verify(selected, snapshot)
-            github.verify_resources_absent(selected)
-            github.remove_repository(directory, selected)
+            github.verify_resources_absent(selected, app_reader(snapshot, selected), allow_target=True)
+            github.remove_repository(directory, selected, app_reader(snapshot, selected))
             result = {'verified': True}
         elif action == 'verify':
             receipt(directory, selected, 'repository')
-            github.verify(selected)
+            github.verify(selected, app_reader(snapshot, selected))
             dns.verify(selected, snapshot)
             result = host(snapshot, 'verify', selected)
             write(directory / 'final-receipt.json', {'schema_version': 1, 'plan_sha256': digest(selected),
@@ -204,7 +213,7 @@ def perform(args, action):
                 'host_context_cleanup': 'pending'})
         elif action == 'cleanup-context':
             receipt(directory, selected, 'verify')
-            github.verify(selected)
+            github.verify(selected, app_reader(snapshot, selected))
             dns.verify(selected, snapshot)
             result = host(snapshot, 'cleanup-context', selected)
             if result.get('context_absent') is not True:

@@ -23,7 +23,7 @@ class RepositoryStageResumeTests(unittest.TestCase):
         self.identity = {'repository': 'example-org/sample-app', 'repository_id': 101,
                          'slug': 'sample-app', 'org': 'example-org'}
         # No packages existed at planning; late names must still block DELETE.
-        self.selected = {'identity': self.identity, 'github': {'app_repositories': [101, 102], 'packages': []}}
+        self.selected = {'identity': self.identity, 'github': {'app_repositories': [101, 102], 'packages': [], 'preserved_repositories': [102]}}
         self.snapshot = {'identity': self.identity}
         self.args = SimpleNamespace(plan_sha256=state.digest(self.selected))
         state.write(self.directory / 'providers.json', {'plan_sha256': state.digest(self.selected), 'verified': True})
@@ -33,6 +33,8 @@ class RepositoryStageResumeTests(unittest.TestCase):
         self.lose_delete_response = False
         self.delete_count = 0
         self.events = []
+        self.delayed_app_reads = 0
+        self.forced_selection = None
         self.stack = ExitStack()
         self.addCleanup(self.stack.close)
         def patch(owner, name, **options):
@@ -45,16 +47,25 @@ class RepositoryStageResumeTests(unittest.TestCase):
         self.repositories = patch(github, 'repositories', side_effect=self.repository_inventory)
         self.get = patch(github, 'get', side_effect=self.repository_get)
         self.packages = patch(github, 'packages', side_effect=lambda *args: self.events.append('packages') or [])
-        self.selections = patch(github, 'selections', return_value=[102])
+        self.selections = patch(github, 'selections', side_effect=self.app_selection)
         self.api = patch(github, 'api', side_effect=self.request)
         self.remove_resources = patch(github, 'remove_resources')
+        patch(github.time, 'sleep')
 
     def host_verify(self, *args):
         self.events.append('host')
         return {'verified': True}
 
     def repository_inventory(self, identity):
-        return ([{'id': self.remote_id, 'full_name': self.remote_name}] if self.exists else [])
+        return ([{'id': self.remote_id, 'full_name': self.remote_name}] if self.exists else []) + [{'id': 102, 'full_name': 'example-org/neighbor'}]
+
+    def app_selection(self, identity, reader):
+        if self.forced_selection is not None:
+            return self.forced_selection
+        if self.exists or self.delayed_app_reads:
+            self.delayed_app_reads = max(0, self.delayed_app_reads - 1)
+            return [101, 102]
+        return [102]
 
     def repository_get(self, path):
         self.assertEqual(path, 'repos/' + self.identity['repository'])
@@ -82,7 +93,8 @@ class RepositoryStageResumeTests(unittest.TestCase):
         self.assertEqual(state.read(self.directory / 'journal.json')['operations']['repository']['phase'], 'started')
         self.run_stage()
         self.assertEqual(self.delete_count, 1)
-        self.assertEqual(self.events[:4], ['host', 'dns', 'packages', 'DELETE'])
+        self.assertEqual(self.events[:3], ['host', 'dns', 'packages'])
+        self.assertIn('DELETE', self.events)
         self.assertEqual(self.host.call_count, 2)
         self.assertEqual(self.dns.call_count, 2)
         self.remove_resources.assert_not_called()
@@ -93,8 +105,8 @@ class RepositoryStageResumeTests(unittest.TestCase):
         self.run_stage()
         self.run_stage()
         self.assertEqual(self.delete_count, 1)
-        self.assertEqual(self.packages.call_count, 2)
-        self.assertEqual(self.selections.call_count, 2)
+        self.assertGreaterEqual(self.packages.call_count, 2)
+        self.assertGreaterEqual(self.selections.call_count, 2)
         self.assertEqual(self.host.call_count, 2)
         self.assertEqual(self.dns.call_count, 2)
         self.remove_resources.assert_not_called()
@@ -167,9 +179,9 @@ class RepositoryStageResumeTests(unittest.TestCase):
                 self.assertFalse((self.directory / 'journal.json').exists())
 
     def test_exact_preserved_app_selection_is_required(self):
-        for selection in ([], [101, 102], [102, 103]):
+        for selection in ([], [102, 103], [101, 102, 103]):
             with self.subTest(selection=selection):
-                self.selections.return_value = selection
+                self.forced_selection = selection
                 with self.assertRaisesRegex(state.Error, 'exact preserved manifest'):
                     self.run_stage()
                 self.assertEqual(self.delete_count, 0)
@@ -181,6 +193,29 @@ class RepositoryStageResumeTests(unittest.TestCase):
             self.run_stage()
         self.assertEqual(self.delete_count, 0)
         self.assertFalse((self.directory / 'repository.json').exists())
+
+    def test_delayed_app_readback_retries_only_reads_after_delete(self):
+        self.delayed_app_reads = 5
+        self.run_stage()
+        self.assertEqual(self.delete_count, 1)
+        self.assertGreaterEqual(self.selections.call_count, 6)
+        github.time.sleep.assert_called()
+        self.remove_resources.assert_not_called()
+
+    def test_pending_app_readback_resumes_without_redeleting_repository(self):
+        self.forced_selection = [101, 102]
+        with self.assertRaisesRegex(state.Error, 'readback is pending'):
+            self.run_stage()
+        self.assertFalse(self.exists)
+        self.assertEqual(self.delete_count, 1)
+        self.forced_selection = [102]
+        self.run_stage()
+        self.assertEqual(self.delete_count, 1)
+
+    def test_target_already_unselected_is_safe_when_neighbors_are_exact(self):
+        self.forced_selection = [102]
+        self.run_stage()
+        self.assertEqual(self.delete_count, 1)
 
     def test_invalid_package_inventory_blocks_delete(self):
         self.packages.side_effect = None

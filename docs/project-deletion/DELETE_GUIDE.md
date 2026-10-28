@@ -15,10 +15,20 @@ configuration. All `--help` commands are inert.
 Use Python 3.11+, authenticated `gh`, the initialization's verified SSH host key,
 and the existing private DNS token file. The intended maintainer must still be an
 organization owner and repository/package administrator. GitHub OAuth needs
-`repo`, `read:packages`, `delete:packages` and `delete_repo`, plus access to shared
-App installation inventory. If scopes are missing, refresh the intended account
+`repo`, `read:packages`, `delete:packages` and `delete_repo`, plus the operator's existing protected shared App signer for metadata inventory. If scopes are missing, refresh the intended account
 explicitly with `gh auth refresh -h github.com -s delete_repo -s delete:packages`.
 Never transfer an App private key or weaken organization policy to bypass access.
+
+The read-only `app-inventory` host action reuses `/etc/web-app-ci/github-app.json`
+and `/etc/web-app-ci/github-app.pem` through the existing protected signer. It
+validates the historical App/installation/organization and selected-repository
+policy, then mints its own temporary token with **only `metadata: read`**, omitting
+repository filters to observe the installation's full existing selection. It
+exports only App/installation/owner identity and sorted numeric repository IDs,
+and requires confirmed revocation of that token in `finally`. Tokens, private
+keys and raw GitHub responses never leave the operator. This adds no App
+permissions and changes no shared CI credentials, configuration or job tokens.
+An inaccessible inventory or failed token revocation blocks the step.
 
 Do not edit snapshot identity or reset a journal after interruption. Repeat the
 same step and plan hash: started operations first read back the exact resource.
@@ -63,7 +73,9 @@ python3 -B docs/project-deletion/scripts/2_1_inspect_and_plan.py --env "$HOME/.l
 Inspect the printed protected `plan.json`. It records exact numeric repository
 and package IDs, App selection, DNS RRsets, Docker IDs/labels/consumers, root-owned
 path hashes, neighboring resources, host machine/key identity and canonical tool
-source/implementation hashes. It explicitly selects host data purge. The command
+source/implementation hashes. Planning rejects removal of the final shared App
+selection before any teardown; the shared installation remains. It explicitly
+selects host data purge. The command
 prints the plan SHA-256 and all subsequent commands with the actual `--env` path.
 Set this shell variable to the **printed** value:
 
@@ -173,7 +185,7 @@ Full pool validation can take several minutes; do not interrupt it merely becaus
 no progress is printed. If the final consumer is removed, leave the empty pool
 controller disabled. A failed validation remains incomplete and must be resumed.
 
-## 6. Remove DNS, package and App access
+## 6. Remove DNS and packages
 
 ### 6.1. Delete only recorded provider resources
 
@@ -185,10 +197,11 @@ Require successful host/CI absence receipts first. Delete only the two recorded
 A RRsets with the expected operator IP; preserve the shared zone and all other
 RRsets. Verify provider and authoritative absence. Delete the exact two private
 GHCR package IDs linked to this repository, including their versions. Complete
-accessible organization inventory proves package absence. Remove only this
-repository's numeric ID from the shared App's selected repositories and read
-back every preserved selection. Never uninstall the shared App. Removing its
-last selected repository is a blocking policy decision, not an inferred approval.
+accessible organization inventory proves package absence. Preserve the App
+selection at this step: the temporary host inventory token can only read metadata
+and revoke itself. Confirm every neighboring selection remains exactly as planned;
+the target may still be selected. Never explicitly remove App repository access
+or uninstall the shared App.
 
 ## 7. Delete the GitHub repository last
 
@@ -200,9 +213,17 @@ python3 -B docs/project-deletion/scripts/7_1_delete_repository.py --env "$HOME/.
 
 Require all previous receipts and repeat current host/provider checks. Confirm the
 same full name, organization, private state, administrator authority and original
-numeric repository ID. Persist deletion intent before DELETE. If the response is
-lost, resume by accessible organization inventory; never re-create the repository,
-blindly repeat against a reused name or treat an isolated 404 as proof.
+numeric repository ID. Check both derived package names even if absent at
+planning, and preserve the exact neighboring organization repositories and App
+selections. A late/recreated package blocks deletion without being adopted.
+Persist deletion intent before DELETE. Repository deletion removes its access from
+the selected App installation; confirm the accessible repository inventory is
+absent and the App selection equals the original set minus this numeric ID.
+Allow up to six readbacks, two seconds apart, for App consistency. These retries
+only read state. A pending readback keeps the journal incomplete. If the DELETE
+response is lost, rerun the same step: accessible organization and App inventories
+reconcile absence without another DELETE. Never re-create the repository, blindly
+repeat against a reused name or treat an isolated 404 as proof.
 
 ## 8. Verify and remove the host deletion context
 
@@ -235,7 +256,7 @@ by other people. Those limits must remain visible in the final handoff.
 
 API owners: [GitHub repositories](https://docs.github.com/en/rest/repos/repos#delete-a-repository),
 [packages](https://docs.github.com/en/rest/packages/packages#delete-a-package-for-an-organization),
-[App repository selection](https://docs.github.com/en/rest/apps/installations#remove-a-repository-from-an-app-installation),
+[App installation inventory](https://docs.github.com/en/rest/apps/installations#list-repositories-accessible-to-the-app-installation),
 and [Hetzner DNS RRsets](https://docs.hetzner.cloud/reference/cloud#zone-rr-sets-delete-an-rrset).
 Initialization ownership remains in [INIT_GUIDE.md](../template-initialization/INIT_GUIDE.md);
 shared CI in [its operator guide](../../infrastructure/ci/README.md), runtime

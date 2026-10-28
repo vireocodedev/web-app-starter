@@ -1,5 +1,6 @@
 """Host deletion must reject mount boundaries and close CI admission first."""
 from types import SimpleNamespace
+from contextlib import ExitStack
 import os
 from pathlib import Path
 import sys
@@ -166,6 +167,152 @@ class TaskArtifactIdentityTests(unittest.TestCase):
                      '/root/sample-app-source/../foreign', '/root/sample-app-source//child'):
             with self.subTest(path=path), self.assertRaises(host.Error):
                 host.extra_paths({'slug': 'sample-app'}, [self.extra(path)])
+
+
+class OrphanSSHConfigTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.root.chmod(0o700)
+        self.system = self.root / 'etc-ssh'
+        self.user = self.root / 'root-ssh'
+        self.system.mkdir(mode=0o700)
+        self.user.mkdir(mode=0o700)
+        self.system_config = self.system / 'ssh_config'
+        self.user_config = self.user / 'config'
+        self.value = {'slug': 'sample-app'}
+        self.key = self.user / 'sample-app-readonly'
+        self.key.write_text('fixture key bytes')
+        self.key.chmod(0o600)
+        configs = ((self.system_config, self.system, False), (self.user_config, self.user, True))
+        self.patches = ExitStack()
+        self.addCleanup(self.patches.close)
+        self.patches.enter_context(mock.patch.object(host, 'SSH_CONFIGS', configs))
+        # Production reuses metadata's established root-owner/ancestor contract.
+        # The fixture substitutes its own current-user-owned temporary trust root.
+        self.patches.enter_context(mock.patch.object(host, 'metadata', side_effect=self.fixture_metadata))
+
+    def fixture_metadata(self, path, **kwargs):
+        path = Path(path)
+        current = path
+        while current.is_relative_to(self.root):
+            info = current.lstat()
+            if current.is_symlink() or info.st_uid != os.getuid() or info.st_mode & 0o022:
+                raise host.Error('Unsafe fixture SSH configuration owner, symlink or mode')
+            if current == self.root:
+                break
+            current = current.parent
+        return {'path': str(path), 'owner': os.getuid(), 'entries': []}
+
+    def config(self, path, contents):
+        path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        path.write_text(contents)
+        path.chmod(0o600)
+
+    def test_default_empty_system_include_and_benign_user_config_pass(self):
+        self.config(self.system_config, 'Include ' + str(self.system / 'ssh_config.d/*.conf') + '\nHost *\n HashKnownHosts yes\n')
+        self.config(self.user_config, 'Host neighbor\n IdentityFile ~/.ssh/id_ed25519\n')
+        host.require_orphan_ssh_key(self.value)
+
+    def test_conditional_system_include_references_preserve_both_key_files(self):
+        for name in ('sample-app-readonly', 'sample-app-readonly.pub'):
+            with self.subTest(name=name):
+                self.config(self.system_config, 'Host neighbor\n Include ssh_config.d/*.conf\n')
+                self.config(self.system / 'ssh_config.d/neighbor.conf', 'Match host neighbor\n IdentityFile /root/.ssh/' + name + '\n')
+                with self.assertRaisesRegex(host.Error, 'references a project key'):
+                    host.require_orphan_ssh_key(self.value)
+
+    def test_nested_user_relative_includes_use_user_base_not_including_directory(self):
+        self.config(self.user_config, 'Include nested/first.conf\n')
+        self.config(self.user / 'nested/first.conf', 'Match all\n Include second.conf\n')
+        self.config(self.user / 'second.conf', 'CertificateFile /root/.ssh/sample-app-readonly.pub\n')
+        with self.assertRaisesRegex(host.Error, 'references a project key'):
+            host.require_orphan_ssh_key(self.value)
+
+    def test_match_exec_and_proxy_directives_are_never_executed(self):
+        self.config(self.user_config, 'Match exec "touch /tmp/never-execute-this"\n ProxyCommand arbitrary-helper %h %p\n IdentityFile /root/.ssh/id_ed25519\n')
+        with mock.patch.object(host, 'command') as command, mock.patch.object(host.subprocess, 'run') as run:
+            host.require_orphan_ssh_key(self.value)
+        command.assert_not_called()
+        run.assert_not_called()
+
+    def test_dynamic_ambiguous_and_cyclic_includes_fail_closed(self):
+        for directive in ('Include ${HOME}/.ssh/other.conf', 'Include %d/.ssh/other.conf',
+                          'Include unknown?.conf', 'Include */other.conf', 'Include ../other.conf',
+                          'Include "unterminated', 'Include nested//other.conf', 'Include config'):
+            with self.subTest(directive=directive):
+                self.config(self.user_config, directive + '\n')
+                with self.assertRaises(host.Error):
+                    host.require_orphan_ssh_key(self.value)
+
+    def test_unresolved_identity_expansions_fail_closed(self):
+        for value in ('%d/.ssh/%h', '${IDENTITY_FILE}', '~another/key', '/root/.ssh/id_*'):
+            with self.subTest(value=value):
+                self.config(self.user_config, 'IdentityFile ' + value + '\n')
+                with self.assertRaisesRegex(host.Error, 'identity expansion'):
+                    host.require_orphan_ssh_key(self.value)
+
+    def test_writable_or_symlinked_include_is_rejected(self):
+        self.config(self.system_config, 'Include ssh_config.d/*.conf\n')
+        included = self.system / 'ssh_config.d/neighbor.conf'
+        self.config(included, 'IdentityFile /root/.ssh/id_ed25519\n')
+        included.chmod(0o666)
+        with self.assertRaises(host.Error):
+            host.require_orphan_ssh_key(self.value)
+        included.chmod(0o600)
+        outside = self.root / 'other.conf'
+        self.config(outside, 'IdentityFile /root/.ssh/id_ed25519\n')
+        included.unlink()
+        included.symlink_to(outside)
+        with self.assertRaises(host.Error):
+            host.require_orphan_ssh_key(self.value)
+
+    def test_foreign_owner_protected_metadata_failure_is_propagated(self):
+        self.config(self.user_config, 'Host *\n')
+        with mock.patch.object(host, 'metadata', side_effect=host.Error('Unsafe owner')):
+            with self.assertRaisesRegex(host.Error, 'Unsafe owner'):
+                host.require_orphan_ssh_key(self.value)
+
+    def test_include_depth_count_and_size_are_bounded(self):
+        self.config(self.user_config, 'Include first.conf\n')
+        self.config(self.user / 'first.conf', 'Include second.conf\n')
+        self.config(self.user / 'second.conf', 'Host *\n')
+        for name, value in (('SSH_CONFIG_DEPTH_LIMIT', 1), ('SSH_CONFIG_COUNT_LIMIT', 1),
+                            ('SSH_CONFIG_FILE_LIMIT', 4), ('SSH_CONFIG_TOTAL_LIMIT', 4)):
+            with self.subTest(limit=name), mock.patch.object(host, name, value):
+                with self.assertRaises(host.Error):
+                    host.require_orphan_ssh_key(self.value)
+
+    def test_late_included_reference_immediately_before_unlink_preserves_key(self):
+        self.config(self.user_config, 'Include late.conf\n')
+        selected = {'identity': self.value, 'extras': [{'kind': 'orphan-ssh-key', 'path': str(self.key)}]}
+        target = self.fixture_metadata(self.key)
+        def metadata_then_reference(path, **kwargs):
+            self.config(self.user / 'late.conf', 'IdentityFile /root/.ssh/sample-app-readonly\n')
+            return target
+        def operation(directory, plan, key, predecessor, execute, verify):
+            self.assertTrue(self.key.exists())
+            # The first scanner passed; simulate a new reference while metadata
+            # is checked, then require the immediate pre-unlink scanner to block.
+            with mock.patch.object(host, 'metadata', side_effect=metadata_then_reference):
+                execute()
+        with mock.patch.object(host, 'operation', side_effect=operation), \
+             mock.patch.object(host, 'require_unmounted_tree'):
+            with self.assertRaisesRegex(host.Error, 'references a project key'):
+                host.remove_path(self.root, selected, target)
+        self.assertEqual(self.key.read_text(), 'fixture key bytes')
+
+    def test_resumed_absent_key_still_rechecks_included_references(self):
+        self.key.unlink()
+        self.config(self.user_config, 'Include neighbor.conf\n')
+        self.config(self.user / 'neighbor.conf', 'IdentityFile /root/.ssh/sample-app-readonly.pub\n')
+        selected = {'identity': self.value, 'extras': [{'kind': 'orphan-ssh-key', 'path': str(self.key)}]}
+        with mock.patch.object(host, 'operation') as operation:
+            with self.assertRaisesRegex(host.Error, 'references a project key'):
+                host.remove_path(self.root, selected, {'path': str(self.key), 'absent': True})
+        operation.assert_not_called()
+
 
 
 class CIUnregisterBarrierTests(unittest.TestCase):

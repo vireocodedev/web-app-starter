@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import shlex
 import socket
 import stat
 import subprocess
@@ -155,6 +156,124 @@ def units(value):
     return ['web-app-deploy-' + slug + '.service', 'web-app-backup-' + slug + '.service', 'web-app-backup-' + slug + '.timer']
 
 
+SSH_CONFIGS = ((Path('/etc/ssh/ssh_config'), Path('/etc/ssh'), False),
+               (Path('/root/.ssh/config'), Path('/root/.ssh'), True))
+SSH_CONFIG_FILE_LIMIT = 65536
+SSH_CONFIG_TOTAL_LIMIT = 1048576
+SSH_CONFIG_COUNT_LIMIT = 128
+SSH_CONFIG_DEPTH_LIMIT = 16
+
+
+def ssh_config_parent(path):
+    parent = path.parent
+    while not parent.exists() and not parent.is_symlink():
+        parent = parent.parent
+    metadata(parent, recursive=False)
+    if not parent.is_dir():
+        raise Error('SSH configuration ancestor must be a protected directory.')
+
+
+def ssh_include_paths(argument, base, user):
+    # OpenSSH ssh_config(5): relative includes use the user/system SSH base,
+    # even for nested includes. Only this explicitly bounded static subset is
+    # supported; never expand environment variables, arbitrary tokens or users.
+    if argument.startswith('~/') and user:
+        argument = '/root/' + argument[2:]
+    if not re.fullmatch(r'[A-Za-z0-9_./*-]+', argument):
+        raise Error('Dynamic or ambiguous SSH Include prevents orphan-key deletion.')
+    path = Path(argument) if argument.startswith('/') else base / argument
+    if '..' in path.parts or str(path) != (argument if argument.startswith('/') else str(base) + '/' + argument):
+        raise Error('Noncanonical SSH Include prevents orphan-key deletion.')
+    if '*' in str(path):
+        if path.name != '*.conf' or '*' in str(path.parent):
+            raise Error('Only static basename *.conf SSH Includes are supported.')
+        ssh_config_parent(path)
+        if not path.parent.exists():
+            return []
+        matches = []
+        for index, child in enumerate(path.parent.iterdir()):
+            if index >= 2048:
+                raise Error('SSH Include directory exceeds the reviewed bound.')
+            if child.name.endswith('.conf'):
+                matches.append(child)
+                if len(matches) > SSH_CONFIG_COUNT_LIMIT:
+                    raise Error('SSH Include file count exceeds the reviewed bound.')
+        return sorted(matches)
+    return [path]
+
+
+def require_orphan_ssh_key(value):
+    """Read all static client-config branches without running any SSH command.
+
+    Include and IdentityFile expansion rules: https://man.openbsd.org/ssh_config
+    Unsupported dynamic input fails closed instead of guessing effective Hosts.
+    """
+    names = (value['slug'] + '-readonly', value['slug'] + '-readonly.pub')
+    count = total = 0
+    active = set()
+
+    def visit(path, base, user, depth):
+        nonlocal count, total
+        if depth > SSH_CONFIG_DEPTH_LIMIT or path in active:
+            raise Error('Cyclic or excessively deep SSH Include prevents orphan-key deletion.')
+        ssh_config_parent(path)
+        if not path.exists() and not path.is_symlink():
+            return  # OpenSSH permits absent literal and empty wildcard includes.
+        count += 1
+        if count > SSH_CONFIG_COUNT_LIMIT or path.lstat().st_size > SSH_CONFIG_FILE_LIMIT:
+            raise Error('SSH configuration exceeds the reviewed file/count bound.')
+        metadata(path, recursive=False)
+        if not path.is_file():
+            raise Error('SSH Include must be a protected regular file.')
+        with path.open('rb') as stream:
+            raw = stream.read(SSH_CONFIG_FILE_LIMIT + 1)
+        total += len(raw)
+        if len(raw) > SSH_CONFIG_FILE_LIMIT or total > SSH_CONFIG_TOTAL_LIMIT or b'\0' in raw:
+            raise Error('SSH configuration exceeds its size or syntax bound.')
+        try:
+            text = raw.decode('utf-8')
+        except UnicodeError:
+            raise Error('SSH configuration encoding is ambiguous; preserve the orphan key.') from None
+        active.add(path)
+        try:
+            for line in text.splitlines():
+                if not line.strip() or line.lstrip().startswith('#'):
+                    continue
+                match = re.fullmatch(r'\s*([A-Za-z][A-Za-z0-9]*)(?:\s*=\s*|\s+)(.*?)\s*', line)
+                if not match:
+                    raise Error('Ambiguous SSH configuration syntax; preserve the orphan key.')
+                lexer = shlex.shlex(match[2], posix=True)
+                lexer.whitespace_split, lexer.commenters, lexer.quotes, lexer.escape = True, '#', '"', ''
+                try:
+                    arguments = list(lexer)
+                except ValueError:
+                    raise Error('Ambiguous SSH configuration quoting; preserve the orphan key.') from None
+                if not arguments or any('\\' in argument or any(ord(char) < 32 for char in argument) for argument in arguments):
+                    raise Error('Ambiguous SSH configuration arguments; preserve the orphan key.')
+                if any(name in argument for argument in arguments for name in names):
+                    raise Error('SSH configuration references a project key; preserve both key files.')
+                keyword = match[1].lower()
+                if keyword == 'include':
+                    for argument in arguments:
+                        for included in ssh_include_paths(argument, base, user):
+                            visit(included, base, user, depth + 1)
+                elif keyword in {'identityfile', 'certificatefile'}:
+                    if len(arguments) != 1:
+                        raise Error('Ambiguous SSH identity syntax; preserve the orphan key.')
+                    argument = arguments[0]
+                    if argument.startswith('~/'):
+                        argument = '/root/' + argument[2:]
+                    if any(token in argument for token in ('%', '$', '~', '*', '?', '[', ']', "'")):
+                        raise Error('Unresolved SSH identity expansion may reference the key; preserve it.')
+                # Deliberately inspect every Host/Match branch, including exec,
+                # without evaluating conditions or executing any directive.
+        finally:
+            active.remove(path)
+
+    for path, base, user in SSH_CONFIGS:
+        visit(path, base, user, 0)
+
+
 def extra_paths(value, extras):
     if not isinstance(extras, list):
         raise Error('Extra resource manifest must be a list.')
@@ -181,10 +300,7 @@ def extra_paths(value, extras):
                 observed = command('ssh-keygen', '-lf', key).split()
                 if len(observed) < 2 or observed[1] != extra['fingerprint']:
                     raise Error('SSH key fingerprint differs; preserve it.')
-            for directory in (Path('/root/.ssh'), Path('/etc/ssh')):
-                for file in directory.glob('*config*'):
-                    if file.is_file() and (path in file.read_text(errors='replace') or Path(path).name in file.read_text(errors='replace')):
-                        raise Error('SSH configuration references the key; preserve it.')
+            require_orphan_ssh_key(value)
             owner = 0
         elif kind == 'dedicated-tls':
             base = '/var/lib/caddy/.local/share/caddy/certificates/'
@@ -471,6 +587,10 @@ def removed(path):
 
 def remove_path(directory, selected, target):
     path = Path(target['path'])
+    orphan_key = any(extra.get('kind') == 'orphan-ssh-key' and extra.get('path') == str(path)
+                     for extra in selected.get('extras', []))
+    if orphan_key:
+        require_orphan_ssh_key(selected['identity'])  # Also guard resumed/already-absent operations.
     def execute():
         current = metadata(path, owner=target.get('owner', 0))
         if current != target:
@@ -484,6 +604,8 @@ def remove_path(directory, selected, target):
                 raise Error('This platform lacks symlink-safe recursive removal.')
             shutil.rmtree(path)
         else:
+            if orphan_key:
+                require_orphan_ssh_key(selected['identity'])  # Recheck immediately before either key unlink.
             path.unlink()
         sync_dir(path.parent)
     operation(directory, selected, 'path-' + digest(str(path)), target, execute, lambda: removed(path))
@@ -664,6 +786,14 @@ def dispatch(request):
         raise Error('Require the historical canonical source path.')
     if request['action'] == 'inspect':
         return inspect(value, request['extras'])
+    if request['action'] == 'app-inventory':
+        selected = request['plan']
+        if selected is not None:
+            if selected['identity'] != value or selected['extras'] != request['extras']:
+                raise Error('App inventory request differs from the sealed plan.')
+            check_plan(selected)
+        from _app_inventory import inspect as inspect_app
+        return inspect_app(value)
     selected = request['plan']
     if selected['identity'] != value or selected['extras'] != request['extras']:
         raise Error('Operator request identity differs from the sealed plan.')

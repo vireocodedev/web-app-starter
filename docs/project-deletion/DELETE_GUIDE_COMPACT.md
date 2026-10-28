@@ -49,13 +49,13 @@ Validation may take several minutes. Let it finish.
 python3 -B docs/project-deletion/scripts/5_1_unregister_ci.py --env "$HOME/.local/share/project-deletion/values.env" --plan-sha256 "$DELETION_PLAN_SHA256"
 ```
 
-## 6.1. Remove exact DNS, private GHCR packages and shared App repository access
+## 6.1. Remove exact DNS and private GHCR packages; preserve App selection
 
 ```bash
 python3 -B docs/project-deletion/scripts/6_1_remove_provider_resources.py --env "$HOME/.local/share/project-deletion/values.env" --plan-sha256 "$DELETION_PLAN_SHA256"
 ```
 
-## 7.1. Delete the original numeric GitHub repository identity last
+## 7.1. Delete the original repository last and verify its App selection disappears
 
 ```bash
 python3 -B docs/project-deletion/scripts/7_1_delete_repository.py --env "$HOME/.local/share/project-deletion/values.env" --plan-sha256 "$DELETION_PLAN_SHA256"

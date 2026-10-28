@@ -9,7 +9,8 @@ the protected **deletion** reference file. Step 1.1 separately takes the existin
 
 Private modules own historical snapshot/plan/journal (`_state.py`), orchestration
 (`_deletion.py`), exact GitHub/DNS operations (`_github.py`, `_dns.py`) and reviewed
-operator execution (`_host.py`). No public script performs all stages implicitly.
+operator execution (`_host.py`) and metadata-only shared App inventory
+(`_app_inventory.py`). No public script performs all stages implicitly.
 SSH transfers only typed private data to the already installed clean canonical
 checkout; it never transfers executable snippets or provider/App credentials.
 
@@ -24,3 +25,12 @@ retry; state must never be reset to hide uncertain outcomes.
 Operator requests run under the root-only `/root/PROJECT_SLUG-deletion` context.
 The final nonsecret receipt is saved locally before that host context is removed.
 No raw database/configuration/key contents leave the host during inventory.
+
+App inventory runs only on the protected operator with the existing fixed shared
+signer. Its temporary token requests exactly `metadata: read` across the existing
+selected repositories, exports only identity and numeric IDs, and must be revoked
+before success. The explicit reader is injected into GitHub operations. Step 6
+preserves App selection; step 7 verifies that repository deletion removes only the
+target selection. It makes no explicit App selection mutation. Final-selection
+removal blocks planning before host/provider teardown. Lost DELETE responses and
+short App consistency delays reconcile through read-only inventories.
