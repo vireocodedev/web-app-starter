@@ -162,8 +162,13 @@ python3 -B docs/template-initialization/scripts/4_1_edit_backend_identity.py
 
 ### 4.2 Refactor both Java package roots — workstation
 
-Move main/test application packages and code references, preserving SQL, fixtures
-and comments. Completed retries are no-ops; mixed/partial trees stop for inspection.
+Move main/test application packages and code references. Keep reference packages
+neutral; rewrite only the eight published imports listed in the
+[full 4.2 contract](INIT_GUIDE.md#42-refactor-the-java-package-roots). Preserve SQL,
+literals, comments and unrelated fixtures. Retry pending reference imports after
+both application roots move; mixed/partial application trees and unsafe reference
+content stop for inspection. Completed retries are no-ops. Section 10.1 verifies
+the real personalized reference with `test bootJar`.
 
 ```bash
 python3 -B docs/template-initialization/scripts/4_2_refactor_java_packages.py
@@ -199,7 +204,8 @@ framework attribution and licenses for retained artwork.
 
 ### 6.1 Verify selected identity automatically — workstation
 
-Check all owned identity fields, Java packages, title expectations and whitespace.
+Check all owned identity fields, Java packages, scoped neutral reference imports,
+title expectations and whitespace. Pending reference imports require step 4.2.
 Known neutral references are classified automatically; unexpected leftovers fail
 with a named path/field and repair step.
 

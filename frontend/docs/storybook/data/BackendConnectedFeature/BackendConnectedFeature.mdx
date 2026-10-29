@@ -38,6 +38,27 @@ adapter remains an inert, tested reference. The app's existing runtime is unchan
 The recipe deliberately extends the current construction seam rather than
 pretending that a feature can already obtain Axios from a hook.
 
+### Choose the write protocol before copying this recipe
+
+This preview demonstrates a separately specified **PATCH action**: it sends
+`expectedVersion` in its body and its private endpoint defines 409
+`REQUEST_REJECTED` as stale. Keep that agreement when running this preview.
+The executable backend Contacts reference instead demonstrates the installed
+CRUD convention: one resource Request record for POST and full PUT,
+`X-Expected-Version` on PUT/DELETE, `PageResponse` with
+`items/page/size/totalItems`, 404 `RESOURCE_NOT_FOUND`, and 409
+`VERSION_CONFLICT` or `RESOURCE_IN_USE`. A known unique collision remains
+`REQUEST_REJECTED`. See the
+[backend package contract](../../../development-guide/en/backend/foundation/http-service-persistence-boundaries.md)
+and its linked executable reference before creating a new CRUD adapter.
+
+For that convention, send editable fields as the PUT body and the captured
+version as a header; do not copy this PATCH body's version field or classify
+every 409 as stale. Preserve the draft on conflict and reload explicitly before
+accepting a new editing basis. Neither recipe authorizes silent retry using the
+latest version. An adapter choosing the new convention must update its schemas,
+serialization and status/code tests together.
+
 ## 1. Agree the server contract and file owners
 
 ```text

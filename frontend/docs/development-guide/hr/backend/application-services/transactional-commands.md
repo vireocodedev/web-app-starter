@@ -1,8 +1,12 @@
 # Jedna transakcija za jednu cjelovitu poslovnu naredbu
 
-**Status podrške: referentni recept potkrijepljen izvorom.** Spring transakcije i JPA dostupni su u predlošku, ali prikazane command servise, audit writer i domenske ovlasti mora implementirati projekt. Client Discovery daje primjere transakcijskih radnji, a LMS korisnu usporedbu flusha i stvarnog završetka transakcije.
+**Status podrške: ugrađena Spring/JPA transakcijska osnova i izvršivi CRUD primjer, uz vanjske command/audit recepte.** Starter baza nema domenske ovlasti ni audit writer. Client Discovery primjeri ostaju pseudokod projekta, a LMS usporedba flush/commit granice.
 
 Koristite obrazac kad jedna korisnička radnja mijenja više redaka, kvota ovisi o konkurentnim zapisivačima ili audit događaj mora postojati točno kad postoji i poslovna promjena. Najprije definirajte invarijantu: baza ne smije zadržati samo prividno uspješan početak naredbe.
+
+## Ugrađena CRUD transakcijska granica
+
+Mali [BaseService](../foundation/crud-foundation-and-class-conventions.md) pruža protected mehaniku, ne javni transaction framework. Konkretne nonfinal javne service metode vode cijelu radnju; standardna čitanja koriste readOnly i mapiraju unutar transakcije uz OSIV false. Flush prije create/update responsea daje aktualne version/audit vrijednosti, a HTTP uspjeh čeka proxy commit. No-op PUT izričito uzima OPTIMISTIC lock jer možda nema UPDATE-a. Rollback, commit-time optimistic failure i direct service authority traže runtime testove. Ne uvodi se generički retry, audit povijest ni outbox.
 
 ## Aplikacijskom naredbom obuhvatite cijelu radnju
 

@@ -55,6 +55,31 @@ export const englishBackendHandbookTranslations = {
     },
   },
   articles: {
+    "backend-foundation-crud-foundation-and-class-conventions": {
+      title: "CRUD foundation and class conventions",
+      description:
+        "Use the installed foundation, exact current sources and explicit behavioral verification boundaries.",
+    },
+    "backend-data-jpa-entities-and-relationships": {
+      title: "JPA entities and relationships",
+      description:
+        "Use the installed foundation, exact current sources and explicit behavioral verification boundaries.",
+    },
+    "backend-queries-jpa-repositories-fetch-plans-and-projections": {
+      title: "JPA repositories, fetch plans and projections",
+      description:
+        "Use the installed foundation, exact current sources and explicit behavioral verification boundaries.",
+    },
+    "backend-data-configurable-hard-and-soft-deletion": {
+      title: "Configurable hard and soft deletion",
+      description:
+        "Use the installed foundation, exact current sources and explicit behavioral verification boundaries.",
+    },
+    "backend-foundation-executable-reference-feature-and-isolation": {
+      title: "Executable reference feature and isolation",
+      description:
+        "Use the installed foundation, exact current sources and explicit behavioral verification boundaries.",
+    },
     "backend-foundation-runtime-and-configuration": {
       title: "Runtime and configuration ownership",
       description:

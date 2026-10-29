@@ -6,7 +6,7 @@ import { ReferenceReader } from "../../../docs/storybook/shared/documentation/Re
 describe("Storybook reference reader", () => {
   it("searches source metadata and selects a complete lazy article inside the preview", async () => {
     render(<ReferenceReader />);
-    expect(screen.getByRole("status")).toHaveTextContent("Matching articles: 158 of 158");
+    expect(screen.getByRole("status")).toHaveTextContent("Matching articles: 163 of 163");
     fireEvent.change(screen.getByRole("searchbox", { name: "Search reference articles" }), {
       target: { value: "one transaction" },
     });

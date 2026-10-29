@@ -4,6 +4,10 @@
 
 Use this pattern when a form updates only changed fields, a nullable field can be cleared, or a client must never write derived/audit data. HTTP PATCH alone does not define your field semantics: the endpoint needs a documented absent/null/value contract that survives decoding, validation, mapping and persistence.
 
+## Installed POST and PUT default
+
+New starter business resources use one `<Resource>Request` record for POST and full PUT, with identical writable-field validation and a separate Response. Null clears an optional nullable field on PUT; omitted optional JSON normally decodes to null and therefore also clears it. Required omissions fail validation. Metadata/version remain server-owned, with version carried in `X-Expected-Version`. See [CRUD conventions](crud-foundation-and-class-conventions.md). The LMS PATCH recipe below remains a separate, uninstalled partial-update design; do not infer PATCH semantics for this PUT.
+
 ## Three inputs mean three different commands
 
 Assume a record has a nullable note and a required display name. The following is a **recipe wire contract**, not an existing starter endpoint:

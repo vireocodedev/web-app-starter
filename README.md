@@ -139,6 +139,17 @@ for prerequisites and troubleshooting.
 
 ## Backend and authentication
 
+New business features follow the
+[backend package and class contract](frontend/docs/development-guide/en/backend/foundation/http-service-persistence-boundaries.md).
+Optional `crud` bases provide UUID/audit/version metadata, scoped lookup and
+constructor-selected HARD/SOFT deletion. Concrete services own transactions and
+business rules. The executable Contacts/ContactGroup reference lives only in
+`backend/src/test/java/referencefixtures`; its controllers, schema and entities
+are absent from the normal application and Boot JAR. Its tests exercise real
+PostgreSQL persistence, HTTP/version contracts and architecture rules. Follow the
+linked guide for writing and checking a feature; it also documents the deliberate
+authentication exception.
+
 - JPA/Hibernate owns user persistence; Flyway owns schema creation and upgrades.
   Hibernate validates the schema instead of modifying it.
 - Spring Security authenticates username/password against hashed database

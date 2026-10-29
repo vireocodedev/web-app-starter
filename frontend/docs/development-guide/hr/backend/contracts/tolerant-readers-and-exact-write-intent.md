@@ -4,6 +4,10 @@
 
 Obrazac koristite za additive response i djelomično uređivanje. Reader ignorira nepoznat dodatak, dok write točno izražava namjeru. To ne dopušta nevaljano poznato polje.
 
+## Starter write politika
+
+Ovaj Vireo recept zadržava izvorne zasebne Create/Patch tipove. Ugrađeni starter default koristi jedan Request za POST/puni PUT i zaseban Response; [CRUD pravila](../foundation/crud-foundation-and-class-conventions.md) vlasnik su tog pravila. Write serializer bira writable polja, bez spreadanja Response metapodataka. Puni PUT nosi sve writable vrijednosti i `X-Expected-Version`; stale odgovor čuva draft. Time se ne mijenja pinani Vireo generator.
+
 ## Toleranciju ograničite odabranom dimenzijom
 
 Response `z.object` uklanja nepoznata svojstva, ali čuva tip, enum i null validaciju. Optional domain polje response je explicit nullable; `.nullable()` ne dopušta missing. Novi klijent zato može odbiti stariji odgovor bez novog očekivanog polja.

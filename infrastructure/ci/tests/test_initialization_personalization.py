@@ -23,6 +23,13 @@ sys.path.insert(0, str(SCRIPTS))
 import _local as local
 import _personalization as personalization
 
+REFERENCE_TYPES = (
+    "crud.BaseEntity", "crud.SoftDeletableEntity", "crud.BaseService",
+    "crud.DeleteMode", "crud.ResourceNotFoundException",
+    "crud.VersionConflictException", "crud.ResourceInUseException",
+    "http.PageResponse",
+)
+
 
 class PersonalizationTests(unittest.TestCase):
     def setUp(self):
@@ -46,6 +53,17 @@ class PersonalizationTests(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(base64.b64decode(encoded, validate=True))
+        # Stable, test-owned input: do not copy the evolving implementation.
+        self.reference = "backend/src/test/java/referencefixtures/contacts/Contact.java"
+        self.write(self.reference, "package referencefixtures.contacts;\n" + "".join(
+            "import com.vireocode.backend." + suffix + ";\n"
+            for suffix in REFERENCE_TYPES
+        ) + '// com.vireocode.backend.crud.BaseEntity\n'
+            '/* com.vireocode.backend.http.PageResponse */\n'
+            'class Contact { String literal = "com.vireocode.backend.crud.BaseEntity";\n'
+            'String block = """\ncom.vireocode.backend.http.PageResponse\n"""; }\n')
+        self.write("backend/src/test/java/httptestfixtures/Neutral.java",
+                   'package httptestfixtures; // com.vireocode.backend\nclass Neutral {}\n')
 
     def read(self, relative):
         return (self.root / relative).read_text()
@@ -358,6 +376,149 @@ class PersonalizationTests(unittest.TestCase):
         before = self.snapshot()
         with self.assertRaisesRegex(local.InitError, "partially moved"):
             local.refactor_java_packages(self.ctx)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_imports_are_scoped_and_neutral_sources_stay_in_place(self):
+        before = self.snapshot()
+        local.refactor_java_packages(self.ctx)
+        expected = before[self.reference].decode()
+        for suffix in REFERENCE_TYPES:
+            expected = expected.replace("import com.vireocode.backend." + suffix + ";",
+                                        "import org.example.sample." + suffix + ";")
+        self.assertEqual(self.read(self.reference), expected)
+        for relative, content in before.items():
+            if relative.startswith(("backend/src/test/java/architecturefixtures/", "backend/src/test/java/httptestfixtures/")):
+                self.assertEqual((self.root / relative).read_bytes(), content, relative)
+        self.assertFalse((self.root / "backend/src/test/java/org/example/sample/referencefixtures").exists())
+
+    def test_reference_rewrite_resumes_after_application_roots_already_moved(self):
+        original = self.read(self.reference)
+        self.apply()
+        self.write(self.reference, original)
+        # Another file already has the selected imports; resume is per file.
+        second = "backend/src/test/java/referencefixtures/contacts/Other.java"
+        self.write(second, "package referencefixtures.contacts;\nimport org.example.sample.crud.BaseEntity;\nclass Other {}\n")
+        selected = self.read(second)
+        local.refactor_java_packages(self.ctx)
+        self.audit()
+        self.assertIn("import org.example.sample.crud.BaseEntity;", self.read(self.reference))
+        self.assertEqual(self.read(second), selected)
+        before = self.snapshot()
+        local.refactor_java_packages(self.ctx)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_preflight_rejects_unapproved_ambiguous_and_foreign_imports(self):
+        original = self.read(self.reference)
+        cases = (
+            ("import com.vireocode.backend.user.AppUser;", "unexpected production"),
+            ("import com.vireocode.backend.crud.*;", "unexpected production"),
+            ("import static com.vireocode.backend.crud.DeleteMode.SOFT;", "unexpected production"),
+            ("import org.foreign.app.crud.BaseEntity;", "unexpected production"),
+            ("import org.example.sample.crud.DeleteMode;", "ambiguous"),
+            ("import com.vireocode.backend.crud.BaseEntity;", "ambiguous"),
+            ("class Other { com.vireocode.backend.crud.BaseEntity value; }", "explicit import"),
+            ("import com.vireocode /* separated */ . backend.crud.BaseEntity;", "token-spaced"),
+            ("import com.vireocode.backend.crud . BaseEntity;", "unexpected production"),
+        )
+        for source, message in cases:
+            with self.subTest(source=source):
+                self.write(self.reference, original + source + "\n")
+                before = self.snapshot()
+                with self.assertRaisesRegex(local.InitError, message):
+                    local.refactor_java_packages(self.ctx)
+                self.assertEqual(self.snapshot(), before)
+        self.write(self.reference, original)
+
+    def test_reference_preflight_rejects_mixed_namespaces_in_one_source(self):
+        self.write(self.reference, self.read(self.reference).replace(
+            "import com.vireocode.backend.crud.DeleteMode;", "import org.example.sample.crud.DeleteMode;"))
+        before = self.snapshot()
+        with self.assertRaisesRegex(local.InitError, "mixed production reference"):
+            local.refactor_java_packages(self.ctx)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_preflight_rejects_foreign_or_mismatched_declaration(self):
+        self.write(self.reference, self.read(self.reference).replace(
+            "package referencefixtures.contacts;", "package org.foreign.contacts;"))
+        before = self.snapshot()
+        with self.assertRaisesRegex(local.InitError, "neutral path"):
+            local.refactor_java_packages(self.ctx)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_symlink_file_is_refused_before_any_application_move(self):
+        target = self.write("foreign-reference.java", self.read(self.reference))
+        (self.root / self.reference).unlink()
+        (self.root / self.reference).symlink_to(target)
+        before = self.snapshot()
+        with self.assertRaisesRegex(local.InitError, "symbolic link"):
+            local.refactor_java_packages(self.ctx)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_symlink_root_is_refused_before_any_application_move(self):
+        root = self.root / personalization.REFERENCE_ROOT
+        root.rename(self.root / "foreign-references")
+        root.symlink_to(self.root / "foreign-references", target_is_directory=True)
+        before = self.snapshot()
+        with self.assertRaisesRegex(local.InitError, "symbolic link"):
+            local.refactor_java_packages(self.ctx)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_concurrent_edit_is_preserved_on_commit(self):
+        plans = personalization.reference_java_plan(self.ctx)
+        self.write(self.reference, self.read(self.reference) + "// concurrent owner\n")
+        before = self.snapshot()
+        with self.assertRaisesRegex(local.InitError, "changed during planning"):
+            personalization.commit(plans)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_interruption_after_package_move_safely_retries(self):
+        with patch.object(personalization.os, "replace", side_effect=OSError("reference interruption")):
+            with self.assertRaisesRegex(OSError, "reference interruption"):
+                local.refactor_java_packages(self.ctx)
+        self.assertTrue((self.root / "backend/src/main/java/org/example/sample").is_dir())
+        self.assertTrue((self.root / "backend/src/test/java/org/example/sample").is_dir())
+        self.assertIn("import com.vireocode.backend.crud.BaseEntity;", self.read(self.reference))
+        local.refactor_java_packages(self.ctx)
+        self.assertIn("import org.example.sample.crud.BaseEntity;", self.read(self.reference))
+        self.assertFalse(list(self.root.rglob(".initialization-*")))
+
+    def test_reference_partial_atomic_replacements_converge_without_rewriting_completed_file(self):
+        second = "backend/src/test/java/referencefixtures/contacts/Other.java"
+        self.write(second, "package referencefixtures.contacts;\nimport com.vireocode.backend.crud.BaseEntity;\nclass Other {}\n")
+        real_replace = personalization.os.replace
+        count = 0
+        def interrupt(temporary, target):
+            nonlocal count
+            count += 1
+            if count == 2:
+                raise OSError("second reference interrupted")
+            return real_replace(temporary, target)
+        with patch.object(personalization.os, "replace", side_effect=interrupt):
+            with self.assertRaisesRegex(OSError, "second reference interrupted"):
+                local.refactor_java_packages(self.ctx)
+        completed = self.read(self.reference)
+        self.assertIn("import org.example.sample.crud.BaseEntity;", completed)
+        self.assertIn("import com.vireocode.backend.crud.BaseEntity;", self.read(second))
+        with patch.object(personalization.os, "replace", wraps=real_replace) as replace:
+            local.refactor_java_packages(self.ctx)
+        self.assertEqual(replace.call_count, 1)
+        self.assertEqual(replace.call_args.args[1], self.root / second)
+        self.assertEqual(self.read(self.reference), completed)
+
+    def test_reference_unexpected_content_is_refused_before_application_moves(self):
+        self.write("backend/src/test/java/referencefixtures/contacts/unexpected.txt", "preserve me")
+        before = self.snapshot()
+        with self.assertRaisesRegex(local.InitError, "Unexpected reference Java content"):
+            local.refactor_java_packages(self.ctx)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_reference_audit_rejects_pending_import_without_writing(self):
+        self.apply()
+        self.write(self.reference, self.read(self.reference).replace(
+            "import org.example.sample.", "import com.vireocode.backend."))
+        before = self.snapshot()
+        with self.assertRaisesRegex(local.InitError, "stale reference import; run step 4.2"):
+            self.audit()
         self.assertEqual(self.snapshot(), before)
 
     def test_audit_is_read_only_and_rejects_unfinished_owned_field(self):

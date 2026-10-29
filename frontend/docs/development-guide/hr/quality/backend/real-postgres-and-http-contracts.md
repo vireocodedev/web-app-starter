@@ -4,6 +4,12 @@ Autentikacija obuhvaća sigurnosne filtre, cookie sesije, CSRF, JSON, bazu i pro
 
 Ovo je **ugrađeni starter obrazac testiranja**. `AuthIntegrationTests` koristi Spring na slučajnom portu, local profil s izričitim sintetičkim bootstrap vrijednostima i Testcontainers konfiguraciju. Ona service connectionom daje PostgreSQL 18. Izvor je pregledan; za članak nije pokrenut kontejner, server ni test.
 
+## Ugrađena poslovna reference granica
+
+[Izvršivi primjer](../../backend/foundation/executable-reference-feature-and-isolation.md) dodaje stvarni PostgreSQL/HTTP za HARD grupu i SOFT kontakt bez produkcijskih feature tablica ili endpointa. Provjerite pouzdani actor scope, zajednički Request/puni PUT clear, obvezni X-Expected-Version parser, sigurne 400/404/409/500 odgovore i OpenAPI oblik. Nakon requesta provjerite bazu: flush nije commit, HTTP nije u test rollbacku i uspješni odgovor nosi aktualnu verziju/audit.
+
+Zasebni fixturei provjeravaju metadata/proxy/hash, fresh/cached soft vidljivost, native active uvjete, rezervirani unique kod, točne FK/UNIQUE catalog constrainte i negativni schema drift. Normal-context mappings/schema/OpenAPI i Boot JAR exclusion zasebni su negativni dokazi. Puna stranica s hladnim contextom mora ostati unutar konkretna tri SELECT-a; mali skup/cache može sakriti N+1. To su acceptance provjere implementacije, ne uspješni rezultati samo zato što ih članak navodi.
+
 ## Okidač i vlasništvo
 
 Granica odgovara sesijama, sigurnosti, bazi, migracijama i endpoint mapiranju koje service-only test ne dokazuje. Suite posjeduje jednokratnu bazu i sintetičke podatke. Spring stvarnu HTTP i sigurnosnu kompoziciju. Klijent ima vlastiti cookie jar, svjež u svakom scenariju.

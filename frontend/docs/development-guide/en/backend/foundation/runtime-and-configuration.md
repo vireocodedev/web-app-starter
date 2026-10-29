@@ -4,6 +4,10 @@
 
 Use this pattern when adding a backend capability, diagnosing profile-dependent startup, or deciding whether a setting belongs in source, local development configuration or the deployment environment. Configuration is part of the application contract: a feature that requires a new setting also requires an owner, a missing-value policy and a deployment change.
 
+## CRUD clock and reference activation
+
+Internal CrudConfiguration enables Spring Data auditing with a UTC Clock and matching DateTimeProvider; a test may supply its own Clock. No new environment value is required. The [reference feature](executable-reference-feature-and-isolation.md) activates only in its explicit test configuration, never by a production Spring profile.
+
 ## The build and application own different decisions
 
 `backend/build.gradle` selects Java 21 through its toolchain and declares Spring Boot 4.1.1. Installed capabilities include WebMVC, Bean Validation, Security, JPA, Flyway, JDBC-backed Spring Session, Actuator and the PostgreSQL driver. The wrapper owns the Gradle version. Do not infer that a peer application's MapStruct, Lombok, MQTT or alternate JSON package is installed here.

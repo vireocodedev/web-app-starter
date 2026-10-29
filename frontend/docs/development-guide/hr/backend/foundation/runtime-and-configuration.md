@@ -4,6 +4,10 @@
 
 Ovaj obrazac koristite pri dodavanju backend mogućnosti, dijagnostici pokretanja ovisnog o profilu ili odluci pripada li postavka izvornom kodu, lokalnom razvoju ili deployment okruženju. Konfiguracija je dio ugovora aplikacije: nova postavka zahtijeva vlasnika, ponašanje pri nedostatku vrijednosti i odgovarajuću promjenu deploymenta.
 
+## CRUD clock i aktivacija primjera
+
+Interna CrudConfiguration uključuje Spring Data auditing s UTC Clockom i istim DateTimeProviderom; test može dati vlastiti Clock. Nema nove environment vrijednosti. [Referentni feature](executable-reference-feature-and-isolation.md) aktivira se samo eksplicitnom test konfiguracijom, ne produkcijskim Spring profilom.
+
 ## Build i aplikacija imaju različite odgovornosti
 
 `backend/build.gradle` odabire Javu 21 toolchainom i deklarira Spring Boot 4.1.1. Ugrađene mogućnosti uključuju WebMVC, Bean Validation, Security, JPA, Flyway, JDBC Spring Session, Actuator i PostgreSQL driver. Gradle verziju određuje wrapper. MapStruct, Lombok, MQTT ili drugi JSON paket iz susjednog projekta ovdje nisu automatski dostupni.

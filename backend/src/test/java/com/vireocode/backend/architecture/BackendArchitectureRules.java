@@ -15,7 +15,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 /** The documented backend contract, parameterized only to run it against isolated proof fixtures. */
-final class BackendArchitectureRules {
+public final class BackendArchitectureRules {
 
     private BackendArchitectureRules() {
     }
@@ -145,7 +145,7 @@ final class BackendArchitectureRules {
         });
     }
 
-    static ArchRule persistenceDoesNotDependOnTransport() {
+    public static ArchRule persistenceDoesNotDependOnTransport() {
         return classes().should(new ArchCondition<>("keep repositories and entities independent of HTTP and security configuration") {
             @Override
             public void check(JavaClass origin, ConditionEvents events) {
@@ -171,6 +171,18 @@ final class BackendArchitectureRules {
     }
 
     private static boolean publishedPair(JavaClass origin, JavaClass target, String applicationPackage) {
+        Set<String> bases = Set.of("BaseEntity", "SoftDeletableEntity", "BaseService", "DeleteMode");
+        Set<String> failures = Set.of("ResourceNotFoundException", "VersionConflictException", "ResourceInUseException");
+        if (target.getPackageName().equals(applicationPackage + ".crud")) {
+            if (origin.getPackageName().equals(applicationPackage + ".http")) {
+                return origin.getName().equals(applicationPackage + ".http.ApiExceptionHandler")
+                        && failures.contains(target.getSimpleName());
+            }
+            return bases.contains(target.getSimpleName()) || failures.contains(target.getSimpleName());
+        }
+        if (target.getName().equals(applicationPackage + ".http.PageResponse")) {
+            return !feature(origin, applicationPackage).equals("crud");
+        }
         boolean consumer = origin.getName().equals(applicationPackage + ".auth.AuthController")
                 || origin.getName().equals(applicationPackage + ".auth.SecurityConfiguration");
         boolean publishedTarget = target.getName().equals(applicationPackage + ".user.AppUser")

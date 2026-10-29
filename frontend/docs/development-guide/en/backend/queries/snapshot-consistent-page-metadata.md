@@ -4,6 +4,10 @@
 
 Use this pattern when a response promises a coherent total, facet options and page rows even while other users edit records. A read-only annotation describes intended access; by itself it does not guarantee that several SQL statements observe the same committed state.
 
+## Installed PageResponse limitation
+
+The [starter page DTO](jpa-repositories-fetch-plans-and-projections.md) defines shape and bounds only. Its reference readOnly list does not promise a shared count/row snapshot under READ COMMITTED. A feature that promises coherent metadata must explicitly choose the transaction/isolation policy described below; readOnly or a stable sort alone is insufficient.
+
 ## State the consistency promise precisely
 
 Under PostgreSQL's usual READ COMMITTED behavior, separate statements can observe different committed states. A count can finish, another transaction can insert or archive a row, and the following page query can see the new state. Each statement may be individually correct while the assembled response contradicts itself.

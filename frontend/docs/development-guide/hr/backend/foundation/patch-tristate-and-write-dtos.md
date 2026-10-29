@@ -4,6 +4,10 @@
 
 Koristite obrazac kad forma mijenja samo dotaknuta polja, nullable polje treba moći očistiti ili klijent ne smije pisati izvedene/audit podatke. Sam HTTP PATCH ne definira semantiku polja: endpoint treba dokumentiran absent/null/value ugovor koji preživi dekodiranje, validaciju, mapiranje i persistenciju.
 
+## Ugrađeni POST i PUT default
+
+Novi poslovni resursi dijele jedan `<Resource>Request` record za POST i puni PUT, s istim writable pravilima i zasebnim Responseom. Null briše opcionalno nullable polje na PUT-u; izostavljeno opcionalno JSON polje obično se dekodira u null pa ga također briše. Izostavljeno obvezno polje pada na validaciji. Metadata/verzija pripadaju backendu, a verzija se šalje kroz `X-Expected-Version`. Pogledajte [CRUD pravila](crud-foundation-and-class-conventions.md). LMS PATCH recept ispod ostaje zaseban neugrađeni partial-update dizajn; ne primjenjujte ga na ovaj PUT.
+
 ## Tri unosa znače tri različite naredbe
 
 Zapis ima nullable bilješku i obvezan naziv za prikaz. Slijedi **recept wire ugovora**, ne postojeći endpoint predloška:

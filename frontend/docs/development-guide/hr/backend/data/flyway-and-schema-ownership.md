@@ -4,6 +4,10 @@
 
 Koristite ovaj obrazac kad funkcionalnost zahtijeva pohranjeno stanje, promjenu entiteta, novo ograničenje ili nadogradnju session persistencije. Migracija i kod koji je koristi čine jednu promjenu. Razvoj sheme mora objasniti i novu instalaciju i sljedeću podržanu nadogradnju postojeće baze.
 
+## Referentna shema samo u testu
+
+[Ugovor izolacije primjera](../foundation/executable-reference-feature-and-isolation.md) vodi explicit-only repeatable SQL lokaciju i PostgreSQL UNIQUE/FK catalog provjere s negativnim drift slučajevima. Hibernate validira stupce/tipove, ne potpunu jednakost constrainta. Produkcijske migracije i AppUser ostaju isti; test bootstrap nije dokaz produkcijske nadogradnje.
+
 ## Jedan vlasnik izvršava DDL
 
 Osnovna konfiguracija uključuje Flyway, postavlja Hibernate `ddl-auto: validate`, isključuje Open Session in View i postavlja JDBC session `initialize-schema: never`. Flyway izvršava DDL, Hibernate provjerava usklađenost, a Spring Session koristi tablice bez njihova ponovnog stvaranja. Samostalna promjena entiteta ili uključivanje automatskog DDL-a uvodi konkurentne vlasnike.

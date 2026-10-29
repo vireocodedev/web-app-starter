@@ -18,6 +18,13 @@ from _shared import InitError
 
 
 OLD_PACKAGE = "com.vireocode.backend"
+REFERENCE_ROOT = "backend/src/test/java/referencefixtures"
+REFERENCE_IMPORTS = frozenset((
+    "crud.BaseEntity", "crud.SoftDeletableEntity", "crud.BaseService",
+    "crud.DeleteMode", "crud.ResourceNotFoundException",
+    "crud.VersionConflictException", "crud.ResourceInUseException",
+    "http.PageResponse",
+))
 JAVA_KEYWORDS = set("abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while true false null _ record sealed permits var yield".split())
 IDENTITY = re.compile(r"com\.vireocode\.backend|rgo-frontend-template|vireocode-backend|vireocode-web-app-starter-local|RGO application|RGO aplikacija")
 STRING = r'"(?:\\.|[^"\\])*"'
@@ -406,10 +413,83 @@ def java_plan(ctx, *, completed=False):
     return plans, trees, states[0]
 
 
+def reference_java_plan(ctx, *, completed=False):
+    """Keep the reference package neutral; personalize only its published imports."""
+    new = namespace(ctx.values)
+    source = safe_path(ctx.root, "backend/src/test/java", directory=True)
+    candidate = source / "referencefixtures"
+    # Older consumer snapshots and minimal source fixtures have no reference
+    # capability. Never invent it, but refuse a dangling symlink as well.
+    if not candidate.exists() and not candidate.is_symlink():
+        return []
+    root = safe_path(ctx.root, REFERENCE_ROOT, directory=True)
+    plans = []
+    files = sorted(root.rglob("*"))
+    if not any(path.is_file() for path in files):
+        raise InitError("Reference Java root must contain source files; inspect step 4.2.")
+    prefixes = (OLD_PACKAGE, new)
+    owned = re.compile(r"(?<![\w$.])(?:" + "|".join(re.escape(prefix) for prefix in prefixes) + r")(?=\.|[^\w$]|$)")
+    # Count package tokens in masked code, but retain offsets into the original
+    # source. Whitespace/comments between tokens are refused rather than erased.
+    spaced = re.compile(r"(?<![\w$.])(?:" + "|".join(r"\s*\.\s*".join(map(re.escape, prefix.split("."))) for prefix in prefixes) + r")(?=\s*\.|[^\w$]|$)")
+    imports = re.compile(r"\bimport\s+(?P<static>static\s+)?(?P<name>[\w$.*\s]+?)\s*;")
+    for path in files:
+        if path.is_symlink() or (not path.is_dir() and (not path.is_file() or path.suffix != ".java")):
+            raise InitError("Unexpected reference Java content or symbolic link; inspect step 4.2.")
+        if not path.is_file():
+            continue
+        plan = FileEdit(ctx.root, str(path.relative_to(ctx.root)))
+        masked = JAVA_LITERAL.sub(lambda match: " " * len(match[0]), plan.text)
+        declarations = re.findall(r"\bpackage\s+([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*)\s*;", masked)
+        relative = path.relative_to(root)
+        expected = "referencefixtures" + ("." + ".".join(relative.parent.parts) if relative.parent.parts else "")
+        if declarations != [expected]:
+            raise InitError(f"{plan.relative}: reference declaration differs from its neutral path; inspect step 4.2.")
+        if any(match[0] not in prefixes for match in spaced.finditer(masked)):
+            raise InitError(f"{plan.relative}: token-spaced reference import; inspect step 4.2.")
+        recognized, identities, seen = [], set(), set()
+        for match in imports.finditer(masked):
+            name = match["name"].strip()
+            compact = re.sub(r"\s+", "", name)
+            suffix = next((suffix for suffix in REFERENCE_IMPORTS if compact.endswith("." + suffix)), None)
+            prefix = next((prefix for prefix in prefixes if compact == prefix or compact.startswith(prefix + ".")), None)
+            if prefix is None and suffix is None:
+                continue
+            if prefix is None or suffix is None or compact != prefix + "." + suffix or name != compact or match["static"]:
+                raise InitError(f"{plan.relative}: unexpected production reference import; preserve it and inspect step 4.2.")
+            if suffix in seen:
+                raise InitError(f"{plan.relative}: ambiguous production reference imports; inspect step 4.2.")
+            if completed and prefix != new:
+                raise InitError(f"{plan.relative}: stale reference import; run step 4.2.")
+            seen.add(suffix)
+            identities.add(prefix)
+            start = match.start("name")
+            # The regex may include trailing whitespace; change the type only.
+            end = start + len(match["name"].rstrip())
+            plan.set(start, end, OLD_PACKAGE + "." + suffix, new + "." + suffix, new + "." + suffix, "reference production import")
+            recognized.append((start, end))
+        if len(identities) > 1:
+            raise InitError(f"{plan.relative}: mixed production reference namespaces; inspect step 4.2.")
+        for match in owned.finditer(masked):
+            if not any(start <= match.start() and match.end() <= end for start, end in recognized):
+                raise InitError(f"{plan.relative}: production reference must use an approved explicit import; inspect step 4.2.")
+        plans.append(plan)
+    return plans
+
+
 def refactor_java(ctx):
     plans, trees, fresh = java_plan(ctx)
+    references = reference_java_plan(ctx)
+    # Validate every neutral file before moving either application root. Commit
+    # rechecks these snapshots before and during atomic reference replacements.
+    for plan in references:
+        if safe_path(plan.root, plan.relative).read_bytes() != plan.before:
+            raise InitError("Reference source changed during preflight; inspect step 4.2.")
+        plan.rendered()
     if not fresh:
-        print("Both Java package roots already match the selected namespace; no changes needed.")
+        commit(references)
+        reference_java_plan(ctx, completed=True)
+        print("Java package roots verified; approved neutral reference imports match the selected namespace.")
         return
     for plan, target in plans:
         if target.exists() or target.is_symlink() or safe_path(plan.root, plan.relative).read_bytes() != plan.before:
@@ -435,7 +515,9 @@ def refactor_java(ctx):
             directory.rmdir()
         origin.rmdir()
     java_plan(ctx, completed=True)
-    print("Moved both Java package roots and code references; comments, fixtures and migrations are preserved.")
+    commit(references)
+    reference_java_plan(ctx, completed=True)
+    print("Moved both Java package roots and approved reference imports; neutral packages, comments, literals and migrations are preserved.")
 
 
 def audit(ctx):
@@ -445,6 +527,7 @@ def audit(ctx):
             step = "4.1" if plan.relative.startswith("backend/") or plan.relative.startswith(".vscode/") else "5.2" if plan.relative.startswith("frontend/tests/") else "5.1"
             raise InitError(f"{plan.relative}: unfinished identity field; run step {step}.")
     java_plan(ctx, completed=True)
+    reference_java_plan(ctx, completed=True)
     covered = {plan.relative: plan.rendered(mask=True) for plan in plans}
     owned = set(covered)
     for relative in ("frontend/src", "frontend/tests", "backend/scripts", "backend/src/main/resources", ".vscode"):

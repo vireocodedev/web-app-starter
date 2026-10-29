@@ -1,8 +1,19 @@
 # Validation and public error contracts
 
-**Support status: installed shared HTTP error contract with a reference recipe for domain extensions.** MVC handlers, authentication advice, Security filters and servlet error dispatches use the same safe JSON envelope. The frontend decodes bounded machine metadata and renders local translations. Domain conflict codes, correlation IDs and a ProblemDetail protocol are not installed by this contract.
+**Support status: installed shared HTTP error and CRUD conflict contract.** MVC, authentication, Security filters and servlet dispatch retain the code/message/fieldErrors envelope. Correlation IDs and ProblemDetail are not installed.
 
 Use this pattern when defining a request DTO, connecting a form to an endpoint, or distinguishing invalid input, missing authentication and conflicting business state. HTTP status and a stable machine code govern behavior; arbitrary server prose does not.
+
+## CRUD failures and expected version
+
+| Status | Code                 | Meaning                                                                                                             |
+| ------ | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 404    | `RESOURCE_NOT_FOUND` | Missing, soft-deleted or outside the permitted actor/parent scope.                                                  |
+| 409    | `VERSION_CONFLICT`   | Stale expected version or an actual optimistic-lock race, including commit.                                         |
+| 409    | `RESOURCE_IN_USE`    | A known relationship/invariant blocks deletion.                                                                     |
+| 409    | `REQUEST_REJECTED`   | Exact known unique constraint on duplicate POST/PUT, including reserved soft-deleted code and concurrent insertion. |
+
+PUT/DELETE require `X-Expected-Version`, a nonnegative int64 decimal; missing, malformed, negative or overflowing values return 400 `INVALID_REQUEST`. Version remains outside the shared writable Request. Unknown integrity/persistence failures remain 500 `INTERNAL_ERROR`; never translate every DataIntegrityViolationException into conflict or leak constraint names/SQL/private input. Known-constraint translation happens outside the service proxy after rollback, not by continuing inside an aborted transaction. Existing auth meanings, field allowlists, bounded frontend parsing, cancellation/original Axios object and unknown fallback stay unchanged. EN/HR translations include the three CRUD codes.
 
 ## Installed response shape and owners
 
@@ -61,7 +72,7 @@ The [Spring-session adapter](../../../../../../frontend/src/app/auth/api/appAuth
 
 The [backend-connected feature tutorial](../../../../storybook/data/BackendConnectedFeature/BackendConnectedFeature.mdx) provides a complete frontend consumer recipe using this envelope. Its endpoint-specific status mapping and proposed domain-field publication are explicit consumer contracts, not additions to the installed shared vocabulary. Implement and test the corresponding backend field allowlist before promising those field details to a form.
 
-The installed vocabulary does not define a stale-revision or domain-conflict code. A future editor must separately specify its 409 meaning, safe fields, authorization/resource-hiding policy and draft-preserving recovery, then update backend construction, frontend decoding/translations and contract coverage together. Do not infer a domain protocol from the generic `REQUEST_REJECTED` fallback or add unreviewed envelope fields endpoint by endpoint.
+The installed CRUD codes above define the approved stale-version and deletion meanings. Any further domain code still requires explicit 409 semantics, safe fields, authorization/resource-hiding and draft-preserving recovery, plus coordinated backend/frontend contract coverage. Do not infer a domain protocol from the generic `REQUEST_REJECTED` fallback or add unreviewed envelope fields endpoint by endpoint.
 
 LMS remains a legacy comparison: its older `ErrorResponse` includes timestamp/status/path and an optional translation key. That demonstrates a translation seam, not an instruction to copy its payload or forward arbitrary exception messages. This starter emits no `requestId` and promises no correlation-ID facility. Introduce such a facility only through its own approved design.
 
