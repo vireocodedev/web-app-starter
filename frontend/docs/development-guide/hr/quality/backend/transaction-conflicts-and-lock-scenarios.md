@@ -4,6 +4,12 @@ Dvije zasebno valjane naredbe mogu u utrci prekršiti pravilo. Scenarij treba us
 
 Ovo je **potrošački referentni obrazac** CDA PostgreSQL testova. Oni zovu stvarne Spring servise te TransactionTemplateom i latchovima kontroliraju utrku kontakta. To je service/database granica, ne HTTP security-filter scenarij. Testovi su pročitani, ne izvršeni za članak.
 
+## Ugrađeni CRUD rasporedi
+
+[Test-only primjer](../../backend/foundation/executable-reference-feature-and-isolation.md) vodi update/update, update/delete, no-op optimistic commit i child-create/parent-delete rasporede. Svaki koristi odvojene stvarne transakcije, ograničene participant barijere/čekanja i konačno committed stanje. No-op PUT traži OPTIMISTIC provjeru i bez UPDATE-a. Stale namjera daje 409 VERSION_CONFLICT bez refresh-and-retry; absent/deleted scope ostaje 404.
+
+Parent delete i child write dijele owned parent lock protokol. Provjerite oba redoslijeda i retained soft djecu koja blokiraju HARD delete. Stvarni unique constraint razrješava concurrent duplicate insert; samo točno poznati failure daje 409 REQUEST_REJECTED nakon rollbacka, nepovezani integrity ostaje 500. Latch se oslobađa i worker završava u finally. Kontrolirani raspored konkretan je dokaz, ne dokaz potpune deadlock slobode ili production loada. CDA primjeri ispod zadržavaju zasebnu izvornu politiku.
+
 ## Okidač i vlasništvo
 
 Koristite za zajedničke kvote, vlasništvo, ovlasti, revizije, potvrde i invariante više vlasnika naredbi. Produkcijski servisi posjeduju lock i autorizaciju. Test sudionike, neovisne dretve, barijere, ograničena čekanja i sigurno oslobađanje.

@@ -4,6 +4,10 @@
 
 Use this pattern when a server adds response fields or a form edits only part of a resource. A tolerant reader can ignore unfamiliar additive data while a write command still says exactly what the user intended to change. Those policies are complementary, not a reason to accept arbitrary malformed known fields.
 
+## Starter write policy
+
+This Vireo recipe preserves its original separate Create/Patch types. The installed starter default instead uses one Request for POST/full PUT and a separate Response; [CRUD conventions](../foundation/crud-foundation-and-class-conventions.md) owns that rule. Write serializers select only writable fields, never spread Response metadata. Full PUT includes every writable value and uses `X-Expected-Version`; a stale response preserves the draft. This does not change the pinned Vireo generator.
+
 ## Be tolerant only about the chosen dimension
 
 Generated response schemas use `z.object`, which strips unknown properties. Known properties retain their type, enum and nullability validation. Optional domain fields appear as explicit nullable response fields; `.nullable()` does not make a missing property optional. A new client can therefore reject an older response that omits a newly expected field, despite unknown-field tolerance in the other direction.

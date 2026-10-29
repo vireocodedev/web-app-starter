@@ -88,6 +88,91 @@ export const backendHandbookCatalog = {
   ],
   articles: [
     {
+      id: "backend-foundation-crud-foundation-and-class-conventions",
+      topicId: "backend-foundation",
+      slug: "crud-foundation-and-class-conventions",
+      contentPath: "backend/foundation/crud-foundation-and-class-conventions",
+      titleKey: "handbook.articles.backend-foundation-crud-foundation-and-class-conventions.title",
+      descriptionKey: "handbook.articles.backend-foundation-crud-foundation-and-class-conventions.description",
+      implementation: "starter",
+      size: "medium",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+          path: "backend/build.gradle",
+        },
+      ],
+    },
+    {
+      id: "backend-data-jpa-entities-and-relationships",
+      topicId: "backend-data",
+      slug: "jpa-entities-and-relationships",
+      contentPath: "backend/data/jpa-entities-and-relationships",
+      titleKey: "handbook.articles.backend-data-jpa-entities-and-relationships.title",
+      descriptionKey: "handbook.articles.backend-data-jpa-entities-and-relationships.description",
+      implementation: "starter",
+      size: "medium",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+          path: "backend/build.gradle",
+        },
+      ],
+    },
+    {
+      id: "backend-queries-jpa-repositories-fetch-plans-and-projections",
+      topicId: "backend-queries",
+      slug: "jpa-repositories-fetch-plans-and-projections",
+      contentPath: "backend/queries/jpa-repositories-fetch-plans-and-projections",
+      titleKey: "handbook.articles.backend-queries-jpa-repositories-fetch-plans-and-projections.title",
+      descriptionKey: "handbook.articles.backend-queries-jpa-repositories-fetch-plans-and-projections.description",
+      implementation: "starter",
+      size: "medium",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+          path: "backend/build.gradle",
+        },
+      ],
+    },
+    {
+      id: "backend-data-configurable-hard-and-soft-deletion",
+      topicId: "backend-data",
+      slug: "configurable-hard-and-soft-deletion",
+      contentPath: "backend/data/configurable-hard-and-soft-deletion",
+      titleKey: "handbook.articles.backend-data-configurable-hard-and-soft-deletion.title",
+      descriptionKey: "handbook.articles.backend-data-configurable-hard-and-soft-deletion.description",
+      implementation: "starter",
+      size: "medium",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+          path: "backend/build.gradle",
+        },
+      ],
+    },
+    {
+      id: "backend-foundation-executable-reference-feature-and-isolation",
+      topicId: "backend-foundation",
+      slug: "executable-reference-feature-and-isolation",
+      contentPath: "backend/foundation/executable-reference-feature-and-isolation",
+      titleKey: "handbook.articles.backend-foundation-executable-reference-feature-and-isolation.title",
+      descriptionKey: "handbook.articles.backend-foundation-executable-reference-feature-and-isolation.description",
+      implementation: "starter",
+      size: "medium",
+      sources: [
+        {
+          project: "vireocode-web-app-starter",
+          revision: "785de22420b7ec42c15373522b324f4319b4dfd8",
+          path: "backend/build.gradle",
+        },
+      ],
+    },
+    {
       id: "backend-foundation-runtime-and-configuration",
       topicId: "backend-foundation",
       slug: "runtime-and-configuration",
@@ -326,7 +411,7 @@ export const backendHandbookCatalog = {
       contentPath: "backend/application-services/transactional-commands",
       titleKey: "handbook.articles.backend-application-services-transactional-commands.title",
       descriptionKey: "handbook.articles.backend-application-services-transactional-commands.description",
-      implementation: "reference",
+      implementation: "mixed",
       size: "large",
       sources: [
         {
@@ -363,7 +448,7 @@ export const backendHandbookCatalog = {
       contentPath: "backend/data/revision-conflicts-and-shared-locks",
       titleKey: "handbook.articles.backend-data-revision-conflicts-and-shared-locks.title",
       descriptionKey: "handbook.articles.backend-data-revision-conflicts-and-shared-locks.description",
-      implementation: "reference",
+      implementation: "mixed",
       size: "large",
       sources: [
         {
@@ -479,7 +564,7 @@ export const backendHandbookCatalog = {
       contentPath: "backend/foundation/patch-tristate-and-write-dtos",
       titleKey: "handbook.articles.backend-foundation-patch-tristate-and-write-dtos.title",
       descriptionKey: "handbook.articles.backend-foundation-patch-tristate-and-write-dtos.description",
-      implementation: "reference",
+      implementation: "mixed",
       size: "large",
       sources: [
         {
@@ -525,7 +610,7 @@ export const backendHandbookCatalog = {
       contentPath: "backend/data/audit-fields-events-and-versions",
       titleKey: "handbook.articles.backend-data-audit-fields-events-and-versions.title",
       descriptionKey: "handbook.articles.backend-data-audit-fields-events-and-versions.description",
-      implementation: "reference",
+      implementation: "mixed",
       size: "large",
       sources: [
         {
@@ -608,7 +693,7 @@ export const backendHandbookCatalog = {
       contentPath: "backend/queries/bounded-pagination-and-sort-contracts",
       titleKey: "handbook.articles.backend-queries-bounded-pagination-and-sort-contracts.title",
       descriptionKey: "handbook.articles.backend-queries-bounded-pagination-and-sort-contracts.description",
-      implementation: "reference",
+      implementation: "mixed",
       size: "large",
       sources: [
         {
@@ -644,7 +729,7 @@ export const backendHandbookCatalog = {
       contentPath: "backend/queries/snapshot-consistent-page-metadata",
       titleKey: "handbook.articles.backend-queries-snapshot-consistent-page-metadata.title",
       descriptionKey: "handbook.articles.backend-queries-snapshot-consistent-page-metadata.description",
-      implementation: "reference",
+      implementation: "mixed",
       size: "large",
       sources: [
         {
@@ -1599,7 +1684,7 @@ export const backendHandbookCatalog = {
       contentPath: "backend/contracts/tolerant-readers-and-exact-write-intent",
       titleKey: "handbook.articles.backend-contracts-tolerant-readers-and-exact-write-intent.title",
       descriptionKey: "handbook.articles.backend-contracts-tolerant-readers-and-exact-write-intent.description",
-      implementation: "reference",
+      implementation: "mixed",
       size: "large",
       sources: [
         {

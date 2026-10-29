@@ -26,6 +26,9 @@ describe("shared HTTP error contract", () => {
     ["AUTHENTICATION_FAILED", 401],
     ["CSRF_INVALID", 403],
     ["FORBIDDEN", 403],
+    ["RESOURCE_NOT_FOUND", 404],
+    ["VERSION_CONFLICT", 409],
+    ["RESOURCE_IN_USE", 409],
     ["REQUEST_REJECTED", 405],
     ["REQUEST_REJECTED", 429],
     ["INTERNAL_ERROR", 500],
@@ -82,6 +85,18 @@ describe("shared HTTP error contract", () => {
         ?.fieldErrors,
     ).toEqual([]);
     expect(Object.hasOwn({}, "polluted")).toBe(false);
+  });
+
+  it.each([
+    ["RESOURCE_NOT_FOUND", 409],
+    ["VERSION_CONFLICT", 404],
+    ["RESOURCE_IN_USE", 500],
+  ])("rejects incompatible %s status %s without changing the failure", (code, status) => {
+    const error = failure({ ...validation, code }, status);
+    const response = error.response;
+    expect(decodeAppHttpError(error)).toBeNull();
+    expect(error.response).toBe(response);
+    expect(error.message).toBe("private transport details");
   });
 
   it("ignores field metadata on non-validation errors", () => {

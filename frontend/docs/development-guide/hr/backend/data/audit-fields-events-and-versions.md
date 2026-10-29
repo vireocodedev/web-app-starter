@@ -1,8 +1,12 @@
 # Audit polja, događaji i nepromjenjive verzije odgovaraju na različita pitanja
 
-**Status podrške: referentni recept potkrijepljen izvorom.** LMS pokazuje JPA audit polja i zamjenske verzijske retke; Client Discovery transakcijske audit događaje te verzije/prijelaze zaštićene bazom. Ti mehanizmi nisu opći ugrađeni history framework predloška. Birajte ih prema informacijama koje domena mora zadržati.
+**Status podrške: ugrađeni current-row timestampovi uz vanjske actor/history recepte.** BaseEntity pruža backend datume i optimistic verziju; LMS replacement povijest te Discovery transakcijski eventi/immutable verzije ostaju zasebni dizajni, ne ugrađeni opći history framework.
 
 Koristite obrazac kad „tko je promijenio?” preraste u „što se dogodilo?”, „koji je točno sadržaj odobren?” ili „možemo li rekonstruirati ranije stanje?”. Četiri polja na trenutačnom retku ne odgovaraju na sva pitanja, a čuvanje svakog zahtjeva nije sigurna zamjena za dizajn povijesti.
+
+## Ugrađeni metadata trenutačnog retka
+
+[BaseEntity](jpa-entities-and-relationships.md) ugrađuje createdAt/updatedAt Instant kroz Spring Data auditing i zajednički UTC Clock te provider-owned optimistic verziju. Soft deletedAt koristi isti Clock. Ta polja nisu writable u Request DTO-u. Time se ne dodaju createdBy/updatedBy, actor povijest, immutable verzije ni eventi; LMS/Discovery izvori ispod zadržavaju zasebno podrijetlo.
 
 ## Najprije odaberite dokaz, zatim oblik pohrane
 

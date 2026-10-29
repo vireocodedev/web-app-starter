@@ -4,6 +4,10 @@
 
 Koristite obrazac kad naredba zaključava više postojećih resursa ili dva zahtjeva mogu pokušati isti unique insert. Redoslijed smanjuje izbježive deadlockove, database ograničenja razrješavaju utrku, a nova transakcija daje uporabljivo stanje nakon prekida. Ništa od toga proizvoljnu naredbu ne čini sigurnom za ponavljanje.
 
+## Starter reference politika
+
+[Referentni feature](../foundation/executable-reference-feature-and-isolation.md) zaključava istu owned grupu za child write i parent delete. Nema automatskog retryja. Samo točan contact unique constraint postaje 409 REQUEST_REJECTED izvan neuspjele service transakcije; nepovezani integrity problem ostaje 500. Osvježena expected verzija nije automatski oporavak stale korisničke namjere.
+
 ## Redoslijed definirajte prema stvarnom zaključanom identitetu
 
 FRED registration servis sortira serijske reference po kanonskom database identitetu, zatim po serijskoj referenci. Izvor izričito pokriva konfigurirane aliase. Sortiranje samo korisničkog aliasa može dati različite redoslijede za iste temeljne resurse i poništiti protokol.

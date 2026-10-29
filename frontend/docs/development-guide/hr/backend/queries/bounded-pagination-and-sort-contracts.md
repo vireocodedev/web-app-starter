@@ -4,6 +4,10 @@
 
 Koristite obrazac kad lista može prerasti fixture podatke, tablica nudi sortiranje ili se export/lookup zamjenjuje s običnim pagingom. Ugovor rada upita i redoslijeda odredite prije spajanja generičkog UI paginatora.
 
+## Ugrađeni starter page ugovor
+
+[PageResponse i JPA fetch planovi](jpa-repositories-fetch-plans-and-projections.md) definiraju novi default: `{items,page,size,totalItems}`, kopija items, zero-based page, default size 20 i maksimum 100 (minimum 1). Odbijte nevaljani unos i nepodržani sort/direction; koristite feature allowlist i UUID tie-breaker. Ne izlažite Spring Page ni neograničeni negative-size izlaz. Vanjski offset/limit recept zadržava izvorne defaulte.
+
 ## Eksplicitno ograničite wire vrijednosti
 
 Discovery browse kontroler prima offset i limit kao stringove. Servis zahtijeva ASCII znamenke, parsira integer i odbija nevaljane ili overflowing vrijednosti. Offset je nenegativan; izvor dopušta limit 1–100, kontroler daje default 25 i ograničava pretragu na 1000 znakova. To su politike peer endpointa, ne univerzalne postavke predloška.

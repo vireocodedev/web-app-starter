@@ -4,6 +4,12 @@ Two individually valid commands can violate a rule when they race. A concurrency
 
 This is a **consumer reference pattern** from CDA's PostgreSQL-backed specification tests. They call real Spring services and use explicit TransactionTemplate/latches for a shared-contact race. This is a service/database boundary, not an HTTP security-filter scenario. The tests were inspected, not executed for this article.
 
+## Installed CRUD schedules
+
+The [test-only reference](../../backend/foundation/executable-reference-feature-and-isolation.md) owns update/update, update/delete, no-op optimistic commit and child-create/parent-delete schedules. Each uses separate real transactions, bounded participant barriers/waits and final committed-state assertions. No-op PUT must request OPTIMISTIC verification even if no UPDATE occurs. Stale intent is 409 VERSION_CONFLICT without refresh-and-retry; absent/deleted scope remains 404.
+
+Parent deletion and child writes participate in the same owned parent lock protocol. Test both operation orders and retained soft children blocking HARD deletion. Concurrent duplicate insert is settled by the actual unique constraint; only its exact known failure maps 409 REQUEST_REJECTED after rollback, unrelated integrity remains 500. Ensure latches release and workers terminate in finally. One controlled schedule is specific evidence, not proof of exhaustive deadlock freedom or production load behavior. The CDA examples below retain their distinct source policy.
+
 ## Trigger and ownership
 
 Use this design for shared quotas, parent/child ownership, active grants, revision checks, receipts, and other invariants crossing more than one command owner. The production services own locking/authorization. The test owns transaction participants, independent threads, barriers, bounded waits, and failure-safe release.

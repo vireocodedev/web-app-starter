@@ -77,6 +77,13 @@ class ArchitectureTests {
         BackendArchitectureRules.persistenceDoesNotDependOnTransport().check(productionClasses);
     }
 
+    @Test
+    void rolesMetadataAndSharedCrudHaveNarrowContracts() {
+        CrudArchitectureRules.roles(APPLICATION_PACKAGE).check(productionClasses);
+        CrudArchitectureRules.entities(APPLICATION_PACKAGE).check(productionClasses);
+        CrudArchitectureRules.sharedCrud(APPLICATION_PACKAGE).check(productionClasses);
+    }
+
     private static Path outputDirectory(Class<?> anchor) throws URISyntaxException {
         Path output = Path.of(anchor.getProtectionDomain().getCodeSource().getLocation().toURI());
         assertThat(output).as("architecture tests require compiled class directories").isDirectory();

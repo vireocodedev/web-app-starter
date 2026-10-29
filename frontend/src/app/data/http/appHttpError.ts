@@ -7,6 +7,9 @@ export type AppHttpErrorCode =
   | "AUTHENTICATION_FAILED"
   | "CSRF_INVALID"
   | "FORBIDDEN"
+  | "RESOURCE_NOT_FOUND"
+  | "VERSION_CONFLICT"
+  | "RESOURCE_IN_USE"
   | "REQUEST_REJECTED"
   | "INTERNAL_ERROR";
 export type AppHttpFieldErrorCode = "REQUIRED" | "TOO_LONG";
@@ -30,6 +33,11 @@ function isCompatibleCode(code: unknown, status: number): code is AppHttpErrorCo
     case "CSRF_INVALID":
     case "FORBIDDEN":
       return status === 403;
+    case "RESOURCE_NOT_FOUND":
+      return status === 404;
+    case "VERSION_CONFLICT":
+    case "RESOURCE_IN_USE":
+      return status === 409;
     case "REQUEST_REJECTED":
       return status >= 400 && status < 500 && ![400, 401, 403].includes(status);
     case "INTERNAL_ERROR":
@@ -99,6 +107,12 @@ export function appHttpErrorMessageKey(error: AppHttpError | null) {
       return "httpErrors.forbidden";
     case "REQUEST_REJECTED":
       return "httpErrors.requestRejected";
+    case "RESOURCE_NOT_FOUND":
+      return "httpErrors.resourceNotFound";
+    case "VERSION_CONFLICT":
+      return "httpErrors.versionConflict";
+    case "RESOURCE_IN_USE":
+      return "httpErrors.resourceInUse";
     case "INTERNAL_ERROR":
       return "httpErrors.internalError";
     default:

@@ -1,8 +1,12 @@
 # One transaction for one complete business command
 
-**Support status: source-backed reference recipe.** Spring transactions and JPA are available in the starter, but the command services, audit writer and domain authority shown here must be implemented by the consumer. Client Discovery supplies the transactional action examples; LMS supplies a useful comparison between flushing and actual transaction completion.
+**Support status: installed Spring/JPA transaction foundation and executable CRUD reference, with external command/audit recipes.** The starter base has no domain authority or audit writer. Client Discovery examples below remain consumer-owned pseudocode, and LMS supplies the flush/commit comparison.
 
 Use this pattern when one user action changes several rows, a quota depends on concurrent writers, or an audit event must exist exactly when its business mutation exists. Define the invariant first: the database must never retain only a successful-looking prefix of the command.
+
+## Installed CRUD transaction boundary
+
+The small [BaseService](../foundation/crud-foundation-and-class-conventions.md) adds protected mechanics, not a public transaction framework. Concrete nonfinal public service methods own the complete action; standard reads use readOnly and map before leaving the transaction with OSIV false. Flush before building create/update responses so version/audit reflect the write, while HTTP success waits for proxy commit. A no-op PUT explicitly takes an OPTIMISTIC lock because no UPDATE may be emitted. Rollback, commit-time optimistic failure and direct service authority need runtime tests. No generic retry, audit history or outbox is introduced.
 
 ## Put the application command around the whole action
 

@@ -102,6 +102,12 @@ These source-backed recipes complement the isolated Storybook Patterns and Archi
 
 ### Backend
 
+- [CRUD foundation and class conventions](en/backend/foundation/crud-foundation-and-class-conventions.md) · [Hrvatski](hr/backend/foundation/crud-foundation-and-class-conventions.md)
+- [JPA entities and relationships](en/backend/data/jpa-entities-and-relationships.md) · [Hrvatski](hr/backend/data/jpa-entities-and-relationships.md)
+- [JPA repositories, fetch plans and projections](en/backend/queries/jpa-repositories-fetch-plans-and-projections.md) · [Hrvatski](hr/backend/queries/jpa-repositories-fetch-plans-and-projections.md)
+- [Configurable hard and soft deletion](en/backend/data/configurable-hard-and-soft-deletion.md) · [Hrvatski](hr/backend/data/configurable-hard-and-soft-deletion.md)
+- [Executable reference feature and isolation](en/backend/foundation/executable-reference-feature-and-isolation.md) · [Hrvatski](hr/backend/foundation/executable-reference-feature-and-isolation.md)
+
 #### Foundation
 
 - [Runtime and configuration ownership](en/backend/foundation/runtime-and-configuration.md) · [Hrvatski](hr/backend/foundation/runtime-and-configuration.md)

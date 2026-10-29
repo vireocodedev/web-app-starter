@@ -1,8 +1,12 @@
 # Audit fields, events and immutable versions answer different questions
 
-**Support status: source-backed reference recipe.** LMS demonstrates JPA audit fields and replacement version rows; Client Discovery demonstrates transactional audit events and database-protected immutable versions/transitions. These mechanisms are not installed as a general starter history framework. Choose them from the information the domain must retain.
+**Support status: installed current-row timestamps with external actor/history reference recipes.** BaseEntity supplies server-owned dates and optimistic version; LMS replacement history and Discovery transactional events/immutable versions remain separate designs, not a generic installed history framework.
 
 Use this pattern when “who changed it?” expands into “what happened?”, “which exact content was approved?” or “can the previous state be reconstructed?” Adding four timestamps to the current row does not answer all of those questions, and retaining every request is not a safe substitute for a history design.
+
+## Installed current-row metadata
+
+[BaseEntity](jpa-entities-and-relationships.md) now installs createdAt/updatedAt Instant timestamps through Spring Data auditing and the shared UTC Clock, plus provider-owned optimistic version. Soft deletedAt uses that same Clock. These fields are not writable in Request DTOs. This adds neither createdBy/updatedBy nor actor history, immutable versions or events; the LMS/Discovery references below retain their distinct provenance.
 
 ## Select the evidence before the storage shape
 

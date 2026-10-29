@@ -4,6 +4,10 @@
 
 Koristite obrazac kad odgovor obećava usklađen total, facet opcije i retke uz konkurentno uređivanje. Read-only anotacija opisuje namjeru pristupa; sama ne jamči da više SQL naredbi vidi isto potvrđeno stanje.
 
+## Ograničenje ugrađenog PageResponsea
+
+[Starter page DTO](jpa-repositories-fetch-plans-and-projections.md) definira oblik i granice. Referentni readOnly list ne obećava zajednički count/row snapshot pod READ COMMITTED. Feature koji obećava koherentne metapodatke mora izričito odabrati transaction/isolation politiku ispod; readOnly ili stabilan sort nisu dovoljni.
+
 ## Precizno odredite obećanu dosljednost
 
 Uz uobičajeni PostgreSQL READ COMMITTED odvojene naredbe mogu vidjeti različita potvrđena stanja. Count završi, druga transakcija umetne ili arhivira red, a page upit vidi novo stanje. Svaki iskaz pojedinačno može biti točan dok je sastavljeni odgovor proturječan.

@@ -373,11 +373,24 @@ backend identity:
 python3 -B docs/template-initialization/scripts/4_2_refactor_java_packages.py
 ```
 
-The script moves both roots and updates Java code references while preserving
-comments, string fixtures and unrelated packages. A completed retry verifies the
-selected roots and makes no changes; mixed or partially moved trees stop for
-inspection. Moving packages does not change schema/table names or authorization
-contracts.
+The script moves both roots and updates Java code references. The test-only
+`backend/src/test/java/referencefixtures` tree stays at its neutral path and
+package. Within that tree, only explicit imports of these published production
+types change to the selected namespace: `crud.BaseEntity`,
+`crud.SoftDeletableEntity`, `crud.BaseService`, `crud.DeleteMode`,
+`crud.ResourceNotFoundException`, `crud.VersionConflictException`,
+`crud.ResourceInUseException` and `http.PageResponse`. Comments, string/text-block
+literals, SQL and unrelated `architecturefixtures`/`httptestfixtures` stay
+byte-identical. Older consumers without the reference tree do not acquire it.
+
+All application and reference plans are checked before either application root
+moves. Unexpected production imports, static/wildcard imports of those types,
+foreign or mixed namespaces in one reference file, path/declaration mismatches,
+symlinks and collisions stop for inspection. Correct already-selected imports are
+preserved. A completed retry makes no changes; if both application roots already
+moved but reference imports are pending, rerun 4.2 to complete those imports.
+Mixed or partially moved application trees still stop for inspection. Moving
+packages does not change schema/table names or authorization contracts.
 
 For existing `.env`/database resources, resolve identity first. A changed Compose
 name creates a different namespace; it does not migrate a volume. Changed DB
@@ -385,7 +398,12 @@ settings do not alter credentials inside an initialized volume. Preserve matchin
 configuration or deliberately allocate separate project/port resources; deletion
 or password reset is not the repair.
 
-**Done:** Java paths/imports, Gradle, Compose defaults and debugger main class agree.
+**Done:** Java paths/imports, neutral reference imports, Gradle, Compose defaults
+and debugger main class agree. Section 10.1 runs `test bootJar` in the actual
+personalized consumer: the reference compiles and runs there, while isolation
+tests verify it contributes no ordinary application mappings or packaged fixture
+classes/resources. The identity audit alone does not prove compilation or runtime
+isolation.
 
 ## 5. Personalize the frontend and documentation
 
@@ -434,7 +452,10 @@ identity automatically, without reading secret or generated files:
 python3 -B docs/template-initialization/scripts/6_1_audit_identity.py
 ```
 
-This read-only gate checks coherence and whitespace, classifies known retained
+This read-only gate checks coherence and whitespace, including the scoped
+production imports in any neutral `referencefixtures` tree. Pending imports name
+4.2 as the repair step; foreign or ambiguous content remains an inspection error.
+It classifies known retained
 reference examples, fixtures, attribution and artwork automatically, and fails on
 unexpected application-identity leftovers. It names the affected path/field and
 repair step; routine initialization needs no manual reference classification.

@@ -4,6 +4,12 @@ A backend authentication contract spans security filters, session cookies, CSRF,
 
 This is an **installed starter test pattern**. `AuthIntegrationTests` uses a random-port Spring application, the local profile with explicit synthetic bootstrap values, and imported Testcontainers configuration. That configuration supplies PostgreSQL 18 through a service connection. The source was inspected; no container, server, or test was started for this article.
 
+## Installed business reference boundary
+
+The [executable reference](../../backend/foundation/executable-reference-feature-and-isolation.md) adds real PostgreSQL/HTTP coverage for a HARD group and SOFT contact without adding production feature tables or endpoints. Test trusted actor scope, shared Request/full PUT clearing, required X-Expected-Version parsing, safe 400/404/409/500 envelopes and OpenAPI shape. Inspect persisted state after requests: flush is not commit, HTTP work does not share a test rollback, and a successful response must carry current version/audit.
+
+Separate fixtures assert metadata/proxy/hash behavior, fresh/cached soft visibility, native active predicates, reserved unique code, exact FK/UNIQUE catalog constraints and negative schema drift. Normal-context mappings/schema/OpenAPI and Boot JAR exclusion are independent negative evidence. A full page with a cold context must stay within the specific three-SELECT budget; small data/cache can conceal N+1. These are implementation acceptance checks, not passing results merely because this article names them.
+
 ## Trigger and ownership
 
 Use this boundary for session/security contracts, database-backed behavior, migrations, and endpoint mapping that a service-only test cannot prove. The suite owns a disposable database and synthetic data. Spring owns the real HTTP/security/application composition. The HTTP client owns its cookie jar, and each scenario starts with a fresh one.

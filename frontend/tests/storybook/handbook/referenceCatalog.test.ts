@@ -19,11 +19,11 @@ import {
 
 describe("Storybook reference catalog", () => {
   it("exposes every handbook and architecture article through unique canonical reading destinations", () => {
-    expect(handbookArticles).toHaveLength(158);
+    expect(handbookArticles).toHaveLength(163);
     expect(architectureArticleCatalog.map(({ id }) => id)).toEqual(architectureArticleIds);
     expect(architectureArticleIds).toHaveLength(15);
-    expect(referenceArticles).toHaveLength(173);
-    expect(new Set(referenceArticles.map(({ to }) => to)).size).toBe(173);
+    expect(referenceArticles).toHaveLength(178);
+    expect(new Set(referenceArticles.map(({ to }) => to)).size).toBe(178);
     const groups = new Set(architectureGroups.map(({ id }) => id));
     for (const article of architectureArticleCatalog) expect(groups.has(article.groupId)).toBe(true);
     for (const article of handbookArticles) expect(handbookLabel(article.titleKey)).not.toBe(article.titleKey);

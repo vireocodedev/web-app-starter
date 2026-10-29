@@ -4,6 +4,10 @@
 
 Use this policy before changing an existing request, response, endpoint behavior, validation rule, authorization decision or error meaning. The frontend/backend owners share the compatibility review; Bruno approves breaking changes and removal conditions before implementation.
 
+## Additive CRUD foundation
+
+The [shared error owner](../foundation/validation-and-error-contracts.md) adds three deliberate CRUD codes and PageResponse is a separate published wire seam. Existing login/session/CSRF DTOs, six exact auth dependencies and AppUser schema remain unchanged. The executable Contacts endpoints are test-only; they are not newly deployed business endpoints or proof of a mixed-version production matrix. New resources share Request across POST/full PUT, carry version in a required header, and must preserve this explicit write intent.
+
 ## Preserve the installed contract deliberately
 
 Current authentication paths remain under `/api/auth` with no version segment. This article introduces neither a `/v1` convention nor a general resource-naming policy. Record the affected method/path and actual consumers instead of silently renaming an endpoint.

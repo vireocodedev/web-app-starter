@@ -39,6 +39,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	dependsOn tasks.named('bootJar')
+	systemProperty 'template.reference.bootJar', tasks.named('bootJar').get().archiveFile.get().asFile.absolutePath
 }
 
 // Each CI lane compiles the complete source set, including cross-test fixtures.

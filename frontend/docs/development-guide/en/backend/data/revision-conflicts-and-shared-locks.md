@@ -1,8 +1,14 @@
 # Revision conflicts and shared invariant locks
 
-**Support status: source-backed reference recipe.** Client Discovery demonstrates expected revisions checked under a project row lock, plus a shared parent lock for file quotas and lifecycle changes. The starter does not provide a universal revision field, lock helper or conflict DTO. Those are consumer-owned contracts.
+**Support status: installed JPA version contract with a test-only shared-parent lock example, plus external reference recipes.** The starter supplies BaseEntity version mechanics and safe conflicts; each feature still owns its scope and lock protocol. Client Discovery retains its separately described body-based revision design.
 
 Use revisions when an edit must detect that the user's view is stale. Use shared locks when several commands can violate one invariant even while editing different child rows. These solve related but different problems: an edit conflict protects user intent; serialization protects the aggregate's valid state.
+
+## Installed JPA version protocol
+
+New business entities use BaseEntity `@Version Long`; responses expose `version`, PUT/DELETE require `X-Expected-Version`. [Error ownership](../foundation/validation-and-error-contracts.md) defines 400/404/409. Compare the submitted value with the managed entity, then rely on JPA for concurrent UPDATE/DELETE races. A no-op PUT uses `EntityManager.lock(entity, OPTIMISTIC)` so commit verifies the loaded version even without dirty UPDATE. Do not silently retry with the latest value.
+
+Reference contact writes and HARD group deletion share an owned parent pessimistic lock before child checks/mutations. Active or retained children block HARD deletion; foreign scope stays 404. This protocol protects the dependency invariant; it does not replace optimistic user-intent checks. The external expectedRevision recipe below retains its own body-based protocol.
 
 ## Match the actual revision protocol
 

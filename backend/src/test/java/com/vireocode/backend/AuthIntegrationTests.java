@@ -249,6 +249,13 @@ class AuthIntegrationTests {
     }
 
     @Test
+    void persistenceErrorsTranslateOnlyKnownPublicMeaning() throws Exception {
+        assertThat(post("/auth/login", credentials("test-user-password"), csrf()).statusCode()).isEqualTo(204);
+        assertError(get("/test-errors/optimistic-commit"), 409, "VERSION_CONFLICT", "The resource has changed");
+        assertError(get("/test-errors/unknown-integrity"), 500, "INTERNAL_ERROR", "The request could not be completed");
+    }
+
+    @Test
     void methodValidationKeepsInputAndReturnValueFailuresDistinct() throws Exception {
         assertThat(post("/auth/login", credentials("test-user-password"), csrf()).statusCode()).isEqualTo(204);
         assertError(get("/test-errors/validation?name=private-name"), 400,

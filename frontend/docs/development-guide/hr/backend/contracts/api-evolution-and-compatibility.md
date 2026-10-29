@@ -4,6 +4,10 @@
 
 Koristite ovu politiku prije promjene postojećeg zahtjeva, odgovora, ponašanja endpointa, validacijskog pravila, odluke autorizacije ili značenja pogreške. Frontend/backend vlasnici dijele pregled kompatibilnosti; Bruno odobrava nekompatibilne promjene i uvjete uklanjanja prije implementacije.
 
+## Aditivna CRUD osnova
+
+[Zajednički vlasnik pogrešaka](../foundation/validation-and-error-contracts.md) dodaje tri namjerna CRUD koda, a PageResponse je zasebna objavljena wire granica. Login/session/CSRF DTO-i, šest točnih auth ovisnosti i AppUser schema ostaju isti. Izvršivi Contacts endpointi postoje samo u testu; nisu novi deployed business endpointi ni dokaz mixed-version production matrice. Novi resursi dijele Request za POST/puni PUT, nose verziju u obveznom headeru i čuvaju tu namjeru pisanja.
+
 ## Namjerno sačuvajte ugrađeni ugovor
 
 Trenutačne autentikacijske putanje ostaju pod `/api/auth`, bez segmenta verzije. Ovaj članak ne uvodi konvenciju `/v1` ni opću politiku imenovanja resursa. Zabilježite pogođenu metodu/putanju i stvarne pozivatelje umjesto prešutnog preimenovanja endpointa.

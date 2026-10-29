@@ -4,10 +4,16 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
+import com.vireocode.backend.crud.ResourceNotFoundException;
+import com.vireocode.backend.crud.ResourceInUseException;
+import com.vireocode.backend.crud.VersionConflictException;
+import jakarta.persistence.OptimisticLockException;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -74,6 +80,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         Exception current = exception;
         while (visited.add(current)) {
+            // Includes provider conflicts wrapped by transaction commit. Never disclose the cause text.
+            if (current instanceof ResourceNotFoundException) {
+                return typedResponse(HttpStatus.NOT_FOUND, ApiErrors.resourceNotFound());
+            }
+            if (current instanceof VersionConflictException
+                    || current instanceof OptimisticLockException
+                    || current instanceof OptimisticLockingFailureException) {
+                return typedResponse(HttpStatus.CONFLICT, ApiErrors.versionConflict());
+            }
+            if (current instanceof ResourceInUseException) {
+                return typedResponse(HttpStatus.CONFLICT, ApiErrors.resourceInUse());
+            }
             if (current instanceof ResponseStatusException declared) {
                 return safeResponse(declared.getStatusCode(), declared.getHeaders());
             }
@@ -91,6 +109,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     private ResponseEntity<Object> safeResponse(HttpStatusCode status) {
         return safeResponse(status, HttpHeaders.EMPTY);
+    }
+
+    private ResponseEntity<Object> typedResponse(HttpStatus status, Object body) {
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
     }
 
     private ResponseEntity<Object> safeResponse(HttpStatusCode status, HttpHeaders headers) {

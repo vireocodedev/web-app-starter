@@ -60,6 +60,26 @@ export const croatianBackendHandbookTranslations = {
     },
   },
   articles: {
+    "backend-foundation-crud-foundation-and-class-conventions": {
+      title: "CRUD osnova i pravila pisanja klasa",
+      description: "Koristite ugrađenu osnovu, točne izvore i jasne granice provjere ponašanja.",
+    },
+    "backend-data-jpa-entities-and-relationships": {
+      title: "JPA entiteti i relacije",
+      description: "Koristite ugrađenu osnovu, točne izvore i jasne granice provjere ponašanja.",
+    },
+    "backend-queries-jpa-repositories-fetch-plans-and-projections": {
+      title: "JPA repozitoriji, fetch planovi i projekcije",
+      description: "Koristite ugrađenu osnovu, točne izvore i jasne granice provjere ponašanja.",
+    },
+    "backend-data-configurable-hard-and-soft-deletion": {
+      title: "Podesivo hard i soft brisanje",
+      description: "Koristite ugrađenu osnovu, točne izvore i jasne granice provjere ponašanja.",
+    },
+    "backend-foundation-executable-reference-feature-and-isolation": {
+      title: "Izvršivi referentni feature i izolacija",
+      description: "Koristite ugrađenu osnovu, točne izvore i jasne granice provjere ponašanja.",
+    },
     "backend-foundation-runtime-and-configuration": {
       title: "Vlasništvo nad runtimeom i konfiguracijom",
       description:

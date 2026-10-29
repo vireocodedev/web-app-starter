@@ -4,6 +4,10 @@
 
 Use this pattern when one command locks several existing resources or two requests can attempt the same unique insert. Ordering lowers avoidable deadlock risk; database constraints settle races; a fresh transaction provides a usable state after an aborted attempt. None of these makes an arbitrary command safe to repeat.
 
+## Starter reference policy
+
+The [reference feature](../foundation/executable-reference-feature-and-isolation.md) locks the same owned group for child writes and parent deletion. It performs no automatic retry. Only the exact contact unique constraint becomes 409 REQUEST_REJECTED outside the failed service transaction; unrelated integrity failures remain 500. A refreshed expected version is never an automatic recovery for stale user intent.
+
 ## Define order in terms of the actual locked identity
 
 FRED's registration service sorts recent resource serials by canonical database identity and then by serial before processing them. The source explicitly accounts for configured aliases. Sorting only the user-supplied alias could produce different orders for the same underlying resources, defeating the intended protocol.

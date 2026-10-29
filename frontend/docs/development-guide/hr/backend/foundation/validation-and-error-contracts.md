@@ -1,8 +1,19 @@
 # Validacija i javni ugovori pogrešaka
 
-**Status podrške: ugrađeni zajednički HTTP ugovor pogrešaka uz referentni recept za domenska proširenja.** MVC handleri, autentikacijski advice, Security filtri i servlet obrada pogrešaka koriste isti sigurni JSON oblik. Frontend dekodira ograničene strojne metapodatke i prikazuje lokalne prijevode. Domenski kodovi konflikta, korelacijski identifikatori i ProblemDetail protokol nisu ugrađeni ovim ugovorom.
+**Status podrške: ugrađeni zajednički HTTP error i CRUD conflict ugovor.** MVC, autentikacija, Security filtri i servlet dispatch zadržavaju code/message/fieldErrors oblik. Correlation ID i ProblemDetail nisu ugrađeni.
 
 Koristite ovaj obrazac pri definiranju request DTO-a, povezivanju forme s endpointom ili razlikovanju nevaljanog unosa, nedostajuće autentikacije i konflikta poslovnog stanja. HTTP status i stabilan strojni kod upravljaju ponašanjem, a ne proizvoljan tekst poslužitelja.
+
+## CRUD pogreške i očekivana verzija
+
+| Status | Code                 | Značenje                                                                                                               |
+| ------ | -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 404    | `RESOURCE_NOT_FOUND` | Nema retka, soft-obrisan je ili izvan dopuštenog actor/parent scopea.                                                  |
+| 409    | `VERSION_CONFLICT`   | Zastarjeli expected version ili stvarni optimistic-lock race, uključujući commit.                                      |
+| 409    | `RESOURCE_IN_USE`    | Poznata relacija/invarijanta blokira brisanje.                                                                         |
+| 409    | `REQUEST_REJECTED`   | Točno poznati unique constraint pri duplicate POST/PUT, uključujući rezervirani soft-obrisani kod i concurrent insert. |
+
+PUT/DELETE traže `X-Expected-Version`, nenegativni decimalni int64; missing/malformed/negative/overflow daju 400 `INVALID_REQUEST`. Verzija nije dio zajedničkog writable Requesta. Nepoznati integrity/persistence problem ostaje 500 `INTERNAL_ERROR`; ne prevodite svaki DataIntegrityViolationException u conflict i ne otkrivajte constraint/SQL/privatni unos. Poznati constraint prevodi se izvan service proxyja nakon rollbacka, bez nastavka u neuspjeloj transakciji. Auth značenja, field allowlist, bounded frontend parser, cancellation/originalni Axios objekt i unknown fallback ostaju očuvani. EN/HR prijevodi uključuju tri CRUD koda.
 
 ## Ugrađeni oblik odgovora i vlasnici
 
@@ -61,7 +72,7 @@ Stabilni kodovi tijekom prikaza mapiraju se na lokalne prijevodne ključeve. Pos
 
 [Upute za backend-connected feature](../../../../storybook/data/BackendConnectedFeature/BackendConnectedFeature.mdx) daju cjelovit referentni frontend primjer s ovim oblikom odgovora. Mapiranje statusa pojedinog endpointa i predložena objava domenskih polja izričiti su ugovori potrošača, a ne proširenje ugrađenog zajedničkog skupa kodova. Implementirajte i provjerite odgovarajući backend popis dopuštenih polja prije nego obrascu obećate te detalje.
 
-Ugrađeni skup kodova ne definira kod zastarjele revizije ili domenskog konflikta. Budući uređivač mora zasebno definirati značenje statusa 409, sigurna polja, autorizaciju/skrivanje resursa i oporavak koji čuva nacrt, pa zajedno ažurirati backend izgradnju, frontend dekodiranje/prijevode i pokrivenost ugovora. Nemojte zaključiti domenski protokol iz generičkog fallbacka `REQUEST_REJECTED` niti dodavati nepregledana polja odgovora po endpointima.
+Prethodno navedeni CRUD kodovi definiraju odobreni stale-version i deletion ugovor. Svaki dodatni domenski kod traži jasnu semantiku 409, sigurna polja, skrivanje resursa, očuvanje nacrta i usklađenu backend/frontend provjeru. Nemojte zaključiti domenski protokol iz generičkog fallbacka `REQUEST_REJECTED` niti dodavati nepregledana polja odgovora po endpointima.
 
 LMS ostaje usporedba sa starijom implementacijom: njegov stariji `ErrorResponse` sadrži timestamp/status/path i opcionalni prijevodni ključ. To pokazuje seam prevođenja, a ne uputu za kopiranje payloada ili prosljeđivanje proizvoljnih poruka iznimki. Ovaj predložak ne šalje `requestId` niti obećava mehanizam korelacijskog identifikatora. Takav mehanizam uvedite samo kroz zaseban odobreni dizajn.
 

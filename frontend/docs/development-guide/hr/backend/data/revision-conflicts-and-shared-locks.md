@@ -1,8 +1,14 @@
 # Konflikti revizija i zajednička zaključavanja invarijanti
 
-**Status podrške: referentni recept potkrijepljen izvorom.** Client Discovery provjerava očekivanu reviziju pod lockom retka projekta te dijeli roditeljski lock za kvote datoteka i promjene životnog ciklusa. Predložak nema univerzalno revision polje, lock helper ili conflict DTO. Ti ugovori pripadaju projektu.
+**Status podrške: ugrađeni JPA version ugovor s test-only shared-parent lock primjerom te vanjskim receptima.** Starter pruža BaseEntity version mehaniku i sigurne konflikte; svaki feature vodi vlastiti scope i lock protokol. Client Discovery zadržava zasebno opisani body revision dizajn.
 
 Reviziju koristite kad uređivanje mora otkriti zastarjeli korisnički pogled. Zajednički lock koristite kad više naredbi može prekršiti jednu invarijantu i pri pisanju različitih redaka djece. Problemi su povezani, ali različiti: konflikt uređivanja štiti namjeru korisnika, a serializacija valjanost agregata.
+
+## Ugrađeni JPA version protokol
+
+Novi poslovni entiteti koriste BaseEntity `@Version Long`; Response izlaže `version`, PUT/DELETE traže `X-Expected-Version`. [Vlasnik pogrešaka](../foundation/validation-and-error-contracts.md) definira 400/404/409. Usporedite predanu vrijednost s managed entitetom pa JPA štiti concurrent UPDATE/DELETE race. No-op PUT koristi `EntityManager.lock(entity, OPTIMISTIC)` kako bi commit provjerio učitanu verziju i bez dirty UPDATE-a. Ne ponavljajte tiho s novijom verzijom.
+
+Referentni contact write i HARD group delete dijele owned parent pessimistic lock prije provjere/promjene djece. Aktivna ili zadržana djeca blokiraju HARD delete; strani scope ostaje 404. Taj protokol štiti dependency invarijantu, ne zamjenjuje optimistic provjeru namjere. Vanjski expectedRevision recept ispod zadržava svoj body protokol.
 
 ## Slijedite stvarni protokol revizije
 

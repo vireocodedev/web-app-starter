@@ -67,6 +67,18 @@ public final class ApiErrors {
         return new PublicError("VALIDATION_FAILED", "Some fields need attention", List.of());
     }
 
+    static Object resourceNotFound() {
+        return new PublicError("RESOURCE_NOT_FOUND", "The resource is not available", List.of());
+    }
+
+    static Object versionConflict() {
+        return new PublicError("VERSION_CONFLICT", "The resource has changed", List.of());
+    }
+
+    static Object resourceInUse() {
+        return new PublicError("RESOURCE_IN_USE", "The resource is in use", List.of());
+    }
+
     private static PublicError invalidRequest() {
         return new PublicError("INVALID_REQUEST", "The request is not valid", List.of());
     }
@@ -87,7 +99,10 @@ public final class ApiErrors {
 
     @Schema(name = "ApiError")
     private record PublicError(
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String code,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
+                    "VALIDATION_FAILED", "INVALID_REQUEST", "AUTHENTICATION_REQUIRED", "AUTHENTICATION_FAILED",
+                    "CSRF_INVALID", "FORBIDDEN", "RESOURCE_NOT_FOUND", "VERSION_CONFLICT", "RESOURCE_IN_USE",
+                    "REQUEST_REJECTED", "INTERNAL_ERROR" }) String code,
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String message,
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<FieldError> fieldErrors) {
     }

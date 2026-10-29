@@ -4,6 +4,10 @@
 
 Use this pattern when a new list could grow beyond fixture data, a table exposes sort controls, or an export/lookup is being mistaken for ordinary paging. Define the query's work and ordering contract before connecting a generic UI paginator.
 
+## Installed starter page contract
+
+[PageResponse and JPA fetch plans](jpa-repositories-fetch-plans-and-projections.md) define the new business default: `{items,page,size,totalItems}`, defensive item copy, zero-based page, default size 20 and maximum 100 (minimum 1). Reject invalid input and unsupported sort/direction; use a feature allowlist and UUID tie-breaker. Do not expose Spring Page or an unbounded negative-size escape. The peer offset/limit recipe below keeps its original defaults.
+
 ## Bound the wire values explicitly
 
 The Discovery browse controller accepts offset and limit as strings. The service requires ASCII digit sequences, parses them as integers, and rejects invalid or overflowing values. Offset is nonnegative; the source permits limit 1–100, defaults to 25 in the controller and caps search text at 1000 characters. These are peer endpoint policies, not universal template defaults.

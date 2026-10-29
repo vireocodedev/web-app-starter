@@ -55,6 +55,17 @@ public class HttpErrorTestConfiguration {
     @RestController
     public static class ErrorEndpoints {
 
+        @GetMapping("/test-errors/optimistic-commit")
+        public String optimisticCommit() {
+            throw new org.springframework.transaction.TransactionSystemException("secret-commit",
+                    new jakarta.persistence.OptimisticLockException("secret-version SQL"));
+        }
+
+        @GetMapping("/test-errors/unknown-integrity")
+        public String unknownIntegrity() {
+            throw new org.springframework.dao.DataIntegrityViolationException("secret-unknown-constraint SQL");
+        }
+
         @GetMapping("/test-errors/unexpected")
         public String unexpected() {
             throw new IllegalStateException("secret-password SQL SELECT * FROM private_accounts");

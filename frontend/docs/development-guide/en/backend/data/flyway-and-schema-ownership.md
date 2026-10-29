@@ -4,6 +4,10 @@
 
 Use this pattern whenever a feature needs stored state, an entity change, a new constraint, or a session persistence upgrade. The migration and the code using it form one change. Schema evolution must explain both fresh installation and the next supported upgrade of an existing database.
 
+## Test-only reference schema
+
+The [reference isolation contract](../foundation/executable-reference-feature-and-isolation.md) owns its explicit-only repeatable SQL location and PostgreSQL UNIQUE/FK catalog guards, including negative drift cases. Hibernate validates columns/types but does not establish complete constraint equivalence. Production migrations and AppUser stay unchanged; a test bootstrap is not production upgrade evidence.
+
 ## One owner performs DDL
 
 The base configuration enables Flyway, sets Hibernate `ddl-auto: validate`, disables Open Session in View and sets JDBC session `initialize-schema: never`. Flyway performs DDL; Hibernate checks agreement; Spring Session uses its tables without creating another copy. Changing only an entity or enabling automatic DDL gives the generated app competing owners.
