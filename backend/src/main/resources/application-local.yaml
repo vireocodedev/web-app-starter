@@ -19,3 +19,9 @@ app:
     email: ${INITIAL_USER_EMAIL}
     display-name: ${INITIAL_USER_DISPLAY_NAME}
     password: ${INITIAL_USER_PASSWORD}
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

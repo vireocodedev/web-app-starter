@@ -51,6 +51,20 @@ class RuntimeTests(unittest.TestCase):
             self.assertTrue(service['ports'][0].startswith('127.0.0.1:'))
             self.assertNotIn('volumes', service)
 
+    def test_api_documentation_is_enabled_only_in_staging(self):
+        config = self.config()
+        for environment, enabled in (('staging', 'true'), ('production', 'false')):
+            with self.subTest(environment=environment):
+                services = runtime.app_compose(config, environment, PAIR)['services']
+                self.assertEqual(services['backend']['environment'], {
+                    'SERVER_FORWARD_HEADERS_STRATEGY': 'framework',
+                    'SPRINGDOC_APIDOCS_ENABLED': enabled,
+                    'SPRINGDOC_SWAGGERUI_ENABLED': enabled})
+                self.assertEqual(services['backend']['env_file'], [
+                    config['settings'] + '/' + environment + '/database.env'])
+                self.assertNotIn('SPRINGDOC_APIDOCS_ENABLED', services['frontend'].get('environment', {}))
+                self.assertNotIn('SPRINGDOC_SWAGGERUI_ENABLED', services['frontend'].get('environment', {}))
+
     def test_production_backup_failure_prevents_candidate_replacement(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

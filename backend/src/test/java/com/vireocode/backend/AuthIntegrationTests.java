@@ -12,6 +12,7 @@ import java.util.Map;
 import com.vireocode.backend.user.AppUserRepository;
 import com.vireocode.backend.user.LocalUserInitializer;
 import httptestfixtures.HttpErrorTestConfiguration;
+import httptestfixtures.OpenApiTestConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ import tools.jackson.databind.ObjectMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("local")
-@Import({TestcontainersConfiguration.class, HttpErrorTestConfiguration.class})
+@Import({TestcontainersConfiguration.class, HttpErrorTestConfiguration.class, OpenApiTestConfiguration.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "app.bootstrap-user.username=test-user",
         "app.bootstrap-user.password=test-user-password",
@@ -263,6 +264,109 @@ class AuthIntegrationTests {
                 .contains("HttpOnly", "SameSite=Lax", "Path=/api");
         assertThat(response.headers().firstValue("Cache-Control").orElseThrow()).contains("no-store");
         assertThat(response.headers().firstValue("Access-Control-Allow-Origin")).isEmpty();
+    }
+
+    @Test
+    void localOpenApiDescribesActualAuthDtosErrorsAndNewControllers() throws Exception {
+        var response = get("/v3/api-docs");
+        assertThat(response.statusCode()).isEqualTo(200);
+        var api = json.readTree(response.body());
+        var paths = api.path("paths");
+        assertThat(paths.has("/auth/csrf")).isTrue();
+        assertThat(paths.has("/auth/login")).isTrue();
+        assertThat(paths.has("/auth/session")).isTrue();
+        assertThat(paths.has("/auth/logout")).isTrue();
+        assertThat(paths.has("/catalog-items")).isTrue();
+        assertThat(paths.has("/error")).isFalse();
+        assertThat(paths.has("/actuator/health")).isFalse();
+        assertThat(paths.has("/api/auth/session")).isFalse();
+        assertThat(api.path("info").path("title").asString())
+                .isEqualTo(environment.getRequiredProperty("spring.application.name") + " API");
+        assertThat(api.path("servers").get(0).path("url").asString()).endsWith("/api");
+
+        var schemas = api.path("components").path("schemas");
+        var login = schemas.path("LoginRequest");
+        assertThat(login.path("properties").properties()).hasSize(2);
+        assertThat(login.path("required").toString()).contains("username", "password");
+        assertThat(login.path("properties").path("username").path("maxLength").asInt()).isEqualTo(100);
+        assertThat(login.path("properties").path("password").path("maxLength").asInt()).isEqualTo(72);
+        assertThat(login.path("properties").path("password").path("format").asString()).isEqualTo("password");
+        assertThat(login.path("properties").path("password").path("writeOnly").asBoolean()).isTrue();
+        assertThat(schemas.path("CsrfResponse").path("properties").properties()).hasSize(2);
+        assertThat(schemas.path("CsrfResponse").path("properties").has("headerName")).isTrue();
+        assertThat(schemas.path("CsrfResponse").path("properties").has("token")).isTrue();
+        assertThat(schemas.path("SessionUser").path("properties").properties()).hasSize(3);
+        assertThat(schemas.path("SessionUser").path("properties").has("id")).isTrue();
+        assertThat(schemas.path("SessionUser").path("properties").has("displayName")).isTrue();
+        assertThat(schemas.path("SessionUser").path("properties").has("email")).isTrue();
+        assertThat(schemas.path("CreateCatalogItem").path("properties").path("name").path("maxLength").asInt())
+                .isEqualTo(60);
+        assertThat(schemas.path("CreateCatalogItem").path("required").toString()).contains("name");
+        assertThat(schemas.path("CatalogItem").path("properties").has("name")).isTrue();
+
+        var error = schemas.path("ApiError");
+        assertThat(error.path("properties").properties()).hasSize(3);
+        var actualError = json.readTree(get("/auth/session").body());
+        assertThat(actualError.properties()).hasSize(3);
+        actualError.properties().forEach(field -> assertThat(error.path("properties").has(field.getKey())).isTrue());
+        assertThat(error.path("properties").path("fieldErrors").path("type").asString()).isEqualTo("array");
+        assertThat(schemas.path("FieldError").path("properties").properties()).hasSize(2);
+        assertThat(schemas.path("FieldError").path("properties").has("field")).isTrue();
+        assertThat(schemas.path("FieldError").path("properties").has("code")).isTrue();
+        assertThat(paths.path("/auth/login").path("post").path("responses").path("400")
+                .path("content").path("application/json").path("schema").path("$ref").asString())
+                .isEqualTo("#/components/schemas/ApiError");
+        assertThat(response.body()).doesNotContain("passwordHash", "AppUser", "CsrfToken", "principal", "JSESSIONID");
+    }
+
+    @Test
+    void openApiSecurityMatchesTheSessionAndCsrfLifecycle() throws Exception {
+        var api = json.readTree(get("/v3/api-docs").body());
+        assertThat(api.path("security").toString()).isEqualTo("[{\"sessionCookie\":[]}]");
+        var schemes = api.path("components").path("securitySchemes");
+        assertThat(schemes.path("sessionCookie").path("in").asString()).isEqualTo("cookie");
+        assertThat(schemes.path("sessionCookie").path("name").asString()).isEqualTo("SESSION");
+        assertThat(schemes.path("csrfToken").path("in").asString()).isEqualTo("header");
+        assertThat(schemes.path("csrfToken").path("name").asString()).isEqualTo("X-CSRF-TOKEN");
+        var paths = api.path("paths");
+        assertThat(paths.path("/catalog-items").path("post").path("security").get(0).properties()).hasSize(2);
+        assertThat(paths.path("/catalog-items").path("post").path("security").get(0).has("sessionCookie")).isTrue();
+        assertThat(paths.path("/catalog-items").path("post").path("security").get(0).has("csrfToken")).isTrue();
+        assertThat(paths.path("/auth/csrf").path("get").path("security").toString()).isEqualTo("[]");
+        assertThat(paths.path("/auth/csrf").path("get").has("parameters")).isFalse();
+        assertThat(paths.path("/auth/session").path("get").has("parameters")).isFalse();
+        for (var path : List.of("/auth/login", "/auth/logout")) {
+            var operation = paths.path(path).path("post");
+            assertThat(operation.path("security").toString()).isEqualTo("[{\"csrfToken\":[]}]");
+            assertThat(operation.path("responses").has("204")).isTrue();
+            assertThat(operation.path("responses").path("204").has("content")).isFalse();
+            assertThat(operation.path("responses").path("403").path("content")
+                    .path("application/json").path("schema").path("$ref").asString())
+                    .isEqualTo("#/components/schemas/ApiError");
+        }
+        // The documented filter-owned logout also accepts anonymous sessions with a valid token.
+        assertThat(post("/auth/logout", "", csrf()).statusCode()).isEqualTo(204);
+    }
+
+    @Test
+    void localSwaggerUiAndYamlArePublicButProtectedRoutesRemainProtected() throws Exception {
+        var yaml = get("/v3/api-docs.yaml");
+        assertThat(yaml.statusCode()).isEqualTo(200);
+        assertThat(yaml.body()).contains("openapi:", "/auth/login:", "/auth/logout:");
+        var redirect = get("/swagger-ui.html");
+        assertThat(redirect.statusCode()).isEqualTo(302);
+        assertThat(redirect.headers().firstValue("Location").orElseThrow()).endsWith("/api/swagger-ui/index.html");
+        var ui = get("/swagger-ui/index.html");
+        assertThat(ui.statusCode()).isEqualTo(200);
+        assertThat(ui.body()).contains("swagger-ui-bundle.js");
+        assertThat(get("/swagger-ui/swagger-ui-bundle.js").statusCode()).isEqualTo(200);
+        var config = json.readTree(get("/v3/api-docs/swagger-config").body());
+        assertThat(config.path("url").asString()).isEqualTo("/api/v3/api-docs");
+        assertThat(config.path("persistAuthorization").asBoolean()).isFalse();
+        assertThat(config.toString()).doesNotContain("petstore.swagger.io", "validator.swagger.io");
+        assertError(get("/auth/session"), 401, "AUTHENTICATION_REQUIRED", "Authentication required");
+        assertError(post("/v3/api-docs", "{}", null), 403, "CSRF_INVALID", "Request not permitted");
+        assertError(get("/v3/api-docs/private-group"), 401, "AUTHENTICATION_REQUIRED", "Authentication required");
     }
 
     private void assertError(HttpResponse<String> response, int status, String code, String message) throws Exception {

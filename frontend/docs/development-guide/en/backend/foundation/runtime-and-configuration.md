@@ -42,6 +42,28 @@ The `provision-user` profile binds to loopback and selects an ephemeral port. It
 
 For local setup, follow the workspace `README.md` and its linked initialization runbook. Those sources own the commands and credential preparation. A guide article must not become a second, divergent provisioning procedure.
 
+## Generated API documentation follows the environment
+
+The springdoc WebMVC UI dependency in [build.gradle](../../../../../../backend/build.gradle)
+derives OpenAPI JSON/YAML and Swagger UI from Spring mappings and transport DTOs.
+The base configuration disables `springdoc.api-docs.enabled` and
+`springdoc.swagger-ui.enabled`; the local profile enables both. The provisioning
+profile keeps both disabled.
+
+The installed [release runtime](../../../../../../infrastructure/release/runtime.py)
+derives `SPRINGDOC_APIDOCS_ENABLED` and `SPRINGDOC_SWAGGERUI_ENABLED` from its
+existing environment selector: staging is `true`, production is `false`. These
+are the canonical environment names for the dashed Spring properties. Explicit
+Compose service values override env-file entries. There is no new secret or
+values-file input. Documentation reads are public only when enabled; application
+authentication, CSRF and secure deployed cookies retain their existing owners.
+
+See the workspace `README.md`, section “Generated API documentation”, for URLs
+and the Swagger CSRF flow. Existing protected runtime copies need the reviewed
+operator update in `infrastructure/release/README.md`, section “API documentation
+visibility”, and a subsequent deployment snapshot before staging picks up the
+new values.
+
 ## Persistence and diagnostics are deliberately constrained
 
 Hibernate uses `ddl-auto: validate`; Flyway performs schema evolution. `open-in-view: false` prevents the web rendering phase from serving as an implicit persistence session. A new response that needs related data must load and map that data within its explicit application boundary. Changing to `update` or enabling Open Session in View hides a missing migration or query design problem.

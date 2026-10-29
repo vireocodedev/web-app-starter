@@ -947,6 +947,15 @@ python3 -B docs/template-initialization/scripts/14_4_install_release.py
 
 ### 14.5 Prepare the separate databases and proxy routes
 
+The installed release runtime fixes `SPRINGDOC_APIDOCS_ENABLED` and
+`SPRINGDOC_SWAGGERUI_ENABLED` to `true` on staging and `false` on production.
+The local profile enables documentation separately; provisioning keeps it off.
+No extra values-file input is required. Existing installed helpers and immutable
+snapshots need the [reviewed runtime update](../../infrastructure/release/README.md#api-documentation-visibility)
+before a later deployment can apply this policy; do not rerun fresh installation
+over an existing project. See [Swagger usage](../../README.md#generated-api-documentation)
+for paths and the unchanged CSRF flow.
+
 ```bash
 python3 -B docs/template-initialization/scripts/14_5_prepare_release.py
 ```

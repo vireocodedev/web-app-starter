@@ -37,3 +37,15 @@ management:
   endpoint:
     health:
       show-details: never
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+    disable-swagger-default-url: true
+    persist-authorization: false
+  paths-to-exclude:
+    - /error
+    - /actuator/**
+  override-with-generic-response: false

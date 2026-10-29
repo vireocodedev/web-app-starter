@@ -17,7 +17,22 @@ The `/api` servlet context produces these external routes:
 | GET `/api/auth/session` | Authenticated public user DTO; reloads enabled user                              |
 | POST `/api/auth/logout` | Spring Security logout; successful response is 204 and SESSION cookie is deleted |
 
-CSRF and login are permitted by authorization rules. `permitAll` does **not** disable CSRF on login: a state-changing login request still needs the token/header obtained through the CSRF endpoint. `/actuator/health` and `/error` are also permitted. All other requests require authentication under the installed chain.
+CSRF and login are permitted by authorization rules. `permitAll` does **not** disable CSRF on login: a state-changing login request still needs the token/header obtained through the CSRF endpoint. `/actuator/health` and `/error` are also permitted. Enabled documentation reads are described below; other application requests require authentication, with logout handled by its existing CSRF-protected filter.
+
+### Swagger uses the same session lifecycle
+
+OpenAPI JSON/YAML and Swagger UI have public read access locally and on staging;
+both are disabled by base configuration and the production release runtime.
+The specification describes `sessionCookie` (`SESSION`) and `csrfToken`
+(`X-CSRF-TOKEN`) separately. CSRF/login/logout retain their actual requirements;
+the filter-owned logout also accepts an anonymous session with valid CSRF.
+
+In Swagger, fetch `/auth/csrf`, authorize its token as `csrfToken`, and execute
+login. Fetch and replace the token after login before another mutation. The
+browser manages the same-origin HttpOnly cookie. The library's cookie-based CSRF
+helper is not enabled for this response-body/session-token contract; tokens and
+authorized values are not persisted to browser storage. See the workspace
+`README.md`, section “Generated API documentation”, for the flow.
 
 ## The ordered login transition
 

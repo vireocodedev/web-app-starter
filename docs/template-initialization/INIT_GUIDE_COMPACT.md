@@ -542,6 +542,10 @@ python3 -B docs/template-initialization/scripts/14_4_install_release.py --env /r
 
 Prepare separate private PostgreSQL instances and this project's Caddy routes;
 inspect retained `preparation.json` after interruption before retrying.
+The installed runtime enables generated API docs/UI on staging and disables
+both on production through fixed Springdoc environment values. Existing hosts
+need the [reviewed runtime update](../../infrastructure/release/README.md#api-documentation-visibility),
+then a new deployment snapshot; fresh installation does not upgrade a project.
 
 ```bash
 python3 -B docs/template-initialization/scripts/14_5_prepare_release.py --env /root/PROJECT_SLUG-initialization/values.env

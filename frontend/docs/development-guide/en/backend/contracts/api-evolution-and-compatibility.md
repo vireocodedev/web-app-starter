@@ -1,6 +1,6 @@
 # API evolution and compatibility
 
-**Support status: installed compatibility policy and frontend consumer fixtures, with a worked rollout procedure.** The current Spring-session adapter validates incoming transport responses and writes explicit commands. Its compatibility fixtures exercise that client through MSW; backend HTTP tests separately exercise the producer. This is not generated/OpenAPI schema support or proof that old deployed binaries have been tested together.
+**Support status: installed compatibility policy and frontend consumer fixtures, with a worked rollout procedure.** The current Spring-session adapter validates incoming transport responses and writes explicit commands. Its compatibility fixtures exercise that client through MSW; backend HTTP tests separately exercise the producer. Runtime-generated OpenAPI describes current mappings and DTOs as documented in the workspace `README.md`, section “Generated API documentation”. Neither schema generation nor these fixtures prove that old deployed binaries have been tested together.
 
 Use this policy before changing an existing request, response, endpoint behavior, validation rule, authorization decision or error meaning. The frontend/backend owners share the compatibility review; Bruno approves breaking changes and removal conditions before implementation.
 

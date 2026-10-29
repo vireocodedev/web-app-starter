@@ -17,7 +17,22 @@ Servlet kontekst `/api` daje sljedeće vanjske rute:
 | GET `/api/auth/session` | Autentificirani javni DTO; ponovno dohvaća aktivnog korisnika     |
 | POST `/api/auth/logout` | Spring Security odjava; uspješno vraća 204 i briše SESSION cookie |
 
-CSRF i login dopušteni su autorizacijskim pravilima. `permitAll` **ne isključuje** CSRF na prijavi: zahtjev koji mijenja stanje i dalje treba token i zaglavlje dobiveno CSRF endpointom. `/actuator/health` i `/error` također su dopušteni. Svi drugi zahtjevi u ugrađenom chainu trebaju autentikaciju.
+CSRF i login dopušteni su autorizacijskim pravilima. `permitAll` **ne isključuje** CSRF na prijavi: zahtjev koji mijenja stanje i dalje treba token i zaglavlje dobiveno CSRF endpointom. `/actuator/health` i `/error` također su dopušteni. Uključeno čitanje dokumentacije opisano je niže; drugi aplikacijski zahtjevi trebaju autentikaciju, dok odjavu obrađuje postojeći CSRF-zaštićeni filtar.
+
+### Swagger koristi isti životni ciklus sesije
+
+OpenAPI JSON/YAML i Swagger UI imaju javni pristup čitanju lokalno i na stagingu;
+osnovna konfiguracija i produkcijski release runtime isključuju oboje.
+Specifikacija zasebno opisuje `sessionCookie` (`SESSION`) i `csrfToken`
+(`X-CSRF-TOKEN`). CSRF, prijava i odjava zadržavaju stvarne zahtjeve; odjavni
+filtar prihvaća i anonimnu sesiju s valjanim CSRF-om.
+
+U Swaggeru dohvatite `/auth/csrf`, autorizirajte token kao `csrfToken` i provedite
+prijavu. Nakon prijave ponovno dohvatite i zamijenite token prije iduće mutacije.
+Preglednik upravlja HttpOnly cookiejem istog origina. Bibliotečni CSRF helper
+temeljen na cookieju nije uključen za ovaj ugovor tokena iz tijela odgovora i
+sesije; tokeni i autorizirane vrijednosti ne spremaju se u browser storage.
+Za tijek pogledajte workspace `README.md`, odjeljak „Generated API documentation”.
 
 ## Uređeni prijelaz prijave
 
