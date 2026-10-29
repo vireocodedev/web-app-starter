@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -84,9 +85,15 @@ public final class ApiErrors {
         json.writeValue(response.getWriter(), error);
     }
 
-    private record PublicError(String code, String message, List<FieldError> fieldErrors) {
+    @Schema(name = "ApiError")
+    private record PublicError(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String code,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String message,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<FieldError> fieldErrors) {
     }
 
-    private record FieldError(String field, String code) {
+    private record FieldError(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String field,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String code) {
     }
 }

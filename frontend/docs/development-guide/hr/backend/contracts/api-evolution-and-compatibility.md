@@ -1,6 +1,6 @@
 # Razvoj API-ja i kompatibilnost
 
-**Status podrške: ugrađena politika kompatibilnosti i frontend potrošački fixturei, uz razrađen postupak isporuke.** Trenutačni Spring-session adapter validira ulazne transportne odgovore i zapisuje eksplicitne naredbe. Njegovi fixturei kompatibilnosti provjeravaju taj klijent kroz MSW, a backend HTTP testovi zasebno provjeravaju proizvođača. To nije podrška za generirane/OpenAPI sheme ni dokaz da su stare isporučene binarne verzije zajedno testirane.
+**Status podrške: ugrađena politika kompatibilnosti i frontend potrošački fixturei, uz razrađen postupak isporuke.** Trenutačni Spring-session adapter validira ulazne transportne odgovore i zapisuje eksplicitne naredbe. Njegovi fixturei kompatibilnosti provjeravaju taj klijent kroz MSW, a backend HTTP testovi zasebno provjeravaju proizvođača. Runtime-generirani OpenAPI opisuje trenutačna mapiranja i DTO-e prema workspace `README.md` uputama, odjeljak „Generated API documentation”. Ni generiranje sheme ni ovi fixturei ne dokazuju da su stare isporučene binarne verzije zajedno testirane.
 
 Koristite ovu politiku prije promjene postojećeg zahtjeva, odgovora, ponašanja endpointa, validacijskog pravila, odluke autorizacije ili značenja pogreške. Frontend/backend vlasnici dijele pregled kompatibilnosti; Bruno odobrava nekompatibilne promjene i uvjete uklanjanja prije implementacije.
 

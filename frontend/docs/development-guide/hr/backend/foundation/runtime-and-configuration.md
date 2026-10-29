@@ -42,6 +42,28 @@ Profil `provision-user` koristi loopback i privremeni port. Njegov runner ima do
 
 Za lokalno postavljanje slijedite workspace `README.md` i povezani runbook inicijalizacije. Oni su vlasnici naredbi i pripreme pristupnih podataka. Članak vodiča ne treba postati druga, različita procedura provisioninga.
 
+## Generirana dokumentacija API-ja prati okruženje
+
+Springdoc WebMVC UI ovisnost u [build.gradle](../../../../../../backend/build.gradle)
+iz Spring mapiranja i transportnih DTO-a izvodi OpenAPI JSON/YAML i Swagger UI.
+Osnovna konfiguracija isključuje `springdoc.api-docs.enabled` i
+`springdoc.swagger-ui.enabled`, a lokalni profil uključuje obje postavke. Profil
+za provisioning zadržava obje isključenima.
+
+Instalirani [release runtime](../../../../../../infrastructure/release/runtime.py)
+iz postojećeg odabira okruženja izvodi `SPRINGDOC_APIDOCS_ENABLED` i
+`SPRINGDOC_SWAGGERUI_ENABLED`: staging dobiva `true`, a produkcija `false`. To
+su kanonski nazivi varijabli za Spring svojstva s crticama. Eksplicitne vrijednosti
+Compose servisa imaju prednost pred env datotekom. Nema nove tajne ni unosa u
+datoteku vrijednosti. Čitanje dokumentacije javno je samo kada je uključena;
+autentikacija aplikacije, CSRF i secure cookieji zadržavaju postojeće vlasnike.
+
+Za URL-ove i CSRF tijek u Swaggeru pogledajte workspace `README.md`, odjeljak
+„Generated API documentation”. Postojeće zaštićene kopije runtimea trebaju
+pregledanu operatersku nadogradnju iz `infrastructure/release/README.md`, odjeljak
+„API documentation visibility”, i kasniji deployment snapshot da staging preuzme
+nove vrijednosti.
+
 ## Persistencija i dijagnostika imaju namjerne granice
 
 Hibernate koristi `ddl-auto: validate`, a Flyway mijenja shemu. `open-in-view: false` sprječava da web sloj postane implicitna persistence sesija. Ako novi odgovor zahtijeva povezane podatke, treba ih dohvatiti i mapirati unutar eksplicitne aplikacijske granice. Uključivanje `update` ili Open Session in View skriva problem migracije ili dizajna upita.

@@ -149,8 +149,9 @@ for prerequisites and troubleshooting.
 - Login changes the session ID and rotates CSRF protection. The frontend obtains
   a fresh session-bound CSRF token before every unsafe HTTP request. Neither
   authentication credentials nor tokens are persisted in browser storage.
-- All endpoints other than login, CSRF, health, and error handling require
-  authentication. No public registration endpoint is included.
+- Application endpoints require authentication except login, CSRF, health and
+  error handling. The logout filter requires CSRF; enabled API documentation has
+  public read access locally and on staging. No public registration is included.
 
 The frontend adapter uses these endpoints under the `/api` context:
 
@@ -177,6 +178,45 @@ Before changing that API, follow the
 [API evolution and compatibility policy](frontend/docs/development-guide/en/backend/contracts/api-evolution-and-compatibility.md)
 for old/new reader and writer review, independent consumer fixtures, rollout and
 explicit approval of breaking changes or removals.
+
+## Generated API documentation
+
+The backend generates OpenAPI JSON/YAML and Swagger UI from its Spring MVC
+controllers and DTOs using springdoc. New controller mappings are discovered
+automatically; annotations describe security and responses that inference cannot
+determine. The filter-owned logout operation is documented separately, without
+adding another logout endpoint. Current authentication schemas expose transport
+DTOs and hide framework-injected parameters.
+
+With the usual local backend port, open:
+
+- Swagger UI: `http://127.0.0.1:8080/api/swagger-ui.html`
+- OpenAPI JSON: `http://127.0.0.1:8080/api/v3/api-docs`
+- OpenAPI YAML: `http://127.0.0.1:8080/api/v3/api-docs.yaml`
+
+The `local` profile enables documentation. The release runtime enables both
+documentation endpoints on staging and disables them on production, using fixed
+`SPRINGDOC_APIDOCS_ENABLED` and `SPRINGDOC_SWAGGERUI_ENABLED` environment values.
+Base configuration and the one-time provisioning profile keep both disabled.
+On staging, use the same `/api/...` paths at the staging HTTPS origin. Existing
+installations need the reviewed runtime update described in the
+[release guide](infrastructure/release/README.md#api-documentation-visibility);
+deploying a new application image alone does not update installed host helpers.
+
+To try authenticated requests in Swagger UI:
+
+1. Execute `GET /auth/csrf`; copy the returned token.
+2. Choose **Authorize** and enter it for `csrfToken` (`X-CSRF-TOKEN`).
+3. Execute `POST /auth/login` with the actual username/password. A successful
+   response is `204`; the browser manages the same-origin HttpOnly session cookie.
+4. Execute `GET /auth/csrf` again after login and replace the authorized token,
+   because login rotates it. Then try `GET /auth/session` or `POST /auth/logout`.
+
+The session-cookie scheme describes the browser-managed `SESSION` cookie; it
+does not require manually setting that cookie through Swagger authorization.
+CSRF and authorization remain enforced, and Swagger does not persist authorized
+values across reloads. Runtime schema generation supplements the existing
+contract tests; it does not establish compatibility of deployed client versions.
 
 ## Verification
 
